@@ -1,0 +1,388 @@
+openapi: 3.1.0
+info:
+  title: SIAA — Sistema Integrado de Asistencia Académica
+  version: 0.1.0
+  description: |
+    API REST de SIAA. Todos los endpoints requieren HTTPS. Las respuestas de
+    error siguen la estructura del catálogo §9.2 del SRS.
+  contact:
+    name: Equipo SIAA
+    email: dev@siaa.edu.co
+  license:
+    name: Propietario
+
+servers:
+  - url: https://api.siaa.edu.co/api/v1
+    description: Producción
+  - url: http://localhost:8080/api/v1
+    description: Desarrollo local
+
+# ─── Seguridad global ──────────────────────────────────────────────────────
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # ─── Esquemas de error comunes ─────────────────────────────────────────
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [codigo, mensaje, correlationId]
+      properties:
+        codigo:
+          type: string
+          example: AUTH_CREDENCIALES_INVALIDAS
+          description: Código de error del catálogo §9.2
+        mensaje:
+          type: string
+          example: Credenciales incorrectas
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        correlationId:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+
+    FieldError:
+      type: object
+      required: [campo, error]
+      properties:
+        campo:
+          type: string
+          example: correo
+        error:
+          type: string
+          example: required
+
+    # ─── Auth ──────────────────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      required: [correo, password]
+      properties:
+        correo:
+          type: string
+          format: email
+          example: docente@universidad.edu.co
+        password:
+          type: string
+          format: password
+          minLength: 1
+          example: "**********"
+        dispositivoId:
+          type: string
+          description: ID de instalación del dispositivo (UUID estable)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    TokenPairResponse:
+      type: object
+      required: [accessToken, refreshToken, expiraEn, tipoToken, usuario]
+      properties:
+        accessToken:
+          type: string
+          description: JWT de acceso válido por 15 minutos
+          example: eyJhbGciOiJIUzI1NiJ9...
+        refreshToken:
+          type: string
+          description: Token de refresco opaco válido por 30 días
+          example: a1b2c3d4e5f6...
+        expiraEn:
+          type: string
+          format: date-time
+          example: "2024-12-31T23:59:59Z"
+        tipoToken:
+          type: string
+          enum: [Bearer]
+        usuario:
+          $ref: '#/components/schemas/UsuarioInfo'
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+        dispositivoId:
+          type: string
+
+    RecuperarRequest:
+      type: object
+      required: [correo]
+      properties:
+        correo:
+          type: string
+          format: email
+
+    ConfirmarRecuperarRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 12
+
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    UsuarioInfo:
+      type: object
+      required: [id, correo, nombre, apellido, roles, permisos]
+      properties:
+        id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        correo:
+          type: string
+          format: email
+        nombre:
+          type: string
+        apellido:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+          example: [DOCENTE]
+        permisos:
+          type: array
+          items:
+            type: string
+          example: [marcaje:crear, marcaje:leer]
+
+    MensajeResponse:
+      type: object
+      required: [mensaje]
+      properties:
+        mensaje:
+          type: string
+
+    HealthResponse:
+      type: object
+      required: [status, version, uptimeSegundos, dependencias]
+      properties:
+        status:
+          type: string
+          enum: [ok, degradado]
+        version:
+          type: string
+        commit:
+          type: string
+        uptimeSegundos:
+          type: integer
+        hostname:
+          type: string
+        dependencias:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [ok, error]
+
+# ─── Rutas ──────────────────────────────────────────────────────────────────
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Verificar estado del servicio
+      description: Siempre responde 200. No requiere autenticación.
+      security: []
+      tags: [salud]
+      responses:
+        '200':
+          description: Servicio operativo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/ready:
+    get:
+      operationId: healthReady
+      summary: Verificar disponibilidad de dependencias
+      description: Retorna 503 si MongoDB no está disponible.
+      security: []
+      tags: [salud]
+      responses:
+        '200':
+          description: Todas las dependencias disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Una o más dependencias no disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/login:
+    post:
+      operationId: login
+      summary: Iniciar sesión institucional
+      description: |
+        Autentica con correo y contraseña. Respuesta idéntica si las credenciales
+        son incorrectas o el usuario no existe (AC-02).
+        El rate limiting es de 120 req/min por IP (RNF-SEG-005).
+      security: []
+      tags: [autenticación]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+        '401':
+          description: Credenciales inválidas o cuenta no activa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                codigo: AUTH_CREDENCIALES_INVALIDAS
+                mensaje: Credenciales incorrectas
+                correlationId: 550e8400-e29b-41d4-a716-446655440000
+        '423':
+          description: Cuenta bloqueada temporalmente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Demasiadas peticiones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Renovar par de tokens
+      description: |
+        Rota el refresh token. Si se detecta reutilización, se revoca toda la
+        familia de tokens (AC-06).
+      security: []
+      tags: [autenticación]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Nuevo par de tokens emitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+        '401':
+          description: Token inválido, expirado o revocado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Cerrar sesión
+      description: Revoca el refresh token actual. Requiere token de acceso válido.
+      tags: [autenticación]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Sesión cerrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensajeResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/recuperar:
+    post:
+      operationId: solicitarRecuperacion
+      summary: Solicitar recuperación de contraseña
+      description: |
+        Envía enlace de un solo uso válido por 30 min. La respuesta es idéntica
+        si el correo existe o no (AC-02 anti-enumeración).
+      security: []
+      tags: [autenticación]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecuperarRequest'
+      responses:
+        '200':
+          description: Respuesta enviada (idéntica independientemente del correo)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensajeResponse'
+
+  /auth/recuperar/confirmar:
+    post:
+      operationId: confirmarRecuperacion
+      summary: Establecer nueva contraseña
+      description: |
+        Valida el token de recuperación y actualiza la contraseña.
+        Revoca todas las sesiones activas del usuario.
+      security: []
+      tags: [autenticación]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmarRecuperarRequest'
+      responses:
+        '200':
+          description: Contraseña actualizada y sesiones cerradas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensajeResponse'
+        '401':
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Contraseña no cumple política
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

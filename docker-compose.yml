@@ -1,0 +1,88 @@
+services:
+  # ─── API Principal ────────────────────────────────────────────
+  siaa-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: siaa-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=development
+      - APP_VERSION=0.1.0-dev
+      - PORT=8080
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=siaa_dev
+      - JWT_SECRET=${JWT_SECRET:-siaa-dev-secret-change-in-production-min-32chars}
+      - JWT_ACCESS_MINUTES=15
+      - JWT_REFRESH_DAYS=30
+      - SMTP_HOST=${SMTP_HOST:-mailhog}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_FROM=noreply@siaa.local
+      - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS:-}
+      - RATE_LIMIT_PER_MINUTE=120
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/siaa-api", "--health-check"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - siaa-net
+
+  # ─── MongoDB ──────────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: siaa-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=siaa_dev
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - siaa-net
+
+  # ─── MailHog (SMTP de desarrollo) ─────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: siaa-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # UI web
+    networks:
+      - siaa-net
+
+  # ─── Mongo Express (UI de MongoDB para dev) ───────────────────
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: siaa-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - siaa-net
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  siaa-net:
+    driver: bridge

@@ -1,0 +1,50 @@
+name: siaa_web
+description: SIAA — Consola administrativa web (Flutter Web WASM)
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Compartido con mobile
+  dio: ^5.7.0
+  flutter_bloc: ^9.1.1
+  bloc: ^9.2.1
+  equatable: ^2.0.5
+  json_annotation: ^4.9.0
+  google_fonts: ^8.2.1
+  gap: ^3.0.1
+  intl: '>=0.19.0 <1.0.0'
+
+  # UI Web
+  data_table_2: ^3.0.0
+  fl_chart: ^1.2.0
+  syncfusion_flutter_calendar: ^34.2.8
+  file_picker: ^13.1.0
+  excel: ^4.0.3
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # Almacenamiento web
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  json_serializable: ^6.8.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/

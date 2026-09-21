@@ -1,0 +1,82 @@
+name: siaa_mobile
+description: SIAA — Sistema Integrado de Asistencia Académica (App Móvil)
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Red
+  dio: ^5.7.0
+  retrofit: ^4.3.0
+  json_annotation: ^4.9.0
+
+  # Estado (BLoC)
+  flutter_bloc: ^9.1.1
+  bloc: ^9.2.1
+  equatable: ^3.0.0
+
+  # Almacenamiento seguro (Keystore/Keychain) — T-PLT-03.6
+  flutter_secure_storage: ^11.2.0
+
+  # Geolocalización — US-MAR-02
+  geolocator: ^14.0.3
+  permission_handler: ^13.0.2
+
+  # Mapas — US-GEO-02
+  maplibre_gl: ^0.27.1
+
+  # Integridad del dispositivo — US-MAR-10
+  device_info_plus: ^13.2.0
+  package_info_plus: ^10.2.1
+
+  # Biometría local — US-AUT-06
+  local_auth: ^3.0.2
+
+  # UI
+  google_fonts: ^8.2.1
+  shimmer: ^4.0.0
+  lottie: ^3.1.2
+  gap: ^3.0.1
+  cached_network_image: ^4.0.0
+
+  # Generación de código
+  freezed_annotation: ^3.1.0
+  copy_with_extension: ^17.1.0
+
+  # Certificado pinning — T-PLT-03.5
+  # Se configura vía DIO + InterceptorsWrapper
+
+  # UUID (ID instalación, T-PLT-03.2)
+  uuid: ^4.5.1
+
+  # Intl
+  intl: '>=0.19.0 <1.0.0'
+
+  # Conectividad
+  connectivity_plus: ^7.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  retrofit_generator: ^10.2.11
+  json_serializable: ^6.8.0
+  freezed: ^4.0.1
+  mocktail: ^1.0.4
+  bloc_test: ^10.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/lottie/
+    - assets/icons/

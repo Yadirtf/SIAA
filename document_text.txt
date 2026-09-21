@@ -1,0 +1,1160 @@
+﻿SIAA — Sistema Integrado de Asistencia Académica
+Documento Base de Requerimientos · Backend, Frontend y Arquitectura
+Jhon Alexander Gómez Ruiz
+Versión 1.0 · Septiembre de 2026
+Contenido
+Ficha del documento1
+Identificación1
+Control de versiones1
+1. Introducción1
+1.1 Propósito1
+1.2 Alcance1
+1.3 Definiciones y acrónimos1
+1.4 Referencias normativas1
+2. Visión general del sistema1
+2.1 Descripción1
+2.2 Principio de diseño rector1
+2.3 Actores del sistema1
+2.4 Diagrama conceptual de módulos1
+3. Requerimientos funcionales1
+3.1 Módulo AUT — Autenticación y sesión1
+3.2 Módulo ROL — Roles y permisos1
+3.3 Módulo GEO — Cartografía y editor GPS de espacios1
+3.4 Módulo ACA — Estructura académica, horarios y asignaciones1
+3.5 Módulo PAR — Parametrización (holgura y reglas)1
+3.6 Módulo MAR — Marcaje de asistencia1
+3.7 Módulo JUS — Novedades y justificaciones1
+3.8 Módulo REP — Reportes e indicadores1
+3.9 Módulo AUD — Auditoría1
+3.10 Módulo NOT — Notificaciones1
+4. Requerimientos no funcionales1
+4.1 Rendimiento1
+4.2 Disponibilidad y continuidad1
+4.3 Seguridad1
+4.4 Usabilidad y accesibilidad1
+4.5 Compatibilidad1
+4.6 Mantenibilidad y calidad1
+4.7 Legales y de privacidad1
+5. Arquitectura y stack tecnológico1
+5.1 Restricción: código compilado1
+5.2 Stack recomendado (Opción A)1
+5.3 Stack alternativo (Opción B — apalanca experiencia Kotlin)1
+5.4 Vista de despliegue1
+5.5 Estructura de capas del backend1
+6. Modelo de datos (MongoDB)1
+6.1 Colecciones1
+6.2 Esquemas principales1
+6.3 Índices requeridos1
+6.4 Consulta geoespacial de referencia1
+7. Motor de validación de marcaje (regla de negocio central)1
+8. Contratos de API (resumen)1
+9. Especificación de interfaz (frontend)1
+9.1 App móvil — pantallas1
+9.2 Consola web — módulos1
+9.3 Lineamientos visuales1
+10. Riesgos técnicos y decisiones abiertas1
+Decisiones pendientes de definición institucional1
+11. Plan de fases1
+12. Criterios de aceptación (muestra)1
+13. Anexos sugeridos1
+Ficha del documento
+Identificación
+Campo
+Valor
+Código del documento
+SIAA-SRS-001
+Versión
+1.0 (borrador para revisión)
+Fecha
+Septiembre de 2026
+Autor
+Jhon Alexander Gómez Ruiz
+Estado
+En elaboración
+Alcance
+Aplicación móvil (Android/iOS), consola web administrativa y API backend
+Control de versiones
+Versión
+Fecha
+Autor
+Cambios
+1.0
+2026-09-04
+J. Gómez
+Versión inicial del documento base
+1. Introducción
+1.1 Propósito
+Este documento define la línea base de requerimientos funcionales, no funcionales, de datos y de arquitectura del SIAA (Sistema Integrado de Asistencia Académica): una solución móvil y web para el registro y control de asistencia académica validado por geolocalización dentro del perímetro real del aula, sobre horarios y asignaciones previamente definidos.
+Sirve como insumo para: estimación, diseño técnico, contratación de desarrollo, y como anexo técnico en un eventual proceso institucional.
+1.2 Alcance
+Incluido en el alcance:
+Aplicación móvil nativa compilada para Android e iOS.
+Consola web administrativa.
+API backend compilada y base de datos MongoDB Atlas (Cloud).
+Cartografía de espacios físicos (aulas, bloques, torres, sedes) creada desde el GPS del dispositivo por el rol administrador.
+Gestión de horarios, asignaciones docente–aula–franja y parámetros de holgura.
+Registro de asistencia validado por tiempo + ubicación + asignación.
+Roles, permisos y auditoría.
+Reportes e indicadores de cumplimiento.
+Fuera del alcance (v1):
+Nómina, liquidación de horas o descuentos automáticos.
+Reconocimiento facial o biométrico.
+Integración con torniquetes, lectores RFID o hardware de control de acceso.
+Gestión curricular completa (mallas, notas, matrícula) — se asume integración con el sistema académico existente.
+1.3 Definiciones y acrónimos
+Término
+Definición
+Geocerco (geofence)
+Polígono geográfico que delimita un espacio físico; en SIAA se almacena como GeoJSON Polygon.
+Holgura
+Tolerancia en minutos, antes y después de la hora de inicio, dentro de la cual se acepta el marcaje. Parametrizable.
+Marcaje
+Evento de registro de asistencia (entrada o salida) generado por un usuario.
+Asignación
+Vínculo entre un usuario (docente), un grupo/asignatura, un aula y una franja horaria, en un periodo académico.
+Franja horaria
+Bloque de tiempo recurrente (día de semana, hora inicio, hora fin).
+Sesión de clase
+Instancia concreta de una asignación en una fecha específica. Es la unidad contra la que se marca.
+Precisión GPS
+Radio de incertidumbre en metros reportado por el proveedor de ubicación del dispositivo.
+Mock location
+Ubicación falsificada por software. Vector de fraude principal.
+RBAC / ABAC
+Control de acceso basado en roles / basado en atributos.
+1.4 Referencias normativas
+Ley 1581 de 2012 y Decreto 1377 de 2013 — Protección de datos personales (Colombia). La geolocalización es dato personal.
+Ley 1266 de 2008 — Habeas Data.
+Reglamento docente y estatuto profesoral de la institución.
+Lineamientos de Gobierno Digital (MinTIC) para servicios institucionales.
+OWASP MASVS (Mobile Application Security Verification Standard) y OWASP API Security Top 10.
+2. Visión general del sistema
+2.1 Descripción
+SIAA resuelve un problema concreto: verificar que el docente estuvo físicamente en el aula asignada, en el horario asignado. La verificación se apoya en tres condiciones que deben cumplirse simultáneamente y que se validan siempre en el servidor:
+Autorización — existe una asignación vigente del usuario para esa sesión.
+Tiempo — el marcaje ocurre dentro de la ventana de holgura, medida con hora de servidor.
+Espacio — la coordenada reportada cae dentro del polígono del aula (o de su buffer configurado), con precisión aceptable.
+2.2 Principio de diseño rector
+Minimalismo funcional. El docente debe poder marcar asistencia en un solo toque, en menos de 5 segundos, sin navegar menús. Toda la complejidad (mapas, horarios, parámetros, excepciones) vive en la administración, no en la pantalla del usuario final.
+2.3 Actores del sistema
+Actor
+Descripción
+Canal principal
+Superadministrador
+Configura la instancia, parámetros globales, integraciones.
+Web
+Administrador institucional
+Gestiona sedes, bloques, aulas, cartografía GPS, usuarios, periodos.
+Móvil + Web
+Coordinador / Decano
+Gestiona horarios y asignaciones de su facultad; consulta reportes de su ámbito.
+Web
+Docente
+Marca asistencia; consulta su horario e historial; radica justificaciones.
+Móvil
+Estudiante
+Marca su asistencia a la sesión; consulta su porcentaje de asistencia.
+Móvil
+Monitor / Auxiliar
+(Opcional) Apoya el marcaje grupal de estudiantes.
+Móvil
+Talento Humano / Auditor
+Consulta y exporta evidencia; no modifica datos operativos.
+Web
+Sistema externo
+Sistema académico que provee horarios, docentes y grupos vía API.
+API
+2.4 Diagrama conceptual de módulos
+┌──────────────────────────────┐   ┌──────────────────────────────┐│   APP MÓVIL (Android / iOS)  │   │   CONSOLA WEB ADMINISTRATIVA ││  · Marcaje 1-tap             │   │  · Sedes / bloques / aulas   ││  · Mi horario / historial    │   │  · Horarios y asignaciones   ││  · Editor GPS de aulas (adm) │   │  · Parámetros y holguras     ││  · Justificaciones           │   │  · Reportes y auditoría      │└──────────────┬───────────────┘   └──────────────┬───────────────┘               │            HTTPS / JWT           │               └───────────────┬──────────────────┘                               ▼            ┌────────────────────────────────────────┐            │        API BACKEND (binario compilado) │            │  Auth · RBAC · Motor de validación     │            │  Geoespacial · Reportes · Auditoría    │            └────────────────────┬───────────────────┘                                 ▼            ┌────────────────────────────────────────┐            │   MongoDB Atlas (índices 2dsphere)     │            └────────────────────────────────────────┘
+3. Requerimientos funcionales
+Nomenclatura: RF-MM-NNN donde MM es el módulo. Prioridad: A (MVP obligatorio), B (necesario, fase 2), C (deseable).
+3.1 Módulo AUT — Autenticación y sesión
+ID
+Requerimiento
+Prio
+RF-AUT-001
+El sistema debe autenticar por correo institucional y contraseña, con emisión de token de acceso (JWT, vida corta) y token de refresco.
+A
+RF-AUT-002
+El sistema debe permitir recuperación de contraseña por enlace de un solo uso con expiración.
+A
+RF-AUT-003
+El sistema debe soportar segundo factor (TOTP) obligatorio para roles administrativos.
+B
+RF-AUT-004
+El sistema debe vincular la cuenta a un dispositivo confiable (identificador de instalación). Un cambio de dispositivo requiere aprobación administrativa o revalidación.
+A
+RF-AUT-005
+El sistema debe permitir desbloqueo biométrico local (huella/Face ID) para reabrir sesión sin reescribir credenciales.
+B
+RF-AUT-006
+El sistema debe cerrar sesión remotamente y revocar tokens desde la consola web.
+B
+RF-AUT-007
+El sistema debe bloquear la cuenta tras N intentos fallidos y registrar el evento.
+A
+RF-AUT-008
+El sistema debe soportar inicio de sesión federado (OAuth2/OIDC) con el directorio institucional.
+C
+3.2 Módulo ROL — Roles y permisos
+ID
+Requerimiento
+Prio
+RF-ROL-001
+El sistema debe implementar RBAC con permisos granulares con formato recurso:acción (p. ej. aula:crear, marcaje:anular, reporte:exportar).
+A
+RF-ROL-002
+El sistema debe permitir crear roles personalizados combinando permisos, más allá de los roles predefinidos.
+B
+RF-ROL-003
+El sistema debe aplicar alcance por atributos (ABAC): un coordinador solo ve y opera sobre su facultad/sede. El alcance se evalúa en el backend, nunca solo en la interfaz.
+A
+RF-ROL-004
+El sistema debe permitir que un usuario tenga varios roles simultáneos (p. ej. docente + coordinador) y alternar el contexto activo.
+B
+RF-ROL-005
+El sistema debe registrar toda asignación o revocación de rol en la bitácora de auditoría.
+A
+RF-ROL-006
+El sistema debe permitir vigencia temporal de roles (fecha inicio / fin) para encargos.
+C
+Matriz de permisos base
+Permiso
+Superadmin
+Admin
+Coordinador
+Docente
+Estudiante
+Auditor
+sede:*, bloque:*
+X
+X
+—
+—
+—
+—
+aula:crear / aula:editar-geometria
+X
+X
+—
+—
+—
+—
+aula:leer
+X
+X
+X
+X (asignadas)
+X (asignadas)
+X
+horario:crear / asignacion:crear
+X
+X
+X (su ámbito)
+—
+—
+—
+marcaje:crear
+—
+—
+—
+X
+X
+—
+marcaje:leer
+X
+X
+X (su ámbito)
+X (propios)
+X (propios)
+X
+marcaje:anular / marcaje:ajustar
+X
+X
+X (su ámbito)
+—
+—
+—
+justificacion:crear
+—
+—
+—
+X
+X
+—
+justificacion:aprobar
+X
+X
+X
+—
+—
+—
+parametro:editar
+X
+X
+—
+—
+—
+—
+reporte:exportar
+X
+X
+X
+—
+—
+X
+auditoria:leer
+X
+X
+—
+—
+—
+X
+3.3 Módulo GEO — Cartografía y editor GPS de espacios
+Este es el módulo diferenciador. El administrador levanta la cartografía en sitio, con el celular, sin necesidad de planos ni software SIG.
+ID
+Requerimiento
+Prio
+RF-GEO-001
+El sistema debe permitir crear la jerarquía física: Sede → Torre → Bloque → Piso → Aula. Todos los niveles opcionales salvo Sede y Aula.
+A
+RF-GEO-002
+El sistema debe permitir capturar el polígono de un espacio mediante recorrido perimetral: el administrador camina el contorno y captura un vértice por cada esquina.
+A
+RF-GEO-003
+En cada captura de vértice, el sistema debe promediar N lecturas GPS consecutivas (N parametrizable, por defecto 5) y descartar las que excedan la precisión máxima configurada.
+A
+RF-GEO-004
+El sistema debe permitir un modo alternativo de captura por toque sobre mapa satelital, para espacios inaccesibles o de gran extensión.
+A
+RF-GEO-005
+El sistema debe permitir un modo simplificado centroide + radio que genere un polígono circular aproximado.
+B
+RF-GEO-006
+El sistema debe validar que el polígono: tenga ≥ 3 vértices, sea simple (sin auto-intersecciones), esté cerrado, y su área esté entre un mínimo y máximo configurables.
+A
+RF-GEO-007
+El sistema debe detectar y advertir solapamientos entre polígonos de espacios del mismo piso y bloque.
+A
+RF-GEO-008
+El sistema debe permitir editar vértices individuales (mover, insertar, eliminar) desde móvil y web.
+A
+RF-GEO-009
+El sistema debe versionar la geometría: cada modificación conserva la anterior con fecha y autor. Los marcajes históricos se evalúan contra la geometría vigente en su momento.
+A
+RF-GEO-010
+El sistema debe permitir definir un buffer en metros por espacio, que amplía el polígono efectivo de validación.
+A
+RF-GEO-011
+El sistema debe permitir importar y exportar la cartografía en GeoJSON y KML.
+B
+RF-GEO-012
+El sistema debe mostrar en tiempo real, durante la captura, la precisión GPS actual y bloquear la captura si supera el umbral.
+A
+RF-GEO-013
+El sistema debe permitir capturar en modo offline y sincronizar la geometría al recuperar conexión.
+B
+RF-GEO-014
+El sistema debe permitir asociar a cada espacio metadatos: nombre, código, capacidad, tipo (aula, laboratorio, auditorio, taller), facultad responsable, y estado (activo/inactivo/mantenimiento).
+A
+RF-GEO-015
+El sistema debe permitir clonar la geometría de un piso a otro piso de la misma torre, ajustando únicamente el atributo piso.
+B
+RF-GEO-016
+El sistema debe registrar métodos complementarios de verificación por espacio: BSSID de puntos WiFi, UUID de baliza BLE o código QR fijo, para desambiguar pisos. (Ver riesgo R-01.)
+B
+3.4 Módulo ACA — Estructura académica, horarios y asignaciones
+ID
+Requerimiento
+Prio
+RF-ACA-001
+El sistema debe gestionar periodos académicos con fecha de inicio, fin y estado (planeación, activo, cerrado).
+A
+RF-ACA-002
+El sistema debe gestionar facultades, programas, asignaturas y grupos.
+A
+RF-ACA-003
+El sistema debe permitir crear franjas horarias recurrentes (día de semana, hora inicio, hora fin) asociadas a un grupo.
+A
+RF-ACA-004
+El sistema debe permitir crear una asignación que vincule: docente + grupo/asignatura + aula + franja horaria + periodo.
+A
+RF-ACA-005
+El sistema debe impedir colisiones: un docente no puede tener dos asignaciones solapadas en el tiempo; un aula no puede tener dos grupos en la misma franja.
+A
+RF-ACA-006
+El sistema debe permitir asignaciones con codocencia (más de un docente en la misma franja y aula).
+B
+RF-ACA-007
+El sistema debe generar automáticamente las sesiones de clase (instancias por fecha) al activar el periodo, expandiendo las franjas recurrentes contra el calendario académico.
+A
+RF-ACA-008
+El sistema debe gestionar un calendario de excepciones: festivos, semanas de receso, jornadas institucionales, paros; las fechas excluidas no generan sesión.
+A
+RF-ACA-009
+El sistema debe permitir cambios puntuales de sesión: reprogramar fecha/hora, cambiar de aula, o marcar la sesión como cancelada, con motivo y responsable.
+A
+RF-ACA-010
+El sistema debe permitir reemplazo docente en una sesión específica, transfiriendo la autorización de marcaje al suplente.
+B
+RF-ACA-011
+El sistema debe soportar carga masiva de estructura académica y horarios vía CSV/XLSX con validación previa y reporte de errores.
+A
+RF-ACA-012
+El sistema debe exponer un endpoint de integración para sincronizar horarios desde el sistema académico institucional.
+C
+RF-ACA-013
+El sistema debe permitir sesiones en modalidad virtual o no presencial, marcadas como exentas de validación geoespacial.
+B
+3.5 Módulo PAR — Parametrización (holgura y reglas)
+ID
+Requerimiento
+Prio
+RF-PAR-001
+El sistema debe permitir configurar la holgura de entrada (minutos antes y después de la hora de inicio en que se acepta el marcaje).
+A
+RF-PAR-002
+El sistema debe permitir configurar la holgura de salida y si el marcaje de salida es obligatorio, opcional o está desactivado.
+A
+RF-PAR-003
+El sistema debe permitir configurar el umbral de tardanza: minutos tras los cuales el marcaje se clasifica como TARDANZA en lugar de PRESENTE.
+A
+RF-PAR-004
+El sistema debe aplicar los parámetros mediante herencia jerárquica con precedencia del más específico: Global → Sede → Facultad → Bloque → Aula → Asignación.
+A
+RF-PAR-005
+El sistema debe permitir configurar la precisión GPS máxima aceptable (metros) para admitir un marcaje.
+A
+RF-PAR-006
+El sistema debe permitir configurar el buffer perimetral por defecto aplicado a los polígonos.
+A
+RF-PAR-007
+El sistema debe permitir activar o desactivar, por ámbito: marcaje offline, detección de mock location, bloqueo por dispositivo rooteado, y exigencia de verificación complementaria (QR/BLE/WiFi).
+A
+RF-PAR-008
+El sistema debe permitir configurar el porcentaje mínimo de asistencia para alertas y el umbral de inasistencias consecutivas que dispara notificación al coordinador.
+B
+RF-PAR-009
+Toda modificación de parámetros debe quedar auditada con valor anterior, valor nuevo, autor y fecha, y debe indicar desde qué momento aplica.
+A
+RF-PAR-010
+El sistema debe mostrar, para cualquier asignación, el parámetro efectivo resuelto y de qué nivel de la jerarquía proviene.
+B
+Parámetros base sugeridos (valores por defecto):
+Parámetro
+Valor por defecto
+Rango admitido
+holguraEntradaAntesMin
+15
+0–60
+holguraEntradaDespuesMin
+15
+0–60
+umbralTardanzaMin
+10
+0–60
+holguraSalidaAntesMin
+10
+0–60
+holguraSalidaDespuesMin
+20
+0–60
+precisionGpsMaxMetros
+35
+5–100
+bufferPerimetralMetros
+10
+0–50
+marcajeSalidaObligatorio
+false
+booleano
+permitirOffline
+true
+booleano
+bloquearMockLocation
+true
+booleano
+promedioLecturasVertice
+5
+1–20
+3.6 Módulo MAR — Marcaje de asistencia
+ID
+Requerimiento
+Prio
+RF-MAR-001
+La app debe mostrar al docente, en la pantalla principal, únicamente la sesión activa o próxima dentro de su ventana de holgura, con un botón principal de marcaje.
+A
+RF-MAR-002
+El sistema debe permitir el marcaje exclusivamente si el usuario tiene una asignación vigente para esa sesión. No debe existir forma de seleccionar un aula arbitraria.
+A
+RF-MAR-003
+El sistema debe validar que la coordenada del usuario esté dentro del polígono del aula (más su buffer) al momento del marcaje.
+A
+RF-MAR-004
+Toda la validación (asignación, ventana temporal, contención geoespacial) debe ejecutarse en el servidor. El cliente nunca decide el resultado.
+A
+RF-MAR-005
+El sistema debe usar hora del servidor como referencia temporal; el desfase con la hora del dispositivo debe registrarse y, si supera un umbral, marcarse como anomalía.
+A
+RF-MAR-006
+El sistema debe registrar, junto al marcaje: coordenadas, precisión, distancia al centroide, timestamp de dispositivo y servidor, identificador de dispositivo, versión de app, y banderas de integridad.
+A
+RF-MAR-007
+El sistema debe clasificar el resultado en: PRESENTE, TARDANZA, RECHAZADO_FUERA_DE_AREA, RECHAZADO_FUERA_DE_HORARIO, RECHAZADO_SIN_ASIGNACION, RECHAZADO_INTEGRIDAD, PENDIENTE_SINCRONIZACION.
+A
+RF-MAR-008
+El sistema debe ser idempotente: intentos repetidos para la misma sesión y tipo de marcaje no generan registros duplicados.
+A
+RF-MAR-009
+El sistema debe explicar al usuario el motivo del rechazo en lenguaje claro y, cuando aplique, indicar la distancia al aula o los minutos fuera de ventana.
+A
+RF-MAR-010
+El sistema debe permitir marcaje offline: encolar el intento firmado localmente y sincronizarlo al recuperar conexión, conservando el timestamp original y marcándolo como diferido.
+B
+RF-MAR-011
+El sistema debe generar automáticamente AUSENTE para sesiones cuya ventana de marcaje expiró sin registro.
+A
+RF-MAR-012
+El sistema debe permitir el marcaje de estudiantes bajo las mismas reglas, con posibilidad de que el docente abra o cierre una ventana de marcaje estudiantil dentro de la sesión.
+B
+RF-MAR-013
+El sistema debe ofrecer al docente una lista de asistencia manual del grupo como respaldo, cuyo uso queda auditado.
+B
+RF-MAR-014
+El sistema debe permitir al administrador anular, ajustar o crear un marcaje manualmente, exigiendo motivo obligatorio y dejando trazabilidad completa.
+A
+RF-MAR-015
+El sistema debe notificar por push al docente cuando se aproxime el cierre de su ventana de marcaje sin registro.
+B
+RF-MAR-016
+El sistema no debe rastrear la ubicación de forma continua ni en segundo plano; la lectura se realiza únicamente en el instante del marcaje.
+A
+3.7 Módulo JUS — Novedades y justificaciones
+ID
+Requerimiento
+Prio
+RF-JUS-001
+El sistema debe permitir al docente radicar una justificación sobre una sesión ausente o rechazada, adjuntando evidencia (imagen o PDF).
+A
+RF-JUS-002
+El sistema debe implementar un flujo de aprobación: RADICADA → EN_REVISIÓN → APROBADA / RECHAZADA, con responsable y observaciones.
+A
+RF-JUS-003
+El sistema debe permitir tipificar la novedad (incapacidad, comisión, permiso, falla técnica del sistema, calamidad).
+A
+RF-JUS-004
+Una justificación aprobada debe reflejarse en el reporte sin borrar el evento original.
+A
+RF-JUS-005
+El sistema debe notificar al solicitante el resultado de la revisión.
+B
+3.8 Módulo REP — Reportes e indicadores
+ID
+Requerimiento
+Prio
+RF-REP-001
+El sistema debe generar el reporte de cumplimiento por docente, con horas programadas, dictadas, tardanzas y ausencias, filtrable por periodo.
+A
+RF-REP-002
+El sistema debe generar el reporte de ocupación y uso por aula, bloque y sede.
+B
+RF-REP-003
+El sistema debe generar el reporte de asistencia por grupo y por estudiante, con porcentaje acumulado.
+B
+RF-REP-004
+El sistema debe permitir exportar todo reporte a XLSX y PDF, con marca de agua institucional y sello de fecha de generación.
+A
+RF-REP-005
+El sistema debe ofrecer un tablero con indicadores en vivo: sesiones del día, marcajes efectuados, sesiones sin marcaje en curso, y alertas.
+B
+RF-REP-006
+El sistema debe permitir consultar el mapa de calor de marcajes rechazados por aula, para identificar geocercos mal calibrados.
+C
+RF-REP-007
+El sistema debe permitir programar el envío automático de reportes por correo con periodicidad configurable.
+C
+3.9 Módulo AUD — Auditoría
+ID
+Requerimiento
+Prio
+RF-AUD-001
+El sistema debe registrar en bitácora inmutable toda operación de creación, modificación y eliminación sobre entidades sensibles (marcajes, asignaciones, geometrías, parámetros, roles).
+A
+RF-AUD-002
+Cada registro de auditoría debe contener: actor, rol activo, acción, entidad, identificador, valores anterior y nuevo, IP, agente y timestamp de servidor.
+A
+RF-AUD-003
+La bitácora debe ser consultable y exportable, y no debe admitir edición ni borrado desde la aplicación.
+A
+RF-AUD-004
+El sistema debe registrar los intentos de marcaje rechazados, no solo los exitosos.
+A
+RF-AUD-005
+El sistema debe aplicar borrado lógico (soft delete) en las entidades operativas.
+A
+3.10 Módulo NOT — Notificaciones
+ID
+Requerimiento
+Prio
+RF-NOT-001
+El sistema debe enviar notificaciones push (FCM para Android, APNs para iOS).
+B
+RF-NOT-002
+El sistema debe notificar: recordatorio de sesión próxima, cierre inminente de ventana, resultado de justificación, y cambios en su horario.
+B
+RF-NOT-003
+El sistema debe permitir al usuario configurar qué notificaciones recibe.
+C
+RF-NOT-004
+El sistema debe enviar alertas al coordinador ante N inasistencias consecutivas de un docente.
+C
+4. Requerimientos no funcionales
+4.1 Rendimiento
+ID
+Requerimiento
+RNF-PER-001
+La operación de marcaje debe completarse en ≤ 2 s (p95) desde el toque hasta la confirmación, con conexión 4G.
+RNF-PER-002
+La app debe alcanzar estado interactivo en ≤ 3 s desde el arranque en frío en un dispositivo de gama media (equivalente a 3 GB RAM, Android 10).
+RNF-PER-003
+El sistema debe soportar el pico de cambio de hora: se asume que hasta el 60 % de los docentes marcan en una ventana de 10 minutos. Dimensionar para ≥ 300 solicitudes/segundo sostenidas en pico.
+RNF-PER-004
+Las consultas geoespaciales deben resolverse con índice 2dsphere; no se admite escaneo de colección.
+RNF-PER-005
+El paquete de instalación móvil no debe exceder 40 MB.
+4.2 Disponibilidad y continuidad
+ID
+Requerimiento
+RNF-DIS-001
+Disponibilidad objetivo ≥ 99,5 % mensual en horario académico.
+RNF-DIS-002
+La app debe operar en modo degradado (cola offline) ante pérdida de conectividad.
+RNF-DIS-003
+Respaldo automático diario de la base de datos con retención de 30 días y prueba de restauración trimestral.
+RNF-DIS-004
+RPO ≤ 1 hora; RTO ≤ 4 horas.
+4.3 Seguridad
+ID
+Requerimiento
+RNF-SEG-001
+Todo el tráfico debe usar TLS 1.3. La app debe implementar certificate pinning.
+RNF-SEG-002
+Las contraseñas deben almacenarse con Argon2id (o bcrypt con coste ≥ 12).
+RNF-SEG-003
+Los tokens deben almacenarse en el almacenamiento seguro del sistema operativo (Keystore / Keychain), nunca en preferencias en claro.
+RNF-SEG-004
+La app debe detectar mock location, root/jailbreak y ejecución en emulador, y reportarlo como bandera de integridad.
+RNF-SEG-005
+El backend debe validar exhaustivamente toda entrada y aplicar límites de tasa (rate limiting) por usuario y por IP.
+RNF-SEG-006
+Se debe implementar attestation de aplicación (Play Integrity API / App Attest) para verificar que las peticiones provienen de una instalación legítima.
+RNF-SEG-007
+Los datos deben cifrarse en reposo (cifrado nativo de MongoDB Atlas) y en tránsito.
+RNF-SEG-008
+Se debe realizar una prueba de seguridad (OWASP ZAP + revisión MASVS) antes del despliegue en producción.
+RNF-SEG-009
+El principio de mínimo privilegio aplica a todos los roles y a las credenciales de infraestructura.
+4.4 Usabilidad y accesibilidad
+ID
+Requerimiento
+RNF-USA-001
+El marcaje debe lograrse en un solo toque desde la pantalla principal, sin navegación intermedia.
+RNF-USA-002
+La interfaz debe seguir un lenguaje visual minimalista: máximo 2 colores de acento, tipografía única, jerarquía por tamaño y espacio, sin ornamentación.
+RNF-USA-003
+Cumplimiento de WCAG 2.1 nivel AA: contraste ≥ 4.5:1, área táctil ≥ 44×44 pt, compatibilidad con lector de pantalla.
+RNF-USA-004
+Soporte de tema claro y oscuro.
+RNF-USA-005
+Los mensajes de error deben ser accionables: qué pasó, por qué, y qué hacer.
+RNF-USA-006
+Interfaz en español, con arquitectura preparada para internacionalización.
+RNF-USA-007
+Un docente sin capacitación previa debe poder marcar asistencia correctamente en su primer intento (verificable en pruebas de usabilidad con ≥ 90 % de éxito).
+4.5 Compatibilidad
+ID
+Requerimiento
+RNF-COM-001
+Android 8.0 (API 26) o superior; arquitecturas arm64-v8a y armeabi-v7a.
+RNF-COM-002
+iOS 14 o superior.
+RNF-COM-003
+La consola web debe funcionar en las dos últimas versiones estables de Chrome, Edge, Firefox y Safari, y ser responsiva desde 1280 px.
+RNF-COM-004
+El sistema debe degradar correctamente en dispositivos sin GPS de alta precisión, informando la limitación.
+4.6 Mantenibilidad y calidad
+ID
+Requerimiento
+RNF-MAN-001
+Cobertura de pruebas unitarias ≥ 70 % en el backend, con cobertura ≥ 90 % en el motor de validación de marcaje.
+RNF-MAN-002
+API documentada con OpenAPI 3.1, generada desde el código.
+RNF-MAN-003
+Integración continua con análisis estático, pruebas y construcción automatizada de artefactos.
+RNF-MAN-004
+Versionado semántico de la API (/api/v1) con política de compatibilidad hacia atrás.
+RNF-MAN-005
+Registro estructurado (JSON) con identificador de correlación por petición.
+4.7 Legales y de privacidad
+ID
+Requerimiento
+RNF-LEG-001
+La app debe solicitar autorización expresa e informada para el tratamiento de datos de geolocalización, en cumplimiento de la Ley 1581 de 2012, con registro de la aceptación (fecha, versión de la política).
+RNF-LEG-002
+Debe aplicarse minimización: se captura ubicación únicamente en el instante del marcaje. Debe declararse explícitamente que no hay rastreo continuo.
+RNF-LEG-003
+Debe publicarse aviso de privacidad y política de tratamiento accesibles desde la app y la web.
+RNF-LEG-004
+El sistema debe permitir el ejercicio de los derechos del titular: consulta, actualización, rectificación y supresión, con canal y plazos definidos.
+RNF-LEG-005
+Al alojar datos en MongoDB Atlas (infraestructura fuera del país) debe documentarse la transferencia internacional y suscribirse las cláusulas correspondientes con el encargado del tratamiento.
+RNF-LEG-006
+Debe definirse una política de retención: datos operativos de marcaje conservados por el periodo exigido institucionalmente, luego anonimizados o eliminados.
+RNF-LEG-007
+El uso del sistema como instrumento de control laboral docente debe estar respaldado por acto administrativo institucional y socializado previamente.
+5. Arquitectura y stack tecnológico
+5.1 Restricción: código compilado
+El requerimiento de código compilado descarta las opciones basadas en intérprete o empaquetado de JavaScript en tiempo de ejecución (React Native, Ionic, Node.js/NestJS en producción). El stack propuesto compila a binario nativo en todas las capas.
+5.2 Stack recomendado (Opción A)
+Capa
+Tecnología
+Justificación
+Móvil (Android + iOS)
+Flutter 3.x / Dart
+Compilación AOT a código máquina ARM64 en ambas plataformas (no interpretado). Un solo código base. Excelente soporte de geolocalización (geolocator), mapas (flutter_map / google_maps_flutter) y almacenamiento local cifrado. Rendimiento y control de UI adecuados para una interfaz minimalista consistente.
+Backend / API
+Go 1.23+ con Echo o Fiber
+Compila a binario estático único sin dependencias de runtime. Concurrencia nativa ideal para el pico de cambio de hora. Driver oficial mongo-driver maduro. Consumo de memoria muy bajo → VPS pequeño. Despliegue trivial en contenedor.
+Base de datos
+MongoDB Atlas (M10 o superior)
+Requerimiento del cliente. Soporte nativo de GeoJSON, índices 2dsphere y operadores $geoIntersects / $geoWithin — precisamente lo que exige la validación de contención. Respaldos y cifrado gestionados.
+Consola web
+Flutter Web compilado a WebAssembly (dart2wasm)
+Cumple la restricción de código compilado y reutiliza modelos, validaciones y componentes de la app móvil. Al ser una consola interna, el SEO es irrelevante.
+Mapas
+MapLibre GL + teselas de OpenStreetMap / imagen satelital
+Evita costos y dependencia de licencia de Google Maps; alternativa: Google Maps SDK si se requiere mejor imagen satelital en la zona.
+Infraestructura
+Docker + Dokploy + Traefik sobre VPS, con Cloudflare delante
+Coincide con la infraestructura que ya administras.
+Notificaciones
+Firebase Cloud Messaging + APNs
+Estándar de facto.
+Observabilidad
+Prometheus + Grafana + Loki
+Autoalojable en el mismo VPS.
+5.3 Stack alternativo (Opción B — apalanca experiencia Kotlin)
+Capa
+Tecnología
+Móvil
+Kotlin Multiplatform + Compose Multiplatform (Android compilado a ART/AOT, iOS compilado nativo vía Kotlin/Native)
+Backend
+Kotlin + Ktor sobre JVM, o .NET 8 con Native AOT (C#)
+Web admin
+Kotlin/JS + Compose Web, o Blazor WebAssembly
+Recomendación: Opción A. Flutter tiene menor fricción de mantenimiento a largo plazo para un equipo pequeño y una única superficie de UI; Go reduce drásticamente el costo operativo del backend. La Opción B es válida si el desarrollo lo asumirá personal con dominio de Kotlin nativo.
+5.4 Vista de despliegue
+Internet   │   ▼Cloudflare (WAF, TLS, rate limiting perimetral)   │   ▼VPS ── Traefik (reverse proxy, TLS interno)        ├── contenedor: siaa-api        (binario Go)        ├── contenedor: siaa-admin-web  (Flutter Web/WASM, estático)        ├── contenedor: siaa-worker     (jobs: generación de sesiones, ausencias, reportes)        └── contenedor: observabilidad   │   ▼MongoDB Atlas (VPC peering / IP allowlist)
+5.5 Estructura de capas del backend
+cmd/api/main.gointernal/  ├── domain/        entidades y reglas puras (sin dependencias externas)  ├── usecase/       casos de uso: MarcarAsistencia, CrearGeocerco, ResolverParametros  ├── repository/    interfaces + implementación MongoDB  ├── transport/     handlers HTTP, DTOs, middlewares (auth, RBAC, rate limit)  └── platform/      config, logging, telemetría, tiempo (inyectable para pruebas)
+El motor de validación de marcaje debe vivir en domain/ como función pura, probable sin base de datos ni red.
+6. Modelo de datos (MongoDB)
+6.1 Colecciones
+Colección
+Descripción
+usuarios
+Personas del sistema con credenciales y roles.
+roles
+Definición de roles y sus permisos.
+sedes, bloques
+Jerarquía física superior; bloques incluye torre y número de pisos.
+espacios
+Aulas y demás espacios, con geometría GeoJSON.
+espacios_geometria_hist
+Versiones históricas de geometría.
+periodos
+Periodos académicos.
+facultades, programas, asignaturas, grupos
+Estructura académica.
+asignaciones
+Docente + grupo + espacio + franja + periodo.
+sesiones
+Instancias por fecha, generadas desde asignaciones.
+marcajes
+Eventos de asistencia.
+parametros
+Configuración con ámbito jerárquico.
+justificaciones
+Novedades y su flujo de aprobación.
+dispositivos
+Dispositivos confiables por usuario.
+auditoria
+Bitácora inmutable.
+calendario_excepciones
+Fechas no lectivas.
+6.2 Esquemas principales
+espacios
+{  "_id": "ObjectId",  "codigo": "A-301",  "nombre": "Aula 301",  "tipo": "AULA",  "sedeId": "ObjectId",  "bloqueId": "ObjectId",  "torre": "Torre B",  "piso": 3,  "facultadId": "ObjectId",  "capacidad": 35,  "geometria": {    "type": "Polygon",    "coordinates": [[      [-76.6512, 1.1478],      [-76.6510, 1.1478],      [-76.6510, 1.1476],      [-76.6512, 1.1476],      [-76.6512, 1.1478]    ]]  },  "centroide": { "type": "Point", "coordinates": [-76.6511, 1.1477] },  "areaM2": 62.4,  "bufferMetros": 10,  "metodoCaptura": "RECORRIDO_PERIMETRAL",  "precisionPromedioMetros": 6.8,  "verificacionComplementaria": {    "wifiBssids": ["a4:2b:8c:11:02:9f"],    "bleUuid": null,    "qrCodigo": "SIAA-A301-7X2K"  },  "versionGeometria": 3,  "estado": "ACTIVO",  "creadoPor": "ObjectId",  "creadoEn": "ISODate",  "actualizadoEn": "ISODate"}
+Importante: MongoDB espera coordenadas GeoJSON en orden [longitud, latitud]. Es la fuente de error más común en este tipo de sistema.
+asignaciones
+{  "_id": "ObjectId",  "periodoId": "ObjectId",  "docenteIds": ["ObjectId"],  "grupoId": "ObjectId",  "asignaturaId": "ObjectId",  "espacioId": "ObjectId",  "franja": { "diaSemana": 2, "horaInicio": "08:00", "horaFin": "10:00" },  "modalidad": "PRESENCIAL",  "parametrosOverride": { "holguraEntradaDespuesMin": 20 },  "vigenteDesde": "ISODate",  "vigenteHasta": "ISODate",  "estado": "ACTIVA"}
+sesiones
+{  "_id": "ObjectId",  "asignacionId": "ObjectId",  "fecha": "2026-09-08",  "inicioProgramado": "ISODate",  "finProgramado": "ISODate",  "espacioId": "ObjectId",  "espacioVersionGeometria": 3,  "docenteIds": ["ObjectId"],  "docenteSuplenteId": null,  "parametrosEfectivos": {    "holguraEntradaAntesMin": 15,    "holguraEntradaDespuesMin": 20,    "umbralTardanzaMin": 10,    "precisionGpsMaxMetros": 35,    "bufferPerimetralMetros": 10  },  "estado": "PROGRAMADA",  "motivoCambio": null}
+Congelar los parametrosEfectivos y la versionGeometria en la sesión evita que un cambio administrativo posterior altere retroactivamente evaluaciones ya realizadas.
+marcajes
+{  "_id": "ObjectId",  "sesionId": "ObjectId",  "usuarioId": "ObjectId",  "rolMarcaje": "DOCENTE",  "tipo": "ENTRADA",  "resultado": "PRESENTE",  "motivoRechazo": null,  "ubicacion": { "type": "Point", "coordinates": [-76.65112, 1.14771] },  "precisionMetros": 8.2,  "distanciaAlCentroideMetros": 4.1,  "dentroDelPoligono": true,  "timestampServidor": "ISODate",  "timestampDispositivo": "ISODate",  "desfaseRelojSegundos": 3,  "minutosRespectoInicio": 4,  "dispositivoId": "uuid-instalacion",  "versionApp": "1.0.3",  "integridad": {    "mockLocation": false,    "rooteado": false,    "emulador": false,    "attestationOk": true  },  "verificacionComplementaria": { "metodo": "WIFI", "valor": "a4:2b:8c:11:02:9f", "coincide": true },  "origen": "ONLINE",  "ajustadoPor": null,  "creadoEn": "ISODate"}
+parametros
+{  "_id": "ObjectId",  "ambito": "SEDE",  "ambitoId": "ObjectId",  "valores": { "holguraEntradaDespuesMin": 20, "precisionGpsMaxMetros": 30 },  "vigenteDesde": "ISODate",  "actualizadoPor": "ObjectId"}
+6.3 Índices requeridos
+Colección
+Índice
+Tipo
+espacios
+geometria
+2dsphere
+espacios
+{ sedeId: 1, bloqueId: 1, piso: 1 }
+compuesto
+espacios
+{ codigo: 1 }
+único
+sesiones
+{ docenteIds: 1, inicioProgramado: 1 }
+compuesto
+sesiones
+{ espacioId: 1, inicioProgramado: 1 }
+compuesto
+sesiones
+{ fecha: 1, estado: 1 }
+compuesto
+marcajes
+{ sesionId: 1, usuarioId: 1, tipo: 1 }
+único (idempotencia)
+marcajes
+{ usuarioId: 1, creadoEn: -1 }
+compuesto
+marcajes
+ubicacion
+2dsphere
+asignaciones
+{ periodoId: 1, docenteIds: 1 }
+compuesto
+usuarios
+{ correo: 1 }
+único
+auditoria
+{ entidad: 1, entidadId: 1, creadoEn: -1 }
+compuesto
+6.4 Consulta geoespacial de referencia
+Verificación de contención ejecutada en el servidor:
+db.espacios.findOne({  _id: espacioId,  geometria: {    $geoIntersects: {      $geometry: { type: "Point", coordinates: [lon, lat] }    }  }})
+Para aplicar el buffer, se calcula previamente el polígono expandido o se evalúa la distancia mínima del punto al polígono con $near sobre el centroide más una comprobación de tolerancia. Se recomienda precalcular y almacenar el polígono con buffer (geometriaBuffer) para evitar cómputo en cada solicitud.
+7. Motor de validación de marcaje (regla de negocio central)
+RN-001 — Algoritmo de evaluación. Se ejecuta en el servidor, en este orden, deteniéndose en el primer fallo:
+Paso
+Verificación
+Resultado si falla
+1
+Token válido, usuario activo, rol con permiso marcaje:crear
+401 / 403
+2
+Dispositivo registrado y coincide con el vinculado al usuario
+RECHAZADO_INTEGRIDAD
+3
+Attestation de app válida (si está activada)
+RECHAZADO_INTEGRIDAD
+4
+Existe una sesión para el usuario en la ventana temporal actual
+RECHAZADO_SIN_ASIGNACION
+5
+horaServidor ∈ [inicio − holguraAntes, inicio + holguraDespués]
+RECHAZADO_FUERA_DE_HORARIO
+6
+precisionMetros ≤ precisionGpsMaxMetros
+PRECISION_INSUFICIENTE (permite reintento)
+7
+Banderas de integridad: mockLocation = false (si bloquearMockLocation)
+RECHAZADO_INTEGRIDAD
+8
+El punto intersecta geometriaBuffer del espacio de la sesión
+RECHAZADO_FUERA_DE_AREA
+9
+Verificación complementaria coincide (si es exigida para ese espacio)
+RECHAZADO_VERIFICACION
+10
+No existe marcaje previo del mismo tipo para la sesión
+Devuelve el marcaje existente (idempotencia)
+11
+Clasificación: minutosRespectoInicio ≤ umbralTardanza → PRESENTE; en caso contrario TARDANZA
+—
+RN-002 — Resolución de parámetros efectivos. Al generar cada sesión se resuelve la cascada Global → Sede → Facultad → Bloque → Aula → Asignación, tomando para cada clave el valor del nivel más específico que la defina, y se congela en la sesión.
+RN-003 — Generación de ausencias. Un proceso programado marca como AUSENTE toda sesión cuya ventana de entrada expiró sin marcaje válido, ejecutándose cada 15 minutos.
+RN-004 — Marcaje offline. El cliente encola el intento con timestamp de dispositivo, coordenadas y un identificador único. Al sincronizar, el servidor reevalúa la ventana temporal usando el timestamp del dispositivo, pero marca el registro como origen: OFFLINE y lo somete a revisión si el desfase de reloj supera el umbral configurado.
+RN-005 — No trazabilidad continua. Ninguna función del sistema debe solicitar permiso de ubicación en segundo plano. El permiso requerido es while in use.
+8. Contratos de API (resumen)
+Base: https://api.siaa.<dominio>/api/v1 · Autenticación: Authorization: Bearer <jwt>
+Método
+Ruta
+Descripción
+Rol
+POST
+/auth/login
+Inicio de sesión
+Público
+POST
+/auth/refresh
+Renovar token
+Autenticado
+POST
+/auth/devices
+Registrar dispositivo
+Autenticado
+GET
+/me/sesiones/hoy
+Sesiones del día del usuario
+Docente/Estudiante
+GET
+/me/sesiones/activa
+Sesión marcable ahora + parámetros y geometría
+Docente/Estudiante
+POST
+/marcajes
+Registrar marcaje
+Docente/Estudiante
+POST
+/marcajes/sync
+Sincronizar cola offline (lote)
+Docente/Estudiante
+GET
+/me/historial
+Historial propio paginado
+Docente/Estudiante
+POST
+/justificaciones
+Radicar justificación
+Docente/Estudiante
+PATCH
+/justificaciones/{id}
+Aprobar o rechazar
+Coordinador/Admin
+GET/POST/PATCH
+/espacios
+CRUD de espacios
+Admin
+PUT
+/espacios/{id}/geometria
+Actualizar polígono (crea versión)
+Admin
+POST
+/espacios/validar-geometria
+Validar polígono sin persistir
+Admin
+GET
+/espacios/solapamientos
+Detectar solapamientos
+Admin
+GET/POST
+/asignaciones
+Gestión de asignaciones
+Coordinador/Admin
+POST
+/periodos/{id}/generar-sesiones
+Expandir franjas a sesiones
+Admin
+GET/PUT
+/parametros
+Consultar y editar parámetros por ámbito
+Admin
+GET
+/parametros/efectivos
+Parámetro resuelto para un ámbito
+Admin
+GET
+/reportes/cumplimiento
+Reporte de cumplimiento
+Coordinador/Auditor
+GET
+/auditoria
+Consulta de bitácora
+Admin/Auditor
+Ejemplo — solicitud de marcaje:
+POST /api/v1/marcajes{  "sesionId": "66f0...",  "tipo": "ENTRADA",  "latitud": 1.14771,  "longitud": -76.65112,  "precisionMetros": 8.2,  "timestampDispositivo": "2026-09-08T13:04:11Z",  "dispositivoId": "b7c1-...",  "integridad": { "mockLocation": false, "rooteado": false, "emulador": false },  "verificacionComplementaria": { "metodo": "WIFI", "valor": "a4:2b:8c:11:02:9f" },  "idempotencyKey": "uuid-v4"}
+Respuesta:
+{  "marcajeId": "66f1...",  "resultado": "PRESENTE",  "mensaje": "Asistencia registrada a las 8:04 a. m.",  "distanciaMetros": 4.1,  "minutosRespectoInicio": 4}
+9. Especificación de interfaz (frontend)
+9.1 App móvil — pantallas
+Pantalla
+Contenido
+Rol
+Inicio (Docente)
+Tarjeta única con la sesión activa: asignatura, aula, hora, cuenta regresiva de la ventana. Botón grande MARCAR. Estado del GPS con semáforo de precisión.
+Docente
+Mi horario
+Lista por día de la semana, vista compacta.
+Docente/Estudiante
+Historial
+Cronología de marcajes con estado codificado por color, filtro por mes.
+Docente/Estudiante
+Justificaciones
+Lista y formulario de radicación con adjunto.
+Docente/Estudiante
+Espacios (Admin)
+Listado jerárquico Sede → Bloque → Piso → Aula.
+Admin
+Editor GPS
+Mapa a pantalla completa, indicador de precisión en vivo, botón Capturar vértice, contador de vértices, deshacer, cerrar polígono, previsualización del área.
+Admin
+Perfil
+Datos, dispositivo vinculado, política de privacidad, cierre de sesión.
+Todos
+Estados visuales del botón de marcaje:
+Estado
+Apariencia
+Texto
+Fuera de ventana
+Deshabilitado, gris
+“Tu ventana abre a las 7:45 a. m.”
+Buscando GPS
+Cargando
+“Ubicando…”
+Precisión insuficiente
+Ámbar
+“Señal débil — acércate a una ventana”
+Listo
+Acento, prominente
+“MARCAR ASISTENCIA”
+Fuera del aula
+Rojo suave, deshabilitado
+“Estás a 48 m del aula A-301”
+Registrado
+Verde, con marca
+“Registrado · 8:04 a. m.”
+9.2 Consola web — módulos
+Panel principal, gestión de sedes/bloques/espacios con mapa, editor de geometría por escritorio, gestión académica y de horarios con vista de malla, parametrización con vista de herencia, gestión de usuarios y roles, marcajes con ajustes auditados, justificaciones, reportes y bitácora.
+9.3 Lineamientos visuales
+Retícula de 8 px; espacio en blanco como recurso principal de jerarquía.
+Paleta: neutro base + un color de acento institucional + colores semánticos (verde/ámbar/rojo) reservados exclusivamente para estados de asistencia.
+Tipografía única (p. ej. Inter) con 4 escalas.
+Sin sombras decorativas, sin degradados, sin iconografía redundante.
+Cada pantalla resuelve una tarea.
+10. Riesgos técnicos y decisiones abiertas
+ID
+Riesgo
+Impacto
+Mitigación propuesta
+R-01
+El GPS no distingue pisos. Dos aulas superpuestas en distintos pisos de la misma torre tienen la misma huella horizontal. La altitud GPS tiene error de ±15 m y es inservible para este fin.
+Alto — es el riesgo principal del proyecto.
+Definir por política: (a) validar a nivel de bloque y confiar en la asignación de horario para el aula específica; o (b) exigir verificación complementaria — BSSID del AP WiFi del piso, baliza BLE o QR fijo en el aula. Recomendación: (a) para el MVP, (b) para bloques de alta ocupación.
+R-02
+Precisión GPS degradada en interiores (5–50 m, a veces sin fijación).
+Alto
+Usar proveedor de ubicación fusionado (GPS + WiFi + celda), buffer perimetral configurable, umbral de precisión, y reintento guiado. Calibrar el buffer aula por aula tras un piloto.
+R-03
+Falsificación de ubicación (mock location, apps de GPS falso).
+Alto
+Detección de mock location, Play Integrity / App Attest, vinculación de dispositivo, y análisis de anomalías (mismo dispositivo marcando por varios usuarios, saltos imposibles entre marcajes).
+R-04
+Aulas pequeñas (< 30 m²) donde el error GPS supera el tamaño del aula.
+Alto
+Agrupar aulas contiguas en una “zona de marcaje” común, o usar verificación complementaria.
+R-05
+Pico de carga sincronizado al cambio de hora.
+Medio
+Dimensionamiento según RNF-PER-003, jitter aleatorio en refrescos de cliente, caché de sesión activa, autoescalado.
+R-06
+Resistencia y objeciones del cuerpo docente al control por geolocalización.
+Alto (no técnico)
+Socialización previa, respaldo en acto administrativo, transparencia total sobre qué se captura y cuándo, acceso del docente a su propio registro, y canal de justificaciones ágil. Enfatizar que no hay rastreo continuo.
+R-07
+Transferencia internacional de datos personales a MongoDB Atlas.
+Medio
+Cláusulas contractuales, selección de región, documentación en la política de tratamiento. Evaluar región más cercana disponible.
+R-08
+Publicación en App Store: Apple exige justificación del uso de ubicación.
+Medio
+Declarar propósito preciso en Info.plist, cuenta de desarrollador institucional, y considerar distribución empresarial.
+R-09
+Deriva entre horarios del sistema académico y los de SIAA.
+Medio
+Integración por API o proceso de sincronización con conciliación y reporte de diferencias.
+R-10
+Batería y permisos: el usuario deniega el permiso de ubicación.
+Bajo
+Onboarding explicativo, detección del estado de permiso y guía para reactivarlo.
+Decisiones pendientes de definición institucional
+¿La validación geoespacial se hace a nivel de aula o de bloque? (Determina R-01 y R-04.)
+¿El marcaje de salida es obligatorio?
+¿Los estudiantes marcan en el MVP o en fase posterior?
+¿Quién aprueba las justificaciones: coordinador, decano o talento humano?
+¿Existe integración con el sistema académico actual o la carga será por archivo?
+Volumetría objetivo: número de sedes, bloques, aulas, docentes y estudiantes.
+¿Se requiere firma electrónica del reporte de cumplimiento?
+11. Plan de fases
+Fase
+Contenido
+Duración estimada
+F0 — Descubrimiento
+Cierre de decisiones abiertas, volumetría, levantamiento de una sede piloto, definición de política de datos.
+2 semanas
+F1 — MVP
+Auth + roles base, editor GPS de aulas, carga de horarios y asignaciones, motor de marcaje docente, parámetros de holgura, consola web mínima, reporte de cumplimiento.
+8–10 semanas
+F2 — Piloto
+Despliegue en una facultad, calibración de geocercos, ajuste de buffers y holguras, medición de falsos rechazos.
+4 semanas
+F3 — Consolidación
+Justificaciones, notificaciones push, offline, marcaje estudiantil, reportes ampliados, auditoría completa.
+6–8 semanas
+F4 — Escalamiento
+Integración con sistema académico, verificación complementaria (WiFi/BLE/QR), tablero directivo, publicación en tiendas.
+6 semanas
+Criterio de salida del piloto: tasa de falsos rechazos (docente presente en el aula cuyo marcaje es rechazado) < 2 % durante dos semanas consecutivas.
+12. Criterios de aceptación (muestra)
+ID
+Escenario
+Criterio
+CA-001
+Docente dentro del aula asignada, dentro de la ventana
+El marcaje se registra como PRESENTE en ≤ 2 s y aparece de inmediato en el historial.
+CA-002
+Docente en el pasillo, a 40 m del aula, buffer de 10 m
+Marcaje rechazado con motivo FUERA_DE_AREA y distancia informada.
+CA-003
+Docente con asignación en otra aula intenta marcar
+El sistema no ofrece opción de marcar; no existe forma de seleccionar aula manualmente.
+CA-004
+Docente marca 25 min después del inicio, con holgura de 15 y tardanza de 10
+Marcaje rechazado por FUERA_DE_HORARIO.
+CA-005
+Docente marca 12 min después del inicio, holgura 15, tardanza 10
+Marcaje aceptado y clasificado como TARDANZA.
+CA-006
+App con mock location activa y bloqueo habilitado
+Marcaje rechazado por INTEGRIDAD y evento registrado en auditoría.
+CA-007
+Administrador captura un polígono de 5 vértices caminando el perímetro
+El polígono se guarda con área calculada y precisión promedio, y se advierte si solapa otra aula del mismo piso.
+CA-008
+Administrador cambia la holgura de la Sede Central a 20 min
+Todas las sesiones futuras de esa sede la aplican; las sesiones ya generadas conservan sus parámetros congelados salvo regeneración explícita.
+CA-009
+Docente marca sin conexión y recupera señal 40 min después
+El marcaje se sincroniza conservando la hora original, se registra como OFFLINE y queda visible para revisión.
+CA-010
+Coordinador de una facultad consulta reportes
+Solo visualiza datos de su facultad; un intento de acceder a otra devuelve 403 y se audita.
+CA-011
+Usuario instala la app por primera vez
+Se muestra el aviso de privacidad y se exige aceptación explícita antes de solicitar el permiso de ubicación; la aceptación queda registrada con versión y fecha.
+CA-012
+Doble toque accidental en el botón de marcaje
+Se registra un único marcaje (idempotencia verificada por índice único).
+13. Anexos sugeridos
+A. Inventario de sedes, bloques y aulas con coordenadas de referencia.
+B. Política de tratamiento de datos personales y aviso de privacidad.
+C. Acto administrativo de adopción del sistema.
+D. Especificación OpenAPI completa.
+E. Guion de pruebas de usabilidad y protocolo del piloto.
+F. Manual del administrador para el levantamiento cartográfico en campo.
+Documento base v1.0 — sujeto a revisión tras el cierre de las decisiones pendientes del capítulo 10.

@@ -1,0 +1,164 @@
+name: CI — SIAA Backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+
+env:
+  GO_VERSION: "1.23"
+  MIN_COVERAGE: "70"
+  MIN_COVERAGE_MARCAJE: "90"
+
+jobs:
+  # ─── Calidad de código ─────────────────────────────────────────────────────
+  quality:
+    name: Calidad (format, lint, vet, deps)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Verificar formato
+        run: |
+          gofmt -l . | tee /tmp/gofmt.out
+          test -z "$(cat /tmp/gofmt.out)" || (echo "❌ Código no formateado. Ejecuta: gofmt -w ." && exit 1)
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          version: "2024.1"
+          working-directory: backend
+
+      - name: Escaneo de secretos (T-PLT-02.4)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./backend
+
+      - name: Vulnerabilidades de dependencias (T-PLT-02.4)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Verificar dependencias de capa (ADR-02, T-PLT-02.3)
+        run: |
+          # domain NO debe importar repositorio ni transport ni platform
+          if go list -f '{{.ImportPath}} {{.Imports}}' ./internal/domain/... | grep -E "repository|transport|platform"; then
+            echo "❌ Violación de dependencias de capa: domain importa infraestructura"
+            exit 1
+          fi
+          echo "✅ Dependencias de capa correctas"
+
+  # ─── Pruebas y cobertura ───────────────────────────────────────────────────
+  test:
+    name: Pruebas y cobertura
+    runs-on: ubuntu-latest
+    needs: quality
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Pruebas con cobertura
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DB: siaa_test
+          JWT_SECRET: test-secret-min-32-characters-long
+        run: |
+          go test ./... -coverprofile=coverage.out -covermode=atomic -race -timeout 120s
+
+      - name: Verificar cobertura global ≥ 70 % (T-PLT-02.2)
+        run: |
+          TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+          echo "Cobertura global: ${TOTAL}%"
+          if (( $(echo "$TOTAL < $MIN_COVERAGE" | bc -l) )); then
+            echo "❌ Cobertura global ${TOTAL}% < ${MIN_COVERAGE}% requerido"
+            exit 1
+          fi
+          echo "✅ Cobertura global: ${TOTAL}%"
+
+      - name: Verificar cobertura domain/marcaje ≥ 90 % (T-PLT-02.2)
+        run: |
+          MARCAJE=$(go tool cover -func=coverage.out | grep "domain/marcaje" | awk '{sum+=$3; count++} END {if(count>0) print sum/count; else print 100}' | tr -d '%')
+          echo "Cobertura domain/marcaje: ${MARCAJE}%"
+          if (( $(echo "$MARCAJE < $MIN_COVERAGE_MARCAJE" | bc -l) )); then
+            echo "❌ Cobertura domain/marcaje ${MARCAJE}% < ${MIN_COVERAGE_MARCAJE}% requerido"
+            exit 1
+          fi
+          echo "✅ Cobertura domain/marcaje: ${MARCAJE}%"
+
+      - name: Subir reporte de cobertura
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/coverage.out
+          flags: backend
+
+  # ─── Build y publicación de imagen ─────────────────────────────────────────
+  build:
+    name: Build y publicar imagen Docker
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Obtener metadatos de versión
+        id: meta
+        run: |
+          echo "version=$(cat backend/go.mod | grep '^module' | cut -d/ -f3 || echo '0.1.0')" >> $GITHUB_OUTPUT
+          echo "commit=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      - name: Login a GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build y push imagen (T-PLT-02.5)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/siaa-api:latest
+            ghcr.io/${{ github.repository_owner }}/siaa-api:${{ steps.meta.outputs.commit }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            COMMIT=${{ steps.meta.outputs.commit }}
