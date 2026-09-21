@@ -78,12 +78,47 @@ type Espacio struct {
 	FacultadResponsable string
 	Estado              EstadoEspacio
 	NivelValidacion     NivelValidacion
-	BufferMetros        float64
-	VersionGeometria    int
-	Activo              bool
-	Eliminado           bool
-	CreadoEn            time.Time
-	ActualizadoEn       time.Time
+	BufferMetros            float64
+	Geometria               *GeoPolygon
+	AreaMetrosCuadrados     float64
+	Centroide               *GeoPoint
+	PrecisionPromedioMetros *float64
+	MetodoCaptura           *MetodoCaptura
+	VersionGeometria        int
+	Activo                  bool
+	Eliminado               bool
+	CreadoEn                time.Time
+	ActualizadoEn           time.Time
+}
+
+// AsignarGeometria asigna la geometría de polígono validada al espacio, calculando
+// su área geodésica en m², centroide y actualizando la versión de geometría.
+// RF-GEO-002, AC-06, AC-07, T-GEO-02.1, T-GEO-02.2.
+func (e *Espacio) AsignarGeometria(poligono GeoPolygon, metodo MetodoCaptura, precisionPromedio *float64) error {
+	if !EsMetodoCapturaValido(metodo) {
+		return shared.NewValidationError("Método de captura inválido", shared.FieldError{
+			Campo: "metodoCaptura",
+			Error: "MÉTODO_INVÁLIDO",
+		})
+	}
+	if precisionPromedio != nil && *precisionPromedio < 0 {
+		return shared.NewValidationError("La precisión promedio no puede ser negativa", shared.FieldError{
+			Campo: "precisionPromedio",
+			Error: "PRECISIÓN_INVÁLIDA",
+		})
+	}
+
+	area := CalcularAreaGeodesica(poligono)
+	centroide := CalcularCentroide(poligono)
+
+	e.Geometria = &poligono
+	e.AreaMetrosCuadrados = area
+	e.Centroide = &centroide
+	e.MetodoCaptura = &metodo
+	e.PrecisionPromedioMetros = precisionPromedio
+	e.VersionGeometria++
+	e.ActualizadoEn = time.Now().UTC()
+	return nil
 }
 
 // EsTipoEspacioValido valida si el tipo pertenece a los tipos permitidos por el SRS.

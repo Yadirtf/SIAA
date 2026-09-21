@@ -343,6 +343,40 @@ components:
         versionGeometria:
           type: integer
           example: 1
+        geometria:
+          type: object
+          properties:
+            type:
+              type: string
+              example: Polygon
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: number
+        areaMetrosCuadrados:
+          type: number
+          example: 54.2
+        centroide:
+          type: object
+          properties:
+            type:
+              type: string
+              example: Point
+            coordinates:
+              type: array
+              items:
+                type: number
+              example: [-74.08175, 4.60971]
+        precisionPromedioMetros:
+          type: number
+          example: 4.8
+        metodoCaptura:
+          type: string
+          example: RECORRIDO_PERIMETRAL
         activo:
           type: boolean
           example: true
@@ -430,6 +464,28 @@ components:
         confirmarImpacto:
           type: boolean
           description: Confirmación requerida si el espacio tiene sesiones futuras activas (AC-05).
+
+    ActualizarGeometriaRequest:
+      type: object
+      required: [coordenadas, metodoCaptura]
+      properties:
+        coordenadas:
+          type: array
+          description: Lista de coordenadas en orden estricto [longitud, latitud] (ADR-04). Mínimo 3 vértices distintos.
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 2
+            example: [-74.08175, 4.60971]
+        metodoCaptura:
+          type: string
+          enum: [RECORRIDO_PERIMETRAL, TOQUE_MAPA, MIXTO, IMPORTACION]
+          example: RECORRIDO_PERIMETRAL
+        precisionPromedioMetros:
+          type: number
+          example: 4.8
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 paths:
@@ -1076,6 +1132,61 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Espacio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /espacios/{id}/geometria:
+    put:
+      operationId: actualizarGeometriaEspacio
+      summary: Guardar geometría perimetral del espacio (US-GEO-02, T-GEO-02.7)
+      tags: [espacios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarGeometriaRequest'
+      responses:
+        '200':
+          description: Geometría actualizada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioDTO'
+        '400':
+          description: Solicitud malformada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:editar-geometria)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Espacio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Polígono inválido o coordenadas fuera de rango
           content:
             application/json:
               schema:

@@ -62,6 +62,45 @@
         },
         "type": "object"
       },
+      "ActualizarGeometriaRequest": {
+        "properties": {
+          "coordenadas": {
+            "description": "Lista de coordenadas en orden estricto [longitud, latitud] (ADR-04). Mínimo 3 vértices distintos.",
+            "items": {
+              "example": [
+                -74.08175,
+                4.60971
+              ],
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "metodoCaptura": {
+            "enum": [
+              "RECORRIDO_PERIMETRAL",
+              "TOQUE_MAPA",
+              "MIXTO",
+              "IMPORTACION"
+            ],
+            "example": "RECORRIDO_PERIMETRAL",
+            "type": "string"
+          },
+          "precisionPromedioMetros": {
+            "example": 4.8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "coordenadas",
+          "metodoCaptura"
+        ],
+        "type": "object"
+      },
       "BloqueDTO": {
         "properties": {
           "activo": {
@@ -303,6 +342,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "areaMetrosCuadrados": {
+            "example": 54.2,
+            "type": "number"
+          },
           "bloqueId": {
             "example": "66f0a1b2c3d4e5f60718293b",
             "type": "string"
@@ -314,6 +357,25 @@
           "capacidad": {
             "example": 40,
             "type": "integer"
+          },
+          "centroide": {
+            "properties": {
+              "coordinates": {
+                "example": [
+                  -74.08175,
+                  4.60971
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": {
+                "example": "Point",
+                "type": "string"
+              }
+            },
+            "type": "object"
           },
           "codigo": {
             "example": "A-301",
@@ -336,8 +398,33 @@
             "example": "Facultad de Ingeniería",
             "type": "string"
           },
+          "geometria": {
+            "properties": {
+              "coordinates": {
+                "items": {
+                  "items": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              "type": {
+                "example": "Polygon",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
           "id": {
             "example": "66f0a1b2c3d4e5f60718293c",
+            "type": "string"
+          },
+          "metodoCaptura": {
+            "example": "RECORRIDO_PERIMETRAL",
             "type": "string"
           },
           "nivelValidacion": {
@@ -356,6 +443,10 @@
           "piso": {
             "example": 3,
             "type": "integer"
+          },
+          "precisionPromedioMetros": {
+            "example": 4.8,
+            "type": "number"
           },
           "sedeId": {
             "example": "66f0a1b2c3d4e5f60718293a",
@@ -1423,6 +1514,97 @@
           }
         },
         "summary": "Actualizar datos de un espacio (AC-04, AC-05)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}/geometria": {
+      "put": {
+        "operationId": "actualizarGeometriaEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarGeometriaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Geometría actualizada correctamente"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Solicitud malformada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:editar-geometria)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Espacio no encontrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Polígono inválido o coordenadas fuera de rango"
+          }
+        },
+        "summary": "Guardar geometría perimetral del espacio (US-GEO-02, T-GEO-02.7)",
         "tags": [
           "espacios"
         ]

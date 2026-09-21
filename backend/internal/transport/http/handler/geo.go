@@ -244,6 +244,42 @@ func (h *GeoHandler) EliminarEspacio(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// ActualizarGeometria maneja PUT /api/v1/espacios/:id/geometria.
+// RF-GEO-002, T-GEO-02.7, AC-06, AC-07, ADR-04.
+func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
+	id := c.Param("id")
+	var req dto.ActualizarGeometriaRequest
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	vertices := make([]geo.GeoPoint, 0, len(req.Coordenadas))
+	for _, coord := range req.Coordenadas {
+		pt, err := geo.NewGeoPoint(coord[0], coord[1])
+		if err != nil {
+			return err
+		}
+		vertices = append(vertices, pt)
+	}
+
+	actor := extraerActor(c)
+	espacio, err := h.svc.GuardarGeometriaEspacio(c.Request().Context(), usecaseGeo.GuardarGeometriaCmd{
+		EspacioID:               id,
+		Vertices:                vertices,
+		MetodoCaptura:           req.MetodoCaptura,
+		PrecisionPromedioMetros: req.PrecisionPromedioMetros,
+		Actor:                   actor,
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, dto.EspacioToResponse(espacio))
+}
+
 // ─────────────────────────────────────────────────────────────
 // HELPER EXTRAER ACTOR
 // ─────────────────────────────────────────────────────────────

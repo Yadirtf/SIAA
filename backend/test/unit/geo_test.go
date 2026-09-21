@@ -20,6 +20,7 @@ import (
 	apphttp "github.com/siaa/backend/internal/transport/http"
 	"github.com/siaa/backend/internal/transport/http/dto"
 	"github.com/siaa/backend/internal/transport/http/handler"
+	"github.com/siaa/backend/internal/transport/http/middleware"
 	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
 )
 
@@ -609,6 +610,7 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 
 	e := echo.New()
 	e.Validator = apphttp.NewValidator()
+	e.HTTPErrorHandler = middleware.ErrorHandler(applog.New(applog.LevelDebug, nil))
 	registry := apphttp.NewRouteRegistry()
 
 	api := e.Group("/api/v1")
@@ -637,6 +639,8 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 	registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id", "aula:leer")
 	api.PATCH("/espacios/:id", geoH.ActualizarEspacio)
 	registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id", "aula:editar")
+	api.PUT("/espacios/:id/geometria", geoH.ActualizarGeometria)
+	registry.RegisterPermission(http.MethodPut, "/api/v1/espacios/:id/geometria", "aula:editar-geometria")
 	api.DELETE("/espacios/:id", geoH.EliminarEspacio)
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/espacios/:id", "aula:eliminar")
 
@@ -704,6 +708,42 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 	e.ServeHTTP(recPatch, reqPatch)
 	if recPatch.Code != http.StatusOK {
 		t.Fatalf("PATCH /espacios/:id retorno status %d, esperado 200", recPatch.Code)
+	}
+
+	// Prueba HTTP PUT /espacios/:id/geometria -> 200 (US-GEO-02 AC-06, AC-07, T-GEO-02.7)
+	geomBody := `{"metodoCaptura":"RECORRIDO_PERIMETRAL","coordenadas":[[-74.08175,4.60971],[-74.08165,4.60971],[-74.08165,4.60981],[-74.08175,4.60981]],"precisionPromedioMetros":3.5}`
+	reqGeom := httptest.NewRequest(http.MethodPut, "/api/v1/espacios/"+espResp.ID+"/geometria", strings.NewReader(geomBody))
+	reqGeom.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recGeom := httptest.NewRecorder()
+	e.ServeHTTP(recGeom, reqGeom)
+	if recGeom.Code != http.StatusOK {
+		t.Fatalf("PUT /espacios/:id/geometria retorno status %d, esperado 200. Body: %s", recGeom.Code, recGeom.Body.String())
+	}
+	var espGeomResp dto.EspacioResponse
+	if err := json.Unmarshal(recGeom.Body.Bytes(), &espGeomResp); err != nil {
+		t.Fatalf("error deserializar espacio con geometria: %v", err)
+	}
+	if espGeomResp.Geometria == nil {
+		t.Fatal("se esperaba campo geometria en la respuesta")
+	}
+	if espGeomResp.AreaMetrosCuadrados <= 0 {
+		t.Errorf("area esperada > 0, obtenido %f", espGeomResp.AreaMetrosCuadrados)
+	}
+	if espGeomResp.Centroide == nil {
+		t.Fatal("se esperaba centroide calculado en la respuesta")
+	}
+	if espGeomResp.VersionGeometria != 1 {
+		t.Errorf("versionGeometria esperada 1, obtenido %d", espGeomResp.VersionGeometria)
+	}
+
+	// Prueba HTTP PUT /espacios/:id/geometria con polígono inválido (< 3 vértices) -> 422
+	geomInvalido := `{"metodoCaptura":"RECORRIDO_PERIMETRAL","coordenadas":[[-74.08175,4.60971],[-74.08165,4.60971]]}`
+	reqInvalido := httptest.NewRequest(http.MethodPut, "/api/v1/espacios/"+espResp.ID+"/geometria", strings.NewReader(geomInvalido))
+	reqInvalido.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recInvalido := httptest.NewRecorder()
+	e.ServeHTTP(recInvalido, reqInvalido)
+	if recInvalido.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("esperado status 422 para polígono con vértices insuficientes, obtenido %d", recInvalido.Code)
 	}
 
 	// Prueba HTTP DELETE /espacios/:id -> 204

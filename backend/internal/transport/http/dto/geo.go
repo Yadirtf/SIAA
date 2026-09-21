@@ -104,44 +104,81 @@ type ActualizarEspacioRequest struct {
 	ConfirmarImpacto    bool                `json:"confirmarImpacto,omitempty"`
 }
 
+type ActualizarGeometriaRequest struct {
+	Coordenadas             [][2]float64      `json:"coordenadas" validate:"required"`
+	MetodoCaptura           geo.MetodoCaptura `json:"metodoCaptura" validate:"required"`
+	PrecisionPromedioMetros *float64          `json:"precisionPromedioMetros,omitempty"`
+}
+
+type GeometriaResponse struct {
+	Tipo        string         `json:"tipo"`
+	Coordinates [][][2]float64 `json:"coordinates"`
+}
+
+type CentroideResponse struct {
+	Tipo        string     `json:"tipo"`
+	Coordinates [2]float64 `json:"coordinates"`
+}
+
 type EspacioResponse struct {
-	ID                  string              `json:"id"`
-	SedeID              string              `json:"sedeId"`
-	Torre               *string             `json:"torre,omitempty"`
-	BloqueID            *string             `json:"bloqueId,omitempty"`
-	Piso                *int                `json:"piso,omitempty"`
-	Codigo              string              `json:"codigo"`
-	Nombre              string              `json:"nombre"`
-	Capacidad           int                 `json:"capacidad"`
-	Tipo                geo.TipoEspacio     `json:"tipo"`
-	FacultadResponsable string              `json:"facultadResponsable,omitempty"`
-	Estado              geo.EstadoEspacio   `json:"estado"`
-	NivelValidacion     geo.NivelValidacion `json:"nivelValidacion"`
-	BufferMetros        float64             `json:"bufferMetros"`
-	VersionGeometria    int                 `json:"versionGeometria"`
-	Activo              bool                `json:"activo"`
-	CreadoEn            time.Time           `json:"creadoEn"`
-	ActualizadoEn       time.Time           `json:"actualizadoEn"`
+	ID                      string              `json:"id"`
+	SedeID                  string              `json:"sedeId"`
+	Torre                   *string             `json:"torre,omitempty"`
+	BloqueID                *string             `json:"bloqueId,omitempty"`
+	Piso                    *int                `json:"piso,omitempty"`
+	Codigo                  string              `json:"codigo"`
+	Nombre                  string              `json:"nombre"`
+	Capacidad               int                 `json:"capacidad"`
+	Tipo                    geo.TipoEspacio     `json:"tipo"`
+	FacultadResponsable     string              `json:"facultadResponsable,omitempty"`
+	Estado                  geo.EstadoEspacio   `json:"estado"`
+	NivelValidacion         geo.NivelValidacion `json:"nivelValidacion"`
+	BufferMetros            float64             `json:"bufferMetros"`
+	Geometria               *GeometriaResponse  `json:"geometria,omitempty"`
+	AreaMetrosCuadrados     float64             `json:"areaMetrosCuadrados,omitempty"`
+	Centroide               *CentroideResponse  `json:"centroide,omitempty"`
+	PrecisionPromedioMetros *float64            `json:"precisionPromedioMetros,omitempty"`
+	MetodoCaptura           *geo.MetodoCaptura  `json:"metodoCaptura,omitempty"`
+	VersionGeometria        int                 `json:"versionGeometria"`
+	Activo                  bool                `json:"activo"`
+	CreadoEn                time.Time           `json:"creadoEn"`
+	ActualizadoEn           time.Time           `json:"actualizadoEn"`
 }
 
 func EspacioToResponse(e *geo.Espacio) EspacioResponse {
-	return EspacioResponse{
-		ID:                  e.ID,
-		SedeID:              e.SedeID,
-		Torre:               e.Torre,
-		BloqueID:            e.BloqueID,
-		Piso:                e.Piso,
-		Codigo:              e.Codigo,
-		Nombre:              e.Nombre,
-		Capacidad:           e.Capacidad,
-		Tipo:                e.Tipo,
-		FacultadResponsable: e.FacultadResponsable,
-		Estado:              e.Estado,
-		NivelValidacion:     e.NivelValidacion,
-		BufferMetros:        e.BufferMetros,
-		VersionGeometria:    e.VersionGeometria,
-		Activo:              e.Activo,
-		CreadoEn:            e.CreadoEn,
-		ActualizadoEn:       e.ActualizadoEn,
+	resp := EspacioResponse{
+		ID:                      e.ID,
+		SedeID:                  e.SedeID,
+		Torre:                   e.Torre,
+		BloqueID:                e.BloqueID,
+		Piso:                    e.Piso,
+		Codigo:                  e.Codigo,
+		Nombre:                  e.Nombre,
+		Capacidad:               e.Capacidad,
+		Tipo:                    e.Tipo,
+		FacultadResponsable:     e.FacultadResponsable,
+		Estado:                  e.Estado,
+		NivelValidacion:         e.NivelValidacion,
+		BufferMetros:            e.BufferMetros,
+		AreaMetrosCuadrados:     e.AreaMetrosCuadrados,
+		PrecisionPromedioMetros: e.PrecisionPromedioMetros,
+		MetodoCaptura:           e.MetodoCaptura,
+		VersionGeometria:        e.VersionGeometria,
+		Activo:                  e.Activo,
+		CreadoEn:                e.CreadoEn,
+		ActualizadoEn:           e.ActualizadoEn,
 	}
+	if e.Geometria != nil {
+		resp.Geometria = &GeometriaResponse{
+			Tipo:        "Polygon",
+			Coordinates: [][][2]float64{e.Geometria.Coordinates()},
+		}
+	}
+	if e.Centroide != nil {
+		resp.Centroide = &CentroideResponse{
+			Tipo:        "Point",
+			Coordinates: e.Centroide.Coordinates(),
+		}
+	}
+	return resp
 }

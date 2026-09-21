@@ -67,3 +67,13 @@ type ActualizarEspacioCmd struct {
 	ConfirmarImpacto    bool
 	Actor               ContextoActor
 }
+
+// GuardarGeometriaCmd contiene los parámetros para actualizar la geometría de un espacio.
+// T-GEO-02.7, AC-06, AC-07, RF-GEO-002.
+type GuardarGeometriaCmd struct {
+	EspacioID               string
+	Vertices                []geo.GeoPoint
+	MetodoCaptura           geo.MetodoCaptura
+	PrecisionPromedioMetros *float64
+	Actor                   ContextoActor
+}

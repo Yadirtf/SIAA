@@ -241,7 +241,7 @@ func (s *Service) CrearEspacio(ctx context.Context, cmd CrearEspacioCmd) (*geo.E
 		Estado:              cmd.Estado,
 		NivelValidacion:     cmd.NivelValidacion,
 		BufferMetros:        cmd.BufferMetros,
-		VersionGeometria:    1,
+		VersionGeometria:    0,
 		Activo:              cmd.Estado == geo.EstadoActivo,
 		Eliminado:           false,
 		CreadoEn:            now,
@@ -398,6 +398,37 @@ func (s *Service) EliminarEspacio(ctx context.Context, id string, actor Contexto
 
 	s.auditar(ctx, "espacio", id, "ESPACIO_ELIMINADO", actor, espacio, map[string]interface{}{"eliminado": true})
 	return nil
+}
+
+// GuardarGeometriaEspacio implementa RF-GEO-002, T-GEO-02.7, AC-06, AC-07.
+// Valida el polígono, calcula área en m² y centroide, incrementa versión de geometría,
+// actualiza la entidad y registra entrada en auditoría con acción "GEOMETRIA_ACTUALIZADA".
+func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeometriaCmd) (*geo.Espacio, error) {
+	espacio, err := s.espacioRepo.FindByID(ctx, cmd.EspacioID)
+	if err != nil {
+		return nil, fmt.Errorf("obtener espacio para geometría: %w", err)
+	}
+	if espacio == nil {
+		return nil, shared.NewNotFoundError("Espacio", cmd.EspacioID)
+	}
+
+	poly, err := geo.NewGeoPolygon(cmd.Vertices)
+	if err != nil {
+		return nil, err
+	}
+
+	valorAnterior := *espacio
+
+	if err := espacio.AsignarGeometria(poly, cmd.MetodoCaptura, cmd.PrecisionPromedioMetros); err != nil {
+		return nil, err
+	}
+
+	if err := s.espacioRepo.Update(ctx, espacio); err != nil {
+		return nil, fmt.Errorf("guardar geometria espacio: %w", err)
+	}
+
+	s.auditar(ctx, "espacio", espacio.ID, "GEOMETRIA_ACTUALIZADA", cmd.Actor, valorAnterior, espacio)
+	return espacio, nil
 }
 
 // ─────────────────────────────────────────────────────────────

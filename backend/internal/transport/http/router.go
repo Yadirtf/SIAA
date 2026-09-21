@@ -140,6 +140,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id", rbac.PermAulaLeer)
 		espaciosProtected.PATCH("/:id", geoH.ActualizarEspacio, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
 		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id", rbac.PermAulaEditar)
+		espaciosProtected.PUT("/:id/geometria", geoH.ActualizarGeometria, mw.RequirePermission(rbac.PermAulaEditarGeometria, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/espacios/:id/geometria", rbac.PermAulaEditarGeometria)
 		espaciosProtected.DELETE("/:id", geoH.EliminarEspacio, mw.RequirePermission(rbac.PermAulaEliminar, auditoria))
 		registry.RegisterPermission(http.MethodDelete, "/api/v1/espacios/:id", rbac.PermAulaEliminar)
 	}
