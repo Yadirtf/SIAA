@@ -46,13 +46,34 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (*TokenPair, erro
 
 	// Verificar contraseña — AC-04
 	if !crypto.VerifyArgon2id(input.Password, usuario.PasswordHash) {
+		now := s.clock.Now()
+		ventanaMinutos := time.Duration(s.cfg.LockoutDurationMin) * time.Minute
+
+		// Ventana deslizante (T-AUT-02.1 / AC-01):
+		// Si han transcurrido más de 15 minutos desde el último fallo, reiniciar contador a 1.
+		// De lo contrario, incrementar los fallos acumulados.
 		intentos := usuario.IntentosFallidos + 1
+		if usuario.UltimoFalloEn != nil && now.Sub(*usuario.UltimoFalloEn) > ventanaMinutos {
+			intentos = 1
+		}
+
 		var bloqueadoHasta *time.Time
 		if intentos >= s.cfg.FailedLoginMax {
-			t := s.clock.Now().Add(time.Duration(s.cfg.LockoutDurationMin) * time.Minute)
+			t := now.Add(ventanaMinutos)
 			bloqueadoHasta = &t
+
+			// Auditoría de cuenta bloqueada — AC-01 US-AUT-02
+			_ = s.auditoria.Create(ctx, &repository.AuditEntry{
+				ID:        shared.NewID(),
+				Entidad:   "usuario",
+				EntidadID: usuario.ID,
+				Accion:    "BLOQUEO_CUENTA",
+				ActorID:   "sistema",
+				CreadoEn:  now,
+			})
 		}
-		_ = s.usuarios.UpdateIntentosFallidos(ctx, usuario.ID, intentos, bloqueadoHasta)
+
+		_ = s.usuarios.UpdateIntentosFallidos(ctx, usuario.ID, intentos, bloqueadoHasta, &now)
 		return nil, shared.NewAuthError(shared.ErrCredencialesInvalidas, "Credenciales incorrectas")
 	}
 

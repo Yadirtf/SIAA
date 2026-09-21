@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/transport/http/dto"
 	"github.com/siaa/backend/internal/transport/http/middleware"
 	"github.com/siaa/backend/internal/usecase/auth"
@@ -174,3 +175,35 @@ func (h *AuthHandler) ConfirmarRecuperacion(c echo.Context) error {
 		Mensaje: "Contraseña actualizada correctamente. Todas tus sesiones han sido cerradas.",
 	})
 }
+
+// DesbloquearUsuario godoc
+// @Summary     Desbloquear cuenta de usuario
+// @Description Desbloquea una cuenta bloqueada por intentos fallidos. Requiere permiso usuario:editar.
+// @Tags        usuarios
+// @Produce     json
+// @Param       id path string true "ID del usuario"
+// @Success     200 {object} dto.MensajeResponse
+// @Failure     401 {object} middleware.errorResponse
+// @Failure     403 {object} middleware.errorResponse
+// @Failure     404 {object} middleware.errorResponse
+// @Router      /usuarios/{id}/desbloquear [post]
+func (h *AuthHandler) DesbloquearUsuario(c echo.Context) error {
+	claims, ok := middleware.GetClaims(c)
+	if !ok {
+		return shared.NewAuthError(shared.ErrTokenExpirado, "Autenticación requerida")
+	}
+
+	usuarioID := c.Param("id")
+	if usuarioID == "" {
+		return shared.NewValidationError("El ID del usuario es obligatorio")
+	}
+
+	if err := h.svc.DesbloquearCuenta(c.Request().Context(), claims.UsuarioID, usuarioID); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, dto.MensajeResponse{
+		Mensaje: "Cuenta desbloqueada correctamente",
+	})
+}
+

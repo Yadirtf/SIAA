@@ -22,6 +22,7 @@ type Usuario struct {
 	Ambitos              []rbac.Scope
 	IntentosFallidos     int
 	BloqueadoHasta       *time.Time
+	UltimoFalloEn        *time.Time
 	DispositivoVinculado *string
 	CreadoEn             time.Time
 	ActualizadoEn        time.Time

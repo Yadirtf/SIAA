@@ -15,8 +15,8 @@ type UsuarioRepository interface {
 	FindByCorreo(ctx context.Context, correo string) (*user.Usuario, error)
 	// FindByID busca un usuario por su identificador único.
 	FindByID(ctx context.Context, id string) (*user.Usuario, error)
-	// UpdateIntentosFallidos actualiza el contador de fallos y la fecha de bloqueo.
-	UpdateIntentosFallidos(ctx context.Context, id string, intentos int, bloqueadoHasta *time.Time) error
+	// UpdateIntentosFallidos actualiza el contador de fallos, fecha de bloqueo y timestamp del último fallo.
+	UpdateIntentosFallidos(ctx context.Context, id string, intentos int, bloqueadoHasta *time.Time, ultimoFalloEn *time.Time) error
 	// ResetIntentosFallidos reinicia el contador y elimina el bloqueo.
 	ResetIntentosFallidos(ctx context.Context, id string) error
 	// UpdatePassword actualiza el hash de contraseña del usuario.

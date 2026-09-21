@@ -19,9 +19,12 @@ import (
 // ─────────────────────────────────────────────────────────────
 
 type mockUsuarioRepo struct {
-	usuario *user.Usuario
-	err     error
-	calls   []string
+	usuario            *user.Usuario
+	err                error
+	calls              []string
+	lastIntentos       int
+	lastBloqueadoHasta *time.Time
+	lastUltimoFalloEn  *time.Time
 }
 
 func (m *mockUsuarioRepo) FindByCorreo(_ context.Context, correo string) (*user.Usuario, error) {
@@ -31,8 +34,11 @@ func (m *mockUsuarioRepo) FindByCorreo(_ context.Context, correo string) (*user.
 func (m *mockUsuarioRepo) FindByID(_ context.Context, id string) (*user.Usuario, error) {
 	return m.usuario, m.err
 }
-func (m *mockUsuarioRepo) UpdateIntentosFallidos(_ context.Context, id string, intentos int, bloq *time.Time) error {
+func (m *mockUsuarioRepo) UpdateIntentosFallidos(_ context.Context, id string, intentos int, bloq *time.Time, ultimoFallo *time.Time) error {
 	m.calls = append(m.calls, "UpdateIntentosFallidos")
+	m.lastIntentos = intentos
+	m.lastBloqueadoHasta = bloq
+	m.lastUltimoFalloEn = ultimoFallo
 	return nil
 }
 func (m *mockUsuarioRepo) ResetIntentosFallidos(_ context.Context, id string) error {
@@ -84,11 +90,13 @@ func (m *mockRecoveryRepo) MarkUsed(_ context.Context, id string) error {
 }
 
 type mockAuditoriaRepo struct {
-	entries int
+	entries    int
+	allEntries []*repository.AuditEntry
 }
 
 func (m *mockAuditoriaRepo) Create(_ context.Context, e *repository.AuditEntry) error {
 	m.entries++
+	m.allEntries = append(m.allEntries, e)
 	return nil
 }
 
@@ -235,5 +243,153 @@ func TestRecovery_SiempreRespondeIgual(t *testing.T) {
 	err := svc.SolicitarRecuperacion(context.Background(), "noexiste@test.com")
 	if err != nil {
 		t.Errorf("recuperación debe ser silenciosa, obtuvo: %v", err)
+	}
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pruebas de US-AUT-02: Bloqueo y desbloqueo auditado
+// ─────────────────────────────────────────────────────────────
+
+func TestLogin_BloqueoCincoIntentosConAuditoria(t *testing.T) {
+	usuario := &user.Usuario{
+		ID:               "user-001",
+		Correo:           "docente@test.com",
+		PasswordHash:     "$argon2id$v=19$m=65536,t=1,p=4$aabbccdd$eeff0011",
+		Activo:           true,
+		IntentosFallidos: 4,
+	}
+
+	usuarioRepo := &mockUsuarioRepo{usuario: usuario}
+	auditoriaRepo := &mockAuditoriaRepo{}
+	svc := auth.NewService(
+		usuarioRepo, &mockTokenRepo{}, &mockRecoveryRepo{}, auditoriaRepo,
+		fixedClock(), defaultConfig(), &mockMailer{},
+	)
+
+	_, err := svc.Login(context.Background(), auth.LoginInput{
+		Correo:   "docente@test.com",
+		Password: "wrongPassword",
+	})
+
+	if err == nil {
+		t.Fatal("se esperaba error de credenciales")
+	}
+
+	if usuarioRepo.lastIntentos != 5 {
+		t.Errorf("intentos esperados: 5, obtenidos: %d", usuarioRepo.lastIntentos)
+	}
+
+	if usuarioRepo.lastBloqueadoHasta == nil {
+		t.Fatal("se esperaba que la cuenta quedara bloqueada tras 5 intentos")
+	}
+
+	// Verificar auditoría de bloqueo (AC-01 US-AUT-02)
+	foundAudit := false
+	for _, e := range auditoriaRepo.allEntries {
+		if e.Accion == "BLOQUEO_CUENTA" && e.EntidadID == "user-001" {
+			foundAudit = true
+			break
+		}
+	}
+	if !foundAudit {
+		t.Error("se esperaba evento de auditoría BLOQUEO_CUENTA")
+	}
+}
+
+func TestLogin_VentanaDeslizante_ReiniciaIntentosSiPasanMasDe15Minutos(t *testing.T) {
+	clock := fixedClock()
+	falloAntiguo := clock.Now().Add(-20 * time.Minute) // 20 minutos atrás (> 15 min)
+	usuario := &user.Usuario{
+		ID:               "user-001",
+		Correo:           "docente@test.com",
+		PasswordHash:     "$argon2id$v=19$m=65536,t=1,p=4$aabbccdd$eeff0011",
+		Activo:           true,
+		IntentosFallidos: 4,
+		UltimoFalloEn:    &falloAntiguo,
+	}
+
+	usuarioRepo := &mockUsuarioRepo{usuario: usuario}
+	auditoriaRepo := &mockAuditoriaRepo{}
+	svc := auth.NewService(
+		usuarioRepo, &mockTokenRepo{}, &mockRecoveryRepo{}, auditoriaRepo,
+		clock, defaultConfig(), &mockMailer{},
+	)
+
+	_, err := svc.Login(context.Background(), auth.LoginInput{
+		Correo:   "docente@test.com",
+		Password: "wrongPassword",
+	})
+
+	if err == nil {
+		t.Fatal("se esperaba error de credenciales")
+	}
+
+	// Al haber transcurrido más de 15 min, la ventana deslizante reinicia a 1
+	if usuarioRepo.lastIntentos != 1 {
+		t.Errorf("intentos esperados: 1 (reinicio por ventana deslizante), obtenidos: %d", usuarioRepo.lastIntentos)
+	}
+
+	if usuarioRepo.lastBloqueadoHasta != nil {
+		t.Error("la cuenta NO debería estar bloqueada")
+	}
+}
+
+func TestAuth_DesbloqueoAdministrativoAuditado(t *testing.T) {
+	bloqueado := fixedClock().Now().Add(10 * time.Minute)
+	usuario := &user.Usuario{
+		ID:               "user-001",
+		Correo:           "bloqueado@test.com",
+		Activo:           true,
+		IntentosFallidos: 5,
+		BloqueadoHasta:   &bloqueado,
+	}
+
+	usuarioRepo := &mockUsuarioRepo{usuario: usuario}
+	auditoriaRepo := &mockAuditoriaRepo{}
+	svc := auth.NewService(
+		usuarioRepo, &mockTokenRepo{}, &mockRecoveryRepo{}, auditoriaRepo,
+		fixedClock(), defaultConfig(), &mockMailer{},
+	)
+
+	err := svc.DesbloquearCuenta(context.Background(), "admin-007", "user-001")
+	if err != nil {
+		t.Fatalf("desbloqueo no debería fallar: %v", err)
+	}
+
+	// Verificar llamada a ResetIntentosFallidos
+	foundReset := false
+	for _, c := range usuarioRepo.calls {
+		if c == "ResetIntentosFallidos" {
+			foundReset = true
+			break
+		}
+	}
+	if !foundReset {
+		t.Error("se esperaba llamada a ResetIntentosFallidos")
+	}
+
+	// Verificar auditoría con actor administrativo (AC-02 US-AUT-02)
+	foundAudit := false
+	for _, e := range auditoriaRepo.allEntries {
+		if e.Accion == "DESBLOQUEO_CUENTA" && e.ActorID == "admin-007" && e.EntidadID == "user-001" {
+			foundAudit = true
+			break
+		}
+	}
+	if !foundAudit {
+		t.Error("se esperaba evento de auditoría DESBLOQUEO_CUENTA con admin-007")
+	}
+}
+
+func TestAuth_DesbloqueoUsuarioNoExiste(t *testing.T) {
+	usuarioRepo := &mockUsuarioRepo{usuario: nil}
+	svc := auth.NewService(
+		usuarioRepo, &mockTokenRepo{}, &mockRecoveryRepo{}, &mockAuditoriaRepo{},
+		fixedClock(), defaultConfig(), &mockMailer{},
+	)
+
+	err := svc.DesbloquearCuenta(context.Background(), "admin-007", "no-existe")
+	if err == nil {
+		t.Fatal("se esperaba error de usuario no encontrado")
 	}
 }

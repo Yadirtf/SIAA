@@ -31,6 +31,7 @@ type usuarioDoc struct {
 	Ambitos              []ambitoDoc        `bson:"ambitos"`
 	IntentosFallidos     int                `bson:"intentosFallidos"`
 	BloqueadoHasta       *time.Time         `bson:"bloqueadoHasta,omitempty"`
+	UltimoFalloEn        *time.Time         `bson:"ultimoFalloEn,omitempty"`
 	DispositivoVinculado *string            `bson:"dispositivoVinculado,omitempty"`
 	CreadoEn             time.Time          `bson:"creadoEn"`
 	ActualizadoEn        time.Time          `bson:"actualizadoEn"`
@@ -90,11 +91,12 @@ func (r *usuarioRepository) FindByID(ctx context.Context, id string) (*user.Usua
 	return docToUsuario(&doc), nil
 }
 
-func (r *usuarioRepository) UpdateIntentosFallidos(ctx context.Context, id string, intentos int, bloqueadoHasta *time.Time) error {
+func (r *usuarioRepository) UpdateIntentosFallidos(ctx context.Context, id string, intentos int, bloqueadoHasta *time.Time, ultimoFalloEn *time.Time) error {
 	oid, _ := primitive.ObjectIDFromHex(id)
 	update := bson.D{{Key: "$set", Value: bson.D{
 		{Key: "intentosFallidos", Value: intentos},
 		{Key: "bloqueadoHasta", Value: bloqueadoHasta},
+		{Key: "ultimoFalloEn", Value: ultimoFalloEn},
 		{Key: "actualizadoEn", Value: time.Now().UTC()},
 	}}}
 	_, err := r.col.UpdateByID(ctx, oid, update)
@@ -106,6 +108,7 @@ func (r *usuarioRepository) ResetIntentosFallidos(ctx context.Context, id string
 	update := bson.D{{Key: "$set", Value: bson.D{
 		{Key: "intentosFallidos", Value: 0},
 		{Key: "bloqueadoHasta", Value: nil},
+		{Key: "ultimoFalloEn", Value: nil},
 		{Key: "actualizadoEn", Value: time.Now().UTC()},
 	}}}
 	_, err := r.col.UpdateByID(ctx, oid, update)
@@ -153,6 +156,7 @@ func docToUsuario(d *usuarioDoc) *user.Usuario {
 		Eliminado:            d.Eliminado,
 		IntentosFallidos:     d.IntentosFallidos,
 		BloqueadoHasta:       d.BloqueadoHasta,
+		UltimoFalloEn:        d.UltimoFalloEn,
 		DispositivoVinculado: d.DispositivoVinculado,
 		CreadoEn:             d.CreadoEn,
 		ActualizadoEn:        d.ActualizadoEn,
@@ -184,6 +188,7 @@ func usuarioToDoc(u *user.Usuario) *usuarioDoc {
 		Eliminado:            u.Eliminado,
 		IntentosFallidos:     u.IntentosFallidos,
 		BloqueadoHasta:       u.BloqueadoHasta,
+		UltimoFalloEn:        u.UltimoFalloEn,
 		DispositivoVinculado: u.DispositivoVinculado,
 		CreadoEn:             u.CreadoEn,
 		ActualizadoEn:        u.ActualizadoEn,
