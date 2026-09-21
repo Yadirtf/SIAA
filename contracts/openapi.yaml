@@ -190,6 +190,19 @@ components:
             type: string
             enum: [ok, error]
 
+    RoleDTO:
+      type: object
+      required: [nombre, permisos]
+      properties:
+        nombre:
+          type: string
+          example: DOCENTE
+        permisos:
+          type: array
+          items:
+            type: string
+          example: [marcaje:crear, marcaje:leer, horario:leer]
+
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 paths:
   /health:
@@ -386,3 +399,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /usuarios/{id}/desbloquear:
+    post:
+      operationId: desbloquearUsuario
+      summary: Desbloquear cuenta de usuario
+      description: |
+        Desbloquea una cuenta bloqueada por exceder intentos fallidos (AC-02 US-AUT-02).
+        Requiere token de acceso con permiso usuario:editar.
+      tags: [usuarios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del usuario a desbloquear
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cuenta desbloqueada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensajeResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere usuario:editar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /roles:
+    get:
+      operationId: listarRoles
+      summary: Listar roles del sistema
+      description: |
+        Retorna la lista de roles predefinidos con sus permisos según la matriz del SRS §3.2 (AC-01 US-ROL-01).
+        Requiere token de acceso con permiso rol:leer.
+      tags: [roles]
+      responses:
+        '200':
+          description: Lista de roles obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere rol:leer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+

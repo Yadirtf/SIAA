@@ -92,11 +92,17 @@ func main() {
 	)
 
 	// ─── Handlers ─────────────────────────────────────────────
-	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
-	authH   := handler.NewAuthHandler(authSvc)
+	healthH  := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
+	authH    := handler.NewAuthHandler(authSvc)
+	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
+	rolesH   := handler.NewRolesHandler()
 
-	// ─── Router ───────────────────────────────────────────────
-	router := apphttp.NewRouter(cfg, log, healthH, authH)
+	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, auditoriaRepo, nil)
+	if err != nil {
+		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
+		os.Exit(1)
+	}
 
 	// ─── Servidor HTTP ────────────────────────────────────────
 	srv := &http.Server{

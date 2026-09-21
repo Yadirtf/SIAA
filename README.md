@@ -150,7 +150,9 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 | US-PLT-03 Esqueleto Flutter móvil | ✅ Completo |
 | US-PLT-04 Esqueleto Flutter web | ✅ Completo |
 | US-AUT-01 Login JWT | ✅ Completo |
+| US-AUT-02 Bloqueo y límite de tasa | ✅ Completo |
 | US-AUT-04 Recuperación de contraseña | ✅ Completo |
+| US-ROL-01 Control de acceso por permisos granulares | ✅ Completo |
 
 ## Licencia
 
