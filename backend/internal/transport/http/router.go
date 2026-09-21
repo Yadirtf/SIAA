@@ -27,6 +27,7 @@ func NewRouter(
 	authH *handler.AuthHandler,
 	openapiH *handler.OpenAPIHandler,
 	rolesH *handler.RolesHandler,
+	geoH *handler.GeoHandler,
 	auditoria repository.AuditoriaRepository,
 	registry *RouteRegistry,
 ) (*echo.Echo, error) {
@@ -107,6 +108,40 @@ func NewRouter(
 		rolesProtected := api.Group("/roles", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		rolesProtected.GET("", rolesH.ListarRoles, mw.RequirePermission(rbac.PermRolLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/roles", rbac.PermRolLeer)
+	}
+
+	// ─── Jerarquía física y cartografía — US-GEO-01 ──────────
+	if geoH != nil {
+		// Sedes
+		sedesProtected := api.Group("/sedes", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		sedesProtected.GET("", geoH.ListarSedes, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/sedes", rbac.PermAulaLeer)
+		sedesProtected.POST("", geoH.CrearSede, mw.RequirePermission(rbac.PermSedeAdministrar, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/sedes", rbac.PermSedeAdministrar)
+		sedesProtected.GET("/:id", geoH.ObtenerSede, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/sedes/:id", rbac.PermAulaLeer)
+
+		// Bloques
+		bloquesProtected := api.Group("/bloques", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		bloquesProtected.GET("", geoH.ListarBloques, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/bloques", rbac.PermAulaLeer)
+		bloquesProtected.POST("", geoH.CrearBloque, mw.RequirePermission(rbac.PermBloqueAdministrar, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/bloques", rbac.PermBloqueAdministrar)
+		bloquesProtected.GET("/:id", geoH.ObtenerBloque, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/bloques/:id", rbac.PermAulaLeer)
+
+		// Espacios
+		espaciosProtected := api.Group("/espacios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		espaciosProtected.GET("", geoH.ListarEspacios, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios", rbac.PermAulaLeer)
+		espaciosProtected.POST("", geoH.CrearEspacio, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/espacios", rbac.PermAulaCrear)
+		espaciosProtected.GET("/:id", geoH.ObtenerEspacio, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id", rbac.PermAulaLeer)
+		espaciosProtected.PATCH("/:id", geoH.ActualizarEspacio, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
+		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id", rbac.PermAulaEditar)
+		espaciosProtected.DELETE("/:id", geoH.EliminarEspacio, mw.RequirePermission(rbac.PermAulaEliminar, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/espacios/:id", rbac.PermAulaEliminar)
 	}
 
 	// ─── Verificación al arranque — T-ROL-01.4, AC-03 ─────────

@@ -15,6 +15,11 @@ type customValidator struct {
 	v *validator.Validate
 }
 
+func NewValidator() echo.Validator {
+	v := validator.New()
+	return &customValidator{v: v}
+}
+
 func newValidator() *customValidator {
 	v := validator.New()
 	return &customValidator{v: v}

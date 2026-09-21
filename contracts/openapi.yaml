@@ -203,6 +203,234 @@ components:
             type: string
           example: [marcaje:crear, marcaje:leer, horario:leer]
 
+    # ─── Jerarquía Física y Espacios (US-GEO-01) ─────────────────
+    SedeDTO:
+      type: object
+      required: [id, codigo, nombre, activo, creadoEn, actualizadoEn]
+      properties:
+        id:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293a
+        codigo:
+          type: string
+          example: SEDE-CENTRAL
+        nombre:
+          type: string
+          example: Campus Principal
+        direccion:
+          type: string
+          example: Calle 10 # 5-20
+        activo:
+          type: boolean
+          example: true
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    CrearSedeRequest:
+      type: object
+      required: [codigo, nombre]
+      properties:
+        codigo:
+          type: string
+          example: SEDE-CENTRAL
+        nombre:
+          type: string
+          example: Campus Principal
+        direccion:
+          type: string
+          example: Calle 10 # 5-20
+
+    BloqueDTO:
+      type: object
+      required: [id, sedeId, codigo, nombre, activo, creadoEn, actualizadoEn]
+      properties:
+        id:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293b
+        sedeId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293a
+        codigo:
+          type: string
+          example: B-ING
+        nombre:
+          type: string
+          example: Bloque de Ingeniería
+        pisos:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3, 4]
+        activo:
+          type: boolean
+          example: true
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    CrearBloqueRequest:
+      type: object
+      required: [sedeId, codigo, nombre]
+      properties:
+        sedeId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293a
+        codigo:
+          type: string
+          example: B-ING
+        nombre:
+          type: string
+          example: Bloque de Ingeniería
+        pisos:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3, 4]
+
+    EspacioDTO:
+      type: object
+      required: [id, sedeId, codigo, nombre, capacidad, tipo, estado, nivelValidacion, bufferMetros, versionGeometria, activo, creadoEn, actualizadoEn]
+      properties:
+        id:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293c
+        sedeId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293a
+        torre:
+          type: string
+          example: Torre A
+        bloqueId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293b
+        piso:
+          type: integer
+          example: 3
+        codigo:
+          type: string
+          example: A-301
+        nombre:
+          type: string
+          example: Aula 301
+        capacidad:
+          type: integer
+          example: 40
+        tipo:
+          type: string
+          enum: [AULA, LABORATORIO, AUDITORIO, TALLER]
+          example: AULA
+        facultadResponsable:
+          type: string
+          example: Facultad de Ingeniería
+        estado:
+          type: string
+          enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
+          example: ACTIVO
+        nivelValidacion:
+          type: string
+          enum: [AULA, BLOQUE, ZONA]
+          example: AULA
+        bufferMetros:
+          type: number
+          example: 10.0
+        versionGeometria:
+          type: integer
+          example: 1
+        activo:
+          type: boolean
+          example: true
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    CrearEspacioRequest:
+      type: object
+      required: [sedeId, codigo, nombre, tipo]
+      properties:
+        sedeId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293a
+        torre:
+          type: string
+          example: Torre A
+        bloqueId:
+          type: string
+          example: 66f0a1b2c3d4e5f60718293b
+        piso:
+          type: integer
+          example: 3
+        codigo:
+          type: string
+          example: A-301
+        nombre:
+          type: string
+          example: Aula 301
+        capacidad:
+          type: integer
+          example: 40
+        tipo:
+          type: string
+          enum: [AULA, LABORATORIO, AUDITORIO, TALLER]
+          example: AULA
+        facultadResponsable:
+          type: string
+          example: Facultad de Ingeniería
+        estado:
+          type: string
+          enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
+          example: ACTIVO
+        nivelValidacion:
+          type: string
+          enum: [AULA, BLOQUE, ZONA]
+          example: AULA
+        bufferMetros:
+          type: number
+          example: 10.0
+
+    ActualizarEspacioRequest:
+      type: object
+      properties:
+        sedeId:
+          type: string
+        torre:
+          type: string
+        bloqueId:
+          type: string
+        piso:
+          type: integer
+        codigo:
+          type: string
+        nombre:
+          type: string
+        capacidad:
+          type: integer
+        tipo:
+          type: string
+          enum: [AULA, LABORATORIO, AUDITORIO, TALLER]
+        facultadResponsable:
+          type: string
+        estado:
+          type: string
+          enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
+        nivelValidacion:
+          type: string
+          enum: [AULA, BLOQUE, ZONA]
+        bufferMetros:
+          type: number
+        confirmarImpacto:
+          type: boolean
+          description: Confirmación requerida si el espacio tiene sesiones futuras activas (AC-05).
+
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 paths:
   /health:
@@ -470,5 +698,388 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ─── Sedes (US-GEO-01) ───────────────────────────────────────────────────────
+  /sedes:
+    get:
+      operationId: listarSedes
+      summary: Listar todas las sedes institucionales activas
+      tags: [sedes]
+      responses:
+        '200':
+          description: Lista de sedes obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SedeDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:leer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: crearSede
+      summary: Registrar una nueva sede
+      tags: [sedes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearSedeRequest'
+      responses:
+        '201':
+          description: Sede creada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SedeDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere sede:administrar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto de unicidad de código
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sedes/{id}:
+    get:
+      operationId: obtenerSede
+      summary: Obtener detalle de una sede por ID
+      tags: [sedes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sede obtenida correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SedeDTO'
+        '404':
+          description: Sede no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─── Bloques (US-GEO-01) ────────────────────────────────────────────────────
+  /bloques:
+    get:
+      operationId: listarBloques
+      summary: Listar bloques (opcionalmente filtrados por sedeId)
+      tags: [bloques]
+      parameters:
+        - name: sedeId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de bloques obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BloqueDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:leer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: crearBloque
+      summary: Registrar un nuevo bloque en una sede
+      tags: [bloques]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearBloqueRequest'
+      responses:
+        '201':
+          description: Bloque creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BloqueDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere bloque:administrar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto de unicidad de código
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /bloques/{id}:
+    get:
+      operationId: obtenerBloque
+      summary: Obtener detalle de un bloque por ID
+      tags: [bloques]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bloque obtenido correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BloqueDTO'
+        '404':
+          description: Bloque no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─── Espacios (US-GEO-01) ───────────────────────────────────────────────────
+  /espacios:
+    get:
+      operationId: listarEspacios
+      summary: Listar espacios con filtros jerárquicos (AC-01)
+      tags: [espacios]
+      parameters:
+        - name: sedeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: bloqueId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: piso
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [AULA, LABORATORIO, AUDITORIO, TALLER]
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
+      responses:
+        '200':
+          description: Lista de espacios obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EspacioDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:leer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: crearEspacio
+      summary: Registrar un nuevo espacio (aula/laboratorio/auditorio/taller)
+      tags: [espacios]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearEspacioRequest'
+      responses:
+        '201':
+          description: Espacio creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:crear)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto de unicidad de código (AC-03)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Error de validación en los datos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /espacios/{id}:
+    get:
+      operationId: obtenerEspacio
+      summary: Obtener detalle de un espacio por ID
+      tags: [espacios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Espacio obtenido correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioDTO'
+        '404':
+          description: Espacio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: actualizarEspacio
+      summary: Actualizar datos de un espacio (AC-04, AC-05)
+      tags: [espacios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarEspacioRequest'
+      responses:
+        '200':
+          description: Espacio actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioDTO'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:editar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto de código duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Faltan confirmaciones de impacto ante sesiones futuras o datos inválidos (AC-05)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: eliminarEspacio
+      summary: Eliminar un espacio con borrado lógico (AC-06)
+      tags: [espacios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Espacio eliminado lógicamente
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permiso denegado (requiere aula:eliminar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Espacio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 

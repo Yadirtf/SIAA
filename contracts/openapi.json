@@ -1,6 +1,121 @@
 {
   "components": {
     "schemas": {
+      "ActualizarEspacioRequest": {
+        "properties": {
+          "bloqueId": {
+            "type": "string"
+          },
+          "bufferMetros": {
+            "type": "number"
+          },
+          "capacidad": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "confirmarImpacto": {
+            "description": "Confirmación requerida si el espacio tiene sesiones futuras activas (AC-05).",
+            "type": "boolean"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "piso": {
+            "type": "integer"
+          },
+          "sedeId": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "type": "string"
+          },
+          "torre": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BloqueDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "codigo": {
+            "example": "B-ING",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Bloque de Ingeniería",
+            "type": "string"
+          },
+          "pisos": {
+            "example": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sedeId",
+          "codigo",
+          "nombre",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
+        ],
+        "type": "object"
+      },
       "ConfirmarRecuperarRequest": {
         "properties": {
           "password": {
@@ -15,6 +130,136 @@
         "required": [
           "token",
           "password"
+        ],
+        "type": "object"
+      },
+      "CrearBloqueRequest": {
+        "properties": {
+          "codigo": {
+            "example": "B-ING",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Bloque de Ingeniería",
+            "type": "string"
+          },
+          "pisos": {
+            "example": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sedeId",
+          "codigo",
+          "nombre"
+        ],
+        "type": "object"
+      },
+      "CrearEspacioRequest": {
+        "properties": {
+          "bloqueId": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "bufferMetros": {
+            "example": 10,
+            "type": "number"
+          },
+          "capacidad": {
+            "example": 40,
+            "type": "integer"
+          },
+          "codigo": {
+            "example": "A-301",
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "example": "ACTIVO",
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "example": "Facultad de Ingeniería",
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Aula 301",
+            "type": "string"
+          },
+          "piso": {
+            "example": 3,
+            "type": "integer"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "torre": {
+            "example": "Torre A",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sedeId",
+          "codigo",
+          "nombre",
+          "tipo"
+        ],
+        "type": "object"
+      },
+      "CrearSedeRequest": {
+        "properties": {
+          "codigo": {
+            "example": "SEDE-CENTRAL",
+            "type": "string"
+          },
+          "direccion": {
+            "example": "Calle 10",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Campus Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "nombre"
         ],
         "type": "object"
       },
@@ -45,6 +290,110 @@
           "codigo",
           "mensaje",
           "correlationId"
+        ],
+        "type": "object"
+      },
+      "EspacioDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "bloqueId": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "bufferMetros": {
+            "example": 10,
+            "type": "number"
+          },
+          "capacidad": {
+            "example": 40,
+            "type": "integer"
+          },
+          "codigo": {
+            "example": "A-301",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "example": "ACTIVO",
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "example": "Facultad de Ingeniería",
+            "type": "string"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293c",
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Aula 301",
+            "type": "string"
+          },
+          "piso": {
+            "example": 3,
+            "type": "integer"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "torre": {
+            "example": "Torre A",
+            "type": "string"
+          },
+          "versionGeometria": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "sedeId",
+          "codigo",
+          "nombre",
+          "capacidad",
+          "tipo",
+          "estado",
+          "nivelValidacion",
+          "bufferMetros",
+          "versionGeometria",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
         ],
         "type": "object"
       },
@@ -199,6 +548,47 @@
         "required": [
           "nombre",
           "permisos"
+        ],
+        "type": "object"
+      },
+      "SedeDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "codigo": {
+            "example": "SEDE-CENTRAL",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direccion": {
+            "example": "Calle 10",
+            "type": "string"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Campus Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
         ],
         "type": "object"
       },
@@ -546,6 +936,498 @@
         ]
       }
     },
+    "/bloques": {
+      "get": {
+        "operationId": "listarBloques",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BloqueDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de bloques obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar bloques (opcionalmente filtrados por sedeId)",
+        "tags": [
+          "bloques"
+        ]
+      },
+      "post": {
+        "operationId": "crearBloque",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearBloqueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloqueDTO"
+                }
+              }
+            },
+            "description": "Bloque creado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere bloque:administrar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código"
+          }
+        },
+        "summary": "Registrar un nuevo bloque en una sede",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
+    "/bloques/{id}": {
+      "get": {
+        "operationId": "obtenerBloque",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloqueDTO"
+                }
+              }
+            },
+            "description": "Bloque obtenido correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bloque no encontrado"
+          }
+        },
+        "summary": "Obtener detalle de un bloque por ID",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
+    "/espacios": {
+      "get": {
+        "operationId": "listarEspacios",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bloqueId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "enum": [
+                "AULA",
+                "LABORATORIO",
+                "AUDITORIO",
+                "TALLER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVO",
+                "INACTIVO",
+                "MANTENIMIENTO"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EspacioDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de espacios obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar espacios con filtros jerárquicos (AC-01)",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "post": {
+        "operationId": "crearEspacio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearEspacioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio creado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:crear)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código (AC-03)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error de validación en los datos"
+          }
+        },
+        "summary": "Registrar un nuevo espacio (aula/laboratorio/auditorio/taller)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}": {
+      "delete": {
+        "operationId": "eliminarEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Espacio eliminado lógicamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:eliminar)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Eliminar un espacio con borrado lógico (AC-06)",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "get": {
+        "operationId": "obtenerEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio obtenido correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Obtener detalle de un espacio por ID",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "patch": {
+        "operationId": "actualizarEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarEspacioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio actualizado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:editar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de código duplicado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Faltan confirmaciones de impacto ante sesiones futuras o datos inválidos (AC-05)"
+          }
+        },
+        "summary": "Actualizar datos de un espacio (AC-04, AC-05)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "description": "Siempre responde 200. No requiere autenticación.",
@@ -644,6 +1526,150 @@
         "summary": "Listar roles del sistema",
         "tags": [
           "roles"
+        ]
+      }
+    },
+    "/sedes": {
+      "get": {
+        "operationId": "listarSedes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SedeDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de sedes obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar todas las sedes institucionales activas",
+        "tags": [
+          "sedes"
+        ]
+      },
+      "post": {
+        "operationId": "crearSede",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearSedeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SedeDTO"
+                }
+              }
+            },
+            "description": "Sede creada correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere sede:administrar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código"
+          }
+        },
+        "summary": "Registrar una nueva sede",
+        "tags": [
+          "sedes"
+        ]
+      }
+    },
+    "/sedes/{id}": {
+      "get": {
+        "operationId": "obtenerSede",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SedeDTO"
+                }
+              }
+            },
+            "description": "Sede obtenida correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sede no encontrada"
+          }
+        },
+        "summary": "Obtener detalle de una sede por ID",
+        "tags": [
+          "sedes"
         ]
       }
     },

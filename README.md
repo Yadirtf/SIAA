@@ -154,6 +154,15 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 | US-AUT-04 Recuperación de contraseña | ✅ Completo |
 | US-ROL-01 Control de acceso por permisos granulares | ✅ Completo |
 
+## Sprint 2 — Progreso
+
+| Historia | Estado |
+|---|---|
+| US-GEO-01 Jerarquía física de espacios | ✅ Completo |
+| US-GEO-02 Captura de polígono por recorrido perimetral | ⏳ Pendiente |
+| US-GEO-03 Captura alternativa por toque sobre mapa | ⏳ Pendiente |
+| US-GEO-04 Validación geométrica del polígono | ⏳ Pendiente |
+
 ## Licencia
 
 Propietario — © 2024 SIAA. Todos los derechos reservados.

@@ -24,6 +24,7 @@ import (
 	apphttp "github.com/siaa/backend/internal/transport/http"
 	"github.com/siaa/backend/internal/transport/http/handler"
 	"github.com/siaa/backend/internal/usecase/auth"
+	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
 )
 
 func main() {
@@ -75,6 +76,10 @@ func main() {
 	refreshRepo  := impl.NewRefreshTokenRepository(mongoClient)
 	recoveryRepo := impl.NewRecoveryTokenRepository(mongoClient)
 	auditoriaRepo := impl.NewAuditoriaRepository(mongoClient)
+	sedeRepo := impl.NewSedeRepository(mongoClient)
+	bloqueRepo := impl.NewBloqueRepository(mongoClient)
+	espacioRepo := impl.NewEspacioRepository(mongoClient)
+	sesionChecker := impl.NewSesionFutureChecker(mongoClient)
 
 	// ─── Infraestructura ──────────────────────────────────────
 	// En producción se inyecta la implementación SMTP en lugar del noop.
@@ -91,14 +96,25 @@ func main() {
 		appMailer,
 	)
 
+	geoSvc := usecaseGeo.NewService(
+		sedeRepo,
+		bloqueRepo,
+		espacioRepo,
+		sesionChecker,
+		auditoriaRepo,
+		clk,
+		log,
+	)
+
 	// ─── Handlers ─────────────────────────────────────────────
 	healthH  := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH    := handler.NewAuthHandler(authSvc)
 	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
 	rolesH   := handler.NewRolesHandler()
+	geoH     := handler.NewGeoHandler(geoSvc)
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, auditoriaRepo, nil)
 	if err != nil {
 		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
 		os.Exit(1)
