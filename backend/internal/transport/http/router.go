@@ -46,10 +46,34 @@ func NewRouter(
 	e.Use(echoMiddleware.TimeoutWithConfig(echoMiddleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
+	origins := cfg.CORSAllowedOrigins
+	if len(origins) == 0 {
+		if cfg.Env != "production" {
+			origins = []string{"*"}
+		} else {
+			origins = []string{"https://*.siaa.edu.co"}
+		}
+	}
+
 	e.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-		AllowOrigins:     []string{"https://*.siaa.edu.co"},
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAuthorization, mw.HeaderCorrelationID, "Idempotency-Key"},
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete},
+		AllowOrigins: origins,
+		AllowHeaders: []string{
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAuthorization,
+			echo.HeaderAccept,
+			mw.HeaderCorrelationID,
+			"Idempotency-Key",
+			"X-Requested-With",
+		},
+		AllowMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPatch,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
 		ExposeHeaders:    []string{mw.HeaderCorrelationID},
 		AllowCredentials: false,
 		MaxAge:           86400,

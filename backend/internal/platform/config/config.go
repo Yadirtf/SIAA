@@ -35,6 +35,7 @@ type Config struct {
 	FailedLoginWindowMin   int
 	LockoutDurationMin     int
 	AllowedEmailDomains    []string
+	CORSAllowedOrigins     []string
 
 	// Correo
 	SMTPHost               string
@@ -87,6 +88,15 @@ func Load() (*Config, error) {
 	domains := getEnv("ALLOWED_EMAIL_DOMAINS", "")
 	if domains != "" {
 		cfg.AllowedEmailDomains = strings.Split(domains, ",")
+	}
+
+	corsOrigins := getEnv("CORS_ALLOWED_ORIGINS", "")
+	if corsOrigins != "" {
+		cfg.CORSAllowedOrigins = strings.Split(corsOrigins, ",")
+	} else if cfg.Env != "production" {
+		cfg.CORSAllowedOrigins = []string{"*"}
+	} else {
+		cfg.CORSAllowedOrigins = []string{"https://*.siaa.edu.co"}
 	}
 
 	// Correo
