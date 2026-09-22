@@ -66,18 +66,18 @@ type Bloque struct {
 // Espacio representa una unidad física donde se dictan clases o eventos (ej: Aula 301).
 // RF-GEO-001, RF-GEO-014: sede y espacio obligatorios; torre, bloque y piso opcionales.
 type Espacio struct {
-	ID                  string
-	SedeID              string
-	Torre               *string
-	BloqueID            *string
-	Piso                *int
-	Codigo              string
-	Nombre              string
-	Capacidad           int
-	Tipo                TipoEspacio
-	FacultadResponsable string
-	Estado              EstadoEspacio
-	NivelValidacion     NivelValidacion
+	ID                      string
+	SedeID                  string
+	Torre                   *string
+	BloqueID                *string
+	Piso                    *int
+	Codigo                  string
+	Nombre                  string
+	Capacidad               int
+	Tipo                    TipoEspacio
+	FacultadResponsable     string
+	Estado                  EstadoEspacio
+	NivelValidacion         NivelValidacion
 	BufferMetros            float64
 	Geometria               *GeoPolygon
 	AreaMetrosCuadrados     float64

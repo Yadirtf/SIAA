@@ -248,8 +248,8 @@ func TestRBAC_AuditorPermisosYRestricciones(t *testing.T) {
 
 func TestRBAC_MatrizCompletaSRS32_DataDriven(t *testing.T) {
 	type testCase struct {
-		rol        rbac.RoleName
-		permiso    rbac.Permission
+		rol       rbac.RoleName
+		permiso   rbac.Permission
 		debeTener bool
 	}
 

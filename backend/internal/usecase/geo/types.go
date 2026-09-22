@@ -96,4 +96,3 @@ type ItemInformeSolapamiento struct {
 	PorcentajeSolapado float64 `json:"porcentajeSolapado"`
 	EsCritico          bool    `json:"esCritico"` // true si > 50%
 }
-

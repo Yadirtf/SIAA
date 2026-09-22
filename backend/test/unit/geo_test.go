@@ -248,7 +248,6 @@ func (m *mockEspacioRepo) BuscarIntersecciones(ctx context.Context, espacioID st
 	return matches, nil
 }
 
-
 // Sesion Future Checker Mock
 type mockSesionChecker struct {
 	conteoPorEspacio map[string]int64

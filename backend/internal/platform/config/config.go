@@ -13,43 +13,43 @@ import (
 // Config contiene toda la configuración del servicio.
 type Config struct {
 	// Servidor
-	Port            string
-	Env             string // development | production | test
-	Version         string
-	Commit          string
+	Port    string
+	Env     string // development | production | test
+	Version string
+	Commit  string
 
 	// MongoDB
-	MongoURI        string
-	MongoDB         string
+	MongoURI string
+	MongoDB  string
 
 	// JWT
-	JWTSecret              string
-	JWTAccessMinutes       int
-	JWTRefreshDays         int
-	JWTIssuer              string
+	JWTSecret        string
+	JWTAccessMinutes int
+	JWTRefreshDays   int
+	JWTIssuer        string
 
 	// Seguridad
-	BcryptCost             int
-	RateLimitPerMinute     int
-	FailedLoginMax         int
-	FailedLoginWindowMin   int
-	LockoutDurationMin     int
-	AllowedEmailDomains    []string
-	CORSAllowedOrigins     []string
+	BcryptCost           int
+	RateLimitPerMinute   int
+	FailedLoginMax       int
+	FailedLoginWindowMin int
+	LockoutDurationMin   int
+	AllowedEmailDomains  []string
+	CORSAllowedOrigins   []string
 
 	// Correo
-	SMTPHost               string
-	SMTPPort               int
-	SMTPUser               string
-	SMTPPass               string
-	SMTPFrom               string
+	SMTPHost string
+	SMTPPort int
+	SMTPUser string
+	SMTPPass string
+	SMTPFrom string
 
 	// Recuperación de contraseña
-	RecoveryTokenMinutes   int
-	PasswordMinLength      int
+	RecoveryTokenMinutes int
+	PasswordMinLength    int
 
 	// Parámetros GPS por defecto — SRS §3.5
-	DefaultHolguraEntradaAntesMin  int
+	DefaultHolguraEntradaAntesMin   int
 	DefaultHolguraEntradaDespuesMin int
 	DefaultUmbralTardanzaMin        int
 	DefaultPrecisionGPSMaxMetros    float64

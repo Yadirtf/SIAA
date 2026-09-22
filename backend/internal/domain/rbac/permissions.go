@@ -19,30 +19,30 @@ const (
 	PermMarcajeAnular  Permission = "marcaje:anular"
 
 	// Aulas / Espacios
-	PermAulaLeer           Permission = "aula:leer"
-	PermAulaCrear          Permission = "aula:crear"
-	PermAulaEditar         Permission = "aula:editar"
+	PermAulaLeer            Permission = "aula:leer"
+	PermAulaCrear           Permission = "aula:crear"
+	PermAulaEditar          Permission = "aula:editar"
 	PermAulaEditarGeometria Permission = "aula:editar-geometria"
-	PermAulaEliminar       Permission = "aula:eliminar"
+	PermAulaEliminar        Permission = "aula:eliminar"
 
 	// Sede y Bloque
 	PermSedeAdministrar   Permission = "sede:administrar"
 	PermBloqueAdministrar Permission = "bloque:administrar"
 
 	// Horarios y asignaciones
-	PermHorarioCrear      Permission = "horario:crear"
-	PermHorarioLeer       Permission = "horario:leer"
-	PermAsignacionCrear   Permission = "asignacion:crear"
-	PermAsignacionEditar  Permission = "asignacion:editar"
+	PermHorarioCrear     Permission = "horario:crear"
+	PermHorarioLeer      Permission = "horario:leer"
+	PermAsignacionCrear  Permission = "asignacion:crear"
+	PermAsignacionEditar Permission = "asignacion:editar"
 
 	// Parámetros
 	PermParametroLeer   Permission = "parametro:leer"
 	PermParametroEditar Permission = "parametro:editar"
 
 	// Usuarios
-	PermUsuarioCrear  Permission = "usuario:crear"
-	PermUsuarioEditar Permission = "usuario:editar"
-	PermUsuarioLeer   Permission = "usuario:leer"
+	PermUsuarioCrear    Permission = "usuario:crear"
+	PermUsuarioEditar   Permission = "usuario:editar"
+	PermUsuarioLeer     Permission = "usuario:leer"
 	PermUsuarioEliminar Permission = "usuario:eliminar"
 
 	// Justificaciones
@@ -70,13 +70,13 @@ const (
 type RoleName string
 
 const (
-	RolSuperadmin    RoleName = "SUPERADMIN"
-	RolAdminInst     RoleName = "ADMIN_INSTITUCIONAL"
-	RolCoordinador   RoleName = "COORDINADOR"
-	RolDocente       RoleName = "DOCENTE"
-	RolEstudiante    RoleName = "ESTUDIANTE"
-	RolMonitor       RoleName = "MONITOR"
-	RolAuditor       RoleName = "AUDITOR"
+	RolSuperadmin  RoleName = "SUPERADMIN"
+	RolAdminInst   RoleName = "ADMIN_INSTITUCIONAL"
+	RolCoordinador RoleName = "COORDINADOR"
+	RolDocente     RoleName = "DOCENTE"
+	RolEstudiante  RoleName = "ESTUDIANTE"
+	RolMonitor     RoleName = "MONITOR"
+	RolAuditor     RoleName = "AUDITOR"
 )
 
 // DefaultPermissions define los permisos de cada rol predefinido según §3.2.

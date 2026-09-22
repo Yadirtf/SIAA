@@ -72,8 +72,8 @@ func main() {
 
 	// ─── Repositorios ─────────────────────────────────────────
 	clk := clock.RealClock{}
-	usuarioRepo  := impl.NewUsuarioRepository(mongoClient)
-	refreshRepo  := impl.NewRefreshTokenRepository(mongoClient)
+	usuarioRepo := impl.NewUsuarioRepository(mongoClient)
+	refreshRepo := impl.NewRefreshTokenRepository(mongoClient)
 	recoveryRepo := impl.NewRecoveryTokenRepository(mongoClient)
 	auditoriaRepo := impl.NewAuditoriaRepository(mongoClient)
 	sedeRepo := impl.NewSedeRepository(mongoClient)
@@ -107,11 +107,11 @@ func main() {
 	)
 
 	// ─── Handlers ─────────────────────────────────────────────
-	healthH  := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
-	authH    := handler.NewAuthHandler(authSvc)
+	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
+	authH := handler.NewAuthHandler(authSvc)
 	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
-	rolesH   := handler.NewRolesHandler()
-	geoH     := handler.NewGeoHandler(geoSvc)
+	rolesH := handler.NewRolesHandler()
+	geoH := handler.NewGeoHandler(geoSvc)
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
 	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, auditoriaRepo, nil)

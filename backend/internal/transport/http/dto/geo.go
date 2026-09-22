@@ -74,34 +74,34 @@ func BloqueToResponse(b *geo.Bloque) BloqueResponse {
 
 // CrearEspacioRequest implementa AC-02: sede y espacio obligatorios; torre, bloque y piso opcionales.
 type CrearEspacioRequest struct {
-	SedeID              string            `json:"sedeId" validate:"required"`
-	Torre               *string           `json:"torre,omitempty"`
-	BloqueID            *string           `json:"bloqueId,omitempty"`
-	Piso                *int              `json:"piso,omitempty"`
-	Codigo              string            `json:"codigo" validate:"required"`
-	Nombre              string            `json:"nombre" validate:"required"`
-	Capacidad           int               `json:"capacidad"`
-	Tipo                geo.TipoEspacio   `json:"tipo" validate:"required"`
-	FacultadResponsable string            `json:"facultadResponsable,omitempty"`
-	Estado              geo.EstadoEspacio `json:"estado,omitempty"`
-	NivelValidacion     geo.NivelValidacion `json:"nivelValidacion,omitempty"`
-	BufferMetros        float64           `json:"bufferMetros,omitempty"`
-}
-
-type ActualizarEspacioRequest struct {
-	SedeID              *string             `json:"sedeId,omitempty"`
+	SedeID              string              `json:"sedeId" validate:"required"`
 	Torre               *string             `json:"torre,omitempty"`
 	BloqueID            *string             `json:"bloqueId,omitempty"`
 	Piso                *int                `json:"piso,omitempty"`
-	Codigo              *string             `json:"codigo,omitempty"`
-	Nombre              *string             `json:"nombre,omitempty"`
-	Capacidad           *int                `json:"capacidad,omitempty"`
-	Tipo                *geo.TipoEspacio    `json:"tipo,omitempty"`
-	FacultadResponsable *string             `json:"facultadResponsable,omitempty"`
-	Estado              *geo.EstadoEspacio  `json:"estado,omitempty"`
+	Codigo              string              `json:"codigo" validate:"required"`
+	Nombre              string              `json:"nombre" validate:"required"`
+	Capacidad           int                 `json:"capacidad"`
+	Tipo                geo.TipoEspacio     `json:"tipo" validate:"required"`
+	FacultadResponsable string              `json:"facultadResponsable,omitempty"`
+	Estado              geo.EstadoEspacio   `json:"estado,omitempty"`
+	NivelValidacion     geo.NivelValidacion `json:"nivelValidacion,omitempty"`
+	BufferMetros        float64             `json:"bufferMetros,omitempty"`
+}
+
+type ActualizarEspacioRequest struct {
+	SedeID              *string              `json:"sedeId,omitempty"`
+	Torre               *string              `json:"torre,omitempty"`
+	BloqueID            *string              `json:"bloqueId,omitempty"`
+	Piso                *int                 `json:"piso,omitempty"`
+	Codigo              *string              `json:"codigo,omitempty"`
+	Nombre              *string              `json:"nombre,omitempty"`
+	Capacidad           *int                 `json:"capacidad,omitempty"`
+	Tipo                *geo.TipoEspacio     `json:"tipo,omitempty"`
+	FacultadResponsable *string              `json:"facultadResponsable,omitempty"`
+	Estado              *geo.EstadoEspacio   `json:"estado,omitempty"`
 	NivelValidacion     *geo.NivelValidacion `json:"nivelValidacion,omitempty"`
-	BufferMetros        *float64            `json:"bufferMetros,omitempty"`
-	ConfirmarImpacto    bool                `json:"confirmarImpacto,omitempty"`
+	BufferMetros        *float64             `json:"bufferMetros,omitempty"`
+	ConfirmarImpacto    bool                 `json:"confirmarImpacto,omitempty"`
 }
 
 type ActualizarGeometriaRequest struct {
@@ -206,4 +206,3 @@ type InformeSolapamientosResponse struct {
 	TotalConflictos int                        `json:"totalConflictos"`
 	Conflictos      []SolapamientoItemResponse `json:"conflictos"`
 }
-

@@ -6,14 +6,14 @@ package dto
 
 // LoginRequest es el cuerpo de POST /auth/login.
 type LoginRequest struct {
-	Correo      string `json:"correo"      validate:"required,email"`
-	Password    string `json:"password"    validate:"required,min=1"`
+	Correo        string `json:"correo"      validate:"required,email"`
+	Password      string `json:"password"    validate:"required,min=1"`
 	DispositivoID string `json:"dispositivoId,omitempty"`
 }
 
 // RefreshRequest es el cuerpo de POST /auth/refresh.
 type RefreshRequest struct {
-	RefreshToken string `json:"refreshToken" validate:"required"`
+	RefreshToken  string `json:"refreshToken" validate:"required"`
 	DispositivoID string `json:"dispositivoId,omitempty"`
 }
 
