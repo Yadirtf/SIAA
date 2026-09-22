@@ -35,13 +35,98 @@ class GeoEditorScreen extends StatefulWidget {
   State<GeoEditorScreen> createState() => _GeoEditorScreenState();
 }
 
+enum CapaMapa {
+  googleHibrido,
+  esriSatelite,
+  openStreetMap,
+}
+
 class _GeoEditorScreenState extends State<GeoEditorScreen> {
   final GpsLocationService _gpsService = GpsLocationService();
   final MapController _mapController = MapController();
 
   EstadoPermisoUbicacion? _estadoPermiso;
-  bool _esModoSatelital = true; // Por defecto satelital según RF-GEO-004
+  CapaMapa _capaActual = CapaMapa.googleHibrido;
   bool _mapaCentradoInicialmente = false;
+
+  String get _urlTemplateActual {
+    switch (_capaActual) {
+      case CapaMapa.googleHibrido:
+        return 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+      case CapaMapa.esriSatelite:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case CapaMapa.openStreetMap:
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+  }
+
+  int get _maxNativeZoomActual {
+    switch (_capaActual) {
+      case CapaMapa.googleHibrido:
+        return 20; // Cobertura satelital nativa de Google hasta nivel 20
+      case CapaMapa.esriSatelite:
+        return 18; // Clampeado a 18 para evitar el tile "Map data not yet available" de Esri al pedir z=19+
+      case CapaMapa.openStreetMap:
+        return 19;
+    }
+  }
+
+  String get _nombreCapaActual {
+    switch (_capaActual) {
+      case CapaMapa.googleHibrido:
+        return 'Google Satélite Híbrido (HD)';
+      case CapaMapa.esriSatelite:
+        return 'Esri Satélite (Puro)';
+      case CapaMapa.openStreetMap:
+        return 'OpenStreetMap (Callejero)';
+    }
+  }
+
+  String get _atribucionActual {
+    switch (_capaActual) {
+      case CapaMapa.googleHibrido:
+        return 'Imágenes © Google';
+      case CapaMapa.esriSatelite:
+        return 'Tiles © Esri';
+      case CapaMapa.openStreetMap:
+        return '© OpenStreetMap contributors';
+    }
+  }
+
+  IconData get _iconoCapaActual {
+    switch (_capaActual) {
+      case CapaMapa.googleHibrido:
+        return Icons.satellite_alt_rounded;
+      case CapaMapa.esriSatelite:
+        return Icons.public;
+      case CapaMapa.openStreetMap:
+        return Icons.map_outlined;
+    }
+  }
+
+  void _rotarCapaMapa() {
+    setState(() {
+      switch (_capaActual) {
+        case CapaMapa.googleHibrido:
+          _capaActual = CapaMapa.esriSatelite;
+          break;
+        case CapaMapa.esriSatelite:
+          _capaActual = CapaMapa.openStreetMap;
+          break;
+        case CapaMapa.openStreetMap:
+          _capaActual = CapaMapa.googleHibrido;
+          break;
+      }
+    });
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Capa activa: $_nombreCapaActual'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -332,9 +417,9 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                       mapController: _mapController,
                       options: MapOptions(
                         initialCenter: initialCenter,
-                        initialZoom: 18.0,
+                        initialZoom: 18.5,
                         minZoom: 3.0,
-                        maxZoom: 21.0,
+                        maxZoom: 22.5,
                         onTap: (tapPosition, point) {
                           if (state.modoCaptura == ModoCapturaEditor.mapa && !state.isClosed) {
                             context.read<GeoEditorBloc>().add(
@@ -347,13 +432,13 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                         },
                       ),
                       children: [
-                        // Capa de Teselas (Tiles): Satelital o Callejero
+                        // Capa de Teselas (Tiles): Satelital o Callejero con sobre-escalado automático (overscaling)
                         TileLayer(
-                          urlTemplate: _esModoSatelital
-                              ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                              : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          key: ValueKey(_capaActual),
+                          urlTemplate: _urlTemplateActual,
                           userAgentPackageName: 'com.siaa.mobile',
-                          maxZoom: 20,
+                          maxNativeZoom: _maxNativeZoomActual,
+                          maxZoom: 22.5,
                         ),
 
                         // Capa de Polígono del geocerco
@@ -412,9 +497,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                         // Atribución oficial de capas
                         RichAttributionWidget(
                           attributions: [
-                            TextSourceAttribution(
-                              _esModoSatelital ? 'Tiles © Esri' : '© OpenStreetMap contributors',
-                            ),
+                            TextSourceAttribution(_atribucionActual),
                           ],
                         ),
                       ],
@@ -426,15 +509,11 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                       right: 12,
                       child: Column(
                         children: [
-                          // Botón Cambiar Capa (Satelital / Callejero)
+                          // Botón Rotar Capa (Google Híbrido -> Esri -> OSM)
                           _MapFloatingButton(
-                            icon: _esModoSatelital ? Icons.map_outlined : Icons.satellite_alt_outlined,
-                            tooltip: _esModoSatelital ? 'Ver Callejero OSM' : 'Ver Satélite',
-                            onPressed: () {
-                              setState(() {
-                                _esModoSatelital = !_esModoSatelital;
-                              });
-                            },
+                            icon: _iconoCapaActual,
+                            tooltip: 'Cambiar capa (Actual: $_nombreCapaActual)',
+                            onPressed: _rotarCapaMapa,
                           ),
                           const SizedBox(height: 8),
 
@@ -447,7 +526,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                                 ? () {
                                     _mapController.move(
                                       ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude),
-                                      18.5,
+                                      19.5,
                                     );
                                   }
                                 : () => _iniciarGps(),
@@ -477,7 +556,12 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                             tooltip: 'Acercar',
                             onPressed: () {
                               final currentZoom = _mapController.camera.zoom;
-                              _mapController.move(_mapController.camera.center, currentZoom + 1);
+                              if (currentZoom < 22.5) {
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  (currentZoom + 1).clamp(3.0, 22.5),
+                                );
+                              }
                             },
                           ),
                           const SizedBox(height: 8),
@@ -488,7 +572,12 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                             tooltip: 'Alejar',
                             onPressed: () {
                               final currentZoom = _mapController.camera.zoom;
-                              _mapController.move(_mapController.camera.center, currentZoom - 1);
+                              if (currentZoom > 3.0) {
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  (currentZoom - 1).clamp(3.0, 22.5),
+                                );
+                              }
                             },
                           ),
                         ],
