@@ -27,6 +27,11 @@ void main() async {
     statusBarIconBrightness: Brightness.dark,
   ));
 
+  // Sobreescribe el error banner rojo
+  ErrorWidget.builder = (errorDetails) => _ErrorFallback(
+    message: errorDetails.exceptionAsString(),
+  );
+
   runApp(const SIAAApp());
 }
 
@@ -74,15 +79,6 @@ class SIAAApp extends StatelessWidget {
             '/login': (_) => const LoginScreen(),
             '/home': (_) => const HomeScreen(),
             // '/recuperar-password': (_) => const RecoverPasswordScreen(),
-          },
-
-          // ─── Manejo global de errores ─────────────────────
-          builder: (context, child) {
-            // Sobreescribe el error banner rojo en debug
-            ErrorWidget.builder = (errorDetails) => _ErrorFallback(
-              message: errorDetails.exceptionAsString(),
-            );
-            return child ?? const SizedBox.shrink();
           },
         ),
       ),

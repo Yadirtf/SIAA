@@ -113,4 +113,7 @@ backend/.tmp/
 web/.dart_tool/
 mobile/.dart_tool/
 *.exe
+local.properties
+**/android/.gradle/
+**/android/local.properties
 

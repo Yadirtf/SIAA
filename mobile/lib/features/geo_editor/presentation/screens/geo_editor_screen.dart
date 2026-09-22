@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as ll;
+
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/models/gps_accuracy_status.dart';
 import '../../domain/models/gps_reading.dart';
 import '../../domain/models/tagged_vertex.dart';
 import '../../domain/services/gps_location_service.dart';
@@ -9,11 +13,12 @@ import '../bloc/geo_editor_event.dart';
 import '../bloc/geo_editor_state.dart';
 import '../widgets/gps_traffic_light_badge.dart';
 
-/// Pantalla interactiva de levantamiento cartográfico perimetral (US-GEO-02, US-GEO-03).
-/// Cumple:
-/// - US-GEO-02: Muestreo GPS, semáforo de precisión, promedio de lecturas y descarte por umbral.
-/// - US-GEO-03: Captura por toque en mapa, alternancia de modos (recorrido / mapa),
-///   conservación de vértices (MIXTO), aviso offline de teselas (AC-04) y omisión de precisión en TOQUE_MAPA.
+/// Pantalla interactiva de levantamiento cartográfico perimetral (US-GEO-02, US-GEO-03, US-GEO-05).
+/// Implementa:
+/// - RF-GEO-002: Recorrido perimetral por GPS con semáforo de precisión en vivo.
+/// - RF-GEO-004: Captura por toque sobre mapa satelital / callejero (OpenStreetMap & Esri World Imagery).
+/// - RN-005: Solicitud interactiva de permisos de ubicación en primer plano (while in use).
+/// - US-GEO-05: Diálogos modales de advertencia de solapamiento y bloqueo duro >50%.
 class GeoEditorScreen extends StatefulWidget {
   final String espacioId;
   final String espacioCodigo;
@@ -32,6 +37,11 @@ class GeoEditorScreen extends StatefulWidget {
 
 class _GeoEditorScreenState extends State<GeoEditorScreen> {
   final GpsLocationService _gpsService = GpsLocationService();
+  final MapController _mapController = MapController();
+
+  EstadoPermisoUbicacion? _estadoPermiso;
+  bool _esModoSatelital = true; // Por defecto satelital según RF-GEO-004
+  bool _mapaCentradoInicialmente = false;
 
   @override
   void initState() {
@@ -39,22 +49,34 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
     _iniciarGps();
   }
 
-  void _iniciarGps() {
-    _gpsService.escucharPosiciones(
+  Future<void> _iniciarGps() async {
+    final estado = await _gpsService.escucharPosicionesConPermiso(
       onReading: (reading) {
-        if (mounted) {
-          context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
+        if (!mounted) return;
+        context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
+
+        // Al recibir la primera lectura GPS real, centrar el mapa suavemente
+        if (!_mapaCentradoInicialmente) {
+          _mapaCentradoInicialmente = true;
+          _mapController.move(ll.LatLng(reading.latitude, reading.longitude), 18.5);
         }
       },
       onError: (err) {
-        // En entornos de prueba o sin sensor no interrumpe el uso
+        // En emuladores o entornos sin sensor el error no bloquea el modo mapa
       },
     );
+
+    if (mounted) {
+      setState(() {
+        _estadoPermiso = estado;
+      });
+    }
   }
 
   @override
   void dispose() {
     _gpsService.detenerEscucha();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -62,6 +84,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<GeoEditorBloc, GeoEditorState>(
       listener: (context, state) {
+        // US-GEO-05 AC-03: Bloqueo irremovible ante solapamiento > 50%
         if (state.solapamientoCritico != null) {
           showDialog(
             context: context,
@@ -90,6 +113,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
           return;
         }
 
+        // US-GEO-05 AC-01 & AC-02: Advertencia ante solapamiento <= 50% con confirmación
         if (state.solapamientoAdvertencia != null) {
           final motivoCtrl = TextEditingController();
           showDialog(
@@ -172,6 +196,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
             ),
           );
         }
+
         if (state.successMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -184,6 +209,13 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
         }
       },
       builder: (context, state) {
+        // Centro inicial: posición GPS real, o primer vértice, o Universidad Nacional (Bogotá)
+        final initialCenter = state.currentPosition != null
+            ? ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude)
+            : (state.vertices.isNotEmpty
+                ? ll.LatLng(state.vertices.first[1], state.vertices.first[0])
+                : const ll.LatLng(4.6372, -74.0839));
+
         return Scaffold(
           appBar: AppBar(
             title: Column(
@@ -200,18 +232,19 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Reiniciar polígono',
-                onPressed: state.vertices.isNotEmpty
-                    ? () => _confirmarReinicio(context)
-                    : null,
+                onPressed: state.vertices.isNotEmpty ? () => _confirmarReinicio(context) : null,
               ),
             ],
           ),
           body: Column(
             children: [
-              // ─── Selector de Modo de Captura (AC-03) ──────────────
+              // ─── Banner de Permisos de Ubicación (si no están concedidos) ─────
+              _buildBannerPermisos(),
+
+              // ─── Selector de modo de captura (RF-GEO-002 vs RF-GEO-004) ──────
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     Expanded(
@@ -219,12 +252,12 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                         segments: const [
                           ButtonSegment<ModoCapturaEditor>(
                             value: ModoCapturaEditor.recorrido,
-                            icon: Icon(Icons.directions_walk, size: 18),
-                            label: Text('Recorrido GPS'),
+                            icon: Icon(Icons.directions_walk, size: 16),
+                            label: Text('GPS Recorrido'),
                           ),
                           ButtonSegment<ModoCapturaEditor>(
                             value: ModoCapturaEditor.mapa,
-                            icon: Icon(Icons.touch_app, size: 18),
+                            icon: Icon(Icons.touch_app, size: 16),
                             label: Text('Toque Mapa'),
                           ),
                         ],
@@ -240,11 +273,10 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                 ),
               ),
 
-              // ─── Barra de estado y método de captura ─────────────
+              // ─── Barra de estado de telemetría y método de captura ─────────────
               Container(
-                width: double.infinity,
+                color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: SIAAColors.neutral100,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -272,7 +304,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                 ),
               ),
 
-              // ─── Banner de advertencia offline en modo mapa (AC-04) ─
+              // ─── Banner informativo en modo mapa ──────────────────────────────
               if (state.modoCaptura == ModoCapturaEditor.mapa)
                 Container(
                   width: double.infinity,
@@ -280,11 +312,11 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                   color: const Color(0xFFFEF3C7), // Amber 100
                   child: Row(
                     children: const [
-                      Icon(Icons.layers_outlined, size: 16, color: Color(0xFFB45309)),
+                      Icon(Icons.touch_app, size: 16, color: Color(0xFFB45309)),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Modo Toque: Toque en el lienzo para añadir vértices. En ausencia de red se utilizan capas satelitales en caché local.',
+                          'Modo Toque en Mapa: Toque directamente sobre el mapa satelital para posicionar cada esquina del aula.',
                           style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                         ),
                       ),
@@ -292,52 +324,181 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                   ),
                 ),
 
-              // ─── Área de visualización interactiva del mapa / polígono ───────────
+              // ─── MAPA INTERACTIVO REAL (OpenStreetMap / Esri World Imagery) ───
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final size = Size(constraints.maxWidth, constraints.maxHeight);
-                    final fallbackCenter = state.currentPosition != null
-                        ? [state.currentPosition!.longitude, state.currentPosition!.latitude]
-                        : [-74.08175, 4.60971];
-                    final bb = _BoundingBox.fromPoints(state.vertices, fallbackCenter: fallbackCenter);
-
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapUp: (details) {
-                        if (state.modoCaptura == ModoCapturaEditor.mapa && !state.isClosed) {
-                          const padding = 40.0;
-                          final coords = bb.fromCanvas(details.localPosition, size, padding);
-                          context.read<GeoEditorBloc>().add(
-                                ToqueEnMapaRequested(
-                                  longitud: coords[0],
-                                  latitud: coords[1],
-                                ),
-                              );
-                        }
-                      },
-                      child: Container(
-                        color: state.modoCaptura == ModoCapturaEditor.mapa
-                            ? const Color(0xFF0F172A) // Satelital Dark
-                            : SIAAColors.backgroundLight,
-                        child: CustomPaint(
-                          painter: _PolygonPreviewPainter(
-                            vertices: state.vertices,
-                            taggedVertices: state.verticesEtiquetados,
-                            isClosed: state.isClosed,
-                            isMapMode: state.modoCaptura == ModoCapturaEditor.mapa,
-                            boundingBox: bb,
-                            currentPosition: state.currentPosition,
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: initialCenter,
+                        initialZoom: 18.0,
+                        minZoom: 3.0,
+                        maxZoom: 21.0,
+                        onTap: (tapPosition, point) {
+                          if (state.modoCaptura == ModoCapturaEditor.mapa && !state.isClosed) {
+                            context.read<GeoEditorBloc>().add(
+                                  ToqueEnMapaRequested(
+                                    longitud: point.longitude,
+                                    latitud: point.latitude,
+                                  ),
+                                );
+                          }
+                        },
                       ),
-                    );
-                  },
+                      children: [
+                        // Capa de Teselas (Tiles): Satelital o Callejero
+                        TileLayer(
+                          urlTemplate: _esModoSatelital
+                              ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                              : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.siaa.mobile',
+                          maxZoom: 20,
+                        ),
+
+                        // Capa de Polígono del geocerco
+                        if (state.vertices.length >= 3)
+                          PolygonLayer<Object>(
+                            polygons: [
+                              Polygon(
+                                points: state.vertices.map((v) => ll.LatLng(v[1], v[0])).toList(),
+                                color: state.isClosed
+                                    ? Colors.cyanAccent.withValues(alpha: 0.30)
+                                    : Colors.amberAccent.withValues(alpha: 0.20),
+                                borderColor: state.isClosed ? Colors.cyanAccent : Colors.amberAccent,
+                                borderStrokeWidth: 2.5,
+                              ),
+                            ],
+                          ),
+
+                        // Línea perimetral mientras se dibuja
+                        if (state.vertices.length >= 2 && !state.isClosed)
+                          PolylineLayer(
+                            polylines: [
+                              Polyline(
+                                points: state.vertices.map((v) => ll.LatLng(v[1], v[0])).toList(),
+                                strokeWidth: 2.5,
+                                color: Colors.amberAccent,
+                              ),
+                            ],
+                          ),
+
+                        // Marcadores de Vértices y GPS
+                        MarkerLayer(
+                          markers: [
+                            // Vértices capturados con numeración secuencial
+                            for (int i = 0; i < state.vertices.length; i++)
+                              Marker(
+                                point: ll.LatLng(state.vertices[i][1], state.vertices[i][0]),
+                                width: 32,
+                                height: 32,
+                                child: _buildVertexBadge(
+                                  i + 1,
+                                  state.verticesEtiquetados.length > i ? state.verticesEtiquetados[i] : null,
+                                ),
+                              ),
+
+                            // Ubicación GPS real del usuario en vivo
+                            if (state.currentPosition != null)
+                              Marker(
+                                point: ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude),
+                                width: 40,
+                                height: 40,
+                                child: _buildGpsMarker(state.accuracyStatus),
+                              ),
+                          ],
+                        ),
+
+                        // Atribución oficial de capas
+                        RichAttributionWidget(
+                          attributions: [
+                            TextSourceAttribution(
+                              _esModoSatelital ? 'Tiles © Esri' : '© OpenStreetMap contributors',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    // ─── Controles Flotantes sobre el Mapa ───────────────────
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Column(
+                        children: [
+                          // Botón Cambiar Capa (Satelital / Callejero)
+                          _MapFloatingButton(
+                            icon: _esModoSatelital ? Icons.map_outlined : Icons.satellite_alt_outlined,
+                            tooltip: _esModoSatelital ? 'Ver Callejero OSM' : 'Ver Satélite',
+                            onPressed: () {
+                              setState(() {
+                                _esModoSatelital = !_esModoSatelital;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Botón Centrar en mi ubicación GPS
+                          _MapFloatingButton(
+                            icon: Icons.my_location,
+                            tooltip: 'Mi ubicación GPS',
+                            color: state.currentPosition != null ? Colors.cyanAccent : SIAAColors.neutral400,
+                            onPressed: state.currentPosition != null
+                                ? () {
+                                    _mapController.move(
+                                      ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude),
+                                      18.5,
+                                    );
+                                  }
+                                : () => _iniciarGps(),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Botón Centrar en el polígono
+                          if (state.vertices.isNotEmpty) ...[
+                            _MapFloatingButton(
+                              icon: Icons.crop_free,
+                              tooltip: 'Ver polígono completo',
+                              onPressed: () {
+                                final bounds = LatLngBounds.fromPoints(
+                                  state.vertices.map((v) => ll.LatLng(v[1], v[0])).toList(),
+                                );
+                                _mapController.fitCamera(
+                                  CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(40)),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+
+                          // Zoom In (+)
+                          _MapFloatingButton(
+                            icon: Icons.add,
+                            tooltip: 'Acercar',
+                            onPressed: () {
+                              final currentZoom = _mapController.camera.zoom;
+                              _mapController.move(_mapController.camera.center, currentZoom + 1);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Zoom Out (-)
+                          _MapFloatingButton(
+                            icon: Icons.remove,
+                            tooltip: 'Alejar',
+                            onPressed: () {
+                              final currentZoom = _mapController.camera.zoom;
+                              _mapController.move(_mapController.camera.center, currentZoom - 1);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // ─── Tarjeta de métricas cartográficas ─────────────
+              // ─── Tarjeta de métricas cartográficas ───────────────────────────
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
@@ -358,25 +519,34 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                         _MetricaItem(
                           label: 'Área estimada (AC-06)',
                           valor: '${state.areaCalculadaM2.toStringAsFixed(1)} m²',
-                          icono: Icons.crop_square,
-                          color: SIAAColors.primary500,
+                          icono: Icons.square_foot,
+                          color: SIAAColors.primary600,
                         ),
                         _MetricaItem(
                           label: 'Perímetro',
                           valor: '${state.perimetroMetros.toStringAsFixed(1)} m',
-                          icono: Icons.linear_scale,
+                          icono: Icons.timeline,
                           color: SIAAColors.neutral700,
+                        ),
+                        _MetricaItem(
+                          label: 'Precisión prom.',
+                          valor: state.precisionPromedioCalculada != null
+                              ? '${state.precisionPromedioCalculada!.toStringAsFixed(1)} m'
+                              : 'N/A',
+                          icono: Icons.gps_fixed,
+                          color: state.precisionPromedioCalculada != null && state.precisionPromedioCalculada! <= 10
+                              ? SIAAColors.asistenciaPresente
+                              : SIAAColors.neutral500,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                    // ─── Botonera de acciones ──────────────────────
+                    // Botones de acción principales
                     Row(
                       children: [
-                        // AC-05: Deshacer último vértice
+                        // AC-05: Deshacer vértice
                         Expanded(
-                          flex: 1,
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.undo, size: 18),
                             label: const Text('Deshacer'),
@@ -387,13 +557,13 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                         ),
                         const SizedBox(width: 8),
 
-                        // AC-01 (GPS) o Instrucción (Mapa)
+                        // AC-01: Capturar vértice por GPS (en modo recorrido)
                         if (state.modoCaptura == ModoCapturaEditor.recorrido)
                           Expanded(
                             flex: 2,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: SIAAColors.primary500,
+                                backgroundColor: SIAAColors.primary600,
                                 foregroundColor: Colors.white,
                               ),
                               icon: state.status == GeoEditorStatus.capturing
@@ -510,6 +680,128 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
     );
   }
 
+  Widget _buildBannerPermisos() {
+    if (_estadoPermiso == null || _estadoPermiso == EstadoPermisoUbicacion.concedido) {
+      return const SizedBox.shrink();
+    }
+
+    String titulo;
+    String accionTexto;
+    VoidCallback onAccion;
+    IconData icono;
+
+    switch (_estadoPermiso!) {
+      case EstadoPermisoUbicacion.servicioDesactivado:
+        titulo = 'El GPS del dispositivo está desactivado. Actívelo para capturar vértices.';
+        accionTexto = 'Activar GPS';
+        onAccion = () => _gpsService.abrirAjustesUbicacion();
+        icono = Icons.location_off;
+        break;
+      case EstadoPermisoUbicacion.denegadoPermanentemente:
+        titulo = 'Permiso de ubicación denegado en ajustes del sistema. Habilítelo para usar el GPS.';
+        accionTexto = 'Abrir Ajustes';
+        onAccion = () => _gpsService.abrirAjustesAplicacion();
+        icono = Icons.settings;
+        break;
+      case EstadoPermisoUbicacion.denegado:
+      default:
+        titulo = 'Se requiere permiso de ubicación para delimitar el espacio en sitio.';
+        accionTexto = 'Conceder';
+        onAccion = () => _iniciarGps();
+        icono = Icons.location_searching;
+        break;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      color: const Color(0xFFDC2626), // Red 600
+      child: Row(
+        children: [
+          Icon(icono, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              titulo,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFDC2626),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              minimumSize: const Size(0, 30),
+            ),
+            onPressed: onAccion,
+            child: Text(accionTexto, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGpsMarker(GpsAccuracyStatus accuracy) {
+    Color color;
+    switch (accuracy) {
+      case GpsAccuracyStatus.optimal:
+        color = SIAAColors.asistenciaPresente;
+        break;
+      case GpsAccuracyStatus.acceptable:
+        color = Colors.amber;
+        break;
+      case GpsAccuracyStatus.insufficient:
+      default:
+        color = SIAAColors.asistenciaAusente;
+        break;
+    }
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.25),
+          ),
+        ),
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVertexBadge(int index, TaggedVertex? vertex) {
+    final isGps = vertex?.origen == OrigenVertice.gps;
+    return Container(
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isGps ? const Color(0xFF2563EB) : const Color(0xFFD97706),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 3)],
+      ),
+      child: Text(
+        '$index',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
   Widget _buildModoMapaBadge(GeoEditorState state) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -589,6 +881,36 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   }
 }
 
+class _MapFloatingButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Color? color;
+
+  const _MapFloatingButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B).withValues(alpha: 0.90),
+        shape: BoxShape.circle,
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2))],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: color ?? Colors.white, size: 20),
+        tooltip: tooltip,
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+
 class _MetricaItem extends StatelessWidget {
   final String label;
   final String valor;
@@ -617,273 +939,5 @@ class _MetricaItem extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-/// BoundingBox geográfico con utilidades de proyección bidireccional entre coordenadas y canvas.
-class _BoundingBox {
-  final double minX;
-  final double maxX;
-  final double minY;
-  final double maxY;
-
-  _BoundingBox({
-    required this.minX,
-    required this.maxX,
-    required this.minY,
-    required this.maxY,
-  });
-
-  factory _BoundingBox.fromPoints(
-    List<List<double>> points, {
-    List<double>? fallbackCenter,
-  }) {
-    if (points.isEmpty) {
-      final centerLon = fallbackCenter != null ? fallbackCenter[0] : -74.08175;
-      final centerLat = fallbackCenter != null ? fallbackCenter[1] : 4.60971;
-      const span = 0.0008; // ~80-90 metros
-      return _BoundingBox(
-        minX: centerLon - span / 2,
-        maxX: centerLon + span / 2,
-        minY: centerLat - span / 2,
-        maxY: centerLat + span / 2,
-      );
-    }
-
-    double minX = points.first[0], maxX = points.first[0];
-    double minY = points.first[1], maxY = points.first[1];
-    for (final p in points) {
-      if (p[0] < minX) minX = p[0];
-      if (p[0] > maxX) maxX = p[0];
-      if (p[1] < minY) minY = p[1];
-      if (p[1] > maxY) maxY = p[1];
-    }
-
-    // Asegurar margen mínimo si es un solo punto o puntos muy cercanos
-    final dx = maxX - minX;
-    final dy = maxY - minY;
-    const minSpan = 0.0005;
-    if (dx < minSpan) {
-      final pad = (minSpan - dx) / 2;
-      minX -= pad;
-      maxX += pad;
-    }
-    if (dy < minSpan) {
-      final pad = (minSpan - dy) / 2;
-      minY -= pad;
-      maxY += pad;
-    }
-
-    return _BoundingBox(minX: minX, maxX: maxX, minY: minY, maxY: maxY);
-  }
-
-  Offset toCanvas(List<double> v, Size size, double padding) {
-    final availableW = size.width - 2 * padding;
-    final availableH = size.height - 2 * padding;
-    final dx = maxX - minX;
-    final dy = maxY - minY;
-    final scale = (dx > 0 && dy > 0)
-        ? (availableW / dx < availableH / dy ? availableW / dx : availableH / dy)
-        : 1.0;
-    final x = padding + (v[0] - minX) * scale;
-    final y = size.height - (padding + (v[1] - minY) * scale);
-    return Offset(x, y);
-  }
-
-  List<double> fromCanvas(Offset offset, Size size, double padding) {
-    final availableW = size.width - 2 * padding;
-    final availableH = size.height - 2 * padding;
-    final dx = maxX - minX;
-    final dy = maxY - minY;
-    final scale = (dx > 0 && dy > 0)
-        ? (availableW / dx < availableH / dy ? availableW / dx : availableH / dy)
-        : 1.0;
-    final lon = minX + (offset.dx - padding) / scale;
-    final lat = minY + (size.height - padding - offset.dy) / scale;
-    return [lon, lat];
-  }
-}
-
-/// Canvas interactivo para dibujar la forma del polígono normalizado o sobre mapa satelital.
-class _PolygonPreviewPainter extends CustomPainter {
-  final List<List<double>> vertices;
-  final List<TaggedVertex> taggedVertices;
-  final bool isClosed;
-  final bool isMapMode;
-  final _BoundingBox boundingBox;
-  final GpsReading? currentPosition;
-
-  _PolygonPreviewPainter({
-    required this.vertices,
-    required this.taggedVertices,
-    required this.isClosed,
-    required this.isMapMode,
-    required this.boundingBox,
-    this.currentPosition,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const padding = 40.0;
-
-    // Si está en modo mapa, dibujamos una retícula sutil de cuadrícula satelital (AC-04)
-    if (isMapMode) {
-      final gridPaint = Paint()
-        ..color = Colors.white.withOpacity(0.08)
-        ..strokeWidth = 1.0;
-
-      for (double x = 0; x < size.width; x += 50) {
-        canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-      }
-      for (double y = 0; y < size.height; y += 50) {
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-      }
-
-      // Atribución de cartografía OpenStreetMap
-      final osmTextPainter = TextPainter(
-        text: const TextSpan(
-          text: '© OpenStreetMap contributors • Proyección WGS84',
-          style: TextStyle(
-            color: Colors.white38,
-            fontSize: 9,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      osmTextPainter.paint(canvas, Offset(12, size.height - 20));
-    }
-
-    // Dibujar ubicación actual del usuario si está disponible
-    if (currentPosition != null) {
-      final userCoords = [currentPosition!.longitude, currentPosition!.latitude];
-      final userOffset = boundingBox.toCanvas(userCoords, size, padding);
-
-      // Círculo de radio de precisión
-      final accuracyRadius = (currentPosition!.accuracy * 1.5).clamp(10.0, 50.0);
-      canvas.drawCircle(
-        userOffset,
-        accuracyRadius,
-        Paint()
-          ..color = const Color(0xFF3B82F6).withOpacity(0.18)
-          ..style = PaintingStyle.fill,
-      );
-      canvas.drawCircle(
-        userOffset,
-        accuracyRadius,
-        Paint()
-          ..color = const Color(0xFF3B82F6).withOpacity(0.4)
-          ..strokeWidth = 1.0
-          ..style = PaintingStyle.stroke,
-      );
-
-      // Punto central del usuario
-      canvas.drawCircle(
-        userOffset,
-        6.0,
-        Paint()..color = const Color(0xFF2563EB),
-      );
-      canvas.drawCircle(
-        userOffset,
-        6.0,
-        Paint()
-          ..color = Colors.white
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke,
-      );
-    }
-
-    if (vertices.isEmpty) {
-      final mensaje = isMapMode
-          ? 'MODO MAPA SATELITAL (OpenStreetMap)\nToca en cualquier punto de la pantalla para\nposicionar los vértices del espacio (AC-01).'
-          : 'MODO RECORRIDO PERIMETRAL\nPárese en una esquina del aula y presione\n"Capturar Vértice" para iniciar el recorrido.';
-
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: mensaje,
-          style: TextStyle(
-            color: isMapMode ? Colors.cyanAccent.withOpacity(0.8) : SIAAColors.neutral400,
-            fontSize: 13,
-            height: 1.4,
-          ),
-        ),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
-      )..layout(maxWidth: size.width - 40);
-      textPainter.paint(
-        canvas,
-        Offset((size.width - textPainter.width) / 2, size.height / 2 - 20),
-      );
-      return;
-    }
-
-    final points = vertices.map((v) => boundingBox.toCanvas(v, size, padding)).toList();
-
-    // Relleno si está cerrado
-    if (isClosed && points.length >= 3) {
-      final fillPaint = Paint()
-        ..color = (isMapMode ? Colors.cyanAccent : SIAAColors.primary500).withOpacity(0.18)
-        ..style = PaintingStyle.fill;
-      final path = Path()..moveTo(points.first.dx, points.first.dy);
-      for (int i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
-      path.close();
-      canvas.drawPath(path, fillPaint);
-    }
-
-    // Trazar aristas
-    final strokePaint = Paint()
-      ..color = isMapMode ? Colors.cyanAccent : SIAAColors.primary500
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-
-    for (int i = 0; i < points.length - 1; i++) {
-      canvas.drawLine(points[i], points[i + 1], strokePaint);
-    }
-
-    // Dibujar vértices con numeración y distinción de origen (GPS vs Toque)
-    for (int i = 0; i < points.length; i++) {
-      final isToque = i < taggedVertices.length &&
-          taggedVertices[i].origen == OrigenVertice.toqueMapa;
-
-      final dotColor = isToque
-          ? const Color(0xFFF59E0B) // Amber para toque
-          : (isMapMode ? const Color(0xFF06B6D4) : SIAAColors.primary600); // Azul/Cyan para GPS
-
-      final dotPaint = Paint()
-        ..color = dotColor
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(points[i], 7.5, dotPaint);
-      canvas.drawCircle(
-        points[i],
-        7.5,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-
-      final labelPainter = TextPainter(
-        text: TextSpan(
-          text: '${i + 1}',
-          style: TextStyle(
-            color: isMapMode ? Colors.white : SIAAColors.neutral700,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      labelPainter.paint(canvas, points[i] + const Offset(9, -8));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PolygonPreviewPainter oldDelegate) {
-    return oldDelegate.vertices.length != vertices.length ||
-        oldDelegate.isClosed != isClosed ||
-        oldDelegate.isMapMode != isMapMode ||
-        oldDelegate.currentPosition != currentPosition;
   }
 }
