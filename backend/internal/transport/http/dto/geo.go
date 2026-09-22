@@ -108,6 +108,8 @@ type ActualizarGeometriaRequest struct {
 	Coordenadas             [][2]float64      `json:"coordenadas" validate:"required"`
 	MetodoCaptura           geo.MetodoCaptura `json:"metodoCaptura" validate:"required"`
 	PrecisionPromedioMetros *float64          `json:"precisionPromedioMetros,omitempty"`
+	ConfirmarSolapamiento   bool              `json:"confirmarSolapamiento,omitempty"`
+	MotivoSolapamiento      string            `json:"motivoSolapamiento,omitempty"`
 }
 
 type GeometriaResponse struct {
@@ -182,3 +184,26 @@ func EspacioToResponse(e *geo.Espacio) EspacioResponse {
 	}
 	return resp
 }
+
+// ─── SOLAPAMIENTOS (US-GEO-05) ──────────────────────────────────
+
+type SolapamientoItemResponse struct {
+	SedeID             string  `json:"sedeId"`
+	BloqueID           *string `json:"bloqueId,omitempty"`
+	Piso               *int    `json:"piso,omitempty"`
+	Espacio1ID         string  `json:"espacio1Id"`
+	Espacio1Codigo     string  `json:"espacio1Codigo"`
+	Espacio1Nombre     string  `json:"espacio1Nombre"`
+	Espacio2ID         string  `json:"espacio2Id"`
+	Espacio2Codigo     string  `json:"espacio2Codigo"`
+	Espacio2Nombre     string  `json:"espacio2Nombre"`
+	AreaSolapadaM2     float64 `json:"areaSolapadaM2"`
+	PorcentajeSolapado float64 `json:"porcentajeSolapado"`
+	EsCritico          bool    `json:"esCritico"`
+}
+
+type InformeSolapamientosResponse struct {
+	TotalConflictos int                        `json:"totalConflictos"`
+	Conflictos      []SolapamientoItemResponse `json:"conflictos"`
+}
+

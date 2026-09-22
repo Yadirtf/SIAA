@@ -69,11 +69,18 @@ class CerrarPoligonoRequested extends GeoEditorEvent {
 }
 
 /// Envío del polígono cerrado al backend vía PUT /api/v1/espacios/:id/geometria.
+/// US-GEO-05: T-GEO-05.4 soporte para confirmación de solapamiento.
 class GuardarGeometriaBackendRequested extends GeoEditorEvent {
   final String espacioId;
+  final bool confirmarSolapamiento;
+  final String? motivoSolapamiento;
 
-  const GuardarGeometriaBackendRequested({required this.espacioId});
+  const GuardarGeometriaBackendRequested({
+    required this.espacioId,
+    this.confirmarSolapamiento = false,
+    this.motivoSolapamiento,
+  });
 
   @override
-  List<Object?> get props => [espacioId];
+  List<Object?> get props => [espacioId, confirmarSolapamiento, motivoSolapamiento];
 }

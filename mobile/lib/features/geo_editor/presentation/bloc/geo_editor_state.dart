@@ -25,6 +25,9 @@ class GeoEditorState extends Equatable {
   final double perimetroMetros;
   final String? errorMessage;
   final String? successMessage;
+  final String? solapamientoAdvertencia;
+  final List<String>? solapamientoDetalles;
+  final String? solapamientoCritico;
 
   const GeoEditorState({
     this.status = GeoEditorStatus.initial,
@@ -38,6 +41,9 @@ class GeoEditorState extends Equatable {
     this.perimetroMetros = 0.0,
     this.errorMessage,
     this.successMessage,
+    this.solapamientoAdvertencia,
+    this.solapamientoDetalles,
+    this.solapamientoCritico,
   });
 
   /// AC-04 (US-GEO-02): El botón de captura GPS solo está habilitado si la precisión es óptima o aceptable.
@@ -107,7 +113,11 @@ class GeoEditorState extends Equatable {
     double? perimetroMetros,
     String? errorMessage,
     String? successMessage,
+    String? solapamientoAdvertencia,
+    List<String>? solapamientoDetalles,
+    String? solapamientoCritico,
     bool clearError = false,
+    bool clearSolapamiento = false,
   }) {
     return GeoEditorState(
       status: status ?? this.status,
@@ -121,6 +131,9 @@ class GeoEditorState extends Equatable {
       perimetroMetros: perimetroMetros ?? this.perimetroMetros,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       successMessage: successMessage ?? this.successMessage,
+      solapamientoAdvertencia: clearSolapamiento ? null : (solapamientoAdvertencia ?? this.solapamientoAdvertencia),
+      solapamientoDetalles: clearSolapamiento ? null : (solapamientoDetalles ?? this.solapamientoDetalles),
+      solapamientoCritico: clearSolapamiento ? null : (solapamientoCritico ?? this.solapamientoCritico),
     );
   }
 
@@ -137,5 +150,8 @@ class GeoEditorState extends Equatable {
         perimetroMetros,
         errorMessage,
         successMessage,
+        solapamientoAdvertencia,
+        solapamientoDetalles,
+        solapamientoCritico,
       ];
 }

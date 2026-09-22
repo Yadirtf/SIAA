@@ -114,20 +114,26 @@ class EspacioRepository {
   }
 
   /// Guarda o actualiza la geometría perimetral del espacio (PUT /api/v1/espacios/:id/geometria)
-  /// AC-06, AC-07, ADR-04.
+  /// AC-06, AC-07, ADR-04, US-GEO-05 (AC-01..AC-03).
   Future<EspacioModel> guardarGeometria({
     required String espacioId,
     required List<List<double>> coordenadas,
     required String metodoCaptura,
     double? precisionPromedioMetros,
+    bool confirmarSolapamiento = false,
+    String? motivoSolapamiento,
   }) async {
     try {
       final payload = <String, dynamic>{
         'coordenadas': coordenadas,
         'metodoCaptura': metodoCaptura,
+        'confirmarSolapamiento': confirmarSolapamiento,
       };
       if (precisionPromedioMetros != null) {
         payload['precisionPromedioMetros'] = precisionPromedioMetros;
+      }
+      if (motivoSolapamiento != null && motivoSolapamiento.isNotEmpty) {
+        payload['motivoSolapamiento'] = motivoSolapamiento;
       }
 
       final response = await _client.put(
@@ -137,8 +143,45 @@ class EspacioRepository {
 
       return EspacioModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al guardar geometría en el servidor';
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final codigo = data['codigo'] as String?;
+        final mensaje = data['mensaje'] as String? ?? 'Error al guardar geometría';
+        final detalles = (data['detalles'] as List<dynamic>?)
+            ?.map((d) => d is Map<String, dynamic> ? d['error']?.toString() ?? '' : d.toString())
+            .toList();
+
+        if (codigo == 'VALIDACION' && mensaje.toLowerCase().contains('solapamiento')) {
+          throw SolapamientoAdvertenciaException(mensaje: mensaje, detalles: detalles);
+        } else if (codigo == 'GEOMETRIA_SOLAPADA') {
+          throw SolapamientoCriticoException(mensaje: mensaje);
+        }
+        throw Exception(mensaje);
+      }
+      final errorMsg = e.message ?? 'Error al guardar geometría en el servidor';
       throw Exception(errorMsg);
     }
   }
 }
+
+/// Excepción cuando un solapamiento <= 50% requiere confirmación del usuario (US-GEO-05 AC-01/AC-02).
+class SolapamientoAdvertenciaException implements Exception {
+  final String mensaje;
+  final List<String>? detalles;
+
+  SolapamientoAdvertenciaException({required this.mensaje, this.detalles});
+
+  @override
+  String toString() => mensaje;
+}
+
+/// Excepción cuando un solapamiento > 50% bloquea irrevocablemente el guardado (US-GEO-05 AC-03).
+class SolapamientoCriticoException implements Exception {
+  final String mensaje;
+
+  SolapamientoCriticoException({required this.mensaje});
+
+  @override
+  String toString() => mensaje;
+}
+

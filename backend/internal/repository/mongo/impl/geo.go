@@ -605,6 +605,56 @@ func (r *espacioRepository) SoftDelete(ctx context.Context, id string) error {
 	return err
 }
 
+func (r *espacioRepository) BuscarIntersecciones(
+	ctx context.Context,
+	espacioID string,
+	bloqueID *string,
+	piso *int,
+	geom geo.GeoPolygon,
+) ([]*geo.Espacio, error) {
+	filter := bson.D{
+		{Key: "activo", Value: true},
+		{Key: "eliminado", Value: false},
+		{Key: "geometria", Value: bson.D{
+			{Key: "$geoIntersects", Value: bson.D{
+				{Key: "$geometry", Value: bson.D{
+					{Key: "type", Value: "Polygon"},
+					{Key: "coordinates", Value: [][][2]float64{geom.Coordinates()}},
+				}},
+			}},
+		}},
+	}
+
+	if espacioID != "" {
+		if oid, err := primitive.ObjectIDFromHex(espacioID); err == nil {
+			filter = append(filter, bson.E{Key: "_id", Value: bson.D{{Key: "$ne", Value: oid}}})
+		}
+	}
+	if bloqueID != nil && *bloqueID != "" {
+		filter = append(filter, bson.E{Key: "bloqueId", Value: *bloqueID})
+	}
+	if piso != nil {
+		filter = append(filter, bson.E{Key: "piso", Value: *piso})
+	}
+
+	cursor, err := r.col.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("buscarIntersecciones: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var docs []espacioDoc
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, fmt.Errorf("decodeIntersecciones: %w", err)
+	}
+
+	res := make([]*geo.Espacio, 0, len(docs))
+	for i := range docs {
+		res = append(res, docToEspacio(&docs[i]))
+	}
+	return res, nil
+}
+
 func docToEspacio(doc *espacioDoc) *geo.Espacio {
 	esp := &geo.Espacio{
 		ID:                      doc.ID.Hex(),

@@ -47,6 +47,7 @@ type EspacioRepository interface {
 	List(ctx context.Context, filter EspacioFilter) ([]*geo.Espacio, error)
 	Update(ctx context.Context, e *geo.Espacio) error
 	SoftDelete(ctx context.Context, id string) error
+	BuscarIntersecciones(ctx context.Context, espacioID string, bloqueID *string, piso *int, geom geo.GeoPolygon) ([]*geo.Espacio, error)
 }
 
 // SesionFutureChecker abstrae la verificación de sesiones futuras asociadas a un espacio.

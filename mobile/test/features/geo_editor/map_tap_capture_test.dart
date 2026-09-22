@@ -33,6 +33,8 @@ void main() {
           required List<List<double>> coordenadas,
           required String metodoCaptura,
           double? precisionPromedioMetros,
+          bool? confirmarSolapamiento,
+          String? motivoSolapamiento,
         }) async {
           metodoGuardado = metodoCaptura;
           precisionGuardada = precisionPromedioMetros;
@@ -69,6 +71,8 @@ void main() {
           required List<List<double>> coordenadas,
           required String metodoCaptura,
           double? precisionPromedioMetros,
+          bool? confirmarSolapamiento,
+          String? motivoSolapamiento,
         }) async {
           metodoGuardado = metodoCaptura;
           precisionGuardada = precisionPromedioMetros;

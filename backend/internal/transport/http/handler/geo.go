@@ -271,6 +271,8 @@ func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
 		Vertices:                vertices,
 		MetodoCaptura:           req.MetodoCaptura,
 		PrecisionPromedioMetros: req.PrecisionPromedioMetros,
+		ConfirmarSolapamiento:   req.ConfirmarSolapamiento,
+		MotivoSolapamiento:      req.MotivoSolapamiento,
 		Actor:                   actor,
 	})
 	if err != nil {
@@ -278,6 +280,41 @@ func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, dto.EspacioToResponse(espacio))
+}
+
+// InformeSolapamientos maneja GET /api/v1/espacios/solapamientos.
+// AC-04, T-GEO-05.3.
+func (h *GeoHandler) InformeSolapamientos(c echo.Context) error {
+	sedeID := c.QueryParam("sedeId")
+	bloqueID := c.QueryParam("bloqueId")
+
+	informe, err := h.svc.GenerarInformeSolapamientos(c.Request().Context(), sedeID, bloqueID)
+	if err != nil {
+		return err
+	}
+
+	items := make([]dto.SolapamientoItemResponse, 0, len(informe))
+	for _, it := range informe {
+		items = append(items, dto.SolapamientoItemResponse{
+			SedeID:             it.SedeID,
+			BloqueID:           it.BloqueID,
+			Piso:               it.Piso,
+			Espacio1ID:         it.Espacio1ID,
+			Espacio1Codigo:     it.Espacio1Codigo,
+			Espacio1Nombre:     it.Espacio1Nombre,
+			Espacio2ID:         it.Espacio2ID,
+			Espacio2Codigo:     it.Espacio2Codigo,
+			Espacio2Nombre:     it.Espacio2Nombre,
+			AreaSolapadaM2:     it.AreaSolapadaM2,
+			PorcentajeSolapado: it.PorcentajeSolapado,
+			EsCritico:          it.EsCritico,
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.InformeSolapamientosResponse{
+		TotalConflictos: len(items),
+		Conflictos:      items,
+	})
 }
 
 // ─────────────────────────────────────────────────────────────

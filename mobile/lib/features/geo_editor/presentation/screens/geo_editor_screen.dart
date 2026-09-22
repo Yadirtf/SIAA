@@ -62,6 +62,107 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<GeoEditorBloc, GeoEditorState>(
       listener: (context, state) {
+        if (state.solapamientoCritico != null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogCtx) => AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              title: Row(
+                children: const [
+                  Icon(Icons.block, color: SIAAColors.asistenciaAusente),
+                  SizedBox(width: 8),
+                  Text('Solapamiento Crítico (>50%)', style: TextStyle(color: Colors.white, fontSize: 16)),
+                ],
+              ),
+              content: Text(
+                state.solapamientoCritico!,
+                style: const TextStyle(color: SIAAColors.neutral300, fontSize: 13),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                  child: const Text('Entendido', style: TextStyle(color: Colors.cyanAccent)),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
+        if (state.solapamientoAdvertencia != null) {
+          final motivoCtrl = TextEditingController();
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogCtx) => AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              title: Row(
+                children: const [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amberAccent),
+                  SizedBox(width: 8),
+                  Text('Advertencia de Solapamiento', style: TextStyle(color: Colors.white, fontSize: 16)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    state.solapamientoAdvertencia!,
+                    style: const TextStyle(color: SIAAColors.neutral200, fontSize: 13),
+                  ),
+                  if (state.solapamientoDetalles != null && state.solapamientoDetalles!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ...state.solapamientoDetalles!.map(
+                      (d) => Text('• $d', style: const TextStyle(color: SIAAColors.neutral400, fontSize: 12)),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Indique el motivo para confirmar el guardado (quedará auditado):',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: motivoCtrl,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: const InputDecoration(
+                      hintText: 'Ej. Tolerancia por muro divisorio compartido',
+                      hintStyle: TextStyle(color: SIAAColors.neutral500, fontSize: 12),
+                      filled: true,
+                      fillColor: Color(0xFF0F172A),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                  child: const Text('Cancelar', style: TextStyle(color: SIAAColors.neutral400)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700]),
+                  onPressed: () {
+                    final motivo = motivoCtrl.text.trim();
+                    Navigator.of(dialogCtx).pop();
+                    context.read<GeoEditorBloc>().add(
+                          GuardarGeometriaBackendRequested(
+                            espacioId: widget.espacioId,
+                            confirmarSolapamiento: true,
+                            motivoSolapamiento: motivo.isNotEmpty ? motivo : 'Confirmado por usuario en campo',
+                          ),
+                        );
+                  },
+                  child: const Text('Confirmar y Guardar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

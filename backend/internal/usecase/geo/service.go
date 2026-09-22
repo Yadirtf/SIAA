@@ -400,9 +400,11 @@ func (s *Service) EliminarEspacio(ctx context.Context, id string, actor Contexto
 	return nil
 }
 
-// GuardarGeometriaEspacio implementa RF-GEO-002, T-GEO-02.7, AC-06, AC-07.
-// Valida el polígono, calcula área en m² y centroide, incrementa versión de geometría,
-// actualiza la entidad y registra entrada en auditoría con acción "GEOMETRIA_ACTUALIZADA".
+// GuardarGeometriaEspacio implementa RF-GEO-002, RF-GEO-007, T-GEO-02.7, T-GEO-05.1, T-GEO-05.2,
+// AC-01..AC-03, AC-05, CA-007, R-01.
+// Valida el polígono, detecta solapamientos con espacios activos del mismo bloque y piso,
+// aplica reglas de bloqueo (>50%) o advertencia con confirmación (<=50%), incrementa versión,
+// persiste la entidad y audita la acción ("GEOMETRIA_ACTUALIZADA" o "GEOMETRIA_SOLAPADA_CONFIRMADA").
 func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeometriaCmd) (*geo.Espacio, error) {
 	espacio, err := s.espacioRepo.FindByID(ctx, cmd.EspacioID)
 	if err != nil {
@@ -417,6 +419,65 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 		return nil, err
 	}
 
+	// T-GEO-05.1, AC-05: Buscar intersecciones espaciales en el mismo bloque y piso
+	intersecciones, err := s.espacioRepo.BuscarIntersecciones(ctx, espacio.ID, espacio.BloqueID, espacio.Piso, poly)
+	if err != nil {
+		return nil, fmt.Errorf("verificar intersecciones de espacio: %w", err)
+	}
+
+	var advertencias []geo.SolapamientoEspacio
+	for _, otro := range intersecciones {
+		if otro.Geometria == nil {
+			continue
+		}
+		areaInter, pct := geo.CalcularAreaSolapadaGeodesica(poly, *otro.Geometria)
+		if pct > 0.01 {
+			bloquea := pct > 50.0
+			advertencias = append(advertencias, geo.SolapamientoEspacio{
+				EspacioID:          otro.ID,
+				EspacioCodigo:      otro.Codigo,
+				EspacioNombre:      otro.Nombre,
+				AreaSolapadaM2:     areaInter,
+				PorcentajeSolapado: pct,
+				BloqueaGuardado:    bloquea,
+			})
+		}
+	}
+
+	if len(advertencias) > 0 {
+		// AC-03: si cualquier solapamiento supera el 50%, bloqueo duro (código GEOMETRIA_SOLAPADA)
+		for _, adv := range advertencias {
+			if adv.BloqueaGuardado {
+				return nil, &shared.DomainError{
+					Code:    shared.ErrGeometriaSolapada,
+					Message: fmt.Sprintf("Solapamiento crítico del %.2f%% detectado con el espacio '%s' (%s). Supera el límite permitido del 50%%.", adv.PorcentajeSolapado, adv.EspacioNombre, adv.EspacioCodigo),
+					Fields: []shared.FieldError{
+						{
+							Campo: "geometria",
+							Error: fmt.Sprintf("solapamiento_bloqueado_%.2f_pct_con_%s", adv.PorcentajeSolapado, adv.EspacioCodigo),
+						},
+					},
+				}
+			}
+		}
+
+		// AC-01 / AC-02: solapamiento <= 50% requiere confirmación explícita
+		if !cmd.ConfirmarSolapamiento {
+			fields := make([]shared.FieldError, 0, len(advertencias))
+			for _, adv := range advertencias {
+				fields = append(fields, shared.FieldError{
+					Campo: "confirmarSolapamiento",
+					Error: fmt.Sprintf("solapamiento_detectado: %.2f%% de área solapada con espacio '%s' (%s)", adv.PorcentajeSolapado, adv.EspacioNombre, adv.EspacioCodigo),
+				})
+			}
+			return nil, &shared.DomainError{
+				Code:    shared.ErrValidacion,
+				Message: fmt.Sprintf("Se detectó solapamiento con %d espacio(s) en el mismo bloque y piso. Requiere confirmación explícita para guardar.", len(advertencias)),
+				Fields:  fields,
+			}
+		}
+	}
+
 	valorAnterior := *espacio
 
 	if err := espacio.AsignarGeometria(poly, cmd.MetodoCaptura, cmd.PrecisionPromedioMetros); err != nil {
@@ -427,9 +488,91 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 		return nil, fmt.Errorf("guardar geometria espacio: %w", err)
 	}
 
-	s.auditar(ctx, "espacio", espacio.ID, "GEOMETRIA_ACTUALIZADA", cmd.Actor, valorAnterior, espacio)
+	// AC-02: decisión auditada con actor, motivo y solapamientos
+	if len(advertencias) > 0 && cmd.ConfirmarSolapamiento {
+		s.auditar(ctx, "espacio", espacio.ID, "GEOMETRIA_SOLAPADA_CONFIRMADA", cmd.Actor, valorAnterior, map[string]interface{}{
+			"espacio":       espacio,
+			"motivo":        cmd.MotivoSolapamiento,
+			"solapamientos": advertencias,
+		})
+	} else {
+		s.auditar(ctx, "espacio", espacio.ID, "GEOMETRIA_ACTUALIZADA", cmd.Actor, valorAnterior, espacio)
+	}
+
 	return espacio, nil
 }
+
+// GenerarInformeSolapamientos implementa AC-04, T-GEO-05.3.
+// Genera el informe completo de conflictos de solapamiento por sede y/o bloque.
+// AC-05: Los espacios en pisos distintos no se comparan (riesgo R-01).
+func (s *Service) GenerarInformeSolapamientos(ctx context.Context, sedeID, bloqueID string) ([]ItemInformeSolapamiento, error) {
+	filter := repository.EspacioFilter{
+		SedeID:   sedeID,
+		BloqueID: bloqueID,
+	}
+	espacios, err := s.espacioRepo.List(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("listar espacios para informe: %w", err)
+	}
+
+	var informe []ItemInformeSolapamiento
+	n := len(espacios)
+	for i := 0; i < n; i++ {
+		e1 := espacios[i]
+		if !e1.Activo || e1.Eliminado || e1.Geometria == nil {
+			continue
+		}
+		for j := i + 1; j < n; j++ {
+			e2 := espacios[j]
+			if !e2.Activo || e2.Eliminado || e2.Geometria == nil {
+				continue
+			}
+
+			// AC-05: Solo comparar si coinciden en bloque y piso
+			if !mismoBloqueYPiso(e1, e2) {
+				continue
+			}
+
+			areaInter, pct := geo.CalcularAreaSolapadaGeodesica(*e1.Geometria, *e2.Geometria)
+			if pct > 0.01 {
+				informe = append(informe, ItemInformeSolapamiento{
+					SedeID:             e1.SedeID,
+					BloqueID:           e1.BloqueID,
+					Piso:               e1.Piso,
+					Espacio1ID:         e1.ID,
+					Espacio1Codigo:     e1.Codigo,
+					Espacio1Nombre:     e1.Nombre,
+					Espacio2ID:         e2.ID,
+					Espacio2Codigo:     e2.Codigo,
+					Espacio2Nombre:     e2.Nombre,
+					AreaSolapadaM2:     areaInter,
+					PorcentajeSolapado: pct,
+					EsCritico:          pct > 50.0,
+				})
+			}
+		}
+	}
+	return informe, nil
+}
+
+func mismoBloqueYPiso(e1, e2 *geo.Espacio) bool {
+	// Bloque
+	if (e1.BloqueID == nil && e2.BloqueID != nil) || (e1.BloqueID != nil && e2.BloqueID == nil) {
+		return false
+	}
+	if e1.BloqueID != nil && e2.BloqueID != nil && *e1.BloqueID != *e2.BloqueID {
+		return false
+	}
+	// Piso (AC-05)
+	if (e1.Piso == nil && e2.Piso != nil) || (e1.Piso != nil && e2.Piso == nil) {
+		return false
+	}
+	if e1.Piso != nil && e2.Piso != nil && *e1.Piso != *e2.Piso {
+		return false
+	}
+	return true
+}
+
 
 // ─────────────────────────────────────────────────────────────
 // HELPER AUDITORÍA

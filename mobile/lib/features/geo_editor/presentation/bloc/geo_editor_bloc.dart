@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../data/espacio_repository.dart';
 import '../../domain/models/gps_accuracy_status.dart';
 import '../../domain/models/gps_reading.dart';
 import '../../domain/models/tagged_vertex.dart';
@@ -12,6 +13,8 @@ typedef SaveGeometryCallback = Future<void> Function({
   required List<List<double>> coordenadas,
   required String metodoCaptura,
   double? precisionPromedioMetros,
+  bool confirmarSolapamiento,
+  String? motivoSolapamiento,
 });
 
 class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
@@ -265,11 +268,27 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
           coordenadas: state.vertices,
           metodoCaptura: state.metodoCapturaEfectivo,
           precisionPromedioMetros: state.precisionPromedioCalculada,
+          confirmarSolapamiento: event.confirmarSolapamiento,
+          motivoSolapamiento: event.motivoSolapamiento,
         );
       }
       emit(state.copyWith(
         status: GeoEditorStatus.success,
         successMessage: 'Geometría del espacio guardada exitosamente.',
+        clearSolapamiento: true,
+      ));
+    } on SolapamientoAdvertenciaException catch (e) {
+      emit(state.copyWith(
+        status: GeoEditorStatus.error,
+        solapamientoAdvertencia: e.mensaje,
+        solapamientoDetalles: e.detalles,
+        errorMessage: e.mensaje,
+      ));
+    } on SolapamientoCriticoException catch (e) {
+      emit(state.copyWith(
+        status: GeoEditorStatus.error,
+        solapamientoCritico: e.mensaje,
+        errorMessage: e.mensaje,
       ));
     } catch (e) {
       emit(state.copyWith(

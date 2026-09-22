@@ -158,6 +158,8 @@ func NewRouter(
 		espaciosProtected := api.Group("/espacios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		espaciosProtected.GET("", geoH.ListarEspacios, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios", rbac.PermAulaLeer)
+		espaciosProtected.GET("/solapamientos", geoH.InformeSolapamientos, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/solapamientos", rbac.PermAulaLeer)
 		espaciosProtected.POST("", geoH.CrearEspacio, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
 		registry.RegisterPermission(http.MethodPost, "/api/v1/espacios", rbac.PermAulaCrear)
 		espaciosProtected.GET("/:id", geoH.ObtenerEspacio, mw.RequirePermission(rbac.PermAulaLeer, auditoria))

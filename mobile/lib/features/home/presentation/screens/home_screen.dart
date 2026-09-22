@@ -74,12 +74,16 @@ class _HomeScreenState extends State<HomeScreen> {
               required List<List<double>> coordenadas,
               required String metodoCaptura,
               double? precisionPromedioMetros,
+              bool confirmarSolapamiento = false,
+              String? motivoSolapamiento,
             }) async {
               await _espacioRepo.guardarGeometria(
                 espacioId: espacioId,
                 coordenadas: coordenadas,
                 metodoCaptura: metodoCaptura,
                 precisionPromedioMetros: precisionPromedioMetros,
+                confirmarSolapamiento: confirmarSolapamiento,
+                motivoSolapamiento: motivoSolapamiento,
               );
             },
           ),

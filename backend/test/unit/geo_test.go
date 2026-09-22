@@ -224,6 +224,31 @@ func (m *mockEspacioRepo) SoftDelete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (m *mockEspacioRepo) BuscarIntersecciones(ctx context.Context, espacioID string, bloqueID *string, piso *int, geom geo.GeoPolygon) ([]*geo.Espacio, error) {
+	var matches []*geo.Espacio
+	for _, e := range m.espacios {
+		if e.ID == espacioID || e.Eliminado || !e.Activo || e.Geometria == nil {
+			continue
+		}
+		if bloqueID != nil && *bloqueID != "" {
+			if e.BloqueID == nil || *e.BloqueID != *bloqueID {
+				continue
+			}
+		}
+		if piso != nil {
+			if e.Piso == nil || *e.Piso != *piso {
+				continue
+			}
+		}
+		area, pct := geo.CalcularAreaSolapadaGeodesica(geom, *e.Geometria)
+		if pct > 0.01 || area > 0.01 {
+			matches = append(matches, e)
+		}
+	}
+	return matches, nil
+}
+
+
 // Sesion Future Checker Mock
 type mockSesionChecker struct {
 	conteoPorEspacio map[string]int64
@@ -633,6 +658,8 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 	// Registrar espacios
 	api.GET("/espacios", geoH.ListarEspacios)
 	registry.RegisterPermission(http.MethodGet, "/api/v1/espacios", "aula:leer")
+	api.GET("/espacios/solapamientos", geoH.InformeSolapamientos)
+	registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/solapamientos", "aula:leer")
 	api.POST("/espacios", geoH.CrearEspacio)
 	registry.RegisterPermission(http.MethodPost, "/api/v1/espacios", "aula:crear")
 	api.GET("/espacios/:id", geoH.ObtenerEspacio)
