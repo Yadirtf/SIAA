@@ -746,6 +746,52 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 		t.Fatalf("esperado status 422 para polígono con vértices insuficientes, obtenido %d", recInvalido.Code)
 	}
 
+	// Prueba HTTP PUT /espacios/:id/geometria con TOQUE_MAPA (US-GEO-03 AC-02)
+	geomToqueBody := `{"metodoCaptura":"TOQUE_MAPA","coordenadas":[[-74.08175,4.60971],[-74.08165,4.60971],[-74.08165,4.60981],[-74.08175,4.60981]],"precisionPromedioMetros":5.0}`
+	reqToque := httptest.NewRequest(http.MethodPut, "/api/v1/espacios/"+espResp.ID+"/geometria", strings.NewReader(geomToqueBody))
+	reqToque.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recToque := httptest.NewRecorder()
+	e.ServeHTTP(recToque, reqToque)
+	if recToque.Code != http.StatusOK {
+		t.Fatalf("PUT /espacios/:id/geometria (TOQUE_MAPA) retorno %d, esperado 200", recToque.Code)
+	}
+	var espToqueResp dto.EspacioResponse
+	if err := json.Unmarshal(recToque.Body.Bytes(), &espToqueResp); err != nil {
+		t.Fatalf("error deserializar espacio toque: %v", err)
+	}
+	if espToqueResp.MetodoCaptura == nil || *espToqueResp.MetodoCaptura != "TOQUE_MAPA" {
+		t.Fatalf("metodoCaptura esperado TOQUE_MAPA, obtenido %v", espToqueResp.MetodoCaptura)
+	}
+	if espToqueResp.PrecisionPromedioMetros != nil {
+		t.Fatalf("AC-02: TOQUE_MAPA no debe registrar precisionPromedioMetros, obtenido %v", *espToqueResp.PrecisionPromedioMetros)
+	}
+	if espToqueResp.VersionGeometria != 2 {
+		t.Fatalf("versionGeometria esperada 2 tras segunda actualizacion, obtenido %d", espToqueResp.VersionGeometria)
+	}
+
+	// Prueba HTTP PUT /espacios/:id/geometria con MIXTO (US-GEO-03 AC-03)
+	geomMixtoBody := `{"metodoCaptura":"MIXTO","coordenadas":[[-74.08175,4.60971],[-74.08165,4.60971],[-74.08165,4.60981],[-74.08175,4.60981]],"precisionPromedioMetros":4.2}`
+	reqMixto := httptest.NewRequest(http.MethodPut, "/api/v1/espacios/"+espResp.ID+"/geometria", strings.NewReader(geomMixtoBody))
+	reqMixto.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recMixto := httptest.NewRecorder()
+	e.ServeHTTP(recMixto, reqMixto)
+	if recMixto.Code != http.StatusOK {
+		t.Fatalf("PUT /espacios/:id/geometria (MIXTO) retorno %d, esperado 200", recMixto.Code)
+	}
+	var espMixtoResp dto.EspacioResponse
+	if err := json.Unmarshal(recMixto.Body.Bytes(), &espMixtoResp); err != nil {
+		t.Fatalf("error deserializar espacio mixto: %v", err)
+	}
+	if espMixtoResp.MetodoCaptura == nil || *espMixtoResp.MetodoCaptura != "MIXTO" {
+		t.Fatalf("metodoCaptura esperado MIXTO, obtenido %v", espMixtoResp.MetodoCaptura)
+	}
+	if espMixtoResp.PrecisionPromedioMetros == nil || *espMixtoResp.PrecisionPromedioMetros != 4.2 {
+		t.Fatalf("AC-03: MIXTO debe conservar precisionPromedioMetros, obtenido %v", espMixtoResp.PrecisionPromedioMetros)
+	}
+	if espMixtoResp.VersionGeometria != 3 {
+		t.Fatalf("versionGeometria esperada 3 tras tercera actualizacion, obtenido %d", espMixtoResp.VersionGeometria)
+	}
+
 	// Prueba HTTP DELETE /espacios/:id -> 204
 	reqDel := httptest.NewRequest(http.MethodDelete, "/api/v1/espacios/"+espResp.ID, nil)
 	recDel := httptest.NewRecorder()

@@ -108,6 +108,11 @@ func (e *Espacio) AsignarGeometria(poligono GeoPolygon, metodo MetodoCaptura, pr
 		})
 	}
 
+	// US-GEO-03 AC-02: en captura por toque sobre mapa no se registra precisión GPS promedio
+	if metodo == MetodoToqueMapa {
+		precisionPromedio = nil
+	}
+
 	area := CalcularAreaGeodesica(poligono)
 	centroide := CalcularCentroide(poligono)
 

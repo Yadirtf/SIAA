@@ -1,11 +1,36 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/models/gps_reading.dart';
+import '../../domain/models/tagged_vertex.dart';
 
 abstract class GeoEditorEvent extends Equatable {
   const GeoEditorEvent();
 
   @override
   List<Object?> get props => [];
+}
+
+/// Cambio de modo de captura entre recorrido perimetral (GPS) y toque en mapa (AC-03).
+class CambiarModoCapturaRequested extends GeoEditorEvent {
+  final ModoCapturaEditor nuevoModo;
+
+  const CambiarModoCapturaRequested(this.nuevoModo);
+
+  @override
+  List<Object?> get props => [nuevoModo];
+}
+
+/// Captura alternativa de vértice mediante toque sobre el mapa interactivo (US-GEO-03, AC-01).
+class ToqueEnMapaRequested extends GeoEditorEvent {
+  final double longitud;
+  final double latitud;
+
+  const ToqueEnMapaRequested({
+    required this.longitud,
+    required this.latitud,
+  });
+
+  @override
+  List<Object?> get props => [longitud, latitud];
 }
 
 /// Actualización de la posición GPS en tiempo real para el semáforo y preview.

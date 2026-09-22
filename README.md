@@ -160,7 +160,7 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 |---|---|
 | US-GEO-01 Jerarquía física de espacios | ✅ Completo |
 | US-GEO-02 Captura de polígono por recorrido perimetral | ✅ Completo |
-| US-GEO-03 Captura alternativa por toque sobre mapa | ⏳ Pendiente |
+| US-GEO-03 Captura alternativa por toque sobre mapa | ✅ Completo |
 | US-GEO-04 Validación geométrica del polígono | ⏳ Pendiente |
 
 ## Licencia

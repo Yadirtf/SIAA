@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/home/presentation/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,8 +72,7 @@ class SIAAApp extends StatelessWidget {
           routes: {
             '/splash': (_) => const _SplashRouter(),
             '/login': (_) => const LoginScreen(),
-            // TODO: agregar rutas de home, marcaje, historial
-            // '/home': (_) => const HomeScreen(),
+            '/home': (_) => const HomeScreen(),
             // '/recuperar-password': (_) => const RecoverPasswordScreen(),
           },
 
