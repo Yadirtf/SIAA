@@ -1,9 +1,8 @@
-// HomeScreen — Pantalla principal del aplicativo móvil SIAA
-// Conecta la sesión autenticada con las funciones de cartografía (US-GEO-02, US-GEO-03)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../geo_editor/data/espacio_repository.dart';
 import '../../../geo_editor/presentation/bloc/geo_editor_bloc.dart';
 import '../../../geo_editor/presentation/screens/geo_editor_screen.dart';
 
@@ -17,8 +16,39 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final EspacioRepository _espacioRepo = EspacioRepository();
   final _codigoEspacioController = TextEditingController(text: 'AULA-101');
   final _nombreEspacioController = TextEditingController(text: 'Aula Magistral 101');
+
+  List<EspacioModel> _espacios = [];
+  EspacioModel? _espacioSeleccionado;
+  bool _cargandoEspacios = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEspacios();
+  }
+
+  Future<void> _cargarEspacios() async {
+    setState(() => _cargandoEspacios = true);
+    try {
+      final list = await _espacioRepo.obtenerEspacios();
+      if (mounted) {
+        setState(() {
+          _espacios = list;
+          if (_espacios.isNotEmpty && _espacioSeleccionado == null) {
+            _espacioSeleccionado = _espacios.first;
+            _codigoEspacioController.text = _espacioSeleccionado!.codigo;
+            _nombreEspacioController.text = _espacioSeleccionado!.nombre;
+          }
+          _cargandoEspacios = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _cargandoEspacios = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -28,25 +58,43 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _abrirGeoEditor() {
-    final codigo = _codigoEspacioController.text.trim().isEmpty
-        ? 'AULA-101'
-        : _codigoEspacioController.text.trim();
-    final nombre = _nombreEspacioController.text.trim().isEmpty
-        ? 'Aula Magistral 101'
-        : _nombreEspacioController.text.trim();
+    final id = _espacioSeleccionado?.id ??
+        'esp-${_codigoEspacioController.text.trim().toLowerCase()}';
+    final codigo = _espacioSeleccionado?.codigo ??
+        (_codigoEspacioController.text.trim().isEmpty ? 'AULA-101' : _codigoEspacioController.text.trim());
+    final nombre = _espacioSeleccionado?.nombre ??
+        (_nombreEspacioController.text.trim().isEmpty ? 'Aula Magistral 101' : _nombreEspacioController.text.trim());
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BlocProvider<GeoEditorBloc>(
-          create: (_) => GeoEditorBloc(),
+          create: (_) => GeoEditorBloc(
+            onSaveGeometry: ({
+              required String espacioId,
+              required List<List<double>> coordenadas,
+              required String metodoCaptura,
+              double? precisionPromedioMetros,
+            }) async {
+              await _espacioRepo.guardarGeometria(
+                espacioId: espacioId,
+                coordenadas: coordenadas,
+                metodoCaptura: metodoCaptura,
+                precisionPromedioMetros: precisionPromedioMetros,
+              );
+            },
+          ),
           child: GeoEditorScreen(
-            espacioId: 'esp-${codigo.toLowerCase()}',
+            espacioId: id,
             espacioCodigo: codigo,
             espacioNombre: nombre,
           ),
         ),
       ),
-    );
+    ).then((result) {
+      if (result == true) {
+        _cargarEspacios();
+      }
+    });
   }
 
   @override
@@ -233,6 +281,66 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          if (_cargandoEspacios)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(),
+            ),
+          if (_espacios.isNotEmpty) ...[
+            DropdownButtonFormField<EspacioModel>(
+              value: _espacioSeleccionado,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Seleccionar Aula/Espacio Registrado',
+                prefixIcon: Icon(Icons.meeting_room_outlined),
+                isDense: true,
+              ),
+              items: _espacios.map((esp) {
+                final tieneGeo = esp.tieneGeometria;
+                return DropdownMenuItem<EspacioModel>(
+                  value: esp,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${esp.codigo} — ${esp.nombre}',
+                          style: const TextStyle(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: tieneGeo
+                              ? SIAAColors.asistenciaPresente.withOpacity(0.15)
+                              : Colors.orange.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          tieneGeo ? 'Delimitada' : 'Sin Polígono',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: tieneGeo ? SIAAColors.asistenciaPresente : Colors.orange[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (nuevo) {
+                if (nuevo != null) {
+                  setState(() {
+                    _espacioSeleccionado = nuevo;
+                    _codigoEspacioController.text = nuevo.codigo;
+                    _nombreEspacioController.text = nuevo.nombre;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: [
               Expanded(

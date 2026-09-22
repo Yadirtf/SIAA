@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/models/gps_reading.dart';
 import '../../domain/models/tagged_vertex.dart';
+import '../../domain/services/gps_location_service.dart';
 import '../bloc/geo_editor_bloc.dart';
 import '../bloc/geo_editor_event.dart';
 import '../bloc/geo_editor_state.dart';
@@ -12,7 +14,7 @@ import '../widgets/gps_traffic_light_badge.dart';
 /// - US-GEO-02: Muestreo GPS, semáforo de precisión, promedio de lecturas y descarte por umbral.
 /// - US-GEO-03: Captura por toque en mapa, alternancia de modos (recorrido / mapa),
 ///   conservación de vértices (MIXTO), aviso offline de teselas (AC-04) y omisión de precisión en TOQUE_MAPA.
-class GeoEditorScreen extends StatelessWidget {
+class GeoEditorScreen extends StatefulWidget {
   final String espacioId;
   final String espacioCodigo;
   final String espacioNombre;
@@ -23,6 +25,38 @@ class GeoEditorScreen extends StatelessWidget {
     required this.espacioCodigo,
     required this.espacioNombre,
   });
+
+  @override
+  State<GeoEditorScreen> createState() => _GeoEditorScreenState();
+}
+
+class _GeoEditorScreenState extends State<GeoEditorScreen> {
+  final GpsLocationService _gpsService = GpsLocationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _iniciarGps();
+  }
+
+  void _iniciarGps() {
+    _gpsService.escucharPosiciones(
+      onReading: (reading) {
+        if (mounted) {
+          context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
+        }
+      },
+      onError: (err) {
+        // En entornos de prueba o sin sensor no interrumpe el uso
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _gpsService.detenerEscucha();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +88,9 @@ class GeoEditorScreen extends StatelessWidget {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Cartografía: $espacioCodigo', style: const TextStyle(fontSize: 16)),
+                Text('Cartografía: ${widget.espacioCodigo}', style: const TextStyle(fontSize: 16)),
                 Text(
-                  espacioNombre,
+                  widget.espacioNombre,
                   style: const TextStyle(fontSize: 12, color: SIAAColors.neutral400),
                 ),
               ],
@@ -192,6 +226,7 @@ class GeoEditorScreen extends StatelessWidget {
                             isClosed: state.isClosed,
                             isMapMode: state.modoCaptura == ModoCapturaEditor.mapa,
                             boundingBox: bb,
+                            currentPosition: state.currentPosition,
                           ),
                           child: const SizedBox.expand(),
                         ),
@@ -356,7 +391,7 @@ class GeoEditorScreen extends StatelessWidget {
                               ),
                               onPressed: state.status != GeoEditorStatus.saving
                                   ? () => context.read<GeoEditorBloc>().add(
-                                        GuardarGeometriaBackendRequested(espacioId: espacioId),
+                                        GuardarGeometriaBackendRequested(espacioId: widget.espacioId),
                                       )
                                   : null,
                             ),
@@ -575,6 +610,7 @@ class _PolygonPreviewPainter extends CustomPainter {
   final bool isClosed;
   final bool isMapMode;
   final _BoundingBox boundingBox;
+  final GpsReading? currentPosition;
 
   _PolygonPreviewPainter({
     required this.vertices,
@@ -582,6 +618,7 @@ class _PolygonPreviewPainter extends CustomPainter {
     required this.isClosed,
     required this.isMapMode,
     required this.boundingBox,
+    this.currentPosition,
   });
 
   @override
@@ -600,11 +637,63 @@ class _PolygonPreviewPainter extends CustomPainter {
       for (double y = 0; y < size.height; y += 50) {
         canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
       }
+
+      // Atribución de cartografía OpenStreetMap
+      final osmTextPainter = TextPainter(
+        text: const TextSpan(
+          text: '© OpenStreetMap contributors • Proyección WGS84',
+          style: TextStyle(
+            color: Colors.white38,
+            fontSize: 9,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      osmTextPainter.paint(canvas, Offset(12, size.height - 20));
+    }
+
+    // Dibujar ubicación actual del usuario si está disponible
+    if (currentPosition != null) {
+      final userCoords = [currentPosition!.longitude, currentPosition!.latitude];
+      final userOffset = boundingBox.toCanvas(userCoords, size, padding);
+
+      // Círculo de radio de precisión
+      final accuracyRadius = (currentPosition!.accuracy * 1.5).clamp(10.0, 50.0);
+      canvas.drawCircle(
+        userOffset,
+        accuracyRadius,
+        Paint()
+          ..color = const Color(0xFF3B82F6).withOpacity(0.18)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        userOffset,
+        accuracyRadius,
+        Paint()
+          ..color = const Color(0xFF3B82F6).withOpacity(0.4)
+          ..strokeWidth = 1.0
+          ..style = PaintingStyle.stroke,
+      );
+
+      // Punto central del usuario
+      canvas.drawCircle(
+        userOffset,
+        6.0,
+        Paint()..color = const Color(0xFF2563EB),
+      );
+      canvas.drawCircle(
+        userOffset,
+        6.0,
+        Paint()
+          ..color = Colors.white
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke,
+      );
     }
 
     if (vertices.isEmpty) {
       final mensaje = isMapMode
-          ? 'MODO MAPA SATELITAL\nToca en cualquier punto de la pantalla para\nposicionar los vértices del espacio (AC-01).'
+          ? 'MODO MAPA SATELITAL (OpenStreetMap)\nToca en cualquier punto de la pantalla para\nposicionar los vértices del espacio (AC-01).'
           : 'MODO RECORRIDO PERIMETRAL\nPárese en una esquina del aula y presione\n"Capturar Vértice" para iniciar el recorrido.';
 
       final textPainter = TextPainter(
@@ -693,6 +782,7 @@ class _PolygonPreviewPainter extends CustomPainter {
   bool shouldRepaint(covariant _PolygonPreviewPainter oldDelegate) {
     return oldDelegate.vertices.length != vertices.length ||
         oldDelegate.isClosed != isClosed ||
-        oldDelegate.isMapMode != isMapMode;
+        oldDelegate.isMapMode != isMapMode ||
+        oldDelegate.currentPosition != currentPosition;
   }
 }

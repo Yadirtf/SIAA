@@ -1,9 +1,8 @@
 // Pantalla de login para la consola web administrativa — T-AUT-01.8
-// Diseño centrado, responsivo desde 1280px, contraste ≥ 4.5:1 (RNF-USA-003).
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-// import '../bloc/auth_bloc.dart'; // compartido con mobile
+import '../bloc/auth_bloc.dart';
 
 class WebLoginScreen extends StatefulWidget {
   const WebLoginScreen({super.key});
@@ -16,10 +15,9 @@ class WebLoginScreen extends StatefulWidget {
 
 class _WebLoginScreenState extends State<WebLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _correoController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _correoController = TextEditingController(text: 'admin@siaa.edu.co');
+  final _passwordController = TextEditingController(text: 'Admin12345678*');
   bool _obscurePassword = true;
-  bool _loading = false;
 
   @override
   void dispose() {
@@ -34,32 +32,51 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 768;
 
-    return Scaffold(
-      body: Row(
-        children: [
-          // Panel izquierdo — branding (solo en pantallas ≥ 768px)
-          if (!isMobile)
-            Expanded(
-              child: _buildBrandPanel(theme),
+    return BlocConsumer<WebAuthBloc, WebAuthState>(
+      listener: (context, state) {
+        if (state is WebAuthAuthenticated) {
+          Navigator.of(context).pushReplacementNamed('/dashboard');
+        } else if (state is WebAuthUnauthenticated && state.mensajeError != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.mensajeError!),
+              backgroundColor: SIAAColors.asistenciaAusente,
+              behavior: SnackBarBehavior.floating,
             ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final loading = state is WebAuthLoading;
 
-          // Panel derecho — formulario
-          Container(
-            width: isMobile ? size.width : 480,
-            height: size.height,
-            color: theme.colorScheme.background,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(SIAASpacing.xxl),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: _buildLoginForm(theme),
+        return Scaffold(
+          body: Row(
+            children: [
+              // Panel izquierdo — branding (solo en pantallas >= 768px)
+              if (!isMobile)
+                Expanded(
+                  child: _buildBrandPanel(theme),
+                ),
+
+              // Panel derecho — formulario
+              Container(
+                width: isMobile ? size.width : 480,
+                height: size.height,
+                color: theme.colorScheme.surface,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(SIAASpacing.xxl),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: _buildLoginForm(theme, loading),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -168,21 +185,21 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     )).toList();
   }
 
-  Widget _buildLoginForm(ThemeData theme) {
+  Widget _buildLoginForm(ThemeData theme, bool loading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Acceso administrativo',
           style: SIAATypography.headlineMedium.copyWith(
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: SIAASpacing.xs),
         Text(
           'Ingresa con tu correo institucional',
           style: SIAATypography.bodyMedium.copyWith(
-            color: theme.colorScheme.onBackground.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
         const SizedBox(height: SIAASpacing.xxl),
@@ -235,8 +252,8 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: _loading ? null : _onLogin,
-                  icon: _loading
+                  onPressed: loading ? null : _onLogin,
+                  icon: loading
                       ? const SizedBox(
                           width: 18,
                           height: 18,
@@ -246,7 +263,7 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                           ),
                         )
                       : const Icon(Icons.login_rounded, size: 20),
-                  label: Text(_loading ? 'Ingresando...' : 'Ingresar'),
+                  label: Text(loading ? 'Ingresando...' : 'Ingresar'),
                 ),
               ),
 
@@ -267,10 +284,11 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
 
   void _onLogin() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    // TODO: integrar con AuthBloc
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _loading = false);
-    });
+    context.read<WebAuthBloc>().add(
+      WebAuthLoginRequested(
+        correo: _correoController.text.trim(),
+        password: _passwordController.text.trim(),
+      ),
+    );
   }
 }
