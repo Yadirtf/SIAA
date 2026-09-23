@@ -15,6 +15,7 @@ class DashboardSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 260,
+      height: double.infinity,
       decoration: const BoxDecoration(
         color: Color(0xFF0F172A), // Slate 900
         boxShadow: [

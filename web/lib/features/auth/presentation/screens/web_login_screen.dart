@@ -62,21 +62,23 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
 
         return Scaffold(
           body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (!isMobile)
                 const Expanded(
                   child: WebLoginBrandPanel(),
                 ),
-              Container(
+              SizedBox(
                 width: isMobile ? size.width : 480,
-                height: size.height,
-                color: theme.colorScheme.surface,
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(SIAASpacing.xxl),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: _buildLoginForm(theme, loading),
+                child: ColoredBox(
+                  color: theme.colorScheme.surface,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(SIAASpacing.xxl),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: _buildLoginForm(theme, loading),
+                      ),
                     ),
                   ),
                 ),

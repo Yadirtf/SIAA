@@ -81,6 +81,7 @@ class _DashboardViewState extends State<_DashboardView> {
           return Scaffold(
             backgroundColor: const Color(0xFFF8FAFC),
             body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ─── Barra Lateral (Sidebar) ───────────────────────────
                 DashboardSidebar(
