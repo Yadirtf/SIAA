@@ -72,7 +72,7 @@ class GeoEditorHeader extends StatelessWidget {
                   _MetodoBadge(metodo: state.metodoCapturaEfectivo),
                   const SizedBox(width: 8),
                   Text(
-                    '${state.vertices.length} pts',
+                    '${state.isClosed && state.vertices.length > 3 ? state.vertices.length - 1 : state.vertices.length} pts',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: SIAAColors.neutral700,
@@ -84,20 +84,48 @@ class GeoEditorHeader extends StatelessWidget {
           ),
         ),
 
-        // ─── Banner informativo en modo mapa ──────────────────────────────
+        // ─── Telemetría de Coordenadas GPS en Vivo (Lat / Lon) ───────────
+        if (state.modoCaptura == ModoCapturaEditor.recorrido)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            color: const Color(0xFFF0FDF4),
+            child: Row(
+              children: [
+                const Icon(Icons.my_location, size: 16, color: Color(0xFF16A34A)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    state.currentPosition != null
+                        ? 'GPS en vivo: Lat ${state.currentPosition!.latitude.toStringAsFixed(6)}, Lon ${state.currentPosition!.longitude.toStringAsFixed(6)} (±${state.currentPosition!.accuracy.toStringAsFixed(1)} m)'
+                        : 'GPS: Adquiriendo señal satelital en vivo...',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF15803D),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // ─── Banner informativo en modo mapa con coordenadas ──────────────
         if (state.modoCaptura == ModoCapturaEditor.mapa)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             color: const Color(0xFFFEF3C7), // Amber 100
             child: Row(
-              children: const [
-                Icon(Icons.touch_app, size: 16, color: Color(0xFFB45309)),
-                SizedBox(width: 8),
+              children: [
+                const Icon(Icons.touch_app, size: 16, color: Color(0xFFB45309)),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Modo Toque en Mapa: Toque directamente sobre el mapa satelital para posicionar cada esquina del aula.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                    state.vertices.isNotEmpty
+                        ? 'Último punto marcado [#${state.vertices.length}]: Lat ${state.vertices.last[1].toStringAsFixed(6)}, Lon ${state.vertices.last[0].toStringAsFixed(6)}'
+                        : 'Modo Toque en Mapa: Toque el mapa para colocar los vértices con precisión milimétrica.',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                   ),
                 ),
               ],

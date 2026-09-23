@@ -4,6 +4,59 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/models/geometria_historial_item.dart';
 
+class SedeModel {
+  final String id;
+  final String codigo;
+  final String nombre;
+  final String? direccion;
+
+  const SedeModel({
+    required this.id,
+    required this.codigo,
+    required this.nombre,
+    this.direccion,
+  });
+
+  factory SedeModel.fromJson(Map<String, dynamic> json) {
+    return SedeModel(
+      id: json['id'] as String? ?? '',
+      codigo: json['codigo'] as String? ?? '',
+      nombre: json['nombre'] as String? ?? '',
+      direccion: json['direccion'] as String?,
+    );
+  }
+}
+
+class BloqueModel {
+  final String id;
+  final String sedeId;
+  final String codigo;
+  final String nombre;
+  final List<int> pisos;
+
+  const BloqueModel({
+    required this.id,
+    required this.sedeId,
+    required this.codigo,
+    required this.nombre,
+    required this.pisos,
+  });
+
+  factory BloqueModel.fromJson(Map<String, dynamic> json) {
+    final pisosList = (json['pisos'] as List<dynamic>?)
+            ?.map((p) => p is int ? p : int.tryParse(p.toString()) ?? 1)
+            .toList() ??
+        [1];
+    return BloqueModel(
+      id: json['id'] as String? ?? '',
+      sedeId: json['sedeId'] as String? ?? '',
+      codigo: json['codigo'] as String? ?? '',
+      nombre: json['nombre'] as String? ?? '',
+      pisos: pisosList,
+    );
+  }
+}
+
 class EspacioModel {
   final String id;
   final String sedeId;
@@ -77,6 +130,107 @@ class EspacioRepository {
   final Dio _client;
 
   EspacioRepository({Dio? client}) : _client = client ?? ApiClient.instance;
+
+  /// Obtiene la lista de sedes universitarias
+  Future<List<SedeModel>> obtenerSedes() async {
+    try {
+      final response = await _client.get('/sedes');
+      final list = response.data as List<dynamic>;
+      return list.map((item) => SedeModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al consultar sedes';
+      throw Exception(errorMsg);
+    }
+  }
+
+  /// Crea una nueva sede
+  Future<SedeModel> crearSede({
+    required String codigo,
+    required String nombre,
+    String? direccion,
+  }) async {
+    try {
+      final response = await _client.post('/sedes', data: {
+        'codigo': codigo,
+        'nombre': nombre,
+        'direccion': direccion ?? '',
+      });
+      return SedeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al crear sede';
+      throw Exception(errorMsg);
+    }
+  }
+
+  /// Obtiene los bloques de una sede
+  Future<List<BloqueModel>> obtenerBloques({String? sedeId}) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (sedeId != null && sedeId.isNotEmpty) queryParams['sedeId'] = sedeId;
+      final response = await _client.get('/bloques', queryParameters: queryParams);
+      final list = response.data as List<dynamic>;
+      return list.map((item) => BloqueModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al consultar bloques';
+      throw Exception(errorMsg);
+    }
+  }
+
+  /// Crea un nuevo bloque dentro de una sede
+  Future<BloqueModel> crearBloque({
+    required String sedeId,
+    required String codigo,
+    required String nombre,
+    List<int>? pisos,
+  }) async {
+    try {
+      final response = await _client.post('/bloques', data: {
+        'sedeId': sedeId,
+        'codigo': codigo,
+        'nombre': nombre,
+        'pisos': pisos ?? [1, 2, 3],
+      });
+      return BloqueModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al crear bloque';
+      throw Exception(errorMsg);
+    }
+  }
+
+  /// Crea un nuevo espacio / aula en el backend
+  Future<EspacioModel> crearEspacio({
+    required String sedeId,
+    String? bloqueId,
+    int? piso,
+    required String codigo,
+    required String nombre,
+    int capacidad = 30,
+    String tipo = 'AULA',
+    String? facultadResponsable,
+    double bufferMetros = 10.0,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'sedeId': sedeId,
+        'codigo': codigo,
+        'nombre': nombre,
+        'capacidad': capacidad,
+        'tipo': tipo,
+        'bufferMetros': bufferMetros,
+      };
+      if (bloqueId != null && bloqueId.isNotEmpty) payload['bloqueId'] = bloqueId;
+      if (piso != null) payload['piso'] = piso;
+      if (facultadResponsable != null && facultadResponsable.isNotEmpty) {
+        payload['facultadResponsable'] = facultadResponsable;
+      }
+
+      final response = await _client.post('/espacios', data: payload);
+      return EspacioModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al crear espacio';
+      throw Exception(errorMsg);
+    }
+  }
 
   /// Obtiene la lista de espacios/aulas desde el backend.
   Future<List<EspacioModel>> obtenerEspacios({
@@ -159,7 +313,7 @@ class EspacioRepository {
         }
         throw Exception(mensaje);
       }
-      final errorMsg = e.message ?? 'Error al guardar geometría en el servidor';
+      final errorMsg = e.response?.data?.toString() ?? e.message ?? 'Error de red o servidor inalcanzable. Detalles: ${e.toString()}';
       throw Exception(errorMsg);
     }
   }

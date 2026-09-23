@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../../core/theme/app_theme.dart';
+import '../../data/espacio_repository.dart';
 import '../../domain/models/capa_mapa.dart';
 import '../../domain/services/gps_location_service.dart';
 import '../bloc/geo_editor_bloc.dart';
@@ -25,12 +26,14 @@ class GeoEditorScreen extends StatefulWidget {
   final String espacioId;
   final String espacioCodigo;
   final String espacioNombre;
+  final List<List<double>>? coordenadasExistentes;
 
   const GeoEditorScreen({
     super.key,
     required this.espacioId,
     required this.espacioCodigo,
     required this.espacioNombre,
+    this.coordenadasExistentes,
   });
 
   @override
@@ -48,7 +51,45 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.coordenadasExistentes != null && widget.coordenadasExistentes!.isNotEmpty) {
+      _mapaCentradoInicialmente = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _cargarGeometria(widget.coordenadasExistentes!);
+      });
+    } else {
+      EspacioRepository().obtenerEspacioPorId(widget.espacioId).then((esp) {
+        if (mounted && esp.coordenadas != null && esp.coordenadas!.isNotEmpty) {
+          _cargarGeometria(esp.coordenadas!);
+        }
+      }).catchError((_) {});
+    }
     _iniciarGps();
+  }
+
+  void _cargarGeometria(List<List<double>> coords) {
+    if (coords.isEmpty) return;
+    _mapaCentradoInicialmente = true;
+    context.read<GeoEditorBloc>().add(
+      CargarGeometriaExistenteRequested(coords),
+    );
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      _centrarEnCoordenadas(coords);
+    });
+  }
+
+  void _centrarEnCoordenadas(List<List<double>> coords) {
+    if (coords.isEmpty) return;
+    try {
+      final points = coords.map((c) => ll.LatLng(c[1], c[0])).toList();
+      final bounds = LatLngBounds.fromPoints(points);
+      _mapController.fitCamera(
+        CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)),
+      );
+    } catch (_) {
+      _mapController.move(ll.LatLng(coords.first[1], coords.first[0]), 18.5);
+    }
   }
 
   Future<void> _iniciarGps() async {
@@ -263,17 +304,9 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                     },
                     onSelectVertex: (index) {
                       if (index == -1 || state.verticeSeleccionadoIndex == index) {
-                        context.read<GeoEditorBloc>().add(MoverVerticeRequested(
-                              index: state.verticeSeleccionadoIndex ?? 0,
-                              nuevaLongitud: state.vertices[state.verticeSeleccionadoIndex ?? 0][0],
-                              nuevaLatitud: state.vertices[state.verticeSeleccionadoIndex ?? 0][1],
-                            ));
+                        context.read<GeoEditorBloc>().add(const SeleccionarVerticeRequested(null));
                       } else {
-                        context.read<GeoEditorBloc>().add(MoverVerticeRequested(
-                              index: index,
-                              nuevaLongitud: state.vertices[index][0],
-                              nuevaLatitud: state.vertices[index][1],
-                            ));
+                        context.read<GeoEditorBloc>().add(SeleccionarVerticeRequested(index));
                       }
                     },
                     onDeleteVertex: (index) {
@@ -335,6 +368,17 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                   onGuardar: () => context.read<GeoEditorBloc>().add(
                         GuardarGeometriaBackendRequested(espacioId: widget.espacioId),
                       ),
+                  onSelectVertex: (index) {
+                    if (index >= 0 && index < state.vertices.length) {
+                      final v = state.vertices[index];
+                      _mapController.move(ll.LatLng(v[1], v[0]), _mapController.camera.zoom);
+                      context.read<GeoEditorBloc>().add(MoverVerticeRequested(
+                            index: index,
+                            nuevaLongitud: v[0],
+                            nuevaLatitud: v[1],
+                          ));
+                    }
+                  },
                 ),
               ],
             ),

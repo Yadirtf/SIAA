@@ -165,5 +165,50 @@ void main() {
 
       await bloc.close();
     });
+
+    test('CargarGeometriaExistenteRequested inicializa polígono para edición de referencia', () async {
+      final bloc = GeoEditorBloc();
+      addTearDown(bloc.close);
+
+      final coordsAbiertas = [
+        [-74.081750, 4.638190],
+        [-74.081650, 4.638190],
+        [-74.081650, 4.638250],
+        [-74.081750, 4.638250],
+      ];
+
+      bloc.add(CargarGeometriaExistenteRequested(coordsAbiertas));
+      await Future.delayed(Duration.zero);
+
+      expect(bloc.state.vertices.length, equals(5)); // auto-cerrado con p0 al final
+      expect(bloc.state.isClosed, isTrue);
+      expect(bloc.state.status, equals(GeoEditorStatus.readyToSave));
+      expect(bloc.state.modoCaptura, equals(ModoCapturaEditor.mapa));
+      expect(bloc.state.areaCalculadaM2, greaterThan(0));
+      expect(bloc.state.perimetroMetros, greaterThan(0));
+    });
+
+    test('SeleccionarVerticeRequested selecciona y deselecciona vértice correctamente', () async {
+      final bloc = GeoEditorBloc();
+      addTearDown(bloc.close);
+
+      final coords = [
+        [-74.081750, 4.638190],
+        [-74.081650, 4.638190],
+        [-74.081650, 4.638250],
+        [-74.081750, 4.638190],
+      ];
+
+      bloc.add(CargarGeometriaExistenteRequested(coords));
+      await Future.delayed(Duration.zero);
+
+      bloc.add(const SeleccionarVerticeRequested(1));
+      await Future.delayed(Duration.zero);
+      expect(bloc.state.verticeSeleccionadoIndex, equals(1));
+
+      bloc.add(const SeleccionarVerticeRequested(null));
+      await Future.delayed(Duration.zero);
+      expect(bloc.state.verticeSeleccionadoIndex, isNull);
+    });
   });
 }

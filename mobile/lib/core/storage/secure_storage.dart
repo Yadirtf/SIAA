@@ -11,7 +11,14 @@ class SecureStorage {
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock,
     ),
+    webOptions: WebOptions(
+      dbName: 'SiaaStorage',
+      publicKey: 'SiaaPublicKey',
+    ),
   );
+
+  // Caché en memoria para mitigar restricciones de descifrado WebCrypto y OperationError
+  static final Map<String, String> _memoryCache = {};
 
   // ─── Claves ─────────────────────────────────────────────────
   static const _keyAccessToken   = 'siaa_access_token';
@@ -21,31 +28,65 @@ class SecureStorage {
 
   // ─── Tokens de sesión ──────────────────────────────────────
 
-  /// Guarda el par de tokens de sesión en almacenamiento seguro.
+  /// Guarda el par de tokens de sesión en almacenamiento seguro y en memoria.
   static Future<void> saveSession({
     required String accessToken,
     required String refreshToken,
   }) async {
-    await Future.wait([
-      _storage.write(key: _keyAccessToken, value: accessToken),
-      _storage.write(key: _keyRefreshToken, value: refreshToken),
-    ]);
+    _memoryCache[_keyAccessToken] = accessToken;
+    _memoryCache[_keyRefreshToken] = refreshToken;
+    try {
+      await Future.wait([
+        _storage.write(key: _keyAccessToken, value: accessToken),
+        _storage.write(key: _keyRefreshToken, value: refreshToken),
+      ]);
+    } catch (_) {
+      // Si el motor seguro subyacente (ej. WebCrypto en navegador) falla, la sesión persiste en memoria
+    }
   }
 
-  /// Obtiene el token de acceso actual.
-  static Future<String?> getAccessToken() =>
-      _storage.read(key: _keyAccessToken);
+  /// Obtiene el token de acceso actual sin lanzar excepciones por fallos de descifrado WebCrypto.
+  static Future<String?> getAccessToken() async {
+    if (_memoryCache.containsKey(_keyAccessToken)) {
+      return _memoryCache[_keyAccessToken];
+    }
+    try {
+      final token = await _storage.read(key: _keyAccessToken);
+      if (token != null) {
+        _memoryCache[_keyAccessToken] = token;
+      }
+      return token;
+    } catch (_) {
+      return _memoryCache[_keyAccessToken];
+    }
+  }
 
   /// Obtiene el token de refresco actual.
-  static Future<String?> getRefreshToken() =>
-      _storage.read(key: _keyRefreshToken);
+  static Future<String?> getRefreshToken() async {
+    if (_memoryCache.containsKey(_keyRefreshToken)) {
+      return _memoryCache[_keyRefreshToken];
+    }
+    try {
+      final token = await _storage.read(key: _keyRefreshToken);
+      if (token != null) {
+        _memoryCache[_keyRefreshToken] = token;
+      }
+      return token;
+    } catch (_) {
+      return _memoryCache[_keyRefreshToken];
+    }
+  }
 
   /// Elimina todos los datos de sesión (logout).
   static Future<void> clearSession() async {
-    await Future.wait([
-      _storage.delete(key: _keyAccessToken),
-      _storage.delete(key: _keyRefreshToken),
-    ]);
+    _memoryCache.remove(_keyAccessToken);
+    _memoryCache.remove(_keyRefreshToken);
+    try {
+      await Future.wait([
+        _storage.delete(key: _keyAccessToken),
+        _storage.delete(key: _keyRefreshToken),
+      ]);
+    } catch (_) {}
   }
 
   // ─── ID de instalación ─────────────────────────────────────
@@ -54,10 +95,22 @@ class SecureStorage {
 
   /// Obtiene o genera el ID de instalación de la app.
   static Future<String> getOrCreateInstalacionId() async {
-    var id = await _storage.read(key: _keyInstalacionId);
+    if (_memoryCache.containsKey(_keyInstalacionId)) {
+      return _memoryCache[_keyInstalacionId]!;
+    }
+    String? id;
+    try {
+      id = await _storage.read(key: _keyInstalacionId);
+    } catch (_) {}
+
     if (id == null) {
       id = _generateUUID();
-      await _storage.write(key: _keyInstalacionId, value: id);
+      _memoryCache[_keyInstalacionId] = id;
+      try {
+        await _storage.write(key: _keyInstalacionId, value: id);
+      } catch (_) {}
+    } else {
+      _memoryCache[_keyInstalacionId] = id;
     }
     return id;
   }
@@ -65,15 +118,36 @@ class SecureStorage {
   // ─── Consentimiento ────────────────────────────────────────
 
   /// Guarda la versión de la política de privacidad aceptada.
-  static Future<void> saveConsentimiento(String version) =>
-      _storage.write(key: _keyConsentimiento, value: version);
+  static Future<void> saveConsentimiento(String version) async {
+    _memoryCache[_keyConsentimiento] = version;
+    try {
+      await _storage.write(key: _keyConsentimiento, value: version);
+    } catch (_) {}
+  }
 
   /// Obtiene la versión de política aceptada (null si no ha aceptado).
-  static Future<String?> getConsentimientoVersion() =>
-      _storage.read(key: _keyConsentimiento);
+  static Future<String?> getConsentimientoVersion() async {
+    if (_memoryCache.containsKey(_keyConsentimiento)) {
+      return _memoryCache[_keyConsentimiento];
+    }
+    try {
+      final version = await _storage.read(key: _keyConsentimiento);
+      if (version != null) {
+        _memoryCache[_keyConsentimiento] = version;
+      }
+      return version;
+    } catch (_) {
+      return _memoryCache[_keyConsentimiento];
+    }
+  }
 
   /// Elimina todos los datos del almacenamiento (útil para logout completo).
-  static Future<void> clearAll() => _storage.deleteAll();
+  static Future<void> clearAll() async {
+    _memoryCache.clear();
+    try {
+      await _storage.deleteAll();
+    } catch (_) {}
+  }
 
   // ─── Utilidades ────────────────────────────────────────────
 

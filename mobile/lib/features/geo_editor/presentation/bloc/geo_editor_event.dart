@@ -157,3 +157,13 @@ class SeleccionarVersionPreviewRequested extends GeoEditorEvent {
   List<Object?> get props => [version];
 }
 
+/// Selección o deselección de un vértice para edición activa (mover/reubicar o deseleccionar con null/-1).
+class SeleccionarVerticeRequested extends GeoEditorEvent {
+  final int? index;
+
+  const SeleccionarVerticeRequested(this.index);
+
+  @override
+  List<Object?> get props => [index];
+}
+

@@ -41,6 +41,7 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
     on<MoverVerticeRequested>(_onMoverVerticeRequested);
     on<InsertarVerticeEnSegmentoRequested>(_onInsertarVerticeEnSegmentoRequested);
     on<EliminarVerticeRequested>(_onEliminarVerticeRequested);
+    on<SeleccionarVerticeRequested>(_onSeleccionarVerticeRequested);
     on<CargarGeometriaExistenteRequested>(_onCargarGeometriaExistenteRequested);
     on<CargarVersionesHistoricasRequested>(_onCargarVersionesHistoricasRequested);
     on<SeleccionarVersionPreviewRequested>(_onSeleccionarVersionPreviewRequested);
@@ -244,12 +245,33 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
       }
     }
 
-    final areaFinal = GeodesicCalculator.calcularArea(ring);
-    final perimetroFinal = GeodesicCalculator.calcularPerimetro(ring);
+    // Validar que el polígono no contenga bordes cruzados (auto-intersección / forma de X)
+    if (GeodesicCalculator.tieneAutoInterseccion(ring)) {
+      emit(state.copyWith(
+        status: GeoEditorStatus.error,
+        errorMessage: 'El perímetro se cruza a sí mismo (forma de X). Ajuste los vértices o use Deshacer para trazar el contorno en orden continuo.',
+      ));
+      return;
+    }
+
+    // Normalizar a sentido antihorario (CCW) según RFC 7946 / MongoDB 2dsphere
+    final ringCCW = GeodesicCalculator.normalizarSentidoAntihorario(ring);
+    List<TaggedVertex> ringTaggedCCW = ringTagged;
+    if (ring.length >= 4 &&
+        ringCCW.length == ring.length &&
+        ringTagged.length == ring.length &&
+        (ringCCW[1][0] != ring[1][0] || ringCCW[1][1] != ring[1][1])) {
+      final sinCierre = ringTagged.sublist(0, ringTagged.length - 1).reversed.toList();
+      sinCierre.add(sinCierre.first);
+      ringTaggedCCW = sinCierre;
+    }
+
+    final areaFinal = GeodesicCalculator.calcularArea(ringCCW);
+    final perimetroFinal = GeodesicCalculator.calcularPerimetro(ringCCW);
 
     emit(state.copyWith(
-      vertices: ring,
-      verticesEtiquetados: ringTagged,
+      vertices: ringCCW,
+      verticesEtiquetados: ringTaggedCCW,
       isClosed: true,
       areaCalculadaM2: areaFinal,
       perimetroMetros: perimetroFinal,
@@ -451,6 +473,11 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
     if (event.coordenadas.isEmpty) return;
 
     final vertices = List<List<double>>.from(event.coordenadas);
+    if (vertices.length >= 3 &&
+        (vertices.first[0] != vertices.last[0] || vertices.first[1] != vertices.last[1])) {
+      vertices.add([vertices.first[0], vertices.first[1]]);
+    }
+
     final tagged = vertices.map((c) => TaggedVertex(
       longitude: c[0],
       latitude: c[1],
@@ -471,8 +498,21 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
       areaCalculadaM2: area,
       perimetroMetros: perimetro,
       status: isClosed ? GeoEditorStatus.readyToSave : GeoEditorStatus.tracking,
+      modoCaptura: ModoCapturaEditor.mapa,
+      clearVerticeSeleccionado: true,
       clearError: true,
     ));
+  }
+
+  void _onSeleccionarVerticeRequested(
+    SeleccionarVerticeRequested event,
+    Emitter<GeoEditorState> emit,
+  ) {
+    if (event.index == null || event.index! < 0 || event.index! >= state.vertices.length) {
+      emit(state.copyWith(clearVerticeSeleccionado: true));
+    } else {
+      emit(state.copyWith(verticeSeleccionadoIndex: event.index));
+    }
   }
 
   Future<void> _onCargarVersionesHistoricasRequested(

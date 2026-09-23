@@ -17,31 +17,77 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final EspacioRepository _espacioRepo = EspacioRepository();
-  final _codigoEspacioController = TextEditingController(text: 'AULA-101');
-  final _nombreEspacioController = TextEditingController(text: 'Aula Magistral 101');
+
+  List<SedeModel> _sedes = [];
+  SedeModel? _sedeSeleccionada;
+  bool _cargandoSedes = false;
+
+  List<BloqueModel> _bloques = [];
+  BloqueModel? _bloqueSeleccionado;
+  bool _cargandoBloques = false;
 
   List<EspacioModel> _espacios = [];
-  EspacioModel? _espacioSeleccionado;
   bool _cargandoEspacios = false;
 
   @override
   void initState() {
     super.initState();
-    _cargarEspacios();
+    _cargarSedes();
   }
 
-  Future<void> _cargarEspacios() async {
+  Future<void> _cargarSedes() async {
+    setState(() => _cargandoSedes = true);
+    try {
+      final list = await _espacioRepo.obtenerSedes();
+      if (mounted) {
+        setState(() {
+          _sedes = list;
+          _cargandoSedes = false;
+          if (_sedes.isNotEmpty) {
+            _sedeSeleccionada = _sedes.first;
+            _cargarBloques(_sedeSeleccionada!.id);
+          } else {
+            _sedeSeleccionada = null;
+            _bloques = [];
+            _bloqueSeleccionado = null;
+            _espacios = [];
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _cargandoSedes = false);
+    }
+  }
+
+  Future<void> _cargarBloques(String sedeId) async {
+    setState(() => _cargandoBloques = true);
+    try {
+      final list = await _espacioRepo.obtenerBloques(sedeId: sedeId);
+      if (mounted) {
+        setState(() {
+          _bloques = list;
+          _cargandoBloques = false;
+          if (_bloques.isNotEmpty) {
+            _bloqueSeleccionado = _bloques.first;
+            _cargarEspacios(sedeId, _bloqueSeleccionado!.id);
+          } else {
+            _bloqueSeleccionado = null;
+            _espacios = [];
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _cargandoBloques = false);
+    }
+  }
+
+  Future<void> _cargarEspacios(String sedeId, String? bloqueId) async {
     setState(() => _cargandoEspacios = true);
     try {
-      final list = await _espacioRepo.obtenerEspacios();
+      final list = await _espacioRepo.obtenerEspacios(sedeId: sedeId, bloqueId: bloqueId);
       if (mounted) {
         setState(() {
           _espacios = list;
-          if (_espacios.isNotEmpty && _espacioSeleccionado == null) {
-            _espacioSeleccionado = _espacios.first;
-            _codigoEspacioController.text = _espacioSeleccionado!.codigo;
-            _nombreEspacioController.text = _espacioSeleccionado!.nombre;
-          }
           _cargandoEspacios = false;
         });
       }
@@ -50,21 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _codigoEspacioController.dispose();
-    _nombreEspacioController.dispose();
-    super.dispose();
-  }
-
-  void _abrirGeoEditor() {
-    final id = _espacioSeleccionado?.id ??
-        'esp-${_codigoEspacioController.text.trim().toLowerCase()}';
-    final codigo = _espacioSeleccionado?.codigo ??
-        (_codigoEspacioController.text.trim().isEmpty ? 'AULA-101' : _codigoEspacioController.text.trim());
-    final nombre = _espacioSeleccionado?.nombre ??
-        (_nombreEspacioController.text.trim().isEmpty ? 'Aula Magistral 101' : _nombreEspacioController.text.trim());
-
+  void _abrirGeoEditorParaEspacio(EspacioModel espacio) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BlocProvider<GeoEditorBloc>(
@@ -86,19 +118,232 @@ class _HomeScreenState extends State<HomeScreen> {
                 motivoSolapamiento: motivoSolapamiento,
               );
             },
+            onFetchHistorial: (id) => _espacioRepo.obtenerVersionesGeometria(id),
           ),
           child: GeoEditorScreen(
-            espacioId: id,
-            espacioCodigo: codigo,
-            espacioNombre: nombre,
+            espacioId: espacio.id,
+            espacioCodigo: espacio.codigo,
+            espacioNombre: espacio.nombre,
+            coordenadasExistentes: espacio.coordenadas,
           ),
         ),
       ),
-    ).then((result) {
-      if (result == true) {
-        _cargarEspacios();
+    ).then((_) {
+      if (_sedeSeleccionada != null) {
+        _cargarEspacios(_sedeSeleccionada!.id, _bloqueSeleccionado?.id);
       }
     });
+  }
+
+  Future<void> _dialogoCrearSede() async {
+    final codCtrl = TextEditingController(text: 'SEDE-01');
+    final nomCtrl = TextEditingController(text: 'Campus Principal');
+    final dirCtrl = TextEditingController(text: 'Calle Universitaria #1');
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Registrar Nueva Sede'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: codCtrl, decoration: const InputDecoration(labelText: 'Código de Sede (ej: SEDE-01)')),
+            const SizedBox(height: 8),
+            TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nombre de la Sede')),
+            const SizedBox(height: 8),
+            TextField(controller: dirCtrl, decoration: const InputDecoration(labelText: 'Dirección (opcional)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              if (codCtrl.text.trim().isEmpty || nomCtrl.text.trim().isEmpty) return;
+              Navigator.of(ctx).pop();
+              try {
+                final nueva = await _espacioRepo.crearSede(
+                  codigo: codCtrl.text.trim(),
+                  nombre: nomCtrl.text.trim(),
+                  direccion: dirCtrl.text.trim(),
+                );
+                await _cargarSedes();
+                setState(() => _sedeSeleccionada = nueva);
+                await _cargarBloques(nueva.id);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al crear sede: $e'), backgroundColor: SIAAColors.asistenciaAusente),
+                  );
+                }
+              }
+            },
+            child: const Text('Guardar Sede'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dialogoCrearBloque() async {
+    if (_sedeSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero debe registrar o seleccionar una Sede.')),
+      );
+      return;
+    }
+
+    final codCtrl = TextEditingController(text: 'BLQ-A');
+    final nomCtrl = TextEditingController(text: 'Bloque A — Ciencias e Ingenierías');
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Nuevo Bloque en ${_sedeSeleccionada!.nombre}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: codCtrl, decoration: const InputDecoration(labelText: 'Código de Bloque (ej: BLQ-A)')),
+            const SizedBox(height: 8),
+            TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nombre del Bloque')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              if (codCtrl.text.trim().isEmpty || nomCtrl.text.trim().isEmpty) return;
+              Navigator.of(ctx).pop();
+              try {
+                final nuevo = await _espacioRepo.crearBloque(
+                  sedeId: _sedeSeleccionada!.id,
+                  codigo: codCtrl.text.trim(),
+                  nombre: nomCtrl.text.trim(),
+                  pisos: [1, 2, 3, 4],
+                );
+                await _cargarBloques(_sedeSeleccionada!.id);
+                setState(() => _bloqueSeleccionado = nuevo);
+                await _cargarEspacios(_sedeSeleccionada!.id, nuevo.id);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al crear bloque: $e'), backgroundColor: SIAAColors.asistenciaAusente),
+                  );
+                }
+              }
+            },
+            child: const Text('Guardar Bloque'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dialogoCrearAula() async {
+    if (_sedeSeleccionada == null || _bloqueSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seleccione una Sede y un Bloque antes de crear un aula.')),
+      );
+      return;
+    }
+
+    final codCtrl = TextEditingController(text: 'AULA-101');
+    final nomCtrl = TextEditingController(text: 'Aula Magistral 101');
+    final capCtrl = TextEditingController(text: '35');
+    int pisoSeleccionado = 1;
+    String tipoSeleccionado = 'AULA';
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          title: Text('Nueva Aula en ${_bloqueSeleccionado!.nombre}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: codCtrl, decoration: const InputDecoration(labelText: 'Código Aula (ej: A-101)')),
+                const SizedBox(height: 8),
+                TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nombre del Espacio')),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: pisoSeleccionado,
+                        decoration: const InputDecoration(labelText: 'Piso'),
+                        items: _bloqueSeleccionado!.pisos
+                            .map((p) => DropdownMenuItem(value: p, child: Text('Piso $p')))
+                            .toList(),
+                        onChanged: (p) => setDlgState(() => pisoSeleccionado = p ?? 1),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: capCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Capacidad'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: tipoSeleccionado,
+                  decoration: const InputDecoration(labelText: 'Tipo de Espacio'),
+                  items: const [
+                    DropdownMenuItem(value: 'AULA', child: Text('Aula Magistral')),
+                    DropdownMenuItem(value: 'LABORATORIO', child: Text('Laboratorio')),
+                    DropdownMenuItem(value: 'AUDITORIO', child: Text('Auditorio')),
+                    DropdownMenuItem(value: 'TALLER', child: Text('Taller')),
+                    DropdownMenuItem(value: 'OFICINA', child: Text('Oficina / Sala')),
+                  ],
+                  onChanged: (t) => setDlgState(() => tipoSeleccionado = t ?? 'AULA'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+            FilledButton(
+              onPressed: () async {
+                if (codCtrl.text.trim().isEmpty || nomCtrl.text.trim().isEmpty) return;
+                Navigator.of(ctx).pop();
+                try {
+                  final cap = int.tryParse(capCtrl.text.trim()) ?? 30;
+                  final nuevoEspacio = await _espacioRepo.crearEspacio(
+                    sedeId: _sedeSeleccionada!.id,
+                    bloqueId: _bloqueSeleccionado!.id,
+                    piso: pisoSeleccionado,
+                    codigo: codCtrl.text.trim(),
+                    nombre: nomCtrl.text.trim(),
+                    capacidad: cap,
+                    tipo: tipoSeleccionado,
+                  );
+                  await _cargarEspacios(_sedeSeleccionada!.id, _bloqueSeleccionado!.id);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Aula "${nuevoEspacio.nombre}" creada con éxito en la base de datos.'),
+                        backgroundColor: SIAAColors.asistenciaPresente,
+                      ),
+                    );
+                    _abrirGeoEditorParaEspacio(nuevoEspacio);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al crear aula: $e'), backgroundColor: SIAAColors.asistenciaAusente),
+                    );
+                  }
+                }
+              },
+              child: const Text('Crear y Mapear'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -243,15 +488,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(SIAASpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E3A8A), const Color(0xFF1E293B)]
-              : [const Color(0xFFEFF6FF), Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: SIAAColors.primary200),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: SIAAColors.primary500,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.map_rounded, color: Colors.white, size: 24),
+                child: const Icon(Icons.account_tree_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -272,11 +514,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
                     Text(
-                      'Cartografía y Espacios',
+                      'Jerarquía Física y Cartografía',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Levantamiento perimetral y toque en mapa (US-GEO-02 / 03)',
+                      'Sede → Bloque → Aula → Polígono GPS (RF-GEO-001)',
                       style: TextStyle(fontSize: 12, color: SIAAColors.neutral500),
                     ),
                   ],
@@ -285,108 +527,240 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // ─── 1. Selector de Sede ──────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _cargandoSedes
+                    ? const LinearProgressIndicator()
+                    : DropdownButtonFormField<SedeModel>(
+                        value: _sedeSeleccionada,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: '1. Sede Universitaria',
+                          prefixIcon: Icon(Icons.apartment_rounded),
+                          isDense: true,
+                        ),
+                        hint: const Text('Seleccionar o crear sede'),
+                        items: _sedes.map((s) {
+                          return DropdownMenuItem(value: s, child: Text('${s.codigo} — ${s.nombre}'));
+                        }).toList(),
+                        onChanged: (nueva) {
+                          if (nueva != null) {
+                            setState(() => _sedeSeleccionada = nueva);
+                            _cargarBloques(nueva.id);
+                          }
+                        },
+                      ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                icon: const Icon(Icons.add_business_rounded),
+                tooltip: 'Nueva Sede',
+                onPressed: _dialogoCrearSede,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ─── 2. Selector de Bloque ────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _cargandoBloques
+                    ? const LinearProgressIndicator()
+                    : DropdownButtonFormField<BloqueModel>(
+                        value: _bloqueSeleccionado,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: '2. Bloque o Edificio',
+                          prefixIcon: Icon(Icons.domain_rounded),
+                          isDense: true,
+                        ),
+                        hint: Text(_sedeSeleccionada == null
+                            ? 'Seleccione una sede primero'
+                            : (_bloques.isEmpty ? 'Sin bloques en esta sede' : 'Seleccionar bloque')),
+                        items: _bloques.map((b) {
+                          return DropdownMenuItem(value: b, child: Text('${b.codigo} — ${b.nombre}'));
+                        }).toList(),
+                        onChanged: _sedeSeleccionada == null
+                            ? null
+                            : (nuevo) {
+                                if (nuevo != null) {
+                                  setState(() => _bloqueSeleccionado = nuevo);
+                                  _cargarEspacios(_sedeSeleccionada!.id, nuevo.id);
+                                }
+                              },
+                      ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                icon: const Icon(Icons.add_home_work_rounded),
+                tooltip: 'Nuevo Bloque',
+                onPressed: _sedeSeleccionada != null ? _dialogoCrearBloque : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // ─── 3. Cabecera de Aulas en el Bloque ─────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '3. Aulas / Espacios (${_espacios.length})',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: SIAAColors.primary600,
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Crear Aula'),
+                onPressed: _bloqueSeleccionado != null ? _dialogoCrearAula : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // ─── 4. Lista de Aulas del Bloque ─────────────────────────────────
           if (_cargandoEspacios)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(),
-            ),
-          if (_espacios.isNotEmpty) ...[
-            DropdownButtonFormField<EspacioModel>(
-              value: _espacioSeleccionado,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Seleccionar Aula/Espacio Registrado',
-                prefixIcon: Icon(Icons.meeting_room_outlined),
-                isDense: true,
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_bloqueSeleccionado == null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
               ),
-              items: _espacios.map((esp) {
+              child: const Text(
+                'Seleccione o cree una Sede y un Bloque para gestionar sus aulas y delimitar sus perímetros.',
+                style: TextStyle(fontSize: 12, color: SIAAColors.neutral600),
+              ),
+            )
+          else if (_espacios.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SIAAColors.neutral200),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.meeting_room_outlined, size: 32, color: SIAAColors.neutral400),
+                  const SizedBox(height: 6),
+                  Text(
+                    'No hay aulas en ${_bloqueSeleccionado!.nombre}',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Presiona "+ Crear Aula" para registrar un salón y delimitar su polígono GPS.',
+                    style: TextStyle(fontSize: 11, color: SIAAColors.neutral500),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _espacios.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, idx) {
+                final esp = _espacios[idx];
                 final tieneGeo = esp.tieneGeometria;
-                return DropdownMenuItem<EspacioModel>(
-                  value: esp,
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: SIAAColors.neutral200),
+                  ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          '${esp.codigo} — ${esp.nombre}',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: tieneGeo ? SIAAColors.primary50 : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.meeting_room_rounded,
+                          color: tieneGeo ? SIAAColors.primary600 : Colors.orange.shade800,
+                          size: 22,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: tieneGeo
-                              ? SIAAColors.asistenciaPresente.withOpacity(0.15)
-                              : Colors.orange.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  esp.codigo,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: tieneGeo
+                                        ? SIAAColors.asistenciaPresente.withOpacity(0.15)
+                                        : Colors.orange.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    tieneGeo
+                                        ? 'Delimitada (${esp.areaMetrosCuadrados.toStringAsFixed(1)} m²)'
+                                        : 'Sin Polígono',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: tieneGeo ? SIAAColors.asistenciaPresente : Colors.orange.shade800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              esp.nombre,
+                              style: const TextStyle(fontSize: 12, color: SIAAColors.neutral700),
+                            ),
+                            Text(
+                              'Piso ${esp.piso ?? 1} · Capacidad: ${esp.capacidad} est. · Tipo: ${esp.tipo}',
+                              style: const TextStyle(fontSize: 10, color: SIAAColors.neutral500),
+                            ),
+                          ],
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                        onPressed: () => _abrirGeoEditorParaEspacio(esp),
                         child: Text(
-                          tieneGeo ? 'Delimitada' : 'Sin Polígono',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: tieneGeo ? SIAAColors.asistenciaPresente : Colors.orange[800],
-                          ),
+                          tieneGeo ? 'Editar Polígono' : 'Trazar GPS',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
                 );
-              }).toList(),
-              onChanged: (nuevo) {
-                if (nuevo != null) {
-                  setState(() {
-                    _espacioSeleccionado = nuevo;
-                    _codigoEspacioController.text = nuevo.codigo;
-                    _nombreEspacioController.text = nuevo.nombre;
-                  });
-                }
               },
             ),
-            const SizedBox(height: 12),
-          ],
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: TextField(
-                  controller: _codigoEspacioController,
-                  decoration: const InputDecoration(
-                    labelText: 'Código Aula',
-                    hintText: 'AULA-101',
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _nombreEspacioController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre Espacio',
-                    hintText: 'Aula Magistral 101',
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SIAAColors.primary500,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              icon: const Icon(Icons.explore_outlined, size: 20),
-              label: const Text('Iniciar Editor Cartográfico', style: TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: _abrirGeoEditor,
-            ),
-          ),
         ],
       ),
     );

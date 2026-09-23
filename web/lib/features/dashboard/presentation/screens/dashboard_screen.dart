@@ -4,6 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../data/admin_geo_repository.dart';
+import '../../../academico/data/academico_repository.dart';
+import '../../../academico/presentation/periodos/periodos_tab.dart';
+import '../../../academico/presentation/estructura/estructura_tab.dart';
+import '../../../academico/presentation/asignaciones/asignaciones_tab.dart';
+import '../../../academico/presentation/excepciones/excepciones_tab.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,8 +21,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final AdminGeoRepository _geoRepo = AdminGeoRepository();
+  final AcademicoRepository _academicoRepo = AcademicoRepository();
 
-  int _selectedNavIndex = 0; // 0: Espacios, 1: Sedes y Bloques
+  int _selectedNavIndex = 0; // 0: Espacios, 1: Sedes y Bloques, 2: Periodos, 3: Estructura, 4: Asignaciones, 5: Excepciones
 
   bool _loading = true;
   String? _errorMessage;
@@ -92,7 +98,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ? _buildErrorView()
                             : _selectedNavIndex == 0
                                 ? _buildEspaciosView(theme)
-                                : _buildSedesBloquesView(theme),
+                                : _selectedNavIndex == 1
+                                    ? _buildSedesBloquesView(theme)
+                                    : _selectedNavIndex == 2
+                                        ? PeriodosTab(repository: _academicoRepo)
+                                        : _selectedNavIndex == 3
+                                            ? EstructuraTab(repository: _academicoRepo)
+                                            : _selectedNavIndex == 4
+                                                ? AsignacionesTab(repository: _academicoRepo)
+                                                : ExcepcionesTab(repository: _academicoRepo),
                   ),
                 ],
               ),
@@ -169,6 +183,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.domain_outlined,
             activeIcon: Icons.domain,
             label: 'Sedes y Bloques',
+          ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Text(
+              'ACADÉMICO',
+              style: TextStyle(
+                color: Colors.white30,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          _buildSidebarItem(
+            index: 2,
+            icon: Icons.calendar_month_outlined,
+            activeIcon: Icons.calendar_month,
+            label: 'Periodos Lectivos',
+          ),
+          _buildSidebarItem(
+            index: 3,
+            icon: Icons.account_tree_outlined,
+            activeIcon: Icons.account_tree,
+            label: 'Estructura Base',
+          ),
+          _buildSidebarItem(
+            index: 4,
+            icon: Icons.schedule_outlined,
+            activeIcon: Icons.schedule,
+            label: 'Asignaciones y Horarios',
+          ),
+          _buildSidebarItem(
+            index: 5,
+            icon: Icons.event_busy_outlined,
+            activeIcon: Icons.event_busy,
+            label: 'Calendario Excepciones',
           ),
 
           const Spacer(),

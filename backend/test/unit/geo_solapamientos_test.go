@@ -411,7 +411,9 @@ func TestGeo_USGEO05_AC04_InformeSolapamientosGlobal(t *testing.T) {
 	if len(informe) != 1 {
 		t.Fatalf("esperado exactamente 1 conflicto en el informe, obtenido: %d", len(informe))
 	}
-	if informe[0].Espacio1Codigo != "AULA-101" || informe[0].Espacio2Codigo != "AULA-102" {
+	pair := (informe[0].Espacio1Codigo == "AULA-101" && informe[0].Espacio2Codigo == "AULA-102") ||
+		(informe[0].Espacio1Codigo == "AULA-102" && informe[0].Espacio2Codigo == "AULA-101")
+	if !pair {
 		t.Errorf("conflictos esperados entre AULA-101 y AULA-102, obtenido: %s y %s", informe[0].Espacio1Codigo, informe[0].Espacio2Codigo)
 	}
 

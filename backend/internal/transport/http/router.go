@@ -5,6 +5,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -28,6 +29,7 @@ func NewRouter(
 	openapiH *handler.OpenAPIHandler,
 	rolesH *handler.RolesHandler,
 	geoH *handler.GeoHandler,
+	acaH *handler.AcademicoHandler,
 	auditoria repository.AuditoriaRepository,
 	registry *RouteRegistry,
 ) (*echo.Echo, error) {
@@ -55,8 +57,34 @@ func NewRouter(
 		}
 	}
 
+	// Soporte para Chrome Private Network Access (PNA)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Header.Get("Access-Control-Request-Private-Network") == "true" {
+				c.Response().Header().Set("Access-Control-Allow-Private-Network", "true")
+			}
+			return next(c)
+		}
+	})
+
 	e.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-		AllowOrigins: origins,
+		AllowOriginFunc: func(origin string) (bool, error) {
+			if cfg.Env != "production" {
+				return true, nil
+			}
+			for _, allowed := range cfg.CORSAllowedOrigins {
+				if allowed == "*" || allowed == origin {
+					return true, nil
+				}
+				if strings.HasPrefix(allowed, "https://*.") {
+					baseDomain := strings.TrimPrefix(allowed, "https://*.")
+					if strings.HasPrefix(origin, "https://") && strings.HasSuffix(origin, "."+baseDomain) {
+						return true, nil
+					}
+				}
+			}
+			return false, nil
+		},
 		AllowHeaders: []string{
 			echo.HeaderOrigin,
 			echo.HeaderContentType,
@@ -65,6 +93,9 @@ func NewRouter(
 			mw.HeaderCorrelationID,
 			"Idempotency-Key",
 			"X-Requested-With",
+			"Access-Control-Request-Headers",
+			"Access-Control-Request-Method",
+			"Access-Control-Request-Private-Network",
 		},
 		AllowMethods: []string{
 			http.MethodGet,
@@ -75,7 +106,7 @@ func NewRouter(
 			http.MethodOptions,
 		},
 		ExposeHeaders:    []string{mw.HeaderCorrelationID},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           86400,
 	}))
 
@@ -174,6 +205,74 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id/geometria/versiones/:version", rbac.PermAulaLeer)
 		espaciosProtected.DELETE("/:id", geoH.EliminarEspacio, mw.RequirePermission(rbac.PermAulaEliminar, auditoria))
 		registry.RegisterPermission(http.MethodDelete, "/api/v1/espacios/:id", rbac.PermAulaEliminar)
+	}
+
+	// ─── Estructura académica, horarios y asignaciones — EP-04 ──
+	if acaH != nil {
+		// Periodos (US-ACA-01)
+		periodos := api.Group("/periodos", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		periodos.GET("", acaH.ListarPeriodos, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/periodos", rbac.PermHorarioLeer)
+		periodos.POST("", acaH.CrearPeriodo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/periodos", rbac.PermHorarioCrear)
+		periodos.GET("/:id", acaH.ObtenerPeriodo, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/periodos/:id", rbac.PermHorarioLeer)
+		periodos.PUT("/:id", acaH.ActualizarPeriodo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/periodos/:id", rbac.PermHorarioCrear)
+
+		// Facultades
+		facultades := api.Group("/facultades", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		facultades.GET("", acaH.ListarFacultades, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/facultades", rbac.PermHorarioLeer)
+		facultades.POST("", acaH.CrearFacultad, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/facultades", rbac.PermHorarioCrear)
+		facultades.DELETE("/:id", acaH.EliminarFacultad, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/facultades/:id", rbac.PermHorarioCrear)
+
+		// Programas
+		programas := api.Group("/programas", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		programas.GET("", acaH.ListarProgramas, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/programas", rbac.PermHorarioLeer)
+		programas.POST("", acaH.CrearPrograma, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/programas", rbac.PermHorarioCrear)
+		programas.DELETE("/:id", acaH.EliminarPrograma, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/programas/:id", rbac.PermHorarioCrear)
+
+		// Asignaturas
+		asignaturas := api.Group("/asignaturas", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		asignaturas.GET("", acaH.ListarAsignaturas, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/asignaturas", rbac.PermHorarioLeer)
+		asignaturas.POST("", acaH.CrearAsignatura, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/asignaturas", rbac.PermHorarioCrear)
+		asignaturas.DELETE("/:id", acaH.EliminarAsignatura, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/asignaturas/:id", rbac.PermHorarioCrear)
+
+		// Grupos
+		grupos := api.Group("/grupos", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		grupos.GET("", acaH.ListarGrupos, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/grupos", rbac.PermHorarioLeer)
+		grupos.POST("", acaH.CrearGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/grupos", rbac.PermHorarioCrear)
+		grupos.DELETE("/:id", acaH.EliminarGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
+
+		// Asignaciones (US-ACA-03)
+		asignaciones := api.Group("/asignaciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		asignaciones.GET("", acaH.ListarAsignaciones, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/asignaciones", rbac.PermHorarioLeer)
+		asignaciones.POST("", acaH.CrearAsignacion, mw.RequirePermission(rbac.PermAsignacionCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/asignaciones", rbac.PermAsignacionCrear)
+		asignaciones.DELETE("/:id", acaH.EliminarAsignacion, mw.RequirePermission(rbac.PermAsignacionCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/asignaciones/:id", rbac.PermAsignacionCrear)
+
+		// Calendario de Excepciones (US-ACA-04)
+		excepciones := api.Group("/calendario-excepciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		excepciones.GET("", acaH.ListarExcepciones, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/calendario-excepciones", rbac.PermHorarioLeer)
+		excepciones.POST("", acaH.CrearExcepcion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/calendario-excepciones", rbac.PermHorarioCrear)
+		excepciones.DELETE("/:id", acaH.EliminarExcepcion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/calendario-excepciones/:id", rbac.PermHorarioCrear)
 	}
 
 	// ─── Verificación al arranque — T-ROL-01.4, AC-03 ─────────

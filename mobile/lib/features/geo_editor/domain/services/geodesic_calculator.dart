@@ -78,4 +78,93 @@ class GeodesicCalculator {
 
     return (total.abs() * radioTierraWGS84 * radioTierraWGS84 / 2.0);
   }
+
+  /// Comprueba si dos segmentos [p1, p2] y [p3, p4] se cruzan estrictamente.
+  static bool _segmentosSeCruzan(
+    List<double> p1,
+    List<double> p2,
+    List<double> p3,
+    List<double> p4,
+  ) {
+    double ccw(List<double> a, List<double> b, List<double> c) {
+      return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    }
+
+    final d1 = ccw(p1, p2, p3);
+    final d2 = ccw(p1, p2, p4);
+    final d3 = ccw(p3, p4, p1);
+    final d4 = ccw(p3, p4, p2);
+
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  }
+
+  /// Verifica si el polígono perimetral contiene aristas no adyacentes que se cruzan entre sí (forma de X).
+  static bool tieneAutoInterseccion(List<List<double>> vertices) {
+    if (vertices.length < 4) return false;
+
+    // Normalizar a anillo cerrado
+    final ring = List<List<double>>.from(vertices);
+    if (ring.first[0] != ring.last[0] || ring.first[1] != ring.last[1]) {
+      ring.add(ring.first);
+    }
+
+    final numEdges = ring.length - 1;
+    for (int i = 0; i < numEdges; i++) {
+      for (int j = i + 1; j < numEdges; j++) {
+        // Ignorar aristas adyacentes y cierre (primera y última)
+        if ((i - j).abs() <= 1) continue;
+        if (i == 0 && j == numEdges - 1) continue;
+
+        if (_segmentosSeCruzan(ring[i], ring[i + 1], ring[j], ring[j + 1])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /// Calcula el área con signo en 2D (Shoelace) para determinar la orientación (CW vs CCW).
+  static double _areaConSigno(List<List<double>> vertices) {
+    double sum = 0.0;
+    final n = vertices.length;
+    for (int i = 0; i < n; i++) {
+      final p1 = vertices[i];
+      final p2 = vertices[(i + 1) % n];
+      sum += (p2[0] - p1[0]) * (p2[1] + p1[1]);
+    }
+    return sum;
+  }
+
+  /// Asegura que el polígono esté ordenado en sentido antihorario (CCW),
+  /// requerido por la especificación GeoJSON RFC 7946 e índices 2dsphere de MongoDB.
+  static List<List<double>> normalizarSentidoAntihorario(List<List<double>> vertices) {
+    if (vertices.length < 3) return List.from(vertices);
+
+    final lista = List<List<double>>.from(vertices);
+    final esCerrado = lista.length >= 4 &&
+        lista.first[0] == lista.last[0] &&
+        lista.first[1] == lista.last[1];
+
+    if (esCerrado) {
+      lista.removeLast();
+    }
+
+    // Para la fórmula sum += (x2 - x1) * (y2 + y1):
+    // Si sum > 0 es horario (CW). Si sum < 0 es antihorario (CCW).
+    final areaSigno = _areaConSigno(lista);
+    if (areaSigno > 0) {
+      // Invertir para convertir de horario a antihorario
+      final invertida = lista.reversed.toList();
+      if (esCerrado) {
+        invertida.add(invertida.first);
+      }
+      return invertida;
+    }
+
+    if (esCerrado) {
+      lista.add(lista.first);
+    }
+    return lista;
+  }
 }

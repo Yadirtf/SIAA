@@ -71,7 +71,79 @@ func NewGeoPolygon(vertices []GeoPoint) (GeoPolygon, error) {
 		}
 	}
 
+	// Validar que no existan aristas que se crucen entre sí (auto-intersección / forma de X)
+	if hasSelfIntersections(copia) {
+		return GeoPolygon{}, &shared.DomainError{
+			Code:    shared.ErrGeometriaInvalida,
+			Message: "El polígono es inválido: contiene bordes cruzados (auto-intersección). Asegúrese de trazar los vértices en orden perimetral continuo.",
+			Fields: []shared.FieldError{
+				{Campo: "vertices", Error: "AUTO_INTERSECCION_DETECTADA"},
+			},
+		}
+	}
+
+	copia = asegurarSentidoAntihorario(copia)
+
 	return GeoPolygon{anilloExterior: copia}, nil
+}
+
+func ccw(a, b, c GeoPoint) float64 {
+	return (b.Longitud() - a.Longitud()) * (c.Latitud() - a.Latitud()) - (b.Latitud() - a.Latitud()) * (c.Longitud() - a.Longitud())
+}
+
+func segmentsIntersect(p1, p2, p3, p4 GeoPoint) bool {
+	d1 := ccw(p1, p2, p3)
+	d2 := ccw(p1, p2, p4)
+	d3 := ccw(p3, p4, p1)
+	d4 := ccw(p3, p4, p2)
+
+	return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+		((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+}
+
+func hasSelfIntersections(vertices []GeoPoint) bool {
+	n := len(vertices)
+	if n < 4 {
+		return false
+	}
+	numEdges := n - 1
+	for i := 0; i < numEdges; i++ {
+		for j := i + 1; j < numEdges; j++ {
+			if j-i <= 1 {
+				continue
+			}
+			if i == 0 && j == numEdges-1 {
+				continue
+			}
+			if segmentsIntersect(vertices[i], vertices[i+1], vertices[j], vertices[j+1]) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func asegurarSentidoAntihorario(vertices []GeoPoint) []GeoPoint {
+	if len(vertices) < 4 {
+		return vertices
+	}
+	var sum float64
+	n := len(vertices) - 1
+	for i := 0; i < n; i++ {
+		p1 := vertices[i]
+		p2 := vertices[i+1]
+		sum += (p2.Longitud() - p1.Longitud()) * (p2.Latitud() + p1.Latitud())
+	}
+	// sum > 0: horario (CW). sum < 0: antihorario (CCW).
+	if sum > 0 {
+		res := make([]GeoPoint, len(vertices))
+		for i := 0; i < n; i++ {
+			res[i] = vertices[n-1-i]
+		}
+		res[n] = res[0]
+		return res
+	}
+	return vertices
 }
 
 // Vertices retorna una copia del anillo exterior cerrado de vértices.

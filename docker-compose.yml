@@ -12,8 +12,8 @@ services:
       - APP_ENV=development
       - APP_VERSION=0.1.0-dev
       - PORT=8080
-      - MONGO_URI=mongodb://mongo:27017
-      - MONGO_DB=siaa_dev
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017}
+      - MONGO_DB=${MONGO_DB:-siaa_dev}
       - JWT_SECRET=${JWT_SECRET:-siaa-dev-secret-change-in-production-min-32chars}
       - JWT_ACCESS_MINUTES=15
       - JWT_REFRESH_DAYS=30
@@ -39,7 +39,7 @@ services:
     container_name: siaa-mongo
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27018}:27017"
     volumes:
       - mongo-data:/data/db
     environment:

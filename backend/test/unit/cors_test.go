@@ -21,7 +21,7 @@ func TestCORS_Preflight_LocalhostDevelopment(t *testing.T) {
 	logger := applog.New(applog.LevelDebug, nil)
 	healthH := handler.NewHealthHandler(nil, "0.1.0-test", "test")
 
-	router, err := apphttp.NewRouter(cfg, logger, healthH, nil, nil, nil, nil, nil, nil)
+	router, err := apphttp.NewRouter(cfg, logger, healthH, nil, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error al crear router: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestCORS_Preflight_ProductionRejection(t *testing.T) {
 	logger := applog.New(applog.LevelDebug, nil)
 	healthH := handler.NewHealthHandler(nil, "0.1.0-test", "test")
 
-	router, err := apphttp.NewRouter(cfg, logger, healthH, nil, nil, nil, nil, nil, nil)
+	router, err := apphttp.NewRouter(cfg, logger, healthH, nil, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error al crear router: %v", err)
 	}

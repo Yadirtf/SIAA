@@ -874,3 +874,43 @@ func TestGeo_HTTP_Endpoints_Y_VerificacionRutas(t *testing.T) {
 		t.Fatalf("GET /bloques/:id retorno status %d, esperado 200", recGetBloque.Code)
 	}
 }
+
+// TestGeo_AutoInterseccion_Y_Normalizacion verifica que NewGeoPolygon rechace
+// geometrías con bordes cruzados (forma de X) y admita geometrías válidas.
+func TestGeo_AutoInterseccion_Y_Normalizacion(t *testing.T) {
+	// 1. Polígono cruzado en forma de X (reloj de arena / bowtie):
+	// P0: (-74.08, 4.60) [abajo-izq]
+	// P1: (-74.07, 4.61) [arriba-der] -> cruza diagonalmente
+	// P2: (-74.07, 4.60) [abajo-der]
+	// P3: (-74.08, 4.61) [arriba-izq] -> cruza diagonalmente
+	pt0, _ := geo.NewGeoPoint(-74.08, 4.60)
+	pt1, _ := geo.NewGeoPoint(-74.07, 4.61)
+	pt2, _ := geo.NewGeoPoint(-74.07, 4.60)
+	pt3, _ := geo.NewGeoPoint(-74.08, 4.61)
+
+	_, err := geo.NewGeoPolygon([]geo.GeoPoint{pt0, pt1, pt2, pt3})
+	if err == nil {
+		t.Fatal("se esperaba error de auto-intersección para polígono en X, pero fue aceptado")
+	}
+
+	// 2. Polígono rectangular válido no cruzado:
+	// P0: (-74.08, 4.60) [abajo-izq]
+	// P1: (-74.07, 4.60) [abajo-der]
+	// P2: (-74.07, 4.61) [arriba-der]
+	// P3: (-74.08, 4.61) [arriba-izq]
+	valido0, _ := geo.NewGeoPoint(-74.08, 4.60)
+	valido1, _ := geo.NewGeoPoint(-74.07, 4.60)
+	valido2, _ := geo.NewGeoPoint(-74.07, 4.61)
+	valido3, _ := geo.NewGeoPoint(-74.08, 4.61)
+
+	poly, err := geo.NewGeoPolygon([]geo.GeoPoint{valido0, valido1, valido2, valido3})
+	if err != nil {
+		t.Fatalf("error inesperado en polígono válido: %v", err)
+	}
+
+	area := geo.CalcularAreaGeodesica(poly)
+	if area <= 0 {
+		t.Fatalf("se esperaba área > 0, obtenido %f", area)
+	}
+}
+

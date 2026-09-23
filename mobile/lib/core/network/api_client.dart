@@ -106,9 +106,13 @@ class _AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    final token = await SecureStorage.getAccessToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    try {
+      final token = await SecureStorage.getAccessToken();
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (_) {
+      // Ignorar para evitar abortar la petición si hay fallos en storage
     }
     handler.next(options);
   }

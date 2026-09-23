@@ -41,11 +41,11 @@ class GeoEditorMapView extends StatelessWidget {
   });
 
   ll.LatLng get _initialCenter {
-    if (state.currentPosition != null) {
-      return ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude);
-    }
     if (state.vertices.isNotEmpty) {
       return ll.LatLng(state.vertices.first[1], state.vertices.first[0]);
+    }
+    if (state.currentPosition != null) {
+      return ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude);
     }
     return const ll.LatLng(4.6372, -74.0839); // Coordenadas de referencia (Bogotá)
   }
@@ -141,16 +141,17 @@ class GeoEditorMapView extends StatelessWidget {
                 return;
               }
 
-              // 2. Si el polígono está cerrado o tiene vértices, verificar si tocó una arista para insertar (US-GEO-07 AC-02)
-              if (state.vertices.length >= 3) {
-                final seg = _buscarSegmentoCercano(point, state.vertices, 15.0);
+              // 2. Si el polígono YA está cerrado, permitir insertar vértice en arista cercana (US-GEO-07 AC-02)
+              // Umbral prudente de 3.5 metros para evitar toques accidentales sobre aristas
+              if (state.isClosed && state.vertices.length >= 4) {
+                final seg = _buscarSegmentoCercano(point, state.vertices, 3.5);
                 if (seg != null) {
                   onInsertVertex?.call(seg, point.longitude, point.latitude);
                   return;
                 }
               }
 
-              // 3. Captura alternativa estándar por toque si está en modo mapa y no cerrado
+              // 3. Captura secuencial por toque si está en modo mapa y trazando el contorno
               if (state.modoCaptura == ModoCapturaEditor.mapa && !state.isClosed) {
                 onMapTap?.call(point.longitude, point.latitude);
               }
@@ -268,7 +269,7 @@ class GeoEditorMapView extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Vértice #${state.verticeSeleccionadoIndex! + 1} seleccionado: toque el mapa para moverlo.',
+                        'Vértice #${state.verticeSeleccionadoIndex! + 1} [Lat: ${state.vertices[state.verticeSeleccionadoIndex!][1].toStringAsFixed(6)}, Lon: ${state.vertices[state.verticeSeleccionadoIndex!][0].toStringAsFixed(6)}]: toque el mapa para moverlo.',
                         style: const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
