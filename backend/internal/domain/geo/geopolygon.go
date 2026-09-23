@@ -88,7 +88,7 @@ func NewGeoPolygon(vertices []GeoPoint) (GeoPolygon, error) {
 }
 
 func ccw(a, b, c GeoPoint) float64 {
-	return (b.Longitud() - a.Longitud()) * (c.Latitud() - a.Latitud()) - (b.Latitud() - a.Latitud()) * (c.Longitud() - a.Longitud())
+	return (b.Longitud()-a.Longitud())*(c.Latitud()-a.Latitud()) - (b.Latitud()-a.Latitud())*(c.Longitud()-a.Longitud())
 }
 
 func segmentsIntersect(p1, p2, p3, p4 GeoPoint) bool {

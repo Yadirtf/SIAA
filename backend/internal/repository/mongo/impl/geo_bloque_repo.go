@@ -117,13 +117,13 @@ func (r *bloqueRepository) FindByCodigo(ctx context.Context, sedeID, codigo stri
 	}, nil
 }
 
-func (r *bloqueRepository) FindBySede(ctx context.Context, sedeID string) ([]*geo.Bloque, error) {
+func (r *bloqueRepository) ListBySede(ctx context.Context, sedeID string) ([]*geo.Bloque, error) {
 	cursor, err := r.col.Find(ctx, bson.D{
 		{Key: "sedeId", Value: sedeID},
 		{Key: "eliminado", Value: false},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("findBloquesBySede: %w", err)
+		return nil, fmt.Errorf("listBloquesBySede: %w", err)
 	}
 	defer cursor.Close(ctx)
 
