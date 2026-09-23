@@ -87,11 +87,25 @@ void main() {
       expect(find.text('Aulas y Espacios'), findsOneWidget);
       expect(find.text('Sedes y Bloques'), findsOneWidget);
       expect(find.text('Periodos Lectivos'), findsOneWidget);
+      expect(find.text('Estructura Base'), findsOneWidget);
+      expect(find.text('Asignaciones y Horarios'), findsOneWidget);
+      expect(find.text('Calendario Excepciones'), findsOneWidget);
 
       await tester.tap(find.text('Periodos Lectivos'));
       await tester.pump();
-
       expect(selectedNav, equals(2));
+
+      await tester.tap(find.text('Estructura Base'));
+      await tester.pump();
+      expect(selectedNav, equals(3));
+
+      await tester.tap(find.text('Asignaciones y Horarios'));
+      await tester.pump();
+      expect(selectedNav, equals(4));
+
+      await tester.tap(find.text('Calendario Excepciones'));
+      await tester.pump();
+      expect(selectedNav, equals(5));
     });
 
     test('DashboardBloc: CargarDatosRequested emite estado success con colecciones', () async {

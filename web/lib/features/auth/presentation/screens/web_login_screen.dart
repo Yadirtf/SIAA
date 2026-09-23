@@ -46,7 +46,9 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     return BlocConsumer<WebAuthBloc, WebAuthState>(
       listener: (context, state) {
         if (state is WebAuthAuthenticated) {
-          Navigator.of(context).pushReplacementNamed('/dashboard');
+          if (ModalRoute.of(context)?.settings.name == '/login') {
+            Navigator.of(context).pushReplacementNamed('/dashboard');
+          }
         } else if (state is WebAuthUnauthenticated && state.mensajeError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -102,7 +104,7 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
         Text(
           'Ingresa con tu correo institucional',
           style: SIAATypography.bodyMedium.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: SIAASpacing.xxl),

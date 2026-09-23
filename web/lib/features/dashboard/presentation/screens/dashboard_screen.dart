@@ -47,7 +47,9 @@ class _DashboardViewState extends State<_DashboardView> {
         BlocListener<WebAuthBloc, WebAuthState>(
           listener: (context, state) {
             if (state is WebAuthUnauthenticated) {
-              Navigator.of(context).pushReplacementNamed('/login');
+              if (ModalRoute.of(context)?.settings.name == '/dashboard') {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
             }
           },
         ),
@@ -135,34 +137,16 @@ class _DashboardViewState extends State<_DashboardView> {
     DashboardState state,
     DashboardBloc bloc,
   ) {
-    if (state.status == DashboardStatus.loading && state.sedes.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.status == DashboardStatus.failure && state.sedes.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: SIAAColors.asistenciaAusente),
-            const SizedBox(height: 12),
-            Text(
-              state.errorMessage ?? 'Ocurrió un error al cargar la información.',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => bloc.add(const DashboardCargarDatosRequested()),
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      );
-    }
-
     switch (state.selectedNavIndex) {
       case 0:
+        if (state.status == DashboardStatus.loading && state.sedes.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.status == DashboardStatus.failure && state.sedes.isEmpty) {
+          return _construirErrorGeo(state, bloc);
+        }
         return DashboardEspaciosView(
+          key: const ValueKey('tab_espacios'),
           state: state,
           onCrearEspacio: ({
             required String sedeId,
@@ -186,7 +170,14 @@ class _DashboardViewState extends State<_DashboardView> {
           onEliminarEspacio: (id) => bloc.add(DashboardEliminarEspacioRequested(id)),
         );
       case 1:
+        if (state.status == DashboardStatus.loading && state.sedes.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.status == DashboardStatus.failure && state.sedes.isEmpty) {
+          return _construirErrorGeo(state, bloc);
+        }
         return DashboardSedesBloquesView(
+          key: const ValueKey('tab_sedes_bloques'),
           state: state,
           onCrearSede: ({
             required String codigo,
@@ -214,15 +205,48 @@ class _DashboardViewState extends State<_DashboardView> {
           },
         );
       case 2:
-        return PeriodosTab(repository: _academicoRepo);
+        return PeriodosTab(
+          key: const ValueKey('tab_periodos'),
+          repository: _academicoRepo,
+        );
       case 3:
-        return EstructuraTab(repository: _academicoRepo);
+        return EstructuraTab(
+          key: const ValueKey('tab_estructura'),
+          repository: _academicoRepo,
+        );
       case 4:
-        return AsignacionesTab(repository: _academicoRepo);
+        return AsignacionesTab(
+          key: const ValueKey('tab_asignaciones'),
+          repository: _academicoRepo,
+        );
       case 5:
-        return ExcepcionesTab(repository: _academicoRepo);
+        return ExcepcionesTab(
+          key: const ValueKey('tab_excepciones'),
+          repository: _academicoRepo,
+        );
       default:
         return const Center(child: Text('Sección no encontrada'));
     }
+  }
+
+  Widget _construirErrorGeo(DashboardState state, DashboardBloc bloc) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: SIAAColors.asistenciaAusente),
+          const SizedBox(height: 12),
+          Text(
+            state.errorMessage ?? 'Ocurrió un error al cargar la información.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => bloc.add(const DashboardCargarDatosRequested()),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
   }
 }

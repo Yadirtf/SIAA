@@ -66,60 +66,70 @@ class DashboardSidebar extends StatelessWidget {
             ),
           ),
           const Divider(color: Colors.white12, height: 1),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Items de Navegación
-          _buildItem(
-            index: 0,
-            icon: Icons.meeting_room_outlined,
-            activeIcon: Icons.meeting_room,
-            label: 'Aulas y Espacios',
-          ),
-          _buildItem(
-            index: 1,
-            icon: Icons.domain_outlined,
-            activeIcon: Icons.domain,
-            label: 'Sedes y Bloques',
-          ),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            child: Text(
-              'ACADÉMICO',
-              style: TextStyle(
-                color: Colors.white30,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+          // Items de Navegación con Scroll para evitar desbordamiento
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildItem(
+                    index: 0,
+                    icon: Icons.meeting_room_outlined,
+                    activeIcon: Icons.meeting_room,
+                    label: 'Aulas y Espacios',
+                  ),
+                  _buildItem(
+                    index: 1,
+                    icon: Icons.domain_outlined,
+                    activeIcon: Icons.domain,
+                    label: 'Sedes y Bloques',
+                  ),
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    child: Text(
+                      'ACADÉMICO',
+                      style: TextStyle(
+                        color: Colors.white30,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  _buildItem(
+                    index: 2,
+                    icon: Icons.calendar_month_outlined,
+                    activeIcon: Icons.calendar_month,
+                    label: 'Periodos Lectivos',
+                  ),
+                  _buildItem(
+                    index: 3,
+                    icon: Icons.account_tree_outlined,
+                    activeIcon: Icons.account_tree,
+                    label: 'Estructura Base',
+                  ),
+                  _buildItem(
+                    index: 4,
+                    icon: Icons.schedule_outlined,
+                    activeIcon: Icons.schedule,
+                    label: 'Asignaciones y Horarios',
+                  ),
+                  _buildItem(
+                    index: 5,
+                    icon: Icons.event_busy_outlined,
+                    activeIcon: Icons.event_busy,
+                    label: 'Calendario Excepciones',
+                  ),
+                ],
               ),
             ),
           ),
-          _buildItem(
-            index: 2,
-            icon: Icons.calendar_month_outlined,
-            activeIcon: Icons.calendar_month,
-            label: 'Periodos Lectivos',
-          ),
-          _buildItem(
-            index: 3,
-            icon: Icons.account_tree_outlined,
-            activeIcon: Icons.account_tree,
-            label: 'Estructura Base',
-          ),
-          _buildItem(
-            index: 4,
-            icon: Icons.schedule_outlined,
-            activeIcon: Icons.schedule,
-            label: 'Asignaciones y Horarios',
-          ),
-          _buildItem(
-            index: 5,
-            icon: Icons.event_busy_outlined,
-            activeIcon: Icons.event_busy,
-            label: 'Calendario Excepciones',
-          ),
 
-          const Spacer(),
+          const Divider(color: Colors.white12, height: 1),
 
           // Indicador de Versión y API
           Padding(
@@ -159,12 +169,16 @@ class DashboardSidebar extends StatelessWidget {
     final isSelected = selectedNavIndex == index;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       child: Material(
         color: isSelected ? SIAAColors.primary600 : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
+          mouseCursor: SystemMouseCursors.click,
+          hoverColor: Colors.white.withValues(alpha: 0.08),
+          highlightColor: Colors.white.withValues(alpha: 0.12),
           onTap: () => onNavItemSelected(index),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
