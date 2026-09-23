@@ -913,4 +913,3 @@ func TestGeo_AutoInterseccion_Y_Normalizacion(t *testing.T) {
 		t.Fatalf("se esperaba área > 0, obtenido %f", area)
 	}
 }
-

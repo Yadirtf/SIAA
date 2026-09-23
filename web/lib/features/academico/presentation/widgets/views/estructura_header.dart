@@ -15,21 +15,23 @@ class EstructuraHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Estructura Académica (US-ACA-01 AC-04)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Jerarquía institucional: Facultad → Programa → Asignatura → Grupos',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Estructura Académica (US-ACA-01 AC-04)',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Jerarquía institucional: Facultad → Programa → Asignatura → Grupos',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ],
+          ),
         ),
         FilledButton.icon(
           onPressed: onCrearElemento,
