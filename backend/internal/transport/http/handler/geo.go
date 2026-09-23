@@ -317,6 +317,39 @@ func (h *GeoHandler) InformeSolapamientos(c echo.Context) error {
 	})
 }
 
+// ListarVersionesGeometria maneja GET /api/v1/espacios/:id/geometria/versiones.
+// US-GEO-06 AC-04, T-GEO-06.3.
+func (h *GeoHandler) ListarVersionesGeometria(c echo.Context) error {
+	id := c.Param("id")
+	versiones, err := h.svc.ListarVersionesGeometria(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+
+	res := make([]dto.EspacioGeometriaHistResponse, 0, len(versiones))
+	for _, v := range versiones {
+		res = append(res, dto.EspacioGeometriaHistToResponse(v))
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+// ObtenerVersionGeometria maneja GET /api/v1/espacios/:id/geometria/versiones/:version.
+// US-GEO-06 AC-03, T-GEO-06.3.
+func (h *GeoHandler) ObtenerVersionGeometria(c echo.Context) error {
+	id := c.Param("id")
+	versionStr := c.Param("version")
+	version, err := strconv.Atoi(versionStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "El número de versión debe ser un entero válido")
+	}
+
+	hist, err := h.svc.ObtenerVersionGeometria(c.Request().Context(), id, version)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, dto.EspacioGeometriaHistToResponse(hist))
+}
+
 // ─────────────────────────────────────────────────────────────
 // HELPER EXTRAER ACTOR
 // ─────────────────────────────────────────────────────────────

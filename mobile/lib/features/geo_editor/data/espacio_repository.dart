@@ -2,6 +2,7 @@
 // Permite listar aulas/espacios y enviar la geometría capturada al backend (US-GEO-01, US-GEO-02, US-GEO-03)
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../domain/models/geometria_historial_item.dart';
 
 class EspacioModel {
   final String id;
@@ -159,6 +160,20 @@ class EspacioRepository {
         throw Exception(mensaje);
       }
       final errorMsg = e.message ?? 'Error al guardar geometría en el servidor';
+      throw Exception(errorMsg);
+    }
+  }
+
+  /// Obtiene el historial de versiones archivadas de la geometría de un espacio (US-GEO-06 AC-04, T-GEO-06.3).
+  Future<List<GeometriaHistorialItem>> obtenerVersionesGeometria(String espacioId) async {
+    try {
+      final response = await _client.get('/espacios/$espacioId/geometria/versiones');
+      final list = response.data as List<dynamic>;
+      return list
+          .map((item) => GeometriaHistorialItem.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['mensaje'] ?? e.message ?? 'Error al obtener versiones de geometría';
       throw Exception(errorMsg);
     }
   }

@@ -28,6 +28,22 @@ class TaggedVertex {
   /// Retorna las coordenadas en formato GeoJSON [longitud, latitud] (ADR-04).
   List<double> toCoordinates() => [longitude, latitude];
 
+  TaggedVertex copyWith({
+    double? longitude,
+    double? latitude,
+    OrigenVertice? origen,
+    double? precision,
+  }) {
+    return TaggedVertex(
+      longitude: longitude ?? this.longitude,
+      latitude: latitude ?? this.latitude,
+      origen: origen ?? this.origen,
+      precision: precision ?? this.precision,
+      timestamp: timestamp,
+    );
+  }
+
   @override
   String toString() => 'TaggedVertex(lon: $longitude, lat: $latitude, origen: $origen, acc: $precision)';
 }
+

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/models/geometria_historial_item.dart';
 import '../../domain/models/gps_accuracy_status.dart';
 import '../../domain/models/gps_reading.dart';
 import '../../domain/models/tagged_vertex.dart';
@@ -23,6 +24,10 @@ class GeoEditorState extends Equatable {
   final bool isClosed;
   final double areaCalculadaM2;
   final double perimetroMetros;
+  final int? verticeSeleccionadoIndex; // US-GEO-07: vértice en edición activa
+  final List<GeometriaHistorialItem> versionesHistoricas; // US-GEO-06: lista de versiones
+  final GeometriaHistorialItem? versionPreview; // US-GEO-06: versión histórica superpuesta
+  final bool isLoadingHistorial;
   final String? errorMessage;
   final String? successMessage;
   final String? solapamientoAdvertencia;
@@ -39,12 +44,17 @@ class GeoEditorState extends Equatable {
     this.isClosed = false,
     this.areaCalculadaM2 = 0.0,
     this.perimetroMetros = 0.0,
+    this.verticeSeleccionadoIndex,
+    this.versionesHistoricas = const [],
+    this.versionPreview,
+    this.isLoadingHistorial = false,
     this.errorMessage,
     this.successMessage,
     this.solapamientoAdvertencia,
     this.solapamientoDetalles,
     this.solapamientoCritico,
   });
+
 
   /// AC-04 (US-GEO-02): El botón de captura GPS solo está habilitado si la precisión es óptima o aceptable.
   bool get canCaptureGps =>
@@ -111,6 +121,12 @@ class GeoEditorState extends Equatable {
     bool? isClosed,
     double? areaCalculadaM2,
     double? perimetroMetros,
+    int? verticeSeleccionadoIndex,
+    bool clearVerticeSeleccionado = false,
+    List<GeometriaHistorialItem>? versionesHistoricas,
+    GeometriaHistorialItem? versionPreview,
+    bool clearVersionPreview = false,
+    bool? isLoadingHistorial,
     String? errorMessage,
     String? successMessage,
     String? solapamientoAdvertencia,
@@ -129,6 +145,10 @@ class GeoEditorState extends Equatable {
       isClosed: isClosed ?? this.isClosed,
       areaCalculadaM2: areaCalculadaM2 ?? this.areaCalculadaM2,
       perimetroMetros: perimetroMetros ?? this.perimetroMetros,
+      verticeSeleccionadoIndex: clearVerticeSeleccionado ? null : (verticeSeleccionadoIndex ?? this.verticeSeleccionadoIndex),
+      versionesHistoricas: versionesHistoricas ?? this.versionesHistoricas,
+      versionPreview: clearVersionPreview ? null : (versionPreview ?? this.versionPreview),
+      isLoadingHistorial: isLoadingHistorial ?? this.isLoadingHistorial,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       successMessage: successMessage ?? this.successMessage,
       solapamientoAdvertencia: clearSolapamiento ? null : (solapamientoAdvertencia ?? this.solapamientoAdvertencia),
@@ -148,6 +168,10 @@ class GeoEditorState extends Equatable {
         isClosed,
         areaCalculadaM2,
         perimetroMetros,
+        verticeSeleccionadoIndex,
+        versionesHistoricas,
+        versionPreview,
+        isLoadingHistorial,
         errorMessage,
         successMessage,
         solapamientoAdvertencia,

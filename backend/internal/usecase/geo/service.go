@@ -18,6 +18,7 @@ type Service struct {
 	sedeRepo      repository.SedeRepository
 	bloqueRepo    repository.BloqueRepository
 	espacioRepo   repository.EspacioRepository
+	histRepo      repository.EspacioGeometriaHistRepository
 	sesionChecker repository.SesionFutureChecker
 	auditoriaRepo repository.AuditoriaRepository
 	clk           shared.Clock
@@ -29,6 +30,7 @@ func NewService(
 	sedeRepo repository.SedeRepository,
 	bloqueRepo repository.BloqueRepository,
 	espacioRepo repository.EspacioRepository,
+	histRepo repository.EspacioGeometriaHistRepository,
 	sesionChecker repository.SesionFutureChecker,
 	auditoriaRepo repository.AuditoriaRepository,
 	clk shared.Clock,
@@ -38,6 +40,7 @@ func NewService(
 		sedeRepo:      sedeRepo,
 		bloqueRepo:    bloqueRepo,
 		espacioRepo:   espacioRepo,
+		histRepo:      histRepo,
 		sesionChecker: sesionChecker,
 		auditoriaRepo: auditoriaRepo,
 		clk:           clk,
@@ -480,6 +483,17 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 
 	valorAnterior := *espacio
 
+	// US-GEO-06 AC-01: Si el espacio ya tenía una geometría asignada (version > 0),
+	// se archiva la versión anterior en el histórico inmutable con fecha, autor y número de versión.
+	if s.histRepo != nil && valorAnterior.Geometria != nil && valorAnterior.VersionGeometria > 0 {
+		hist, err := geo.NewEspacioGeometriaHist(&valorAnterior, cmd.Actor.ActorID, cmd.MotivoSolapamiento, s.clk.Now())
+		if err == nil {
+			if errHist := s.histRepo.Create(ctx, hist); errHist != nil {
+				s.log.Warn("no se pudo archivar versión histórica de geometría", applog.Err(errHist))
+			}
+		}
+	}
+
 	if err := espacio.AsignarGeometria(poly, cmd.MetodoCaptura, cmd.PrecisionPromedioMetros); err != nil {
 		return nil, err
 	}
@@ -500,6 +514,51 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 	}
 
 	return espacio, nil
+}
+
+// ListarVersionesGeometria implementa AC-04 de US-GEO-06 (consulta del histórico de versiones).
+func (s *Service) ListarVersionesGeometria(ctx context.Context, espacioID string) ([]*geo.EspacioGeometriaHist, error) {
+	espacio, err := s.espacioRepo.FindByID(ctx, espacioID)
+	if err != nil {
+		return nil, fmt.Errorf("obtener espacio para historial: %w", err)
+	}
+	if espacio == nil {
+		return nil, shared.NewNotFoundError("Espacio", espacioID)
+	}
+
+	if s.histRepo == nil {
+		return []*geo.EspacioGeometriaHist{}, nil
+	}
+
+	return s.histRepo.ListByEspacioID(ctx, espacioID)
+}
+
+// ObtenerVersionGeometria implementa AC-03, T-GEO-06.3 (recuperación histórica por versión).
+func (s *Service) ObtenerVersionGeometria(ctx context.Context, espacioID string, version int) (*geo.EspacioGeometriaHist, error) {
+	espacio, err := s.espacioRepo.FindByID(ctx, espacioID)
+	if err != nil {
+		return nil, fmt.Errorf("obtener espacio para version histórica: %w", err)
+	}
+	if espacio == nil {
+		return nil, shared.NewNotFoundError("Espacio", espacioID)
+	}
+
+	if s.histRepo == nil {
+		return nil, shared.NewNotFoundError("VersionGeometria", fmt.Sprintf("%s_v%d", espacioID, version))
+	}
+
+	hist, err := s.histRepo.FindByEspacioIDAndVersion(ctx, espacioID, version)
+	if err != nil {
+		return nil, fmt.Errorf("buscar version geometria: %w", err)
+	}
+	if hist == nil {
+		// Si la versión solicitada es la actual activa del espacio
+		if espacio.VersionGeometria == version && espacio.Geometria != nil {
+			return geo.NewEspacioGeometriaHist(espacio, "actual", "", espacio.ActualizadoEn)
+		}
+		return nil, shared.NewNotFoundError("VersionGeometria", fmt.Sprintf("%s_v%d", espacioID, version))
+	}
+	return hist, nil
 }
 
 // GenerarInformeSolapamientos implementa AC-04, T-GEO-05.3.

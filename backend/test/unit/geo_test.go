@@ -288,6 +288,7 @@ func setupGeoService() (*usecaseGeo.Service, *mockSedeRepo, *mockBloqueRepo, *mo
 		sedeRepo,
 		bloqueRepo,
 		espacioRepo,
+		nil,
 		sesionChecker,
 		auditoriaRepo,
 		clk,

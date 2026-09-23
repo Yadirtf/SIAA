@@ -84,3 +84,76 @@ class GuardarGeometriaBackendRequested extends GeoEditorEvent {
   @override
   List<Object?> get props => [espacioId, confirmarSolapamiento, motivoSolapamiento];
 }
+
+/// US-GEO-07 AC-01: Arrastrar o mover un vértice existente a una nueva posición con recálculo de área.
+class MoverVerticeRequested extends GeoEditorEvent {
+  final int index;
+  final double nuevaLongitud;
+  final double nuevaLatitud;
+
+  const MoverVerticeRequested({
+    required this.index,
+    required this.nuevaLongitud,
+    required this.nuevaLatitud,
+  });
+
+  @override
+  List<Object?> get props => [index, nuevaLongitud, nuevaLatitud];
+}
+
+/// US-GEO-07 AC-02: Tocar sobre un lado del polígono para insertar un nuevo vértice en esa arista.
+class InsertarVerticeEnSegmentoRequested extends GeoEditorEvent {
+  final int indexDespuesDe;
+  final double longitud;
+  final double latitud;
+
+  const InsertarVerticeEnSegmentoRequested({
+    required this.indexDespuesDe,
+    required this.longitud,
+    required this.latitud,
+  });
+
+  @override
+  List<Object?> get props => [indexDespuesDe, longitud, latitud];
+}
+
+/// US-GEO-07 AC-03: Eliminar un vértice individual (restringido a más de 3 vértices).
+class EliminarVerticeRequested extends GeoEditorEvent {
+  final int index;
+
+  const EliminarVerticeRequested(this.index);
+
+  @override
+  List<Object?> get props => [index];
+}
+
+/// Cargar vértices de una geometría existente para edición.
+class CargarGeometriaExistenteRequested extends GeoEditorEvent {
+  final List<List<double>> coordenadas;
+
+  const CargarGeometriaExistenteRequested(this.coordenadas);
+
+  @override
+  List<Object?> get props => [coordenadas];
+}
+
+/// US-GEO-06 AC-04: Cargar historial de versiones de geometría desde el backend.
+class CargarVersionesHistoricasRequested extends GeoEditorEvent {
+  final String espacioId;
+
+  const CargarVersionesHistoricasRequested(this.espacioId);
+
+  @override
+  List<Object?> get props => [espacioId];
+}
+
+/// US-GEO-06 AC-04: Seleccionar una versión histórica para superponerla sobre el mapa (o null para ocultar).
+class SeleccionarVersionPreviewRequested extends GeoEditorEvent {
+  final int? version;
+
+  const SeleccionarVersionPreviewRequested(this.version);
+
+  @override
+  List<Object?> get props => [version];
+}
+

@@ -79,6 +79,7 @@ func main() {
 	sedeRepo := impl.NewSedeRepository(mongoClient)
 	bloqueRepo := impl.NewBloqueRepository(mongoClient)
 	espacioRepo := impl.NewEspacioRepository(mongoClient)
+	histRepo := impl.NewEspacioGeometriaHistRepository(mongoClient)
 	sesionChecker := impl.NewSesionFutureChecker(mongoClient)
 
 	// ─── Infraestructura ──────────────────────────────────────
@@ -100,6 +101,7 @@ func main() {
 		sedeRepo,
 		bloqueRepo,
 		espacioRepo,
+		histRepo,
 		sesionChecker,
 		auditoriaRepo,
 		clk,

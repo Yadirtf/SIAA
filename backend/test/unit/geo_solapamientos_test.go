@@ -44,7 +44,7 @@ func setupGeoSolapamientosSuite(t *testing.T) (*usecaseGeo.Service, *mockEspacio
 	clk := shared.NewFakeClock(time.Date(2026, 9, 22, 10, 0, 0, 0, time.UTC))
 	logger := applog.New(applog.LevelDebug, nil)
 
-	svc := usecaseGeo.NewService(sedeRepo, bloqueRepo, espacioRepo, sesionChecker, auditRepo, clk, logger)
+	svc := usecaseGeo.NewService(sedeRepo, bloqueRepo, espacioRepo, nil, sesionChecker, auditRepo, clk, logger)
 
 	ctx := context.Background()
 	actor := usecaseGeo.ContextoActor{

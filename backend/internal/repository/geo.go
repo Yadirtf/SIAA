@@ -55,3 +55,11 @@ type EspacioRepository interface {
 type SesionFutureChecker interface {
 	CountSesionesFuturasPorEspacio(ctx context.Context, espacioID string, desde time.Time) (int64, error)
 }
+
+// EspacioGeometriaHistRepository define operaciones de persistencia inmutables para el histórico de versiones.
+// T-GEO-06.1, AC-01, AC-04, AC-05: Colección de solo inserción y lectura, sin métodos de actualización o eliminación.
+type EspacioGeometriaHistRepository interface {
+	Create(ctx context.Context, h *geo.EspacioGeometriaHist) error
+	ListByEspacioID(ctx context.Context, espacioID string) ([]*geo.EspacioGeometriaHist, error)
+	FindByEspacioIDAndVersion(ctx context.Context, espacioID string, version int) (*geo.EspacioGeometriaHist, error)
+}

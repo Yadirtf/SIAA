@@ -206,3 +206,57 @@ type InformeSolapamientosResponse struct {
 	TotalConflictos int                        `json:"totalConflictos"`
 	Conflictos      []SolapamientoItemResponse `json:"conflictos"`
 }
+
+// EspacioGeometriaHistResponse representa una versión archivada de la geometría de un espacio (US-GEO-06 AC-04).
+type EspacioGeometriaHistResponse struct {
+	ID                      string             `json:"id"`
+	EspacioID               string             `json:"espacioId"`
+	Version                 int                `json:"version"`
+	Geometria               *GeometriaResponse `json:"geometria"`
+	AreaMetrosCuadrados     float64            `json:"areaMetrosCuadrados"`
+	Centroide               *CentroideResponse `json:"centroide,omitempty"`
+	MetodoCaptura           *string            `json:"metodoCaptura,omitempty"`
+	PrecisionPromedioMetros *float64           `json:"precisionPromedioMetros,omitempty"`
+	CreadoPor               string             `json:"creadoPor"`
+	CreadoEn                time.Time          `json:"creadoEn"`
+	MotivoCambio            string             `json:"motivoCambio,omitempty"`
+}
+
+func EspacioGeometriaHistToResponse(h *geo.EspacioGeometriaHist) EspacioGeometriaHistResponse {
+	var geom *GeometriaResponse
+	coords := h.Geometria.Coordinates()
+	if len(coords) > 0 {
+		geom = &GeometriaResponse{
+			Tipo:        "Polygon",
+			Coordinates: [][][2]float64{coords},
+		}
+	}
+
+	var centroide *CentroideResponse
+	if h.Centroide != nil {
+		centroide = &CentroideResponse{
+			Tipo:        "Point",
+			Coordinates: h.Centroide.Coordinates(),
+		}
+	}
+
+	var metodo *string
+	if h.MetodoCaptura != nil {
+		m := string(*h.MetodoCaptura)
+		metodo = &m
+	}
+
+	return EspacioGeometriaHistResponse{
+		ID:                      h.ID,
+		EspacioID:               h.EspacioID,
+		Version:                 h.Version,
+		Geometria:               geom,
+		AreaMetrosCuadrados:     h.AreaMetrosCuadrados,
+		Centroide:               centroide,
+		MetodoCaptura:           metodo,
+		PrecisionPromedioMetros: h.PrecisionPromedioMetros,
+		CreadoPor:               h.CreadoPor,
+		CreadoEn:                h.CreadoEn,
+		MotivoCambio:            h.MotivoCambio,
+	}
+}
