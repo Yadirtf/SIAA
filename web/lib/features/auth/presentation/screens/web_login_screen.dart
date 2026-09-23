@@ -46,9 +46,7 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     return BlocConsumer<WebAuthBloc, WebAuthState>(
       listener: (context, state) {
         if (state is WebAuthAuthenticated) {
-          if (ModalRoute.of(context)?.settings.name == '/login') {
-            Navigator.of(context).pushReplacementNamed('/dashboard');
-          }
+          Navigator.of(context).pushReplacementNamed('/dashboard');
         } else if (state is WebAuthUnauthenticated && state.mensajeError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

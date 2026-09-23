@@ -65,18 +65,43 @@ class SIAAWebAdminApp extends StatelessWidget {
   }
 }
 
-class _WebRootRouter extends StatelessWidget {
+class _WebRootRouter extends StatefulWidget {
   const _WebRootRouter();
 
   @override
+  State<_WebRootRouter> createState() => _WebRootRouterState();
+}
+
+class _WebRootRouterState extends State<_WebRootRouter> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _evaluarRuta(context.read<WebAuthBloc>().state);
+    });
+  }
+
+  void _evaluarRuta(WebAuthState state) {
+    if (!mounted) return;
+    if (state is WebAuthAuthenticated) {
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else if (state is WebAuthUnauthenticated) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WebAuthBloc, WebAuthState>(
-      builder: (context, state) {
-        if (state is WebAuthAuthenticated) {
-          return const DashboardScreen();
-        }
-        return const WebLoginScreen();
-      },
+    return BlocListener<WebAuthBloc, WebAuthState>(
+      listener: (context, state) => _evaluarRuta(state),
+      child: const Scaffold(
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -173,7 +173,6 @@ class DashboardSidebar extends StatelessWidget {
       child: Material(
         color: isSelected ? SIAAColors.primary600 : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           mouseCursor: SystemMouseCursors.click,

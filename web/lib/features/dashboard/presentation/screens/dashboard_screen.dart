@@ -47,9 +47,7 @@ class _DashboardViewState extends State<_DashboardView> {
         BlocListener<WebAuthBloc, WebAuthState>(
           listener: (context, state) {
             if (state is WebAuthUnauthenticated) {
-              if (ModalRoute.of(context)?.settings.name == '/dashboard') {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
+              Navigator.of(context).pushReplacementNamed('/login');
             }
           },
         ),
