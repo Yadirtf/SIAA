@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/academico_models.dart';
 import '../../data/academico_repository.dart';
+import '../widgets/dialogs/crear_asignacion_dialog.dart';
+import '../widgets/views/asignaciones_list_view.dart';
 
 class AsignacionesTab extends StatefulWidget {
   final AcademicoRepository repository;
@@ -78,231 +80,65 @@ class _AsignacionesTabState extends State<AsignacionesTab> {
   Future<void> _dialogoNuevaAsignacion() async {
     if (_periodoSeleccionado == null) return;
 
-    final docIdCtrl = TextEditingController();
-    final docNombreCtrl = TextEditingController();
-    final grpIdCtrl = TextEditingController();
-    final asigIdCtrl = TextEditingController();
-    final facIdCtrl = TextEditingController();
-    final espIdCtrl = TextEditingController();
-    final espNombreCtrl = TextEditingController();
-    final hIniCtrl = TextEditingController(text: '08:00');
-    final hFinCtrl = TextEditingController(text: '10:00');
-    int diaSemana = 1;
-    String modalidad = 'PRESENCIAL';
+    await CrearAsignacionDialog.mostrar(
+      context,
+      onGuardar: ({
+        required String docenteId,
+        required String docenteNombre,
+        required String grupoId,
+        required String asignaturaId,
+        required String facultadId,
+        required String? espacioId,
+        required String espacioNombre,
+        required int diaSemana,
+        required String horaInicio,
+        required String horaFin,
+        required String modalidad,
+      }) async {
+        try {
+          final asig = await widget.repository.crearAsignacion(
+            periodoId: _periodoSeleccionado!.id,
+            docenteIds: [docenteId],
+            docenteNombre: docenteNombre,
+            grupoId: grupoId,
+            asignaturaId: asignaturaId,
+            facultadId: facultadId,
+            espacioId: espacioId,
+            espacioNombre: espacioNombre,
+            franja: FranjaModel(
+              diaSemana: diaSemana,
+              horaInicio: horaInicio,
+              horaFin: horaFin,
+            ),
+            modalidad: modalidad,
+          );
 
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Nueva Asignación de Horario (US-ACA-03)'),
-          content: SizedBox(
-            width: 480,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: docNombreCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del Docente*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: docIdCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'ID / Cédula Docente*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: grpIdCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'ID Grupo*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: asigIdCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'ID Asignatura*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: facIdCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'ID Facultad*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: modalidad,
-                    decoration: const InputDecoration(
-                      labelText: 'Modalidad (US-ACA-03 AC-06)',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                          value: 'PRESENCIAL', child: Text('Presencial')),
-                      DropdownMenuItem(
-                          value: 'VIRTUAL',
-                          child: Text('Virtual (Exenta de Geocerca)')),
-                      DropdownMenuItem(
-                          value: 'HIBRIDA', child: Text('Híbrida')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => modalidad = val);
-                      }
-                    },
-                  ),
-                  if (modalidad != 'VIRTUAL') ...[
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: espIdCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'ID Espacio / Aula*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: espNombreCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de Espacio (ej. Aula 301)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<int>(
-                    initialValue: diaSemana,
-                    decoration: const InputDecoration(
-                      labelText: 'Día de la Semana (US-ACA-02)',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('Lunes')),
-                      DropdownMenuItem(value: 2, child: Text('Martes')),
-                      DropdownMenuItem(value: 3, child: Text('Miércoles')),
-                      DropdownMenuItem(value: 4, child: Text('Jueves')),
-                      DropdownMenuItem(value: 5, child: Text('Viernes')),
-                      DropdownMenuItem(value: 6, child: Text('Sábado')),
-                      DropdownMenuItem(value: 7, child: Text('Domingo')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => diaSemana = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: hIniCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Hora Inicio (HH:MM)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: hFinCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Hora Fin (HH:MM)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          if (mounted && asig.advertencias.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(asig.advertencias.join('\n')),
+                backgroundColor: Colors.amber.shade900,
+                duration: const Duration(seconds: 6),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (docNombreCtrl.text.trim().isEmpty ||
-                    docIdCtrl.text.trim().isEmpty ||
-                    grpIdCtrl.text.trim().isEmpty) {
-                  return;
-                }
-                Navigator.of(ctx).pop();
-                try {
-                  final asig = await widget.repository.crearAsignacion(
-                    periodoId: _periodoSeleccionado!.id,
-                    docenteIds: [docIdCtrl.text.trim()],
-                    docenteNombre: docNombreCtrl.text.trim(),
-                    grupoId: grpIdCtrl.text.trim(),
-                    asignaturaId: asigIdCtrl.text.trim(),
-                    facultadId: facIdCtrl.text.trim(),
-                    espacioId: modalidad != 'VIRTUAL'
-                        ? espIdCtrl.text.trim()
-                        : null,
-                    espacioNombre: modalidad != 'VIRTUAL'
-                        ? espNombreCtrl.text.trim()
-                        : 'Virtual',
-                    franja: FranjaModel(
-                      diaSemana: diaSemana,
-                      horaInicio: hIniCtrl.text.trim(),
-                      horaFin: hFinCtrl.text.trim(),
-                    ),
-                    modalidad: modalidad,
-                  );
+            );
+          }
 
-                  if (mounted && asig.advertencias.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(asig.advertencias.join('\n')),
-                        backgroundColor: Colors.amber.shade900,
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-
-                  _cargarAsignaciones(_periodoSeleccionado!.id);
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.toString()),
-                        backgroundColor: Colors.red.shade700,
-                        duration: const Duration(seconds: 5),
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      ),
+          _cargarAsignaciones(_periodoSeleccionado!.id);
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.red.shade700,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -398,48 +234,7 @@ class _AsignacionesTabState extends State<AsignacionesTab> {
               ),
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
-                  : _asignaciones.isEmpty
-                      ? const Center(
-                          child: Text(
-                              'No hay asignaciones para este periodo académico.'),
-                        )
-                      : ListView.separated(
-                          itemCount: _asignaciones.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1),
-                          itemBuilder: (ctx, i) {
-                            final a = _asignaciones[i];
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: a.exentaGeoespacial
-                                    ? Colors.purple.shade50
-                                    : Colors.blue.shade50,
-                                child: Icon(
-                                  a.exentaGeoespacial
-                                      ? Icons.computer
-                                      : Icons.room,
-                                  color: a.exentaGeoespacial
-                                      ? Colors.purple
-                                      : Colors.blue,
-                                ),
-                              ),
-                              title: Text(
-                                '${a.docenteNombre} — Grupo ${a.grupoId}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                '${a.franja.diaNombre} ${a.franja.horaInicio} - ${a.franja.horaFin} | Espacio: ${a.espacioNombre ?? a.espacioId ?? "Sin aula física"}',
-                              ),
-                              trailing: Chip(
-                                label: Text(
-                                  a.modalidad,
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                  : AsignacionesListView(asignaciones: _asignaciones),
             ),
           ),
         ],

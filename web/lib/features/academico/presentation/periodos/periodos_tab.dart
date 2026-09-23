@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/academico_models.dart';
 import '../../data/academico_repository.dart';
+import '../widgets/dialogs/crear_periodo_dialog.dart';
 
 class PeriodosTab extends StatefulWidget {
   final AcademicoRepository repository;
@@ -46,148 +47,62 @@ class _PeriodosTabState extends State<PeriodosTab> {
   }
 
   Future<void> _mostrarDialogoNuevoPeriodo([PeriodoModel? existente]) async {
-    final codigoCtrl = TextEditingController(text: existente?.codigo ?? '');
-    final nombreCtrl = TextEditingController(text: existente?.nombre ?? '');
-    final fIniCtrl = TextEditingController(text: existente?.fechaInicio ?? '');
-    final fFinCtrl = TextEditingController(text: existente?.fechaFin ?? '');
-    String estadoSeleccionado = existente?.estado ?? 'PLANEACION';
+    await CrearPeriodoDialog.mostrar(
+      context,
+      existente: existente,
+      onGuardar: ({
+        required String codigo,
+        required String nombre,
+        required String fechaInicio,
+        required String fechaFin,
+        required String estado,
+      }) async {
+        try {
+          PeriodoModel resultado;
+          if (existente == null) {
+            resultado = await widget.repository.crearPeriodo(
+              codigo: codigo,
+              nombre: nombre,
+              fechaInicio: fechaInicio,
+              fechaFin: fechaFin,
+              estado: estado,
+            );
+          } else {
+            resultado = await widget.repository.actualizarPeriodo(
+              id: existente.id,
+              codigo: codigo,
+              nombre: nombre,
+              fechaInicio: fechaInicio,
+              fechaFin: fechaFin,
+              estado: estado,
+            );
+          }
 
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(existente == null ? 'Nuevo Periodo Académico' : 'Editar Periodo'),
-          content: SizedBox(
-            width: 460,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: codigoCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Código (ej. 2026-2)*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nombreCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del Periodo*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: fIniCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha Inicio (YYYY-MM-DD)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: fFinCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha Fin (YYYY-MM-DD)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: estadoSeleccionado,
-                    decoration: const InputDecoration(
-                      labelText: 'Estado',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'PLANEACION', child: Text('Planeación')),
-                      DropdownMenuItem(value: 'ACTIVO', child: Text('Activo')),
-                      DropdownMenuItem(value: 'CERRADO', child: Text('Cerrado')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => estadoSeleccionado = val);
-                      }
-                    },
-                  ),
-                ],
+          if (mounted && resultado.advertencias.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(resultado.advertencias.join('\n')),
+                backgroundColor: Colors.amber.shade900,
+                duration: const Duration(seconds: 5),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (codigoCtrl.text.trim().isEmpty ||
-                    nombreCtrl.text.trim().isEmpty ||
-                    fIniCtrl.text.trim().isEmpty ||
-                    fFinCtrl.text.trim().isEmpty) {
-                  return;
-                }
-                Navigator.of(ctx).pop();
-                try {
-                  PeriodoModel resultado;
-                  if (existente == null) {
-                    resultado = await widget.repository.crearPeriodo(
-                      codigo: codigoCtrl.text.trim(),
-                      nombre: nombreCtrl.text.trim(),
-                      fechaInicio: fIniCtrl.text.trim(),
-                      fechaFin: fFinCtrl.text.trim(),
-                      estado: estadoSeleccionado,
-                    );
-                  } else {
-                    resultado = await widget.repository.actualizarPeriodo(
-                      id: existente.id,
-                      codigo: codigoCtrl.text.trim(),
-                      nombre: nombreCtrl.text.trim(),
-                      fechaInicio: fIniCtrl.text.trim(),
-                      fechaFin: fFinCtrl.text.trim(),
-                      estado: estadoSeleccionado,
-                    );
-                  }
+            );
+          }
 
-                  if (mounted && resultado.advertencias.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(resultado.advertencias.join('\n')),
-                        backgroundColor: Colors.amber.shade900,
-                        duration: const Duration(seconds: 5),
-                      ),
-                    );
-                  }
-
-                  _cargarPeriodos();
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.toString()),
-                        backgroundColor: Colors.red.shade700,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      ),
+          _cargarPeriodos();
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.red.shade700,
+              ),
+            );
+          }
+        }
+      },
     );
   }
+
 
   Color _colorPorEstado(String estado) {
     switch (estado) {

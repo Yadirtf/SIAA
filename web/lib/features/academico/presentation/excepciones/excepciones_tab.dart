@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/academico_models.dart';
 import '../../data/academico_repository.dart';
+import '../widgets/dialogs/crear_excepcion_dialog.dart';
 
 class ExcepcionesTab extends StatefulWidget {
   final AcademicoRepository repository;
@@ -43,143 +44,37 @@ class _ExcepcionesTabState extends State<ExcepcionesTab> {
   }
 
   Future<void> _dialogoNuevaExcepcion() async {
-    final nombreCtrl = TextEditingController();
-    final fIniCtrl = TextEditingController();
-    final fFinCtrl = TextEditingController();
-    final ambitoIdCtrl = TextEditingController();
-    String tipo = 'FESTIVO';
-    String ambito = 'GLOBAL';
-
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Nueva Excepción de Calendario (US-ACA-04)'),
-          content: SizedBox(
-            width: 440,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nombreCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre / Motivo (ej. Día de la Raza)*',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: tipo,
-                    decoration: const InputDecoration(
-                      labelText: 'Tipo de Excepción',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'FESTIVO', child: Text('Festivo')),
-                      DropdownMenuItem(value: 'RECESO', child: Text('Receso Académico')),
-                      DropdownMenuItem(
-                          value: 'JORNADA_INSTITUCIONAL',
-                          child: Text('Jornada Institucional')),
-                      DropdownMenuItem(value: 'PARO', child: Text('Paro / Cese de Actividades')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => tipo = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: ambito,
-                    decoration: const InputDecoration(
-                      labelText: 'Ámbito de Aplicación (AC-01, AC-05)',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'GLOBAL', child: Text('Global (Todo el Campus)')),
-                      DropdownMenuItem(value: 'SEDE', child: Text('Por Sede')),
-                      DropdownMenuItem(value: 'FACULTAD', child: Text('Por Facultad')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => ambito = val);
-                    },
-                  ),
-                  if (ambito != 'GLOBAL') ...[
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: ambitoIdCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'ID de la $ambito*',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: fIniCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha Inicio (YYYY-MM-DD)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: fFinCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha Fin (YYYY-MM-DD)*',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (nombreCtrl.text.trim().isEmpty ||
-                    fIniCtrl.text.trim().isEmpty ||
-                    fFinCtrl.text.trim().isEmpty) {
-                  return;
-                }
-                Navigator.of(ctx).pop();
-                try {
-                  await widget.repository.crearExcepcion(
-                    nombre: nombreCtrl.text.trim(),
-                    tipo: tipo,
-                    ambito: ambito,
-                    ambitoId:
-                        ambito != 'GLOBAL' ? ambitoIdCtrl.text.trim() : null,
-                    fechaInicio: fIniCtrl.text.trim(),
-                    fechaFin: fFinCtrl.text.trim(),
-                  );
-                  _cargarExcepciones();
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-                    );
-                  }
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      ),
+    await CrearExcepcionDialog.mostrar(
+      context,
+      onGuardar: ({
+        required String nombre,
+        required String tipo,
+        required String ambito,
+        String? ambitoId,
+        required String fechaInicio,
+        required String fechaFin,
+      }) async {
+        try {
+          await widget.repository.crearExcepcion(
+            nombre: nombre,
+            tipo: tipo,
+            ambito: ambito,
+            ambitoId: ambitoId,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+          );
+          _cargarExcepciones();
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+            );
+          }
+        }
+      },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
