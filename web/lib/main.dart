@@ -36,30 +36,8 @@ class SIAAWebAdminApp extends StatelessWidget {
           title: 'SIAA — Consola de Administración',
           debugShowCheckedModeBanner: false,
 
-          theme: SIAATheme.light.copyWith(
-            pageTransitionsTheme: const PageTransitionsTheme(
-              builders: {
-                TargetPlatform.android: _NoTransitionsBuilder(),
-                TargetPlatform.iOS: _NoTransitionsBuilder(),
-                TargetPlatform.windows: _NoTransitionsBuilder(),
-                TargetPlatform.macOS: _NoTransitionsBuilder(),
-                TargetPlatform.linux: _NoTransitionsBuilder(),
-                TargetPlatform.fuchsia: _NoTransitionsBuilder(),
-              },
-            ),
-          ),
-          darkTheme: SIAATheme.dark.copyWith(
-            pageTransitionsTheme: const PageTransitionsTheme(
-              builders: {
-                TargetPlatform.android: _NoTransitionsBuilder(),
-                TargetPlatform.iOS: _NoTransitionsBuilder(),
-                TargetPlatform.windows: _NoTransitionsBuilder(),
-                TargetPlatform.macOS: _NoTransitionsBuilder(),
-                TargetPlatform.linux: _NoTransitionsBuilder(),
-                TargetPlatform.fuchsia: _NoTransitionsBuilder(),
-              },
-            ),
-          ),
+          theme: SIAATheme.light,
+          darkTheme: SIAATheme.dark,
           themeMode: ThemeMode.light,
 
           // Localización español Colombia
@@ -74,70 +52,26 @@ class SIAAWebAdminApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
 
-          routes: {
-            '/login': (_) => const WebLoginScreen(),
-            '/dashboard': (_) => const DashboardScreen(),
-          },
-
-          home: const _WebRootRouter(),
-        ),
-      ),
-    );
-  }
-}
-
-class _WebRootRouter extends StatefulWidget {
-  const _WebRootRouter();
-
-  @override
-  State<_WebRootRouter> createState() => _WebRootRouterState();
-}
-
-class _WebRootRouterState extends State<_WebRootRouter> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _evaluarRuta(context.read<WebAuthBloc>().state);
-    });
-  }
-
-  void _evaluarRuta(WebAuthState state) {
-    if (!mounted) return;
-    if (state is WebAuthAuthenticated) {
-      Navigator.of(context).pushReplacementNamed('/dashboard');
-    } else if (state is WebAuthUnauthenticated) {
-      Navigator.of(context).pushReplacementNamed('/login');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<WebAuthBloc, WebAuthState>(
-      listener: (context, state) => _evaluarRuta(state),
-      child: const Scaffold(
-        backgroundColor: Color(0xFF0F172A),
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+          home: BlocBuilder<WebAuthBloc, WebAuthState>(
+            builder: (context, state) {
+              if (state is WebAuthLoading || state is WebAuthInitial) {
+                return const Scaffold(
+                  backgroundColor: Color(0xFF0F172A),
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                    ),
+                  ),
+                );
+              }
+              if (state is WebAuthAuthenticated) {
+                return const DashboardScreen();
+              }
+              return const WebLoginScreen();
+            },
           ),
         ),
       ),
     );
-  }
-}
-
-class _NoTransitionsBuilder extends PageTransitionsBuilder {
-  const _NoTransitionsBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T>? route,
-    BuildContext? context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
   }
 }

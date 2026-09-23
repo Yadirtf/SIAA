@@ -7,7 +7,6 @@ import '../../../academico/presentation/asignaciones/asignaciones_tab.dart';
 import '../../../academico/presentation/estructura/estructura_tab.dart';
 import '../../../academico/presentation/excepciones/excepciones_tab.dart';
 import '../../../academico/presentation/periodos/periodos_tab.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
@@ -42,38 +41,27 @@ class _DashboardViewState extends State<_DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<WebAuthBloc, WebAuthState>(
-          listener: (context, state) {
-            if (state is WebAuthUnauthenticated) {
-              Navigator.of(context).pushReplacementNamed('/login');
-            }
-          },
-        ),
-        BlocListener<DashboardBloc, DashboardState>(
-          listener: (context, state) {
-            if (state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: SIAAColors.asistenciaAusente,
-                ),
-              );
-              context.read<DashboardBloc>().add(const DashboardLimpiarMensajesRequested());
-            }
-            if (state.successMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.successMessage!),
-                  backgroundColor: SIAAColors.asistenciaPresente,
-                ),
-              );
-              context.read<DashboardBloc>().add(const DashboardLimpiarMensajesRequested());
-            }
-          },
-        ),
-      ],
+    return BlocListener<DashboardBloc, DashboardState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: SIAAColors.asistenciaAusente,
+            ),
+          );
+          context.read<DashboardBloc>().add(const DashboardLimpiarMensajesRequested());
+        }
+        if (state.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.successMessage!),
+              backgroundColor: SIAAColors.asistenciaPresente,
+            ),
+          );
+          context.read<DashboardBloc>().add(const DashboardLimpiarMensajesRequested());
+        }
+      },
       child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           final bloc = context.read<DashboardBloc>();
@@ -84,10 +72,14 @@ class _DashboardViewState extends State<_DashboardView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ─── Barra Lateral (Sidebar) ───────────────────────────
-                DashboardSidebar(
-                  selectedNavIndex: state.selectedNavIndex,
-                  onNavItemSelected: (index) =>
-                      bloc.add(DashboardCambiarNavIndexRequested(index)),
+                SizedBox(
+                  width: 260,
+                  height: double.infinity,
+                  child: DashboardSidebar(
+                    selectedNavIndex: state.selectedNavIndex,
+                    onNavItemSelected: (index) =>
+                        bloc.add(DashboardCambiarNavIndexRequested(index)),
+                  ),
                 ),
 
                 // ─── Contenido Principal ───────────────────────────────
