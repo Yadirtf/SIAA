@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../geo_editor/data/espacio_repository.dart';
-import '../cards/espacio_card_tile.dart';
+import 'aulas_selection_list.dart';
 
 /// Panel principal de selección jerárquica Sede → Bloque → Aula (US-GEO-01).
 class JerarquiaSelectorPanel extends StatelessWidget {
@@ -63,9 +63,13 @@ class JerarquiaSelectorPanel extends StatelessWidget {
           const SizedBox(height: 12),
           _buildBloqueSelector(),
           const SizedBox(height: 16),
-          _buildAulasHeader(),
-          const SizedBox(height: 8),
-          _buildAulasList(),
+          AulasSelectionList(
+            bloqueSeleccionado: bloqueSeleccionado,
+            espacios: espacios,
+            cargandoEspacios: cargandoEspacios,
+            onCrearAula: onCrearAula,
+            onEditarEspacio: onEditarEspacio,
+          ),
         ],
       ),
     );
@@ -83,10 +87,10 @@ class JerarquiaSelectorPanel extends StatelessWidget {
           child: const Icon(Icons.account_tree_rounded, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 'Jerarquía Física y Cartografía',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -143,17 +147,15 @@ class JerarquiaSelectorPanel extends StatelessWidget {
                   value: bloqueSeleccionado,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: '2. Bloque o Edificio',
+                    labelText: '2. Bloque / Edificio',
                     prefixIcon: Icon(Icons.domain_rounded),
                     isDense: true,
                   ),
-                  hint: Text(sedeSeleccionada == null
-                      ? 'Seleccione una sede primero'
-                      : (bloques.isEmpty ? 'Sin bloques en esta sede' : 'Seleccionar bloque')),
+                  hint: const Text('Seleccionar o crear bloque'),
                   items: bloques.map((b) {
                     return DropdownMenuItem(value: b, child: Text('${b.codigo} — ${b.nombre}'));
                   }).toList(),
-                  onChanged: sedeSeleccionada == null ? null : onBloqueChanged,
+                  onChanged: onBloqueChanged,
                 ),
         ),
         const SizedBox(width: 8),
@@ -163,89 +165,6 @@ class JerarquiaSelectorPanel extends StatelessWidget {
           onPressed: onNuevoBloque,
         ),
       ],
-    );
-  }
-
-  Widget _buildAulasHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          '3. Aulas / Espacios (${espacios.length})',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            backgroundColor: SIAAColors.primary600,
-          ),
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('Crear Aula'),
-          onPressed: onCrearAula,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAulasList() {
-    if (cargandoEspacios) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (bloqueSeleccionado == null) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Text(
-          'Seleccione o cree una Sede y un Bloque para gestionar sus aulas y delimitar sus perímetros.',
-          style: TextStyle(fontSize: 12, color: SIAAColors.neutral600),
-        ),
-      );
-    }
-    if (espacios.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: SIAAColors.neutral200),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.meeting_room_outlined, size: 32, color: SIAAColors.neutral400),
-            const SizedBox(height: 6),
-            Text(
-              'No hay aulas en ${bloqueSeleccionado!.nombre}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Presiona "+ Crear Aula" para registrar un salón y delimitar su polígono GPS.',
-              style: TextStyle(fontSize: 11, color: SIAAColors.neutral500),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: espacios.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, idx) {
-        final esp = espacios[idx];
-        return EspacioCardTile(
-          espacio: esp,
-          onEditarPoligono: () => onEditarEspacio(esp),
-        );
-      },
     );
   }
 }

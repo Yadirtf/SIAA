@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
+import '../widgets/web_login_brand_panel.dart';
 
 class WebLoginScreen extends StatefulWidget {
   const WebLoginScreen({super.key});
@@ -24,6 +25,16 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     _correoController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _onLogin() {
+    if (!_formKey.currentState!.validate()) return;
+    context.read<WebAuthBloc>().add(
+      WebAuthLoginRequested(
+        correo: _correoController.text.trim(),
+        password: _passwordController.text.trim(),
+      ),
+    );
   }
 
   @override
@@ -52,13 +63,10 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
         return Scaffold(
           body: Row(
             children: [
-              // Panel izquierdo — branding (solo en pantallas >= 768px)
               if (!isMobile)
-                Expanded(
-                  child: _buildBrandPanel(theme),
+                const Expanded(
+                  child: WebLoginBrandPanel(),
                 ),
-
-              // Panel derecho — formulario
               Container(
                 width: isMobile ? size.width : 480,
                 height: size.height,
@@ -78,111 +86,6 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
         );
       },
     );
-  }
-
-  Widget _buildBrandPanel(ThemeData theme) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1E3A8A),
-            Color(0xFF2563EB),
-            Color(0xFF7C3AED),
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(SIAASpacing.xxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Logo
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: SIAASpacing.radiusMd,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                ),
-              ),
-              child: const Icon(
-                Icons.school_rounded,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: SIAASpacing.xl),
-
-            const Text(
-              'SIAA',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 3,
-              ),
-            ),
-            const SizedBox(height: SIAASpacing.sm),
-            Text(
-              'Consola Administrativa',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: SIAASpacing.xxxl),
-
-            // Features
-            ..._buildFeatures(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildFeatures() {
-    final features = [
-      (Icons.location_on_outlined, 'Validación por geolocalización GPS'),
-      (Icons.map_outlined, 'Cartografía de espacios académicos'),
-      (Icons.schedule_outlined, 'Gestión de horarios y sesiones'),
-      (Icons.bar_chart_outlined, 'Reportes de cumplimiento docente'),
-      (Icons.security_outlined, 'Auditoría completa e inmutable'),
-    ];
-
-    return features.map((f) => Padding(
-      padding: const EdgeInsets.only(bottom: SIAASpacing.md),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: SIAASpacing.radiusSm,
-            ),
-            child: Icon(f.$1, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: SIAASpacing.md),
-          Text(
-            f.$2,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    )).toList();
   }
 
   Widget _buildLoginForm(ThemeData theme, bool loading) {
@@ -248,7 +151,6 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
               ),
               const SizedBox(height: SIAASpacing.lg),
 
-              // Botón de acceso
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
@@ -279,16 +181,6 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  void _onLogin() {
-    if (!_formKey.currentState!.validate()) return;
-    context.read<WebAuthBloc>().add(
-      WebAuthLoginRequested(
-        correo: _correoController.text.trim(),
-        password: _passwordController.text.trim(),
-      ),
     );
   }
 }

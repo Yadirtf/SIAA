@@ -2,129 +2,15 @@
 // Permite listar aulas/espacios y enviar la geometría capturada al backend (US-GEO-01, US-GEO-02, US-GEO-03)
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../domain/models/bloque_model.dart';
+import '../domain/models/espacio_model.dart';
 import '../domain/models/geometria_historial_item.dart';
+import '../domain/models/sede_model.dart';
 
-class SedeModel {
-  final String id;
-  final String codigo;
-  final String nombre;
-  final String? direccion;
-
-  const SedeModel({
-    required this.id,
-    required this.codigo,
-    required this.nombre,
-    this.direccion,
-  });
-
-  factory SedeModel.fromJson(Map<String, dynamic> json) {
-    return SedeModel(
-      id: json['id'] as String? ?? '',
-      codigo: json['codigo'] as String? ?? '',
-      nombre: json['nombre'] as String? ?? '',
-      direccion: json['direccion'] as String?,
-    );
-  }
-}
-
-class BloqueModel {
-  final String id;
-  final String sedeId;
-  final String codigo;
-  final String nombre;
-  final List<int> pisos;
-
-  const BloqueModel({
-    required this.id,
-    required this.sedeId,
-    required this.codigo,
-    required this.nombre,
-    required this.pisos,
-  });
-
-  factory BloqueModel.fromJson(Map<String, dynamic> json) {
-    final pisosList = (json['pisos'] as List<dynamic>?)
-            ?.map((p) => p is int ? p : int.tryParse(p.toString()) ?? 1)
-            .toList() ??
-        [1];
-    return BloqueModel(
-      id: json['id'] as String? ?? '',
-      sedeId: json['sedeId'] as String? ?? '',
-      codigo: json['codigo'] as String? ?? '',
-      nombre: json['nombre'] as String? ?? '',
-      pisos: pisosList,
-    );
-  }
-}
-
-class EspacioModel {
-  final String id;
-  final String sedeId;
-  final String? bloqueId;
-  final int? piso;
-  final String codigo;
-  final String nombre;
-  final int capacidad;
-  final String tipo;
-  final String estado;
-  final String nivelValidacion;
-  final double bufferMetros;
-  final double areaMetrosCuadrados;
-  final bool tieneGeometria;
-  final List<List<double>>? coordenadas;
-
-  const EspacioModel({
-    required this.id,
-    required this.sedeId,
-    this.bloqueId,
-    this.piso,
-    required this.codigo,
-    required this.nombre,
-    required this.capacidad,
-    required this.tipo,
-    required this.estado,
-    required this.nivelValidacion,
-    required this.bufferMetros,
-    required this.areaMetrosCuadrados,
-    required this.tieneGeometria,
-    this.coordenadas,
-  });
-
-  factory EspacioModel.fromJson(Map<String, dynamic> json) {
-    List<List<double>>? coords;
-    final geo = json['geometria'] as Map<String, dynamic>?;
-    if (geo != null && geo['coordinates'] is List) {
-      final rings = geo['coordinates'] as List<dynamic>;
-      if (rings.isNotEmpty && rings.first is List) {
-        final ring = rings.first as List<dynamic>;
-        coords = ring.map<List<double>>((pt) {
-          final p = pt as List<dynamic>;
-          return [
-            (p[0] as num).toDouble(),
-            (p[1] as num).toDouble(),
-          ];
-        }).toList();
-      }
-    }
-
-    return EspacioModel(
-      id: json['id'] as String? ?? '',
-      sedeId: json['sedeId'] as String? ?? '',
-      bloqueId: json['bloqueId'] as String?,
-      piso: json['piso'] as int?,
-      codigo: json['codigo'] as String? ?? '',
-      nombre: json['nombre'] as String? ?? '',
-      capacidad: json['capacidad'] as int? ?? 0,
-      tipo: json['tipo'] as String? ?? 'AULA',
-      estado: json['estado'] as String? ?? 'ACTIVO',
-      nivelValidacion: json['nivelValidacion'] as String? ?? 'AULA',
-      bufferMetros: (json['bufferMetros'] as num?)?.toDouble() ?? 10.0,
-      areaMetrosCuadrados: (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
-      tieneGeometria: coords != null && coords.isNotEmpty,
-      coordenadas: coords,
-    );
-  }
-}
+// Re-exportar modelos para mantener compatibilidad hacia atrás
+export '../domain/models/bloque_model.dart';
+export '../domain/models/espacio_model.dart';
+export '../domain/models/sede_model.dart';
 
 class EspacioRepository {
   final Dio _client;
@@ -353,4 +239,3 @@ class SolapamientoCriticoException implements Exception {
   @override
   String toString() => mensaje;
 }
-
