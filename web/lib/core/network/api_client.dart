@@ -1,109 +1,153 @@
-// Capa de red para la consola web administrativa SIAA — T-PLT-01.8
-// Compatible con Flutter Web (CORS, tokens en SharedPreferences, auto-refresh)
-import 'package:dio/dio.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../storage/token_storage.dart';
+import 'api_exception.dart';
 
-class WebApiClient {
-  static Dio? _instance;
+class ApiClient {
+  final http.Client _client;
+  final TokenStorage _tokenStorage;
 
-  static String baseUrl = const String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8080/api/v1',
-  );
+  ApiClient({
+    http.Client? client,
+    TokenStorage? tokenStorage,
+  })  : _client = client ?? http.Client(),
+        _tokenStorage = tokenStorage ?? TokenStorage();
 
-  static Dio get instance {
-    _instance ??= _create();
-    return _instance!;
-  }
-
-  static Dio _create() {
-    final dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-
-    dio.interceptors.addAll([
-      _WebCorrelationIdInterceptor(),
-      _WebAuthInterceptor(dio),
-    ]);
-
-    return dio;
-  }
-}
-
-class _WebCorrelationIdInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toRadixString(16);
-    options.headers['X-Correlation-Id'] = '$timestamp-web';
-    handler.next(options);
-  }
-}
-
-class _WebAuthInterceptor extends Interceptor {
-  final Dio _dio;
-  bool _isRefreshing = false;
-
-  _WebAuthInterceptor(this._dio);
-
-  @override
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    final publicPaths = ['/auth/login', '/auth/refresh', '/auth/recuperar'];
-    if (publicPaths.any((p) => options.path.contains(p))) {
-      return handler.next(options);
-    }
-
-    final token = await WebTokenStorage.getAccessToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-    handler.next(options);
-  }
-
-  @override
-  Future<void> onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
-      final errorCode = err.response?.data?['codigo'];
-      if (errorCode == 'AUTH_TOKEN_EXPIRADO') {
-        _isRefreshing = true;
-        try {
-          final refreshToken = await WebTokenStorage.getRefreshToken();
-          if (refreshToken != null) {
-            final response = await _dio.post('/auth/refresh', data: {
-              'refreshToken': refreshToken,
-            });
-            final data = response.data as Map<String, dynamic>;
-            await WebTokenStorage.saveSession(
-              accessToken: data['accessToken'] as String,
-              refreshToken: data['refreshToken'] as String,
-            );
-
-            final newToken = await WebTokenStorage.getAccessToken();
-            if (newToken != null) {
-              err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-            }
-            final retryResponse = await _dio.fetch(err.requestOptions);
-            handler.resolve(retryResponse);
-            return;
-          }
-        } catch (_) {
-          await WebTokenStorage.clearSession();
-        } finally {
-          _isRefreshing = false;
-        }
+  Future<Map<String, String>> _getHeaders({bool requiresAuth = true}) async {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (requiresAuth) {
+      final token = await _tokenStorage.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
       }
     }
-    handler.next(err);
+    return headers;
+  }
+
+  Future<dynamic> get(String url, {bool requiresAuth = true}) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.get(Uri.parse(url), headers: headers);
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  Future<dynamic> post(
+    String url, {
+    dynamic body,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  Future<dynamic> put(
+    String url, {
+    dynamic body,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.put(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  Future<dynamic> patch(
+    String url, {
+    dynamic body,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  Future<dynamic> delete(String url, {bool requiresAuth = true}) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.delete(Uri.parse(url), headers: headers);
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  dynamic _processResponse(http.Response response) {
+    final statusCode = response.statusCode;
+    final bodyString = response.body;
+    dynamic bodyJson;
+
+    if (bodyString.isNotEmpty) {
+      try {
+        bodyJson = jsonDecode(bodyString);
+      } catch (_) {
+        bodyJson = bodyString;
+      }
+    }
+
+    if (statusCode >= 200 && statusCode < 300) {
+      return bodyJson;
+    }
+
+    String message = 'Error en el servidor ($statusCode)';
+    if (bodyJson is Map && bodyJson.containsKey('mensaje')) {
+      message = bodyJson['mensaje'].toString();
+    } else if (bodyJson is Map && bodyJson.containsKey('error')) {
+      message = bodyJson['error'].toString();
+    } else if (bodyJson is Map && bodyJson.containsKey('message')) {
+      message = bodyJson['message'].toString();
+    }
+
+    if (statusCode == 401 || statusCode == 403) {
+      throw AuthException(
+        message: message,
+        statusCode: statusCode,
+        details: bodyJson,
+      );
+    }
+
+    throw ApiException(
+      message: message,
+      statusCode: statusCode,
+      details: bodyJson,
+    );
+  }
+
+  Never _handleError(dynamic error) {
+    if (error is ApiException) {
+      throw error;
+    }
+    throw NetworkException(
+      message: 'No se pudo conectar con el servidor: $error',
+    );
   }
 }

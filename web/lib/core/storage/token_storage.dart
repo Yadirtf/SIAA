@@ -1,51 +1,43 @@
-// Almacenamiento de sesión y tokens para navegador web (SharedPreferences)
-// T-PLT-01.8, T-AUT-01.5
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class WebTokenStorage {
-  static const _keyAccessToken = 'siaa_web_access_token';
-  static const _keyRefreshToken = 'siaa_web_refresh_token';
-  static const _keyUser = 'siaa_web_user';
+class TokenStorage {
+  static const String _accessTokenKey = 'siaa_access_token';
+  static const String _refreshTokenKey = 'siaa_refresh_token';
+  static const String _userKey = 'siaa_user_data';
 
-  static Future<void> saveSession({
+  Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
-    Map<String, dynamic>? usuario,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAccessToken, accessToken);
-    await prefs.setString(_keyRefreshToken, refreshToken);
-    if (usuario != null) {
-      await prefs.setString(_keyUser, jsonEncode(usuario));
-    }
+    await prefs.setString(_accessTokenKey, accessToken);
+    await prefs.setString(_refreshTokenKey, refreshToken);
   }
 
-  static Future<String?> getAccessToken() async {
+  Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAccessToken);
+    return prefs.getString(_accessTokenKey);
   }
 
-  static Future<String?> getRefreshToken() async {
+  Future<String?> getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyRefreshToken);
+    return prefs.getString(_refreshTokenKey);
   }
 
-  static Future<Map<String, dynamic>?> getUser() async {
+  Future<void> saveUserData(String userDataJson) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyUser);
-    if (raw == null) return null;
-    try {
-      return jsonDecode(raw) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
-    }
+    await prefs.setString(_userKey, userDataJson);
   }
 
-  static Future<void> clearSession() async {
+  Future<String?> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyAccessToken);
-    await prefs.remove(_keyRefreshToken);
-    await prefs.remove(_keyUser);
+    return prefs.getString(_userKey);
+  }
+
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_accessTokenKey);
+    await prefs.remove(_refreshTokenKey);
+    await prefs.remove(_userKey);
   }
 }
