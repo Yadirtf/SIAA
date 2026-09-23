@@ -18,56 +18,61 @@ class WebLoginBrandPanel extends StatelessWidget {
           ],
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(SIAASpacing.xxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Logo
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: SIAASpacing.radiusMd,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: SIAASpacing.xxl,
+            vertical: SIAASpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Logo
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: SIAASpacing.radiusMd,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.school_rounded,
+                  color: Colors.white,
+                  size: 32,
                 ),
               ),
-              child: const Icon(
-                Icons.school_rounded,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: SIAASpacing.xl),
+              const SizedBox(height: SIAASpacing.lg),
 
-            const Text(
-              'SIAA',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 3,
+              const Text(
+                'SIAA',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Colors.white,
+                  fontSize: 44,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3,
+                ),
               ),
-            ),
-            const SizedBox(height: SIAASpacing.sm),
-            Text(
-              'Consola Administrativa',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
+              const SizedBox(height: SIAASpacing.xs),
+              Text(
+                'Consola Administrativa',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-            ),
-            const SizedBox(height: SIAASpacing.xxxl),
+              const SizedBox(height: SIAASpacing.xxl),
 
-            // Features
-            ..._buildFeatures(),
-          ],
+              // Features
+              ..._buildFeatures(),
+            ],
+          ),
         ),
       ),
     );
@@ -83,25 +88,25 @@ class WebLoginBrandPanel extends StatelessWidget {
     ];
 
     return features.map((f) => Padding(
-      padding: const EdgeInsets.only(bottom: SIAASpacing.md),
+      padding: const EdgeInsets.only(bottom: SIAASpacing.sm),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: SIAASpacing.radiusSm,
             ),
-            child: Icon(f.$1, color: Colors.white, size: 20),
+            child: Icon(f.$1, color: Colors.white, size: 18),
           ),
           const SizedBox(width: SIAASpacing.md),
           Text(
             f.$2,
             style: TextStyle(
               fontFamily: 'Inter',
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 15,
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
           ),
