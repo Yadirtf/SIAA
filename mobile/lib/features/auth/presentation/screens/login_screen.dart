@@ -1,7 +1,8 @@
-// Pantalla de login — T-AUT-01.7, US-AUT-01
-// Diseño modularizado con LoginHeader y LoginFormCard desacoplados.
+// Pantalla de login - T-AUT-01.7, US-AUT-01
+// Diseno modularizado con LoginHeader y LoginFormCard desacoplados.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/navigation/nav_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/login_form_card.dart';
@@ -50,7 +51,13 @@ class _LoginScreenState extends State<LoginScreen>
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            Navigator.of(context).pushReplacementNamed('/home');
+            // Inicializar el NavBloc con los roles y permisos resueltos
+            // por el backend antes de navegar al shell (RF-ROL-003).
+            context.read<NavBloc>().add(NavInicializado(
+                  rolesUsuario: state.roles,
+                  permisosUsuario: state.permisos,
+                ));
+            Navigator.of(context).pushReplacementNamed('/shell');
           }
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
