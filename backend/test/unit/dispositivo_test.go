@@ -114,6 +114,14 @@ func (m *mockUserRepoForDevice) Update(ctx context.Context, u *user.Usuario) err
 	return nil
 }
 
+func (m *mockUserRepoForDevice) Listar(ctx context.Context, limite int) ([]*user.Usuario, error) {
+	var list []*user.Usuario
+	for _, u := range m.usuarios {
+		list = append(list, u)
+	}
+	return list, nil
+}
+
 type mockAuditRepoForDevice struct {
 	entries []*repository.AuditEntry
 }

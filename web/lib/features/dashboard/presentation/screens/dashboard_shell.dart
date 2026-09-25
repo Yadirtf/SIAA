@@ -8,13 +8,16 @@ import '../../../academico/presentation/screens/asignaciones_screen.dart';
 import '../../../academico/presentation/screens/estructura_screen.dart';
 import '../../../academico/presentation/screens/excepciones_screen.dart';
 import '../../../academico/presentation/screens/periodos_screen.dart';
+import '../../../academico/presentation/screens/sesiones_screen.dart';
 import '../../../geo/presentation/bloc/geo_bloc.dart';
+
 import '../../../geo/presentation/bloc/geo_event.dart';
 import '../../../geo/presentation/screens/bloques_screen.dart';
 import '../../../geo/presentation/screens/espacios_screen.dart';
 import '../../../geo/presentation/screens/sedes_screen.dart';
 import '../../../geo/presentation/screens/solapamientos_screen.dart';
 import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
+import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
@@ -65,12 +68,17 @@ class _DashboardShellState extends State<DashboardShell> {
         return const EstructuraScreen();
       case NavSection.asignaciones:
         return const AsignacionesScreen();
+      case NavSection.sesiones:
+        return const SesionesScreen();
       case NavSection.excepciones:
+
         return const ExcepcionesScreen();
       case NavSection.dispositivos:
         return const DispositivosScreen();
       case NavSection.parametros:
         return const ParametrosScreen();
+      case NavSection.marcajes:
+        return const MarcajesAdminScreen();
     }
   }
 

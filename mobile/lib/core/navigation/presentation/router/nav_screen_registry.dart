@@ -3,6 +3,10 @@
 // se edita unicamente este registro sin tocar el AppShell.
 import 'package:flutter/material.dart';
 import '../../../../features/home/presentation/screens/home_screen.dart';
+import '../../../../features/marcaje/presentation/screens/marcaje_grupal_screen.dart';
+import '../../../../features/marcaje/presentation/screens/marcaje_historial_screen.dart';
+import '../../../../features/marcaje/presentation/screens/marcaje_screen.dart';
+import '../../../../features/horario/presentation/screens/mi_horario_screen.dart';
 import '../../../../shared/widgets/placeholder_screen.dart';
 
 /// Registrador centralizado que mapea una ruta de navegacion a su Widget correspondiente.
@@ -16,26 +20,13 @@ class NavScreenRegistry {
         return const HomeScreen();
 
       case '/shell/inicio':
-        return const PlaceholderScreen(
-          titulo: 'Marcar asistencia',
-          descripcion: 'El modulo de marcaje estara disponible en F1-MVP.',
-          icono: Icons.touch_app_rounded,
-        );
+        return const MarcajeScreen();
 
       case '/shell/horario':
-        return const PlaceholderScreen(
-          titulo: 'Mi horario',
-          descripcion:
-              'Consulta tus sesiones de la semana. Disponible en F1-MVP.',
-          icono: Icons.calendar_today_rounded,
-        );
+        return const MiHorarioScreen();
 
       case '/shell/historial':
-        return const PlaceholderScreen(
-          titulo: 'Historial de marcajes',
-          descripcion: 'Tu cronologia de asistencia. Disponible en F1-MVP.',
-          icono: Icons.history_rounded,
-        );
+        return const MarcajeHistorialScreen();
 
       case '/shell/justificaciones':
         return const PlaceholderScreen(
@@ -46,11 +37,7 @@ class NavScreenRegistry {
         );
 
       case '/shell/marcajes-admin':
-        return const PlaceholderScreen(
-          titulo: 'Gestion de marcajes',
-          descripcion: 'Ajuste y anulacion de marcajes. Disponible en F1-MVP.',
-          icono: Icons.manage_search_rounded,
-        );
+        return const MarcajeHistorialScreen();
 
       case '/shell/reportes':
         return const PlaceholderScreen(
@@ -77,12 +64,7 @@ class NavScreenRegistry {
         );
 
       case '/shell/marcaje-grupal':
-        return const PlaceholderScreen(
-          titulo: 'Marcaje grupal',
-          descripcion:
-              'Registra asistencia de un grupo de estudiantes. Disponible en F3.',
-          icono: Icons.group_rounded,
-        );
+        return const MarcajeGrupalScreen();
 
       case '/shell/perfil':
         return const PlaceholderScreen(

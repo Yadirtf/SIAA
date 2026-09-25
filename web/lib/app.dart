@@ -6,6 +6,8 @@ import 'core/theme/app_theme.dart';
 import 'features/academico/data/academico_remote_datasource.dart';
 import 'features/academico/domain/academico_repository.dart';
 import 'features/academico/presentation/bloc/academico_bloc.dart';
+import 'features/academico/presentation/bloc/sesiones_bloc.dart';
+import 'features/academico/presentation/bloc/importacion_bloc.dart';
 import 'features/auth/data/auth_remote_datasource.dart';
 import 'features/auth/domain/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -23,6 +25,10 @@ import 'features/geo/presentation/bloc/geo_bloc.dart';
 import 'features/parametros/data/parametros_data.dart';
 import 'features/parametros/domain/parametros_repository.dart';
 import 'features/parametros/presentation/bloc/parametros_bloc.dart';
+import 'features/marcajes/data/datasources/marcajes_admin_remote_datasource.dart';
+import 'features/marcajes/data/repositories/marcajes_admin_repository_impl.dart';
+import 'features/marcajes/domain/repositories/marcajes_admin_repository.dart';
+import 'features/marcajes/presentation/bloc/marcajes_admin_bloc.dart';
 
 class SiaaApp extends StatelessWidget {
   const SiaaApp({super.key});
@@ -54,6 +60,11 @@ class SiaaApp extends StatelessWidget {
             remote: ParametrosRemoteDataSource(),
           ),
         ),
+        RepositoryProvider<MarcajesAdminRepository>(
+          create: (_) => MarcajesAdminRepositoryImpl(
+            remoteDataSource: MarcajesAdminRemoteDataSource(),
+          ),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -69,6 +80,14 @@ class SiaaApp extends StatelessWidget {
             create: (ctx) =>
                 AcademicoBloc(repository: ctx.read<AcademicoRepository>()),
           ),
+          BlocProvider<SesionesBloc>(
+            create: (ctx) =>
+                SesionesBloc(repository: ctx.read<AcademicoRepository>()),
+          ),
+          BlocProvider<ImportacionBloc>(
+            create: (ctx) =>
+                ImportacionBloc(repository: ctx.read<AcademicoRepository>()),
+          ),
           BlocProvider<DispositivosBloc>(
             create: (ctx) => DispositivosBloc(
               repository: ctx.read<DispositivosRepository>(),
@@ -77,6 +96,11 @@ class SiaaApp extends StatelessWidget {
           BlocProvider<ParametrosBloc>(
             create: (ctx) => ParametrosBloc(
               repository: ctx.read<ParametrosRepository>(),
+            ),
+          ),
+          BlocProvider<MarcajesAdminBloc>(
+            create: (ctx) => MarcajesAdminBloc(
+              repository: ctx.read<MarcajesAdminRepository>(),
             ),
           ),
         ],

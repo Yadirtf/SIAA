@@ -32,6 +32,9 @@ func NewRouter(
 	geoH *handler.GeoHandler,
 	acaH *handler.AcademicoHandler,
 	parametroH *handler.ParametroHandler,
+	marcajeH *handler.MarcajeHandler,
+	marcajeAdminH *handler.MarcajeAdminHandler,
+	marcajeSyncH *handler.MarcajeSyncHandler,
 	auditoria repository.AuditoriaRepository,
 	registry *RouteRegistry,
 ) (*echo.Echo, error) {
@@ -173,6 +176,9 @@ func NewRouter(
 
 	// Administración de usuarios (requiere token válido y tasa de 120 req/min por usuario)
 	usuariosProtected := api.Group("/usuarios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+	// Listado de usuarios para selectores y gestión (US-AUT-01..07)
+	usuariosProtected.GET("", authH.ListarUsuarios, mw.RequirePermission(rbac.PermUsuarioLeer, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/usuarios", rbac.PermUsuarioLeer)
 	// Desbloqueo administrativo auditado (US-AUT-02 AC-02, T-AUT-02.3)
 	usuariosProtected.POST("/:id/desbloquear", authH.DesbloquearUsuario, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/usuarios/:id/desbloquear", rbac.PermUsuarioEditar)
@@ -280,6 +286,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodPost, "/api/v1/sesiones/:id/cancelar", rbac.PermHorarioCrear)
 		sesiones.PUT("/:id/aula", acaH.ReasignarAulaSesion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 		registry.RegisterPermission(http.MethodPut, "/api/v1/sesiones/:id/aula", rbac.PermHorarioCrear)
+		sesiones.PATCH("/:id/docente-reemplazo", acaH.AsignarDocenteReemplazo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPatch, "/api/v1/sesiones/:id/docente-reemplazo", rbac.PermHorarioCrear)
 
 		// Importación masiva académica (US-ACA-07)
 		acaImport := api.Group("/academico", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -356,6 +364,9 @@ func NewRouter(
 		params.GET("/efectivos", parametroH.ObtenerEfectivos, mw.RequirePermission(rbac.PermParametroLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/parametros/efectivos", rbac.PermParametroLeer)
 	}
+
+	// ─── Motor de marcaje — EP-06 (US-MAR-01..15) ─────────────
+	registerMarcajeRoutes(api, cfg, auditoria, registry, marcajeH, marcajeAdminH, marcajeSyncH)
 
 	// ─── Verificación al arranque — T-ROL-01.4, AC-03 ─────────
 	// Toda ruta bajo /api/v1 DEBE declarar su permiso o estar explícitamente marcada como pública.

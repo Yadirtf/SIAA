@@ -15,36 +15,45 @@ class ModulosSecundariosPanel extends StatelessWidget {
     return Column(
       children: [
         _buildFeatureTile(
+          context,
           icon: Icons.qr_code_scanner_rounded,
           title: 'Marcaje de Asistencia',
-          subtitle: 'Validación por geocerca y token de sesión (Próximamente)',
-          enabled: false,
+          subtitle: 'Validación por geocerca y token de sesión',
+          enabled: true,
+          onTap: () => Navigator.pushNamed(context, '/shell/inicio'),
         ),
         const SizedBox(height: 10),
         _buildFeatureTile(
+          context,
           icon: Icons.history_rounded,
           title: 'Historial de Asistencia',
           subtitle: 'Registros y justificaciones de clase',
-          enabled: false,
+          enabled: true,
+          onTap: () => Navigator.pushNamed(context, '/shell/historial'),
         ),
       ],
     );
   }
 
-  Widget _buildFeatureTile({
+  Widget _buildFeatureTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required bool enabled,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SIAAColors.neutral200),
-      ),
-      child: Row(
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SIAAColors.neutral200),
+        ),
+        child: Row(
         children: [
           Icon(
             icon,
@@ -85,6 +94,7 @@ class ModulosSecundariosPanel extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

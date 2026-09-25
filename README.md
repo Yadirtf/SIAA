@@ -154,7 +154,7 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 | **EP-03** | Cartografía GPS de espacios, buffers geodésicos y topología | 100% | ✅ Completo |
 | **EP-04** | Estructura académica, motor de sesiones recurrentes y excepciones | 100% | ✅ Completo |
 | **EP-05** | Parametrización jerárquica institucional y alertas automáticas | 100% | ✅ Completo |
-| **EP-06** | Marcaje de asistencia, telemetría y geocercas activas | — | ⏳ Próximo Sprint |
+| **EP-06** | Marcaje de asistencia, telemetría y geocercas activas | 100% | ✅ Completo |
 | **EP-07** | Justificaciones, permisos y circuito de aprobaciones | — | ⏳ Backlog |
 | **EP-08** | Reportes institucionales, analítica y notificaciones | — | ⏳ Backlog |
 
@@ -205,10 +205,16 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 #### EP-04 — Estructura Académica, Horarios y Sesiones
 | Historia | Descripción | Estado |
 |---|---|---|
-| US-ACA-01 | Motor de recurrencia y generación automatizada de sesiones de clase según calendario | ✅ Completo |
-| US-ACA-02 | Gestión de excepciones de calendario institucional (días festivos, recesos) | ✅ Completo |
-| US-ACA-03 | Asignación y conmutación de espacios físicos con validación de capacidad | ✅ Completo |
-| US-ACA-04 | Carga masiva de programación académica vía archivos estructurados (CSV / JSON) | ✅ Completo |
+| US-ACA-01 | Periodos y estructura curricular (Facultades, Programas, Asignaturas, Grupos) | ✅ Completo |
+| US-ACA-02 | Configuración de franjas horarias recurrentes y validaciones temporales | ✅ Completo |
+| US-ACA-03 | Asignaciones docente-grupo-aula y detección de colisiones de horario (409) | ✅ Completo |
+| US-ACA-04 | Calendario de excepciones y días no hábiles (ámbitos global, sede, facultad) | ✅ Completo |
+| US-ACA-05 | Generación automática idempotente de sesiones con congelamiento de parámetros | ✅ Completo |
+| US-ACA-06 | Cambios puntuales de sesión (reasignación de aula y cancelación con motivo auditado) | ✅ Completo |
+| US-ACA-07 | Carga masiva de programación académica vía CSV con preview y confirmación | ✅ Completo |
+| US-ACA-08 | Soporte para codocencia (múltiples docentes titulares por sesión) | ✅ Completo |
+| US-ACA-09 | Designación de docente de reemplazo / suplente para sesión específica | ✅ Completo |
+| US-ACA-10 | Integración con sistema externo (SIS) | ⏳ Diferida (Fase 4) |
 
 #### EP-05 — Parametrización Jerárquica Institucional
 | Historia | Descripción | Estado |
@@ -216,6 +222,25 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 | US-PAR-01 | Configuración de parámetros institucionales (tolerancia, buffers, umbrales GPS) | ✅ Completo |
 | US-PAR-02 | Herencia y sobreescritura jerárquica de políticas (Institución → Facultad → Programa) | ✅ Completo |
 | US-PAR-03 | Detección proactiva y alertas de desvíos en configuración de parámetros institucionales | ✅ Completo |
+
+#### EP-06 — Motor de Marcaje y Asistencia
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-MAR-01 | Pantalla de un solo toque con semáforo reactivo de 6 estados (SRS §9.1) | ✅ Completo |
+| US-MAR-02 | Captura puntual de GPS de alta precisión con descarte de lecturas obsoletas | ✅ Completo |
+| US-MAR-03 | Motor determinista puro de validación en 11 pasos (RN-001) | ✅ Completo |
+| US-MAR-04 | Registro y persistencia inmutable de evidencia técnica geolocalizada | ✅ Completo |
+| US-MAR-05 | Idempotencia multinivel (UI debounce, UUID Idempotency-Key, BD unique index) | ✅ Completo |
+| US-MAR-06 | Mensajes accionables estructurados (qué pasó, por qué y cómo resolverlo) | ✅ Completo |
+| US-MAR-07 | Worker en segundo plano para generación automatizada de ausencias | ✅ Completo |
+| US-MAR-08 | Historial cronológico propio con filtrado mensual y evidencia técnica | ✅ Completo |
+| US-MAR-09 | Ajustes y anulaciones administrativas con motivo obligatorio auditado (≥ 20 chars) | ✅ Completo |
+| US-MAR-10 | Integridad y atestación de dispositivo (detección de mock GPS, root, saltos) | ✅ Completo |
+| US-MAR-11 | Marcaje offline cifrado en cola local con sincronización por lotes tolerante | ✅ Completo |
+| US-MAR-12 | Avisos y alertas de cierre de ventana temporal de marcaje | ✅ Completo |
+| US-MAR-13 | Apertura y control de ventana de marcaje para estudiantes del grupo | ✅ Completo |
+| US-MAR-14 | Pase de lista manual de respaldo docente (`MANUAL_DOCENTE`) auditado | ✅ Completo |
+| US-MAR-15 | Soporte para marcaje de salida configurable (obligatorio, opcional, desactivado) | ✅ Completo |
 
 ## Licencia
 

@@ -94,3 +94,36 @@ func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspaci
 
 	return sesion, nil
 }
+
+// AsignarDocenteReemplazo designa un docente suplente para una sesión puntual (US-ACA-09).
+func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDocenteID, motivo string, actor ContextoActor) (*academico.Sesion, error) {
+	if nuevoDocenteID == "" {
+		return nil, shared.NewValidationError("El identificador del nuevo docente es obligatorio", shared.FieldError{
+			Campo: "docenteId", Error: "REQUERIDO",
+		})
+	}
+
+	sesion, err := s.ObtenerSesionPorID(ctx, sesionID)
+	if err != nil {
+		return nil, err
+	}
+
+	valAnt := map[string]interface{}{
+		"docenteIds": sesion.DocenteIDs(),
+	}
+
+	if err := sesion.AsignarDocenteReemplazo(nuevoDocenteID, s.clk.Now()); err != nil {
+		return nil, err
+	}
+
+	if err := s.sesionRepo.Update(ctx, sesion); err != nil {
+		return nil, fmt.Errorf("actualizar docente de sesion: %w", err)
+	}
+
+	s.auditar(ctx, "sesion", sesionID, "DOCENTE_REEMPLAZO_ASIGNADO", actor, valAnt, map[string]interface{}{
+		"nuevoDocenteId": nuevoDocenteID,
+		"motivo":         motivo,
+	})
+
+	return sesion, nil
+}

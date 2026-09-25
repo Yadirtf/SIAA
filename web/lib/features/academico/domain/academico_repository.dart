@@ -1,5 +1,7 @@
 import '../data/academico_remote_datasource.dart';
 import '../data/models/academico_models.dart';
+import '../data/models/importacion_model.dart';
+import '../data/models/sesion_model.dart';
 
 abstract class AcademicoRepository {
   Future<List<PeriodoModel>> getPeriodos();
@@ -43,6 +45,7 @@ abstract class AcademicoRepository {
     required String periodoId,
     required int cupo,
   });
+  Future<void> deleteGrupo(String id);
 
   Future<List<AsignacionModel>> getAsignaciones();
   Future<AsignacionModel> createAsignacion(Map<String, dynamic> body);
@@ -57,7 +60,33 @@ abstract class AcademicoRepository {
     required String fechaFin,
   });
   Future<void> deleteExcepcion(String id);
+
+  Future<List<SesionModel>> getSesiones({
+    String? periodoId,
+    String? docenteId,
+    String? espacioId,
+    String? fecha,
+    String? estado,
+  });
+  Future<void> cancelarSesion({required String sesionId, required String motivo});
+  Future<SesionModel> reasignarAulaSesion({
+    required String sesionId,
+    required String nuevoEspacioId,
+    String? motivo,
+  });
+  Future<SesionModel> asignarDocenteReemplazo({
+    required String sesionId,
+    required String docenteId,
+    String? motivo,
+  });
+
+  Future<PreviewImportacionModel> previewImportarCsv({
+    required List<int> bytes,
+    required String filename,
+  });
+  Future<void> confirmarImportarCsv({required List<Map<String, dynamic>> filas});
 }
+
 
 class AcademicoRepositoryImpl implements AcademicoRepository {
   final AcademicoRemoteDataSource _remoteDataSource;
@@ -192,4 +221,59 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
   @override
   Future<void> deleteExcepcion(String id) =>
       _remoteDataSource.deleteExcepcion(id);
+
+  @override
+  Future<void> deleteGrupo(String id) => _remoteDataSource.deleteGrupo(id);
+
+  @override
+  Future<List<SesionModel>> getSesiones({
+    String? periodoId,
+    String? docenteId,
+    String? espacioId,
+    String? fecha,
+    String? estado,
+  }) => _remoteDataSource.getSesiones(
+    periodoId: periodoId,
+    docenteId: docenteId,
+    espacioId: espacioId,
+    fecha: fecha,
+    estado: estado,
+  );
+
+  @override
+  Future<void> cancelarSesion({required String sesionId, required String motivo}) =>
+      _remoteDataSource.cancelarSesion(sesionId: sesionId, motivo: motivo);
+
+  @override
+  Future<SesionModel> reasignarAulaSesion({
+    required String sesionId,
+    required String nuevoEspacioId,
+    String? motivo,
+  }) => _remoteDataSource.reasignarAulaSesion(
+    sesionId: sesionId,
+    nuevoEspacioId: nuevoEspacioId,
+    motivo: motivo,
+  );
+
+  @override
+  Future<SesionModel> asignarDocenteReemplazo({
+    required String sesionId,
+    required String docenteId,
+    String? motivo,
+  }) => _remoteDataSource.asignarDocenteReemplazo(
+    sesionId: sesionId,
+    docenteId: docenteId,
+    motivo: motivo,
+  );
+
+  @override
+  Future<PreviewImportacionModel> previewImportarCsv({
+    required List<int> bytes,
+    required String filename,
+  }) => _remoteDataSource.previewImportarCsv(bytes: bytes, filename: filename);
+
+  @override
+  Future<void> confirmarImportarCsv({required List<Map<String, dynamic>> filas}) =>
+      _remoteDataSource.confirmarImportarCsv(filas: filas);
 }
+

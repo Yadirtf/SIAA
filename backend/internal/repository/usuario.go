@@ -25,4 +25,6 @@ type UsuarioRepository interface {
 	Create(ctx context.Context, u *user.Usuario) error
 	// Update actualiza todos los campos del usuario.
 	Update(ctx context.Context, u *user.Usuario) error
+	// Listar retorna una lista de usuarios activos no eliminados.
+	Listar(ctx context.Context, limite int) ([]*user.Usuario, error)
 }

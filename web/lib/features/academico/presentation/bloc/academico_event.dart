@@ -118,7 +118,16 @@ class CreateGrupoEvent extends AcademicoEvent {
   List<Object?> get props => [numero, asignaturaId, periodoId, cupo];
 }
 
+class DeleteGrupoEvent extends AcademicoEvent {
+  final String id;
+  const DeleteGrupoEvent(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
 class CreateAsignacionEvent extends AcademicoEvent {
+
   final Map<String, dynamic> body;
   const CreateAsignacionEvent(this.body);
 

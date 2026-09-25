@@ -25,6 +25,11 @@ type ReasignarAulaRequest struct {
 	Motivo         string `json:"motivo,omitempty"`
 }
 
+type AsignarDocenteReemplazoRequest struct {
+	DocenteID string `json:"docenteId" validate:"required"`
+	Motivo    string `json:"motivo,omitempty"`
+}
+
 type SesionResponseDTO struct {
 	ID                      string                 `json:"id"`
 	PeriodoID               string                 `json:"periodoId"`
@@ -134,6 +139,25 @@ func (h *AcademicoHandler) ReasignarAulaSesion(c echo.Context) error {
 
 	actor := extraerActorAcademico(c)
 	sesion, err := h.svc.ReasignarAulaSesion(c.Request().Context(), id, req.NuevoEspacioID, req.Motivo, actor)
+	if err != nil {
+		return mapearErrorAcademico(err)
+	}
+	return c.JSON(http.StatusOK, sesionToDTO(sesion))
+}
+
+// AsignarDocenteReemplazo maneja PATCH /api/v1/sesiones/:id/docente-reemplazo (US-ACA-09).
+func (h *AcademicoHandler) AsignarDocenteReemplazo(c echo.Context) error {
+	id := c.Param("id")
+	var req AsignarDocenteReemplazoRequest
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	actor := extraerActorAcademico(c)
+	sesion, err := h.svc.AsignarDocenteReemplazo(c.Request().Context(), id, req.DocenteID, req.Motivo, actor)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}

@@ -9,9 +9,12 @@ enum NavSection {
   periodos,
   estructura,
   asignaciones,
+  sesiones,
   excepciones,
   dispositivos,
+
   parametros,
+  marcajes,
 }
 
 class NavItem {
@@ -77,7 +80,14 @@ class NavItem {
       category: 'ACADÉMICO',
     ),
     NavItem(
+      section: NavSection.sesiones,
+      title: 'Sesiones de Clase',
+      icon: Icons.event_available_rounded,
+      category: 'ACADÉMICO',
+    ),
+    NavItem(
       section: NavSection.excepciones,
+
       title: 'Calendario Excepciones',
       icon: Icons.event_busy_outlined,
       category: 'ACADÉMICO',
@@ -93,6 +103,12 @@ class NavItem {
       title: 'Parametrización',
       icon: Icons.tune_rounded,
       category: 'CONFIGURACIÓN',
+    ),
+    NavItem(
+      section: NavSection.marcajes,
+      title: 'Gestión de Marcajes',
+      icon: Icons.how_to_reg_rounded,
+      category: 'CONTROL Y ASISTENCIA',
     ),
   ];
 }

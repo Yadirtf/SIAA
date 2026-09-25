@@ -67,7 +67,7 @@ void main() {
     });
 
     testWidgets(
-        'ModulosSecundariosPanel: renderiza accesos a módulos con badges de pronto',
+        'ModulosSecundariosPanel: renderiza accesos a módulos operativos activos',
         (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -79,7 +79,7 @@ void main() {
 
       expect(find.text('Marcaje de Asistencia'), findsOneWidget);
       expect(find.text('Historial de Asistencia'), findsOneWidget);
-      expect(find.text('Pronto'), findsNWidgets(2));
+      expect(find.text('Pronto'), findsNothing);
     });
   });
 }

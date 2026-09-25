@@ -1333,7 +1333,327 @@ paths:
         '204':
           description: Rol eliminado
 
+  /periodos:
+    get:
+      operationId: listarPeriodos
+      summary: Listar periodos académicos
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de periodos académicos
+    post:
+      operationId: crearPeriodo
+      summary: Crear periodo académico
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, nombre, fechaInicio, fechaFin]
+              properties:
+                codigo: { type: string }
+                nombre: { type: string }
+                fechaInicio: { type: string, format: date }
+                fechaFin: { type: string, format: date }
+                estado: { type: string, enum: [PLANEACION, ACTIVO, CERRADO], default: PLANEACION }
+      responses:
+        '201':
+          description: Periodo creado
+
+  /periodos/{id}:
+    get:
+      operationId: obtenerPeriodo
+      summary: Obtener periodo por ID
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Periodo académico
+    put:
+      operationId: actualizarPeriodo
+      summary: Actualizar periodo académico
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Periodo actualizado
+
+  /facultades:
+    get:
+      operationId: listarFacultades
+      summary: Listar facultades
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de facultades
+    post:
+      operationId: crearFacultad
+      summary: Crear facultad
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, nombre]
+              properties:
+                codigo: { type: string }
+                nombre: { type: string }
+                sedeId: { type: string }
+      responses:
+        '201':
+          description: Facultad creada
+
+  /facultades/{id}:
+    delete:
+      operationId: eliminarFacultad
+      summary: Eliminar facultad (lógico)
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
+  /programas:
+    get:
+      operationId: listarProgramas
+      summary: Listar programas
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de programas
+    post:
+      operationId: crearPrograma
+      summary: Crear programa académico
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, nombre, facultadId]
+              properties:
+                codigo: { type: string }
+                nombre: { type: string }
+                facultadId: { type: string }
+      responses:
+        '201':
+          description: Programa creado
+
+  /programas/{id}:
+    delete:
+      operationId: eliminarPrograma
+      summary: Eliminar programa (lógico)
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
+  /asignaturas:
+    get:
+      operationId: listarAsignaturas
+      summary: Listar asignaturas
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de asignaturas
+    post:
+      operationId: crearAsignatura
+      summary: Crear asignatura
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, nombre, programaId, creditos]
+              properties:
+                codigo: { type: string }
+                nombre: { type: string }
+                programaId: { type: string }
+                creditos: { type: integer }
+      responses:
+        '201':
+          description: Asignatura creada
+
+  /asignaturas/{id}:
+    delete:
+      operationId: eliminarAsignatura
+      summary: Eliminar asignatura (lógico)
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
+  /grupos:
+    get:
+      operationId: listarGrupos
+      summary: Listar grupos
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de grupos
+    post:
+      operationId: crearGrupo
+      summary: Crear grupo de asignatura
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [numero, asignaturaId, periodoId, cupo]
+              properties:
+                numero: { type: string }
+                asignaturaId: { type: string }
+                periodoId: { type: string }
+                cupo: { type: integer }
+      responses:
+        '201':
+          description: Grupo creado
+
+  /grupos/{id}:
+    delete:
+      operationId: eliminarGrupo
+      summary: Eliminar grupo (lógico)
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
+  /asignaciones:
+    get:
+      operationId: listarAsignaciones
+      summary: Listar asignaciones académicas
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de asignaciones
+    post:
+      operationId: crearAsignacion
+      summary: Crear asignación docente-grupo-aula-franja (US-ACA-03)
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periodoId, grupoId, docenteIds, franja, modalidad]
+              properties:
+                periodoId: { type: string }
+                grupoId: { type: string }
+                asignaturaId: { type: string }
+                docenteIds: { type: array, items: { type: string } }
+                docenteNombre: { type: string }
+                espacioId: { type: string }
+                espacioNombre: { type: string }
+                modalidad: { type: string, enum: [PRESENCIAL, VIRTUAL, HIBRIDA] }
+                franja:
+                  type: object
+                  required: [diaSemana, horaInicio, horaFin]
+                  properties:
+                    diaSemana: { type: integer }
+                    horaInicio: { type: string, example: "08:00" }
+                    horaFin: { type: string, example: "10:00" }
+      responses:
+        '201':
+          description: Asignación creada
+        '409':
+          description: Conflicto de colisión (docente, aula o grupo ocupados en la misma franja)
+
+  /asignaciones/{id}:
+    delete:
+      operationId: eliminarAsignacion
+      summary: Eliminar asignación académica
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
+  /calendario-excepciones:
+    get:
+      operationId: listarExcepciones
+      summary: Listar excepciones de calendario
+      tags: [académico]
+      responses:
+        '200':
+          description: Lista de excepciones
+    post:
+      operationId: crearExcepcion
+      summary: Crear excepción de calendario (US-ACA-04)
+      tags: [académico]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, tipo, ambito, fechaInicio, fechaFin]
+              properties:
+                nombre: { type: string }
+                tipo: { type: string, enum: [FESTIVO, RECESO, PARO, JORNADA_INSTITUCIONAL] }
+                ambito: { type: string, enum: [GLOBAL, SEDE, FACULTAD] }
+                fechaInicio: { type: string, format: date }
+                fechaFin: { type: string, format: date }
+      responses:
+        '201':
+          description: Excepción creada
+
+  /calendario-excepciones/{id}:
+    delete:
+      operationId: eliminarExcepcion
+      summary: Eliminar excepción de calendario
+      tags: [académico]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Eliminado
+
   /periodos/{id}/generar-sesiones:
+
     post:
       operationId: generarSesionesPeriodo
       summary: Generar masivamente sesiones de clase para un periodo (US-ACA-05)
@@ -1434,7 +1754,39 @@ paths:
         '404':
           description: Sesión o aula no encontrada
 
+  /sesiones/{id}/docente-reemplazo:
+    patch:
+      operationId: asignarDocenteReemplazo
+      summary: Asignar suplente para una sesión puntual (US-ACA-09)
+      tags: [sesiones]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [docenteId]
+              properties:
+                docenteId:
+                  type: string
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Docente suplente asignado exitosamente
+        '401':
+          description: No autenticado
+        '404':
+          description: Sesión no encontrada
+
   /academico/importar/preview:
+
     post:
       operationId: previewImportarAcademicoCSV
       summary: Validar y previsualizar archivo CSV de estructura académica (US-ACA-07)
@@ -1485,6 +1837,246 @@ paths:
           description: No autenticado
         '403':
           description: Permiso denegado
+
+  # ─── EP-06: Motor de Marcaje ──────────────────────────────────────────
+  /marcajes:
+    post:
+      operationId: crearMarcaje
+      summary: Registrar marcaje de asistencia (US-MAR-01..US-MAR-05, §9.4)
+      tags: [marcaje]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sesionId, tipo, timestampDispositivo, dispositivoId, versionApp]
+              properties:
+                sesionId:
+                  type: string
+                tipo:
+                  type: string
+                  enum: [ENTRADA, SALIDA]
+                latitud:
+                  type: number
+                longitud:
+                  type: number
+                precisionMetros:
+                  type: number
+                timestampDispositivo:
+                  type: string
+                  format: date-time
+                dispositivoId:
+                  type: string
+                versionApp:
+                  type: string
+                idempotencyKey:
+                  type: string
+      responses:
+        '201':
+          description: Marcaje evaluado y registrado exitosamente (aceptado o rechazado)
+        '200':
+          description: Precisión GPS insuficiente, permite reintento inmediato
+        '400':
+          description: Petición inválida
+        '401':
+          description: No autenticado
+        '403':
+          description: Permiso denegado
+
+    get:
+      operationId: listarMarcajesAdmin
+      summary: Consultar marcajes con filtros administrativos (US-MAR-09)
+      tags: [marcaje]
+      parameters:
+        - name: sesionId
+          in: query
+          schema: { type: string }
+        - name: usuarioId
+          in: query
+          schema: { type: string }
+        - name: resultado
+          in: query
+          schema: { type: string }
+        - name: pagina
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limite
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Lista paginada de marcajes
+
+  /marcajes/sync:
+    post:
+      operationId: syncMarcajesOffline
+      summary: Sincronizar lote de marcajes offline (US-MAR-11)
+      tags: [marcaje]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Balance consolidado de sincronización
+
+  /marcajes/{id}:
+    patch:
+      operationId: ajustarMarcaje
+      summary: Ajustar o anular un marcaje administrativamente (US-MAR-09)
+      tags: [marcaje]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motivo]
+              properties:
+                anulado: { type: boolean }
+                nuevoResultado: { type: string }
+                motivo: { type: string, minLength: 20 }
+      responses:
+        '200':
+          description: Marcaje ajustado exitosamente
+        '400':
+          description: Motivo inválido o menor a 20 caracteres
+
+  /marcajes/manual:
+    post:
+      operationId: crearMarcajeManual
+      summary: Crear marcaje manual de contingencia (US-MAR-09 AC-04)
+      tags: [marcaje]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sesionId, usuarioId, tipo, resultado, motivo]
+              properties:
+                sesionId: { type: string }
+                usuarioId: { type: string }
+                tipo: { type: string, enum: [ENTRADA, SALIDA] }
+                resultado: { type: string }
+                motivo: { type: string, minLength: 20 }
+      responses:
+        '201':
+          description: Marcaje manual registrado exitosamente
+
+  /me/sesiones/activa:
+    get:
+      operationId: obtenerSesionActiva
+      summary: Obtener sesión marcable en la ventana actual con parámetros y geometría (US-MAR-01, §9.5)
+      tags: [marcaje]
+      responses:
+        '200':
+          description: Detalle de sesión activa y parámetros de validación
+
+  /me/sesiones/hoy:
+    get:
+      operationId: listarSesionesHoy
+      summary: Listar todas las sesiones programadas para el docente hoy (T-MAR-01.2)
+      tags: [marcaje]
+      responses:
+        '200':
+          description: Sesiones del día con estado de marcaje
+
+  /me/historial:
+    get:
+      operationId: consultarHistorialPropio
+      summary: Consultar historial cronológico propio de marcajes (US-MAR-08)
+      tags: [marcaje]
+      parameters:
+        - name: mes
+          in: query
+          schema: { type: string, example: "2026-09" }
+        - name: pagina
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limite
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Historial cronológico inverso de marcajes del usuario autenticado
+        '403':
+          description: Prohibido consultar historial de otro usuario (AC-04)
+
+  /sesiones/{id}/ventana-estudiantil:
+    post:
+      operationId: abrirVentanaEstudiantil
+      summary: Abrir ventana de asistencia para estudiantes del grupo (US-MAR-13)
+      tags: [marcaje]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duracionMinutos: { type: integer, default: 15 }
+      responses:
+        '200':
+          description: Ventana estudiantil habilitada
+
+  /sesiones/{id}/lista-manual:
+    post:
+      operationId: registrarListaManual
+      summary: Registrar pase de lista manual de respaldo para estudiantes (US-MAR-14)
+      tags: [marcaje]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motivo, estudiantes]
+              properties:
+                motivo: { type: string }
+                estudiantes:
+                  type: array
+                  items:
+                    type: object
+                    required: [estudianteId, presente]
+                    properties:
+                      estudianteId: { type: string }
+                      presente: { type: boolean }
+      responses:
+        '200':
+          description: Lista manual registrada y auditada exitosamente
+
+
+
 
 
 

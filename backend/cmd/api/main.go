@@ -26,6 +26,7 @@ import (
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
 	"github.com/siaa/backend/internal/usecase/auth"
 	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
+	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
 	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
 	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
 )
@@ -141,6 +142,26 @@ func main() {
 
 	parametroSvc := usecasePar.New(parametroRepo)
 
+	// ─── Motor de Marcaje (EP-06) ─────────────────────────────
+	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
+	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil)
+	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo)
+	historialUC := usecaseMarcaje.NewHistorialUseCase(marcajeRepo)
+	ajustarUC := usecaseMarcaje.NewAjustarMarcajeUseCase(marcajeRepo, sesionRepo, auditoriaRepo)
+	syncUC := usecaseMarcaje.NewSyncOfflineUseCase(crearMarcajeUC, marcajeRepo)
+	ventanaEstudiantilUC := usecaseMarcaje.NewVentanaEstudiantilUseCase(sesionRepo, marcajeRepo)
+	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo)
+	ausenciasWorker := usecaseMarcaje.NewAusenciasWorker(marcajeRepo, sesionRepo)
+
+	// Worker periódico de ausencias automáticas (US-MAR-07, cada 15 min)
+	go func() {
+		ticker := time.NewTicker(15 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			_, _ = ausenciasWorker.EjecutarCiclo(context.Background(), time.Now().UTC())
+		}
+	}()
+
 	// ─── Handlers ─────────────────────────────────────────────
 	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH := handler.NewAuthHandler(authSvc)
@@ -149,9 +170,12 @@ func main() {
 	geoH := handler.NewGeoHandler(geoSvc)
 	acaH := handler.NewAcademicoHandler(acaSvc)
 	parametroH := handler.NewParametroHandler(parametroSvc)
+	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC)
+	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC)
+	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, auditoriaRepo, nil)
 	if err != nil {
 		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
 		os.Exit(1)

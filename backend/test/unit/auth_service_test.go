@@ -54,6 +54,12 @@ func (m *mockUsuarioRepo) Create(_ context.Context, u *user.Usuario) error {
 func (m *mockUsuarioRepo) Update(_ context.Context, u *user.Usuario) error {
 	return nil
 }
+func (m *mockUsuarioRepo) Listar(_ context.Context, _ int) ([]*user.Usuario, error) {
+	if m.usuario != nil {
+		return []*user.Usuario{m.usuario}, nil
+	}
+	return []*user.Usuario{}, nil
+}
 
 type mockTokenRepo struct {
 	token   *repository.RefreshToken

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/user"
@@ -141,6 +142,29 @@ func (r *usuarioRepository) Update(ctx context.Context, u *user.Usuario) error {
 	doc.ActualizadoEn = time.Now().UTC()
 	_, err := r.col.ReplaceOne(ctx, bson.D{{Key: "_id", Value: oid}}, doc)
 	return err
+}
+
+func (r *usuarioRepository) Listar(ctx context.Context, limite int) ([]*user.Usuario, error) {
+	findOpts := options.Find().SetSort(bson.D{{Key: "nombre", Value: 1}})
+	if limite > 0 {
+		findOpts.SetLimit(int64(limite))
+	}
+	cursor, err := r.col.Find(ctx, bson.D{{Key: "eliminado", Value: false}}, findOpts)
+	if err != nil {
+		return nil, fmt.Errorf("listar usuarios: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var docs []usuarioDoc
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, fmt.Errorf("decodificar usuarios: %w", err)
+	}
+
+	usuarios := make([]*user.Usuario, len(docs))
+	for i := range docs {
+		usuarios[i] = docToUsuario(&docs[i])
+	}
+	return usuarios, nil
 }
 
 // ─── Conversores BSON ↔ dominio ──────────────────────────────

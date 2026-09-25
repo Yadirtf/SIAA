@@ -230,6 +230,18 @@ func (s *Sesion) ReasignarEspacio(nuevoEspacioID string, versionGeom int, geom, 
 	s.actualizadoEn = ahora
 }
 
+// AsignarDocenteReemplazo designa un docente suplente para esta sesión específica (US-ACA-09).
+func (s *Sesion) AsignarDocenteReemplazo(nuevoDocenteID string, ahora time.Time) error {
+	if s.estado == EstadoSesionCancelada || s.estado == EstadoSesionRealizada {
+		return shared.NewValidationError("No se puede asignar suplente a una sesión cancelada o ya realizada", shared.FieldError{
+			Campo: "estado", Error: "SESION_NO_MODIFICABLE",
+		})
+	}
+	s.docenteIDs = []string{nuevoDocenteID}
+	s.actualizadoEn = ahora
+	return nil
+}
+
 // EsMarcable comprueba si la hora dada cae dentro de la ventana de entrada de la sesión (SRS §6.4).
 func (s *Sesion) EsMarcable(t time.Time) bool {
 	if s.estado != EstadoSesionProgramada && s.estado != EstadoSesionEnCurso {

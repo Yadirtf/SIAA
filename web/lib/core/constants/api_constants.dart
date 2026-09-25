@@ -36,4 +36,14 @@ class ApiConstants {
   // Parámetros jerárquicos (EP-05, US-PAR-01/02/03)
   static const String parametros = '$baseUrl/parametros';
   static const String parametrosEfectivos = '$baseUrl/parametros/efectivos';
+
+  // Marcajes (EP-06, US-MAR-09)
+  static const String marcajes = '$baseUrl/marcajes';
+  static String ajustarMarcaje(String marcajeId) => '$baseUrl/marcajes/$marcajeId';
+  static const String marcajeManual = '$baseUrl/marcajes/manual';
+  static const String usuarios = '$baseUrl/usuarios';
+  static const String sesiones = '$baseUrl/sesiones';
+  static const String academicoImportarPreview = '$baseUrl/academico/importar/preview';
+  static const String academicoImportar = '$baseUrl/academico/importar';
 }
+

@@ -19,7 +19,9 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
     on<CreateAsignaturaEvent>(_onCreateAsignatura);
     on<DeleteAsignaturaEvent>(_onDeleteAsignatura);
     on<CreateGrupoEvent>(_onCreateGrupo);
+    on<DeleteGrupoEvent>(_onDeleteGrupo);
     on<CreateAsignacionEvent>(_onCreateAsignacion);
+
     on<DeleteAsignacionEvent>(_onDeleteAsignacion);
     on<CreateExcepcionEvent>(_onCreateExcepcion);
     on<DeleteExcepcionEvent>(_onDeleteExcepcion);
@@ -238,7 +240,27 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
     }
   }
 
+  Future<void> _onDeleteGrupo(
+    DeleteGrupoEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
+    try {
+      await _repository.deleteGrupo(event.id);
+      add(const LoadAcademicoDataEvent());
+    } catch (e) {
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
+    }
+  }
+
   Future<void> _onCreateAsignacion(
+
     CreateAsignacionEvent event,
     Emitter<AcademicoState> emit,
   ) async {
