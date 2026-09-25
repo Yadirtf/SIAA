@@ -102,6 +102,7 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080/api/v1
 | Servicio | URL | Descripción |
 |---|---|---|
 | API | http://localhost:8080 | Backend principal |
+| Métricas | http://localhost:8080/metrics | Métricas Prometheus (latencia, throughput) |
 | MongoDB | mongodb://localhost:27017 | Base de datos |
 | MailHog UI | http://localhost:8025 | Ver correos de recuperación |
 | Mongo Express | http://localhost:8081 | Explorador de MongoDB |
@@ -141,27 +142,80 @@ Ver [`backend/.env.example`](backend/.env.example) para la lista completa.
 | ADR-04 | Coordenadas geográficas en formato GeoJSON `[longitud, latitud]` |
 | ADR-07 | Idempotencia de marcajes vía índice único parcial (excluye anulados) |
 
-## Sprint 1 — Progreso
+## Estado de Implementación y Progreso del Proyecto
 
-| Historia | Estado |
-|---|---|
-| US-PLT-01 Esqueleto API Go | ✅ Completo |
-| US-PLT-02 CI con cobertura | ✅ Completo |
-| US-PLT-03 Esqueleto Flutter móvil | ✅ Completo |
-| US-PLT-04 Esqueleto Flutter web | ✅ Completo |
-| US-AUT-01 Login JWT | ✅ Completo |
-| US-AUT-02 Bloqueo y límite de tasa | ✅ Completo |
-| US-AUT-04 Recuperación de contraseña | ✅ Completo |
-| US-ROL-01 Control de acceso por permisos granulares | ✅ Completo |
+### Resumen General de Épicas
 
-## Sprint 2 — Progreso
+| Épica | Descripción | Cobertura | Estado |
+|---|---|---|---|
+| **EP-00** | Fundaciones de plataforma, observabilidad y pipeline CI/CD | 100% | ✅ Completo |
+| **EP-01** | Identidad, autenticación robusta, sesión y dispositivo confiable | 100% | ✅ Completo |
+| **EP-02** | Roles, permisos granulares y control de acceso (RBAC / ABAC) | 100% | ✅ Completo |
+| **EP-03** | Cartografía GPS de espacios, buffers geodésicos y topología | 100% | ✅ Completo |
+| **EP-04** | Estructura académica, motor de sesiones recurrentes y excepciones | 100% | ✅ Completo |
+| **EP-05** | Parametrización jerárquica institucional y alertas automáticas | 100% | ✅ Completo |
+| **EP-06** | Marcaje de asistencia, telemetría y geocercas activas | — | ⏳ Próximo Sprint |
+| **EP-07** | Justificaciones, permisos y circuito de aprobaciones | — | ⏳ Backlog |
+| **EP-08** | Reportes institucionales, analítica y notificaciones | — | ⏳ Backlog |
 
-| Historia | Estado |
-|---|---|
-| US-GEO-01 Jerarquía física de espacios | ✅ Completo |
-| US-GEO-02 Captura de polígono por recorrido perimetral | ✅ Completo |
-| US-GEO-03 Captura alternativa por toque sobre mapa | ✅ Completo |
-| US-GEO-04 Validación geométrica del polígono | ⏳ Pendiente |
+### Detalle de Historias de Usuario Implementadas (EP-00 a EP-05)
+
+#### EP-00 — Fundaciones de Plataforma
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-PLT-01 | Esqueleto API Go con arquitectura hexagonal y endpoints health check | ✅ Completo |
+| US-PLT-02 | Pipeline CI/CD con ejecución automatizada de pruebas y quality gates | ✅ Completo |
+| US-PLT-03 | Esqueleto Flutter móvil (Clean Architecture, BLoC, temas y Certificate Pinning) | ✅ Completo |
+| US-PLT-04 | Esqueleto Flutter web (consola administrativa SPA/WASM) | ✅ Completo |
+| US-PLT-05 | Observabilidad con endpoint Prometheus (`/metrics`) y tracking de latencia p95/p99 | ✅ Completo |
+| US-PLT-06 | Pruebas de carga y capacidad de concurrencia bajo picos de marcaje | ✅ Completo |
+
+#### EP-01 — Identidad, Sesión y Dispositivo Confiable
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-AUT-01 | Login JWT institucional con rotación de par de tokens (Access + Refresh) | ✅ Completo |
+| US-AUT-02 | Bloqueo progresivo y límite de tasa por IP/cuenta para protección contra fuerza bruta | ✅ Completo |
+| US-AUT-03 | Registro, aprobación y vinculación estricta de dispositivo móvil confiable | ✅ Completo |
+| US-AUT-04 | Recuperación segura de contraseña con token criptográfico HMAC-SHA256 | ✅ Completo |
+| US-AUT-05 | Conmutación de contexto multi-rol con revocación y reemisión de tokens | ✅ Completo |
+| US-AUT-06 | Revocación global de sesiones activas y rotación forzada de credenciales | ✅ Completo |
+| US-AUT-07 | Segundo factor de autenticación TOTP (RFC 6238) con códigos de respaldo | ✅ Completo |
+
+#### EP-02 — Roles, Permisos y Alcance Institucional
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-ROL-01 | Matriz RBAC con permisos atómicos granulares (`recurso:accion`) | ✅ Completo |
+| US-ROL-02 | Creación, edición y personalización dinámica de roles institucionales | ✅ Completo |
+| US-ROL-03 | Control de acceso basado en atributos (ABAC contextual y jerarquía institucional) | ✅ Completo |
+| US-ROL-04 | Registro de auditoría y trazabilidad inmutable de asignación de roles y permisos | ✅ Completo |
+
+#### EP-03 — Cartografía GPS de Espacios Académicos
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-GEO-01 | Gestión de jerarquía física institucional (Sede → Bloque → Aula) | ✅ Completo |
+| US-GEO-02 | Captura de polígono perimetral por recorrido continuo con filtro de precisión GPS | ✅ Completo |
+| US-GEO-03 | Captura alternativa por digitalización táctil sobre cartografía satelital | ✅ Completo |
+| US-GEO-04 | Validación topológica y geométrica estricta de polígonos (GeoJSON RFC 7946) | ✅ Completo |
+| US-GEO-05 | Detección y gestión de solapamientos entre espacios con justificación auditada | ✅ Completo |
+| US-GEO-06 | Versionado e historial completo de geometrías de espacios físicos | ✅ Completo |
+| US-GEO-07 | Edición interactiva de vértices individuales y recálculo de área en vivo | ✅ Completo |
+| US-GEO-08 | Clonación rápida de geometrías entre niveles y pisos de edificios | ✅ Completo |
+| US-GEO-09 | Importación masiva de espacios y perímetros mediante FeatureCollection GeoJSON | ✅ Completo |
+
+#### EP-04 — Estructura Académica, Horarios y Sesiones
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-ACA-01 | Motor de recurrencia y generación automatizada de sesiones de clase según calendario | ✅ Completo |
+| US-ACA-02 | Gestión de excepciones de calendario institucional (días festivos, recesos) | ✅ Completo |
+| US-ACA-03 | Asignación y conmutación de espacios físicos con validación de capacidad | ✅ Completo |
+| US-ACA-04 | Carga masiva de programación académica vía archivos estructurados (CSV / JSON) | ✅ Completo |
+
+#### EP-05 — Parametrización Jerárquica Institucional
+| Historia | Descripción | Estado |
+|---|---|---|
+| US-PAR-01 | Configuración de parámetros institucionales (tolerancia, buffers, umbrales GPS) | ✅ Completo |
+| US-PAR-02 | Herencia y sobreescritura jerárquica de políticas (Institución → Facultad → Programa) | ✅ Completo |
+| US-PAR-03 | Detección proactiva y alertas de desvíos en configuración de parámetros institucionales | ✅ Completo |
 
 ## Licencia
 
