@@ -58,10 +58,25 @@ const (
 	PermAuditoriaLeer Permission = "auditoria:leer"
 
 	// Roles
-	PermRolCrear  Permission = "rol:crear"
-	PermRolEditar Permission = "rol:editar"
-	PermRolLeer   Permission = "rol:leer"
+	PermRolCrear    Permission = "rol:crear"
+	PermRolEditar   Permission = "rol:editar"
+	PermRolLeer     Permission = "rol:leer"
+	PermRolEliminar Permission = "rol:eliminar"
 )
+
+// AllPermissions contiene todos los permisos del catálogo oficial del sistema (SRS §3.2).
+var AllPermissions = []Permission{
+	PermMarcajeCrear, PermMarcajeLeer, PermMarcajeAjustar, PermMarcajeAnular,
+	PermAulaLeer, PermAulaCrear, PermAulaEditar, PermAulaEditarGeometria, PermAulaEliminar,
+	PermSedeAdministrar, PermBloqueAdministrar,
+	PermHorarioCrear, PermHorarioLeer, PermAsignacionCrear, PermAsignacionEditar,
+	PermParametroLeer, PermParametroEditar,
+	PermUsuarioCrear, PermUsuarioEditar, PermUsuarioLeer, PermUsuarioEliminar,
+	PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
+	PermReporteExportar, PermReporteLeer,
+	PermAuditoriaLeer,
+	PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
+}
 
 // ─────────────────────────────────────────────
 // Roles predefinidos del sistema — SRS §3.2
@@ -91,7 +106,7 @@ var DefaultPermissions = map[RoleName][]Permission{
 		PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
 		PermReporteExportar, PermReporteLeer,
 		PermAuditoriaLeer,
-		PermRolCrear, PermRolEditar, PermRolLeer,
+		PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
 	},
 	RolAdminInst: {
 		PermMarcajeLeer, PermMarcajeAjustar, PermMarcajeAnular,

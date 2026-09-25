@@ -87,20 +87,24 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   }
 
   Future<void> _iniciarGps() async {
-    final estado = await _gpsService.escucharPosicionesConPermiso(
-      onReading: (reading) {
-        if (!mounted) return;
-        context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
-        if (!_mapaCentradoInicialmente) {
-          _mapaCentradoInicialmente = true;
-          _mapController.move(
-              ll.LatLng(reading.latitude, reading.longitude), 18.5);
-        }
-      },
-      onError: (_) {},
-    );
+    try {
+      final estado = await _gpsService.escucharPosicionesConPermiso(
+        onReading: (reading) {
+          if (!mounted) return;
+          context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
+          if (!_mapaCentradoInicialmente) {
+            _mapaCentradoInicialmente = true;
+            try {
+              _mapController.move(
+                  ll.LatLng(reading.latitude, reading.longitude), 18.5);
+            } catch (_) {}
+          }
+        },
+        onError: (_) {},
+      );
 
-    if (mounted) setState(() => _estadoPermiso = estado);
+      if (mounted) setState(() => _estadoPermiso = estado);
+    } catch (_) {}
   }
 
   void _rotarCapaMapa() {

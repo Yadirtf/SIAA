@@ -47,38 +47,46 @@ const (
 	ClaveBloqueoMockLocation        Clave = "bloqueo_mock_location"
 	ClaveBloqueoDispositivoRooteado Clave = "bloqueo_dispositivo_rooteado"
 	ClaveVerificacionComplementaria Clave = "verificacion_complementaria"
+
+	// Alertas de asistencia — US-PAR-04
+	ClavePorcentajeMinimoAsistencia      Clave = "porcentaje_minimo_asistencia"
+	ClaveInasistenciasConsecutivasAlerta Clave = "inasistencias_consecutivas_alerta"
 )
 
-// ValoresPorDefecto retorna la tabla de defaults del SRS §3.5 (US-PAR-01 AC-01).
+// ValoresPorDefecto retorna la tabla de defaults del SRS §3.5 (US-PAR-01 AC-01, US-PAR-04).
 // Esta función pura es la única fuente de verdad para los valores iniciales.
 func ValoresPorDefecto() map[Clave]interface{} {
 	return map[Clave]interface{}{
-		ClaveHolguraEntradaAntes:        15,
-		ClaveHolguraEntradaDespues:      15,
-		ClaveUmbralTardanzaMin:          10,
-		ClaveHolguraSalidaAntes:         10,
-		ClaveHolguraSalidaDespues:       20,
-		ClavePrecisionGpsMaxMetros:      35,
-		ClaveBufferPerimetralMetros:     10,
-		ClavePromedioLecturasVertice:    5,
-		ClaveSalidaObligatoria:          "DESACTIVADO",
-		ClaveOfflinePermitido:           true,
-		ClaveBloqueoMockLocation:        true,
-		ClaveBloqueoDispositivoRooteado: false,
-		ClaveVerificacionComplementaria: false,
+		ClaveHolguraEntradaAntes:             15,
+		ClaveHolguraEntradaDespues:           15,
+		ClaveUmbralTardanzaMin:               10,
+		ClaveHolguraSalidaAntes:              10,
+		ClaveHolguraSalidaDespues:            20,
+		ClavePrecisionGpsMaxMetros:           35,
+		ClaveBufferPerimetralMetros:          10,
+		ClavePromedioLecturasVertice:         5,
+		ClaveSalidaObligatoria:               "DESACTIVADO",
+		ClaveOfflinePermitido:                true,
+		ClaveBloqueoMockLocation:             true,
+		ClaveBloqueoDispositivoRooteado:      false,
+		ClaveVerificacionComplementaria:      false,
+		ClavePorcentajeMinimoAsistencia:      80,
+		ClaveInasistenciasConsecutivasAlerta: 3,
 	}
 }
 
-// RangosValidos define los rangos permitidos para parámetros numéricos (US-PAR-01 AC-02).
+// RangosValidos define los rangos permitidos para parámetros numéricos (US-PAR-01 AC-02, US-PAR-04).
 var RangosValidos = map[Clave][2]int{
-	ClaveHolguraEntradaAntes:     {0, 120},
-	ClaveHolguraEntradaDespues:   {0, 120},
-	ClaveUmbralTardanzaMin:       {0, 60},
-	ClaveHolguraSalidaAntes:      {0, 60},
-	ClaveHolguraSalidaDespues:    {0, 120},
-	ClavePrecisionGpsMaxMetros:   {5, 200},
-	ClaveBufferPerimetralMetros:  {0, 100},
-	ClavePromedioLecturasVertice: {1, 20},
+	ClaveHolguraEntradaAntes:             {0, 120},
+	ClaveHolguraEntradaDespues:           {0, 120},
+	ClaveUmbralTardanzaMin:               {0, 60},
+	ClaveHolguraSalidaAntes:              {0, 60},
+	ClaveHolguraSalidaDespues:            {0, 120},
+	ClavePrecisionGpsMaxMetros:           {5, 200},
+	ClaveBufferPerimetralMetros:          {0, 100},
+	ClavePromedioLecturasVertice:         {1, 20},
+	ClavePorcentajeMinimoAsistencia:      {50, 100},
+	ClaveInasistenciasConsecutivasAlerta: {1, 10},
 }
 
 // ErrFueraDeRango indica que el valor no está en el rango permitido.

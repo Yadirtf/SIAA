@@ -135,7 +135,7 @@ class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
         ),
         FilledButton(
           onPressed: _enviando ? null : _submit,
-          child: const Text('Crear y Mapear'),
+          child: const Text('Crear Aula'),
         ),
       ],
     );

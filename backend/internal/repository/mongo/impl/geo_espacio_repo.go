@@ -16,42 +16,6 @@ import (
 	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 )
 
-type geoJSONPolygonDoc struct {
-	Type        string         `bson:"type"`
-	Coordinates [][][2]float64 `bson:"coordinates"`
-}
-
-type geoJSONPointDoc struct {
-	Type        string     `bson:"type"`
-	Coordinates [2]float64 `bson:"coordinates"`
-}
-
-type espacioDoc struct {
-	ID                      primitive.ObjectID `bson:"_id,omitempty"`
-	SedeID                  string             `bson:"sedeId"`
-	Torre                   *string            `bson:"torre,omitempty"`
-	BloqueID                *string            `bson:"bloqueId,omitempty"`
-	Piso                    *int               `bson:"piso,omitempty"`
-	Codigo                  string             `bson:"codigo"`
-	Nombre                  string             `bson:"nombre"`
-	Capacidad               int                `bson:"capacidad"`
-	Tipo                    string             `bson:"tipo"`
-	FacultadResponsable     string             `bson:"facultadResponsable"`
-	Estado                  string             `bson:"estado"`
-	NivelValidacion         string             `bson:"nivelValidacion"`
-	BufferMetros            float64            `bson:"bufferMetros"`
-	Geometria               *geoJSONPolygonDoc `bson:"geometria,omitempty"`
-	AreaMetrosCuadrados     float64            `bson:"areaMetrosCuadrados,omitempty"`
-	Centroide               *geoJSONPointDoc   `bson:"centroide,omitempty"`
-	PrecisionPromedioMetros *float64           `bson:"precisionPromedioMetros,omitempty"`
-	MetodoCaptura           *string            `bson:"metodoCaptura,omitempty"`
-	VersionGeometria        int                `bson:"versionGeometria"`
-	Activo                  bool               `bson:"activo"`
-	Eliminado               bool               `bson:"eliminado"`
-	CreadoEn                time.Time          `bson:"creadoEn"`
-	ActualizadoEn           time.Time          `bson:"actualizadoEn"`
-}
-
 type espacioRepository struct {
 	col *mongo.Collection
 }
@@ -88,6 +52,13 @@ func (r *espacioRepository) Create(ctx context.Context, e *geo.Espacio) error {
 			Coordinates: [][][2]float64{e.Geometria.Coordinates()},
 		}
 	}
+	if e.GeometriaBuffer != nil {
+		doc.GeometriaBuffer = &geoJSONPolygonDoc{
+			Type:        "Polygon",
+			Coordinates: [][][2]float64{e.GeometriaBuffer.Coordinates()},
+		}
+	}
+	doc.RadioMetros = e.RadioMetros
 	if e.Centroide != nil {
 		doc.Centroide = &geoJSONPointDoc{
 			Type:        "Point",
@@ -196,6 +167,13 @@ func (r *espacioRepository) Update(ctx context.Context, e *geo.Espacio) error {
 			Coordinates: [][][2]float64{e.Geometria.Coordinates()},
 		}
 	}
+	var geomBufferDoc *geoJSONPolygonDoc
+	if e.GeometriaBuffer != nil {
+		geomBufferDoc = &geoJSONPolygonDoc{
+			Type:        "Polygon",
+			Coordinates: [][][2]float64{e.GeometriaBuffer.Coordinates()},
+		}
+	}
 	var centroideDoc *geoJSONPointDoc
 	if e.Centroide != nil {
 		centroideDoc = &geoJSONPointDoc{
@@ -223,6 +201,8 @@ func (r *espacioRepository) Update(ctx context.Context, e *geo.Espacio) error {
 		{Key: "nivelValidacion", Value: string(e.NivelValidacion)},
 		{Key: "bufferMetros", Value: e.BufferMetros},
 		{Key: "geometria", Value: geomDoc},
+		{Key: "geometriaBuffer", Value: geomBufferDoc},
+		{Key: "radioMetros", Value: e.RadioMetros},
 		{Key: "areaMetrosCuadrados", Value: e.AreaMetrosCuadrados},
 		{Key: "centroide", Value: centroideDoc},
 		{Key: "precisionPromedioMetros", Value: e.PrecisionPromedioMetros},
@@ -297,51 +277,4 @@ func (r *espacioRepository) BuscarIntersecciones(
 		res = append(res, docToEspacio(&docs[i]))
 	}
 	return res, nil
-}
-
-func docToEspacio(doc *espacioDoc) *geo.Espacio {
-	esp := &geo.Espacio{
-		ID:                      doc.ID.Hex(),
-		SedeID:                  doc.SedeID,
-		Torre:                   doc.Torre,
-		BloqueID:                doc.BloqueID,
-		Piso:                    doc.Piso,
-		Codigo:                  doc.Codigo,
-		Nombre:                  doc.Nombre,
-		Capacidad:               doc.Capacidad,
-		Tipo:                    geo.TipoEspacio(doc.Tipo),
-		FacultadResponsable:     doc.FacultadResponsable,
-		Estado:                  geo.EstadoEspacio(doc.Estado),
-		NivelValidacion:         geo.NivelValidacion(doc.NivelValidacion),
-		BufferMetros:            doc.BufferMetros,
-		AreaMetrosCuadrados:     doc.AreaMetrosCuadrados,
-		PrecisionPromedioMetros: doc.PrecisionPromedioMetros,
-		VersionGeometria:        doc.VersionGeometria,
-		Activo:                  doc.Activo,
-		Eliminado:               doc.Eliminado,
-		CreadoEn:                doc.CreadoEn,
-		ActualizadoEn:           doc.ActualizadoEn,
-	}
-	if doc.MetodoCaptura != nil {
-		m := geo.MetodoCaptura(*doc.MetodoCaptura)
-		esp.MetodoCaptura = &m
-	}
-	if doc.Centroide != nil {
-		if pt, err := geo.NewGeoPoint(doc.Centroide.Coordinates[0], doc.Centroide.Coordinates[1]); err == nil {
-			esp.Centroide = &pt
-		}
-	}
-	if doc.Geometria != nil && len(doc.Geometria.Coordinates) > 0 {
-		ring := doc.Geometria.Coordinates[0]
-		vertices := make([]geo.GeoPoint, 0, len(ring))
-		for _, c := range ring {
-			if pt, err := geo.NewGeoPoint(c[0], c[1]); err == nil {
-				vertices = append(vertices, pt)
-			}
-		}
-		if poly, err := geo.NewGeoPolygon(vertices); err == nil {
-			esp.Geometria = &poly
-		}
-	}
-	return esp
 }

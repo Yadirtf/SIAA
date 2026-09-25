@@ -27,4 +27,14 @@ class SedeModel {
         'nombre': nombre,
         if (direccion != null) 'direccion': direccion,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SedeModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

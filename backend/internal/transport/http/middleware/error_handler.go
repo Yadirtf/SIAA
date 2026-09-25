@@ -73,7 +73,7 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 		return 423 // Locked
 	case shared.ErrDosFactorRequerido:
 		return http.StatusUnauthorized
-	case shared.ErrPermisosDenegados, shared.ErrAmbitoDenegado:
+	case shared.ErrPermisosDenegados, shared.ErrAmbitoDenegado, shared.ErrUsuarioInactivo:
 		return http.StatusForbidden
 	case shared.ErrValidacion, shared.ErrGeometriaInvalida:
 		return http.StatusUnprocessableEntity

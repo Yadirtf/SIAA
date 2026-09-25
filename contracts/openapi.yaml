@@ -525,6 +525,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Obtener métricas y observabilidad del sistema
+      description: |
+        Expone latencia p50/p95/p99 por ruta, tasa de error, saturación del pool de base de datos
+        y contadores de resultados de marcaje por tipo (US-PLT-05 AC-01, RNF-PER-003).
+      security: []
+      tags: [observabilidad]
+      responses:
+        '200':
+          description: Reporte consolidado de métricas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [solicitudesTotal, erroresTotal, tasaError, rutas, baseDatos]
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptimeSegundos:
+                    type: integer
+                  solicitudesTotal:
+                    type: integer
+                  erroresTotal:
+                    type: integer
+                  tasaError:
+                    type: number
+                  rutas:
+                    type: object
+                  baseDatos:
+                    type: object
+                  resultadosMarcaje:
+                    type: object
+
   /auth/login:
     post:
       operationId: login
@@ -754,6 +790,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: crearRolPersonalizado
+      summary: Crear rol personalizado (US-ROL-02)
+      tags: [roles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, permisos]
+              properties:
+                nombre:
+                  type: string
+                permisos:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Rol creado exitosamente
 
   # ─── Sedes (US-GEO-01) ───────────────────────────────────────────────────────
   /sedes:
@@ -1120,22 +1177,10 @@ paths:
           description: Espacio eliminado lógicamente
         '401':
           description: No autenticado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Permiso denegado (requiere aula:eliminar)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: Permiso denegado
         '404':
           description: Espacio no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /espacios/{id}/geometria:
     put:
@@ -1163,34 +1208,284 @@ paths:
                 $ref: '#/components/schemas/EspacioDTO'
         '400':
           description: Solicitud malformada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: No autenticado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Permiso denegado (requiere aula:editar-geometria)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: Permiso denegado
         '404':
           description: Espacio no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Polígono inválido o coordenadas fuera de rango
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+
+  /espacios/{id}/buffer:
+    patch:
+      operationId: recalcularBufferEspacio
+      summary: Recalcular buffer geodésico persistido del espacio (US-GEO-08)
+      tags: [espacios]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Buffer recalculado exitosamente
+        '401':
+          description: No autenticado
+        '404':
+          description: Espacio no encontrado
+
+  /bloques/{id}/clonar-piso:
+    post:
+      operationId: clonarPiso
+      summary: Clonar estructura de piso y espacios dentro de un bloque (US-GEO-12)
+      tags: [bloques]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pisoOrigen, pisoDestino]
+              properties:
+                pisoOrigen:
+                  type: integer
+                pisoDestino:
+                  type: integer
+      responses:
+        '201':
+          description: Piso clonado exitosamente
+        '400':
+          description: Solapamiento o parámetros inválidos
+
+  /espacios/importar/preview:
+    post:
+      operationId: previewImportarEspaciosGeoJSON
+      summary: Previsualizar e inspeccionar GeoJSON de espacios (US-GEO-11)
+      tags: [espacios]
+      responses:
+        '200':
+          description: Análisis y preview de Features GeoJSON
+
+  /espacios/importar:
+    post:
+      operationId: confirmarImportarEspaciosGeoJSON
+      summary: Confirmar importación masiva de espacios GeoJSON (US-GEO-11)
+      tags: [espacios]
+      responses:
+        '201':
+          description: Espacios importados exitosamente
+
+  /espacios/exportar:
+    get:
+      operationId: exportarEspaciosGeoJSON
+      summary: Exportar espacios como GeoJSON FeatureCollection (US-GEO-11)
+      tags: [espacios]
+      responses:
+        '200':
+          description: FeatureCollection GeoJSON
+
+  /roles/{id}:
+    get:
+      operationId: obtenerRolPorId
+      summary: Obtener detalle de un rol (US-ROL-02)
+      tags: [roles]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle del rol
+    put:
+      operationId: actualizarRol
+      summary: Actualizar rol personalizado (US-ROL-02)
+      tags: [roles]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rol actualizado
+    delete:
+      operationId: eliminarRol
+      summary: Eliminar rol personalizado (US-ROL-02)
+      tags: [roles]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Rol eliminado
+
+  /periodos/{id}/generar-sesiones:
+    post:
+      operationId: generarSesionesPeriodo
+      summary: Generar masivamente sesiones de clase para un periodo (US-ACA-05)
+      tags: [sesiones]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generación completada con informe de sesiones e idempotencia
+
+  /sesiones:
+    get:
+      operationId: listarSesiones
+      summary: Listar sesiones filtradas (US-ACA-05, US-ACA-08)
+      tags: [sesiones]
+      responses:
+        '200':
+          description: Lista de sesiones filtradas
+
+  /sesiones/{id}:
+    get:
+      operationId: obtenerSesionPorId
+      summary: Obtener detalle de una sesión de clase (US-ACA-05)
+      tags: [sesiones]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle de sesión
+        '404':
+          description: Sesión no encontrada
+
+  /sesiones/{id}/cancelar:
+    post:
+      operationId: cancelarSesion
+      summary: Cancelar administrativamente una sesión de clase (US-ACA-08)
+      tags: [sesiones]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motivo]
+              properties:
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Sesión cancelada exitosamente
+        '401':
+          description: No autenticado
+        '404':
+          description: Sesión no encontrada
+
+  /sesiones/{id}/aula:
+    put:
+      operationId: reasignarAulaSesion
+      summary: Reasignar aula para una sesión puntual congelando su geometría (US-ACA-06)
+      tags: [sesiones]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [espacioId, motivo]
+              properties:
+                espacioId:
+                  type: string
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Aula reasignada exitosamente
+        '401':
+          description: No autenticado
+        '404':
+          description: Sesión o aula no encontrada
+
+  /academico/importar/preview:
+    post:
+      operationId: previewImportarAcademicoCSV
+      summary: Validar y previsualizar archivo CSV de estructura académica (US-ACA-07)
+      tags: [academico]
+      responses:
+        '200':
+          description: Preview con errores por fila y resumen
+        '400':
+          description: Archivo CSV inválido o vacío
+
+  /academico/importar:
+    post:
+      operationId: confirmarImportarAcademico
+      summary: Confirmar importación masiva de asignaciones académicas (US-ACA-07)
+      tags: [academico]
+      responses:
+        '201':
+          description: Asignaciones creadas e importadas
+        '400':
+          description: Filas vacías o inválidas
+
+  /parametros/efectivos:
+    get:
+      operationId: resolverParametrosEfectivos
+      summary: Resolver parámetros efectivos en cascada jerárquica (US-PAR-03)
+      tags: [parametrización]
+      parameters:
+        - name: sedeId
+          in: query
+          schema:
+            type: string
+        - name: facultadId
+          in: query
+          schema:
+            type: string
+        - name: espacioId
+          in: query
+          schema:
+            type: string
+        - name: asignacionId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Parámetros efectivos resueltos con su nivel de origen
+        '401':
+          description: No autenticado
+        '403':
+          description: Permiso denegado
+
 
 
 

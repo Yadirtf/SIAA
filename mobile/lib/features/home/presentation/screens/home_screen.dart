@@ -73,15 +73,21 @@ class _HomeScreenView extends StatelessWidget {
                   .read<HomeBloc>()
                   .add(const LimpiarMensajesHomeRequested());
             } else if (state.successMessage != null) {
+              final ultimoEspacio = state.ultimoEspacioCreado;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.successMessage!),
                   backgroundColor: SIAAColors.asistenciaPresente,
+                  action: ultimoEspacio != null
+                      ? SnackBarAction(
+                          label: 'Trazar GPS',
+                          textColor: Colors.white,
+                          onPressed: () =>
+                              _abrirGeoEditor(context, ultimoEspacio),
+                        )
+                      : null,
                 ),
               );
-              if (state.ultimoEspacioCreado != null) {
-                _abrirGeoEditor(context, state.ultimoEspacioCreado!);
-              }
               context
                   .read<HomeBloc>()
                   .add(const LimpiarMensajesHomeRequested());

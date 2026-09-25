@@ -114,7 +114,12 @@ jobs:
 
       - name: Verificar cobertura domain/marcaje ≥ 90 % (T-PLT-02.2)
         run: |
-          MARCAJE=$(go tool cover -func=coverage.out | grep "domain/marcaje" | awk '{sum+=$3; count++} END {if(count>0) print sum/count; else print 100}' | tr -d '%')
+          COUNT=$(go tool cover -func=coverage.out | grep "domain/marcaje" | wc -l)
+          if [ "$COUNT" -eq 0 ]; then
+            echo "❌ domain/marcaje no tiene tests ni funciones instrumentadas en coverage.out"
+            exit 1
+          fi
+          MARCAJE=$(go tool cover -func=coverage.out | grep "domain/marcaje" | awk '{sum+=$3; count++} END {if(count>0) print sum/count; else print 0}' | tr -d '%')
           echo "Cobertura domain/marcaje: ${MARCAJE}%"
           if (( $(echo "$MARCAJE < $MIN_COVERAGE_MARCAJE" | bc -l) )); then
             echo "❌ Cobertura domain/marcaje ${MARCAJE}% < ${MIN_COVERAGE_MARCAJE}% requerido"

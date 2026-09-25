@@ -2,6 +2,7 @@
 package academico
 
 import (
+	"context"
 	"errors"
 
 	"github.com/siaa/backend/internal/domain/rbac"
@@ -35,6 +36,7 @@ type Service struct {
 	excepcionRepo  repository.CalendarioExcepcionRepository
 	usuarioRepo    repository.UsuarioRepository
 	espacioRepo    repository.EspacioRepository
+	sesionRepo     repository.SesionRepository
 	auditoriaRepo  repository.AuditoriaRepository
 	clk            shared.Clock
 	log            *applog.Logger
@@ -62,4 +64,27 @@ func NewService(
 		clk:            clk,
 		log:            log,
 	}
+}
+
+// WithSesiones inyecta el repositorio de sesiones en el servicio académico.
+func (s *Service) WithSesiones(sesionRepo repository.SesionRepository) *Service {
+	s.sesionRepo = sesionRepo
+	return s
+}
+
+func (s *Service) auditar(ctx context.Context, entidad, entidadID, accion string, actor ContextoActor, valAnt, valNuevo interface{}) {
+	if s.auditoriaRepo == nil {
+		return
+	}
+	entry := &repository.AuditEntry{
+		Entidad:       entidad,
+		EntidadID:     entidadID,
+		Accion:        accion,
+		ActorID:       actor.UsuarioID,
+		RolActivo:     actor.Rol,
+		ValorAnterior: valAnt,
+		ValorNuevo:    valNuevo,
+		CreadoEn:      s.clk.Now(),
+	}
+	_ = s.auditoriaRepo.Create(ctx, entry)
 }

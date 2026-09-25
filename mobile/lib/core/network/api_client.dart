@@ -1,10 +1,11 @@
 // Capa de red — T-PLT-03.4
 // Cliente HTTP con interceptor de autenticación, renovación automática de token,
 // reintentos con backoff exponencial y correlationId.
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
+import 'certificate_pinning.dart';
 
 /// ApiClient configura y proporciona el cliente HTTP de la aplicación.
 class ApiClient {
@@ -32,19 +33,13 @@ class ApiClient {
       },
     ));
 
-    // ─── Certificate Pinning — T-PLT-03.5 ───────────────────
-    // En producción se configuran los hashes SHA-256 del certificado del servidor.
-    // En desarrollo (debug) se permite cualquier certificado para facilitar el trabajo local.
-    if (!_isDebug()) {
-      (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-        final client = HttpClient();
-        client.badCertificateCallback = (cert, host, port) {
-          // Verificar el hash del certificado contra los hashes clavados.
-          // TODO: Implementar verificación real de hash en producción.
-          // Por ahora rechaza todo certificado inválido.
-          return false;
-        };
-        return client;
+    // ─── Certificate Pinning Real — US-PLT-03 AC-06 / RNF-SEG-001 ───
+    if (!kIsWeb && dio.httpClientAdapter is IOHttpClientAdapter) {
+      (dio.httpClientAdapter as IOHttpClientAdapter).validateCertificate = (cert, host, port) {
+        if (_isDebug()) {
+          return true;
+        }
+        return CertificatePinningValidator.instance.validate(cert, host, port);
       };
     }
 

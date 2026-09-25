@@ -788,6 +788,40 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/academico/importar": {
+      "post": {
+        "operationId": "confirmarImportarAcademico",
+        "responses": {
+          "201": {
+            "description": "Asignaciones creadas e importadas"
+          },
+          "400": {
+            "description": "Filas vacías o inválidas"
+          }
+        },
+        "summary": "Confirmar importación masiva de asignaciones académicas (US-ACA-07)",
+        "tags": [
+          "academico"
+        ]
+      }
+    },
+    "/academico/importar/preview": {
+      "post": {
+        "operationId": "previewImportarAcademicoCSV",
+        "responses": {
+          "200": {
+            "description": "Preview con errores por fila y resumen"
+          },
+          "400": {
+            "description": "Archivo CSV inválido o vacío"
+          }
+        },
+        "summary": "Validar y previsualizar archivo CSV de estructura académica (US-ACA-07)",
+        "tags": [
+          "academico"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "description": "Autentica con correo y contraseña. Respuesta idéntica si las credenciales\nson incorrectas o el usuario no existe (AC-02).\nEl rate limiting es de 120 req/min por IP (RNF-SEG-005).\n",
@@ -1181,6 +1215,55 @@
         ]
       }
     },
+    "/bloques/{id}/clonar-piso": {
+      "post": {
+        "operationId": "clonarPiso",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "pisoDestino": {
+                    "type": "integer"
+                  },
+                  "pisoOrigen": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "pisoOrigen",
+                  "pisoDestino"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Piso clonado exitosamente"
+          },
+          "400": {
+            "description": "Solapamiento o parámetros inválidos"
+          }
+        },
+        "summary": "Clonar estructura de piso y espacios dentro de un bloque (US-GEO-12)",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
     "/espacios": {
       "get": {
         "operationId": "listarEspacios",
@@ -1347,6 +1430,48 @@
         ]
       }
     },
+    "/espacios/exportar": {
+      "get": {
+        "operationId": "exportarEspaciosGeoJSON",
+        "responses": {
+          "200": {
+            "description": "FeatureCollection GeoJSON"
+          }
+        },
+        "summary": "Exportar espacios como GeoJSON FeatureCollection (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/importar": {
+      "post": {
+        "operationId": "confirmarImportarEspaciosGeoJSON",
+        "responses": {
+          "201": {
+            "description": "Espacios importados exitosamente"
+          }
+        },
+        "summary": "Confirmar importación masiva de espacios GeoJSON (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/importar/preview": {
+      "post": {
+        "operationId": "previewImportarEspaciosGeoJSON",
+        "responses": {
+          "200": {
+            "description": "Análisis y preview de Features GeoJSON"
+          }
+        },
+        "summary": "Previsualizar e inspeccionar GeoJSON de espacios (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
     "/espacios/{id}": {
       "delete": {
         "operationId": "eliminarEspacio",
@@ -1365,33 +1490,12 @@
             "description": "Espacio eliminado lógicamente"
           },
           "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "No autenticado"
           },
           "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Permiso denegado (requiere aula:eliminar)"
+            "description": "Permiso denegado"
           },
           "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "Espacio no encontrado"
           }
         },
@@ -1519,6 +1623,36 @@
         ]
       }
     },
+    "/espacios/{id}/buffer": {
+      "patch": {
+        "operationId": "recalcularBufferEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buffer recalculado exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Recalcular buffer geodésico persistido del espacio (US-GEO-08)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
     "/espacios/{id}/geometria": {
       "put": {
         "operationId": "actualizarGeometriaEspacio",
@@ -1554,53 +1688,18 @@
             "description": "Geometría actualizada correctamente"
           },
           "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "Solicitud malformada"
           },
           "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "No autenticado"
           },
           "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Permiso denegado (requiere aula:editar-geometria)"
+            "description": "Permiso denegado"
           },
           "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "Espacio no encontrado"
           },
           "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
             "description": "Polígono inválido o coordenadas fuera de rango"
           }
         },
@@ -1666,6 +1765,137 @@
         ]
       }
     },
+    "/metrics": {
+      "get": {
+        "description": "Expone latencia p50/p95/p99 por ruta, tasa de error, saturación del pool de base de datos\ny contadores de resultados de marcaje por tipo (US-PLT-05 AC-01, RNF-PER-003).\n",
+        "operationId": "getMetrics",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "baseDatos": {
+                      "type": "object"
+                    },
+                    "erroresTotal": {
+                      "type": "integer"
+                    },
+                    "resultadosMarcaje": {
+                      "type": "object"
+                    },
+                    "rutas": {
+                      "type": "object"
+                    },
+                    "solicitudesTotal": {
+                      "type": "integer"
+                    },
+                    "tasaError": {
+                      "type": "number"
+                    },
+                    "timestamp": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "uptimeSegundos": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "solicitudesTotal",
+                    "erroresTotal",
+                    "tasaError",
+                    "rutas",
+                    "baseDatos"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Reporte consolidado de métricas"
+          }
+        },
+        "security": [],
+        "summary": "Obtener métricas y observabilidad del sistema",
+        "tags": [
+          "observabilidad"
+        ]
+      }
+    },
+    "/parametros/efectivos": {
+      "get": {
+        "operationId": "resolverParametrosEfectivos",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "espacioId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "asignacionId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parámetros efectivos resueltos con su nivel de origen"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Permiso denegado"
+          }
+        },
+        "summary": "Resolver parámetros efectivos en cascada jerárquica (US-PAR-03)",
+        "tags": [
+          "parametrización"
+        ]
+      }
+    },
+    "/periodos/{id}/generar-sesiones": {
+      "post": {
+        "operationId": "generarSesionesPeriodo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generación completada con informe de sesiones e idempotencia"
+          }
+        },
+        "summary": "Generar masivamente sesiones de clase para un periodo (US-ACA-05)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
     "/roles": {
       "get": {
         "description": "Retorna la lista de roles predefinidos con sus permisos según la matriz del SRS §3.2 (AC-01 US-ROL-01).\nRequiere token de acceso con permiso rol:leer.\n",
@@ -1706,6 +1936,111 @@
           }
         },
         "summary": "Listar roles del sistema",
+        "tags": [
+          "roles"
+        ]
+      },
+      "post": {
+        "operationId": "crearRolPersonalizado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "permisos": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "permisos"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Rol creado exitosamente"
+          }
+        },
+        "summary": "Crear rol personalizado (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      }
+    },
+    "/roles/{id}": {
+      "delete": {
+        "operationId": "eliminarRol",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Rol eliminado"
+          }
+        },
+        "summary": "Eliminar rol personalizado (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      },
+      "get": {
+        "operationId": "obtenerRolPorId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle del rol"
+          }
+        },
+        "summary": "Obtener detalle de un rol (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarRol",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rol actualizado"
+          }
+        },
+        "summary": "Actualizar rol personalizado (US-ROL-02)",
         "tags": [
           "roles"
         ]
@@ -1852,6 +2187,147 @@
         "summary": "Obtener detalle de una sede por ID",
         "tags": [
           "sedes"
+        ]
+      }
+    },
+    "/sesiones": {
+      "get": {
+        "operationId": "listarSesiones",
+        "responses": {
+          "200": {
+            "description": "Lista de sesiones filtradas"
+          }
+        },
+        "summary": "Listar sesiones filtradas (US-ACA-05, US-ACA-08)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}": {
+      "get": {
+        "operationId": "obtenerSesionPorId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle de sesión"
+          },
+          "404": {
+            "description": "Sesión no encontrada"
+          }
+        },
+        "summary": "Obtener detalle de una sesión de clase (US-ACA-05)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/aula": {
+      "put": {
+        "operationId": "reasignarAulaSesion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "espacioId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "espacioId",
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Aula reasignada exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Sesión o aula no encontrada"
+          }
+        },
+        "summary": "Reasignar aula para una sesión puntual congelando su geometría (US-ACA-06)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/cancelar": {
+      "post": {
+        "operationId": "cancelarSesion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión cancelada exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Sesión no encontrada"
+          }
+        },
+        "summary": "Cancelar administrativamente una sesión de clase (US-ACA-08)",
+        "tags": [
+          "sesiones"
         ]
       }
     },

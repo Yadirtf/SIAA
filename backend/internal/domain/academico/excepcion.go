@@ -140,10 +140,13 @@ func (e *CalendarioExcepcion) AfectaFechaYAmbito(fecha time.Time, sedeID string,
 		return false
 	}
 
-	// Normalizar solo componente de fecha año-mes-día
-	f := fecha.Truncate(24 * time.Hour)
-	ini := e.fechaInicio.Truncate(24 * time.Hour)
-	fin := e.fechaFin.Truncate(24 * time.Hour)
+	// Normalizar solo componente de fecha año-mes-día sin sesgo de huso horario
+	yF, mF, dF := fecha.Date()
+	f := time.Date(yF, mF, dF, 0, 0, 0, 0, time.UTC)
+	yIni, mIni, dIni := e.fechaInicio.Date()
+	ini := time.Date(yIni, mIni, dIni, 0, 0, 0, 0, time.UTC)
+	yFin, mFin, dFin := e.fechaFin.Date()
+	fin := time.Date(yFin, mFin, dFin, 23, 59, 59, 999999999, time.UTC)
 
 	if f.Before(ini) || f.After(fin) {
 		return false

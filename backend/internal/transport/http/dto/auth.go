@@ -33,6 +33,28 @@ type LogoutRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
+// CambiarContextoRequest es el cuerpo de POST /auth/contexto (US-ROL-04).
+type CambiarContextoRequest struct {
+	Rol string `json:"rol" validate:"required"`
+}
+
+// RevocarSesionesRequest es el cuerpo de POST /usuarios/:id/revocar-sesiones (US-AUT-07).
+type RevocarSesionesRequest struct {
+	Motivo string `json:"motivo" validate:"required"`
+}
+
+// ActivarTOTPRequest es el cuerpo de POST /auth/totp/activar (US-AUT-05).
+type ActivarTOTPRequest struct {
+	Codigo string `json:"codigo" validate:"required,len=6"`
+}
+
+// VerificarTOTPRequest es el cuerpo de POST /auth/totp/verificar (US-AUT-05).
+type VerificarTOTPRequest struct {
+	UsuarioID     string `json:"usuarioId" validate:"required"`
+	Codigo        string `json:"codigo" validate:"required"`
+	DispositivoID string `json:"dispositivoId,omitempty"`
+}
+
 // ─── Respuestas ────────────────────────────────────────────────
 
 // TokenPairResponse es la respuesta de login/refresh con los tokens.

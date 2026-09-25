@@ -14,6 +14,7 @@ import (
 	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/platform/config"
 	applog "github.com/siaa/backend/internal/platform/log"
+	"github.com/siaa/backend/internal/platform/metrics"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/handler"
 	mw "github.com/siaa/backend/internal/transport/http/middleware"
@@ -120,6 +121,13 @@ func NewRouter(
 	// ─── Rutas ───────────────────────────────────────────────
 	api := e.Group("/api/v1")
 
+	// Métricas y Observabilidad (pública, US-PLT-05 AC-01, RNF-PER-003)
+	collector := metrics.NewCollector()
+	e.Use(mw.MetricsMiddleware(collector))
+	metricsH := handler.NewMetricsHandler(collector)
+	api.GET("/metrics", metricsH.GetMetrics)
+	registry.MarkPublic(http.MethodGet, "/api/v1/metrics")
+
 	// OpenAPI 3.1 (pública, US-PLT-01 AC-06, T-PLT-01.9)
 	if openapiH != nil {
 		api.GET("/openapi.json", openapiH.Spec)
@@ -147,6 +155,8 @@ func NewRouter(
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/recuperar")
 	authGroup.POST("/recuperar/confirmar", authH.ConfirmarRecuperacion)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/recuperar/confirmar")
+	authGroup.POST("/totp/verificar", authH.VerificarTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/verificar")
 
 	// Autenticación (requiere token válido y tasa de 120 req/min por usuario — US-AUT-02 AC-04)
 	authProtected := api.Group("/auth", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -154,12 +164,20 @@ func NewRouter(
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/logout")
 	authProtected.POST("/devices", authH.RegistrarDispositivo)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/devices")
+	authProtected.POST("/contexto", authH.CambiarContexto)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/contexto")
+	authProtected.POST("/totp/setup", authH.SetupTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/setup")
+	authProtected.POST("/totp/activar", authH.ActivarTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/activar")
 
 	// Administración de usuarios (requiere token válido y tasa de 120 req/min por usuario)
 	usuariosProtected := api.Group("/usuarios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 	// Desbloqueo administrativo auditado (US-AUT-02 AC-02, T-AUT-02.3)
 	usuariosProtected.POST("/:id/desbloquear", authH.DesbloquearUsuario, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/usuarios/:id/desbloquear", rbac.PermUsuarioEditar)
+	usuariosProtected.POST("/:id/revocar-sesiones", authH.RevocarSesiones, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
+	registry.RegisterPermission(http.MethodPost, "/api/v1/usuarios/:id/revocar-sesiones", rbac.PermUsuarioEditar)
 	usuariosProtected.GET("/:id/dispositivos", authH.ListarDispositivosUsuario, mw.RequirePermission(rbac.PermUsuarioLeer, auditoria))
 	registry.RegisterPermission(http.MethodGet, "/api/v1/usuarios/:id/dispositivos", rbac.PermUsuarioLeer)
 
@@ -170,11 +188,17 @@ func NewRouter(
 	dispositivosProtected.POST("/:id/revocar", authH.RevocarDispositivo, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/dispositivos/:id/revocar", rbac.PermUsuarioEditar)
 
-	// Roles y permisos del sistema — US-ROL-01 AC-01
+	// Roles y permisos del sistema — US-ROL-01 AC-01, US-ROL-03 AC-01..05
 	if rolesH != nil {
 		rolesProtected := api.Group("/roles", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		rolesProtected.GET("", rolesH.ListarRoles, mw.RequirePermission(rbac.PermRolLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/roles", rbac.PermRolLeer)
+		rolesProtected.POST("", rolesH.CrearRol, mw.RequirePermission(rbac.PermRolCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/roles", rbac.PermRolCrear)
+		rolesProtected.PUT("/:id", rolesH.ActualizarRol, mw.RequirePermission(rbac.PermRolEditar, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/roles/:id", rbac.PermRolEditar)
+		rolesProtected.DELETE("/:id", rolesH.EliminarRol, mw.RequirePermission(rbac.PermRolEliminar, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/roles/:id", rbac.PermRolEliminar)
 	}
 
 	// ─── Jerarquía física y cartografía — US-GEO-01 ──────────
@@ -196,11 +220,19 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodPost, "/api/v1/bloques", rbac.PermBloqueAdministrar)
 		bloquesProtected.GET("/:id", geoH.ObtenerBloque, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/bloques/:id", rbac.PermAulaLeer)
+		bloquesProtected.POST("/:id/clonar-piso", geoH.ClonarPiso, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/bloques/:id/clonar-piso", rbac.PermAulaCrear)
 
 		// Espacios
 		espaciosProtected := api.Group("/espacios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		espaciosProtected.GET("", geoH.ListarEspacios, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios", rbac.PermAulaLeer)
+		espaciosProtected.GET("/exportar", geoH.ExportarGeoJSON, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/exportar", rbac.PermAulaLeer)
+		espaciosProtected.POST("/importar/preview", geoH.PreviewImportarGeoJSON, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/espacios/importar/preview", rbac.PermAulaCrear)
+		espaciosProtected.POST("/importar", geoH.ConfirmarImportarGeoJSON, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/espacios/importar", rbac.PermAulaCrear)
 		espaciosProtected.GET("/solapamientos", geoH.InformeSolapamientos, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/solapamientos", rbac.PermAulaLeer)
 		espaciosProtected.POST("", geoH.CrearEspacio, mw.RequirePermission(rbac.PermAulaCrear, auditoria))
@@ -209,6 +241,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id", rbac.PermAulaLeer)
 		espaciosProtected.PATCH("/:id", geoH.ActualizarEspacio, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
 		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id", rbac.PermAulaEditar)
+		espaciosProtected.PATCH("/:id/buffer", geoH.ActualizarBuffer, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
+		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id/buffer", rbac.PermAulaEditar)
 		espaciosProtected.PUT("/:id/geometria", geoH.ActualizarGeometria, mw.RequirePermission(rbac.PermAulaEditarGeometria, auditoria))
 		registry.RegisterPermission(http.MethodPut, "/api/v1/espacios/:id/geometria", rbac.PermAulaEditarGeometria)
 		espaciosProtected.GET("/:id/geometria/versiones", geoH.ListarVersionesGeometria, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
@@ -223,7 +257,7 @@ func NewRouter(
 
 	// ─── Estructura académica, horarios y asignaciones — EP-04 ──
 	if acaH != nil {
-		// Periodos (US-ACA-01)
+		// Periodos (US-ACA-01, US-ACA-05)
 		periodos := api.Group("/periodos", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		periodos.GET("", acaH.ListarPeriodos, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/periodos", rbac.PermHorarioLeer)
@@ -233,6 +267,26 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/periodos/:id", rbac.PermHorarioLeer)
 		periodos.PUT("/:id", acaH.ActualizarPeriodo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 		registry.RegisterPermission(http.MethodPut, "/api/v1/periodos/:id", rbac.PermHorarioCrear)
+		periodos.POST("/:id/generar-sesiones", acaH.GenerarSesiones, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/periodos/:id/generar-sesiones", rbac.PermHorarioCrear)
+
+		// Sesiones de clase (US-ACA-05, US-ACA-06, US-ACA-08, US-MAR-01)
+		sesiones := api.Group("/sesiones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		sesiones.GET("", acaH.ListarSesiones, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/sesiones", rbac.PermHorarioLeer)
+		sesiones.GET("/:id", acaH.ObtenerSesion, mw.RequirePermission(rbac.PermHorarioLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/sesiones/:id", rbac.PermHorarioLeer)
+		sesiones.POST("/:id/cancelar", acaH.CancelarSesion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/sesiones/:id/cancelar", rbac.PermHorarioCrear)
+		sesiones.PUT("/:id/aula", acaH.ReasignarAulaSesion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/sesiones/:id/aula", rbac.PermHorarioCrear)
+
+		// Importación masiva académica (US-ACA-07)
+		acaImport := api.Group("/academico", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		acaImport.POST("/importar/preview", acaH.PreviewImportarAcademicoCSV, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar/preview", rbac.PermHorarioCrear)
+		acaImport.POST("/importar", acaH.ConfirmarImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar", rbac.PermHorarioCrear)
 
 		// Facultades
 		facultades := api.Group("/facultades", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

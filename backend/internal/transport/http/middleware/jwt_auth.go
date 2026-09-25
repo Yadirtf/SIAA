@@ -10,6 +10,7 @@ import (
 
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/platform/config"
+	"github.com/siaa/backend/internal/platform/security"
 	"github.com/siaa/backend/internal/usecase/auth"
 )
 
@@ -37,6 +38,13 @@ func JWTAuth(cfg *config.Config) echo.MiddlewareFunc {
 					return shared.NewAuthError(shared.ErrTokenExpirado, "Token de acceso expirado")
 				}
 				return shared.NewAuthError(shared.ErrTokenRevocado, "Token de acceso inválido")
+			}
+
+			// Verificar revocación remota de sesiones en memoria — US-AUT-07 AC-02
+			if claims.IssuedAt != nil {
+				if security.DefaultRevocationManager().IsTokenRevoked(claims.UsuarioID, claims.IssuedAt.Time) {
+					return shared.NewAuthError(shared.ErrTokenRevocado, "Sesión revocada por el administrador")
+				}
 			}
 
 			c.Set(CtxClaims, claims)

@@ -39,9 +39,9 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (*TokenPair, erro
 				usuario.BloqueadoHasta.Format("15:04")))
 	}
 
-	// Verificar estado activo — AC-03
+	// Verificar estado activo — AC-03 US-AUT-01 (rechazado con 403)
 	if !usuario.Activo || usuario.Eliminado {
-		return nil, shared.NewAuthError(shared.ErrCredencialesInvalidas, "Usuario inactivo o eliminado")
+		return nil, shared.NewAuthError(shared.ErrUsuarioInactivo, "Usuario inactivo o eliminado")
 	}
 
 	// Verificar contraseña — AC-04

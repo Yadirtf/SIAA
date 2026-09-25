@@ -16,13 +16,17 @@ extension HomeBlocCreationHandlers on HomeBloc {
         direccion: event.direccion,
       );
       final sedes = await repository.obtenerSedes();
+      final sedeEnLista = sedes.firstWhere(
+        (s) => s.id == nueva.id,
+        orElse: () => nueva,
+      );
       emit(state.copyWith(
         sedes: sedes,
-        sedeSeleccionada: nueva,
+        sedeSeleccionada: sedeEnLista,
         cargandoSedes: false,
         successMessage: 'Sede "${nueva.nombre}" registrada con éxito.',
       ));
-      add(SeleccionarSedeRequested(nueva));
+      add(SeleccionarSedeRequested(sedeEnLista));
     } catch (e) {
       emit(state.copyWith(
         cargandoSedes: false,
@@ -44,13 +48,17 @@ extension HomeBlocCreationHandlers on HomeBloc {
         pisos: event.pisos,
       );
       final bloques = await repository.obtenerBloques(sedeId: event.sedeId);
+      final bloqueEnLista = bloques.firstWhere(
+        (b) => b.id == nuevo.id,
+        orElse: () => nuevo,
+      );
       emit(state.copyWith(
         bloques: bloques,
-        bloqueSeleccionado: nuevo,
+        bloqueSeleccionado: bloqueEnLista,
         cargandoBloques: false,
         successMessage: 'Bloque "${nuevo.nombre}" registrado con éxito.',
       ));
-      add(SeleccionarBloqueRequested(nuevo));
+      add(SeleccionarBloqueRequested(bloqueEnLista));
     } catch (e) {
       emit(state.copyWith(
         cargandoBloques: false,

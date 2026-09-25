@@ -73,11 +73,21 @@ type ActualizarEspacioCmd struct {
 type GuardarGeometriaCmd struct {
 	EspacioID               string
 	Vertices                []geo.GeoPoint
+	Centroide               *geo.GeoPoint
+	RadioMetros             *float64
 	MetodoCaptura           geo.MetodoCaptura
 	PrecisionPromedioMetros *float64
 	ConfirmarSolapamiento   bool
 	MotivoSolapamiento      string
 	Actor                   ContextoActor
+}
+
+// ActualizarBufferCmd define el comando para actualizar el buffer de un espacio sin recapturar vértices.
+// Satisface US-GEO-08 (AC-01..AC-03).
+type ActualizarBufferCmd struct {
+	EspacioID    string
+	BufferMetros float64
+	Actor        ContextoActor
 }
 
 // ItemInformeSolapamiento representa un conflicto de solapamiento entre dos espacios en el informe general.

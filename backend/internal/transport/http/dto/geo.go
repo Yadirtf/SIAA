@@ -105,11 +105,23 @@ type ActualizarEspacioRequest struct {
 }
 
 type ActualizarGeometriaRequest struct {
-	Coordenadas             [][2]float64      `json:"coordenadas" validate:"required"`
+	Coordenadas             [][2]float64      `json:"coordenadas,omitempty"`
+	Centroide               *[2]float64       `json:"centroide,omitempty"`
+	RadioMetros             *float64          `json:"radioMetros,omitempty"`
 	MetodoCaptura           geo.MetodoCaptura `json:"metodoCaptura" validate:"required"`
 	PrecisionPromedioMetros *float64          `json:"precisionPromedioMetros,omitempty"`
 	ConfirmarSolapamiento   bool              `json:"confirmarSolapamiento,omitempty"`
 	MotivoSolapamiento      string            `json:"motivoSolapamiento,omitempty"`
+}
+
+type ActualizarBufferRequest struct {
+	BufferMetros float64 `json:"bufferMetros" validate:"min=0,max=50"`
+}
+
+type ClonarPisoRequest struct {
+	PisoOrigen    int    `json:"pisoOrigen" validate:"required"`
+	PisoDestino   int    `json:"pisoDestino" validate:"required"`
+	PrefijoCodigo string `json:"prefijoCodigo,omitempty"`
 }
 
 type GeometriaResponse struct {
@@ -137,6 +149,8 @@ type EspacioResponse struct {
 	NivelValidacion         geo.NivelValidacion `json:"nivelValidacion"`
 	BufferMetros            float64             `json:"bufferMetros"`
 	Geometria               *GeometriaResponse  `json:"geometria,omitempty"`
+	GeometriaBuffer         *GeometriaResponse  `json:"geometriaBuffer,omitempty"`
+	RadioMetros             *float64            `json:"radioMetros,omitempty"`
 	AreaMetrosCuadrados     float64             `json:"areaMetrosCuadrados,omitempty"`
 	Centroide               *CentroideResponse  `json:"centroide,omitempty"`
 	PrecisionPromedioMetros *float64            `json:"precisionPromedioMetros,omitempty"`
@@ -162,6 +176,7 @@ func EspacioToResponse(e *geo.Espacio) EspacioResponse {
 		Estado:                  e.Estado,
 		NivelValidacion:         e.NivelValidacion,
 		BufferMetros:            e.BufferMetros,
+		RadioMetros:             e.RadioMetros,
 		AreaMetrosCuadrados:     e.AreaMetrosCuadrados,
 		PrecisionPromedioMetros: e.PrecisionPromedioMetros,
 		MetodoCaptura:           e.MetodoCaptura,
@@ -174,6 +189,12 @@ func EspacioToResponse(e *geo.Espacio) EspacioResponse {
 		resp.Geometria = &GeometriaResponse{
 			Tipo:        "Polygon",
 			Coordinates: [][][2]float64{e.Geometria.Coordinates()},
+		}
+	}
+	if e.GeometriaBuffer != nil {
+		resp.GeometriaBuffer = &GeometriaResponse{
+			Tipo:        "Polygon",
+			Coordinates: [][][2]float64{e.GeometriaBuffer.Coordinates()},
 		}
 	}
 	if e.Centroide != nil {

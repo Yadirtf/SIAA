@@ -17,6 +17,7 @@ const (
 	ErrTokenRevocado         ErrorCode = "AUTH_TOKEN_REVOCADO"
 	ErrCuentaBloqueada       ErrorCode = "AUTH_CUENTA_BLOQUEADA"
 	ErrDosFactorRequerido    ErrorCode = "AUTH_2FA_REQUERIDO"
+	ErrUsuarioInactivo       ErrorCode = "AUTH_USUARIO_INACTIVO"
 	ErrPermisosDenegados     ErrorCode = "PERM_DENEGADO"
 	ErrAmbitoDenegado        ErrorCode = "AMBITO_DENEGADO"
 	ErrValidacion            ErrorCode = "VALIDACION"

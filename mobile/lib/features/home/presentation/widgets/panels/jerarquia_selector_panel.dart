@@ -108,13 +108,17 @@ class JerarquiaSelectorPanel extends StatelessWidget {
   }
 
   Widget _buildSedeSelector() {
+    final SedeModel? sedeValida = sedes.any((s) => s.id == sedeSeleccionada?.id)
+        ? sedes.firstWhere((s) => s.id == sedeSeleccionada?.id)
+        : null;
+
     return Row(
       children: [
         Expanded(
           child: cargandoSedes
               ? const LinearProgressIndicator()
               : DropdownButtonFormField<SedeModel>(
-                  value: sedeSeleccionada,
+                  value: sedeValida,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: '1. Sede Universitaria',
@@ -140,13 +144,18 @@ class JerarquiaSelectorPanel extends StatelessWidget {
   }
 
   Widget _buildBloqueSelector() {
+    final BloqueModel? bloqueValido =
+        bloques.any((b) => b.id == bloqueSeleccionado?.id)
+            ? bloques.firstWhere((b) => b.id == bloqueSeleccionado?.id)
+            : null;
+
     return Row(
       children: [
         Expanded(
           child: cargandoBloques
               ? const LinearProgressIndicator()
               : DropdownButtonFormField<BloqueModel>(
-                  value: bloqueSeleccionado,
+                  value: bloqueValido,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: '2. Bloque / Edificio',

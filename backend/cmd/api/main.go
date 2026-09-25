@@ -27,6 +27,7 @@ import (
 	"github.com/siaa/backend/internal/usecase/auth"
 	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
 	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
+	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
 )
 
 func main() {
@@ -89,6 +90,9 @@ func main() {
 	estructuraRepo := impl.NewEstructuraRepository(mongoClient)
 	asignacionRepo := impl.NewAsignacionRepository(mongoClient)
 	excepcionRepo := impl.NewCalendarioExcepcionRepository(mongoClient)
+	sesionRepo := impl.NewSesionRepository(mongoClient)
+
+	rolRepo := impl.NewRolRepository(mongoClient)
 
 	// Parametrización jerárquica (EP-05)
 	parametroRepo := impl.NewParametroRepo(mongoClient.DB())
@@ -100,6 +104,8 @@ func main() {
 	dispositivoRepo := impl.NewDispositivoRepository(mongoClient)
 
 	// ─── Casos de uso ─────────────────────────────────────────
+	rbacSvc := usecaseRbac.NewService(rolRepo, auditoriaRepo, clk)
+
 	authSvc := auth.NewService(
 		usuarioRepo,
 		refreshRepo,
@@ -131,7 +137,7 @@ func main() {
 		auditoriaRepo,
 		clk,
 		log,
-	)
+	).WithSesiones(sesionRepo)
 
 	parametroSvc := usecasePar.New(parametroRepo)
 
@@ -139,7 +145,7 @@ func main() {
 	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH := handler.NewAuthHandler(authSvc)
 	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
-	rolesH := handler.NewRolesHandler()
+	rolesH := handler.NewRolesHandler(rbacSvc)
 	geoH := handler.NewGeoHandler(geoSvc)
 	acaH := handler.NewAcademicoHandler(acaSvc)
 	parametroH := handler.NewParametroHandler(parametroSvc)

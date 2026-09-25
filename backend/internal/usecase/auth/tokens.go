@@ -30,11 +30,11 @@ func (s *Service) emitTokens(ctx context.Context, u *user.Usuario, dispositivoID
 func (s *Service) emitTokensInFamily(ctx context.Context, u *user.Usuario, dispositivoID, familiaID string) (*TokenPair, error) {
 	now := s.clock.Now()
 
-	// Determinar rol activo y permisos (primer rol vigente)
+	// Determinar rol activo y permisos (primer rol vigente que cumpla ventana temporal — US-ROL-05 AC-01)
 	rolActivo := ""
 	var permisos []string
 	for _, ra := range u.Roles {
-		if ra.VigenciaFin == nil || now.Before(*ra.VigenciaFin) {
+		if ra.IsVigente(now) {
 			rolActivo = string(ra.Nombre)
 			for _, p := range rbac.DefaultPermissions[ra.Nombre] {
 				permisos = append(permisos, string(p))
@@ -57,6 +57,7 @@ func (s *Service) emitTokensInFamily(ctx context.Context, u *user.Usuario, dispo
 		RolActivo:     rolActivo,
 		Permisos:      permisos,
 		DispositivoID: dispositivoID,
+		Ambitos:       u.Ambitos,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

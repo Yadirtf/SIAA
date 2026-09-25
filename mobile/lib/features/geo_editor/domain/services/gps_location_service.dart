@@ -16,24 +16,28 @@ class GpsLocationService {
 
   /// Verifica y solicita permisos de ubicación en primer plano conforme a RN-005 (while in use only).
   Future<EstadoPermisoUbicacion> verificarYSolicitarPermiso() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return EstadoPermisoUbicacion.servicioDesactivado;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return EstadoPermisoUbicacion.denegado;
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return EstadoPermisoUbicacion.servicioDesactivado;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      return EstadoPermisoUbicacion.denegadoPermanentemente;
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return EstadoPermisoUbicacion.denegado;
+        }
+      }
 
-    return EstadoPermisoUbicacion.concedido;
+      if (permission == LocationPermission.deniedForever) {
+        return EstadoPermisoUbicacion.denegadoPermanentemente;
+      }
+
+      return EstadoPermisoUbicacion.concedido;
+    } catch (_) {
+      return EstadoPermisoUbicacion.denegado;
+    }
   }
 
   /// Retrocompatibilidad: retorna booleano simple.
@@ -44,12 +48,20 @@ class GpsLocationService {
 
   /// Abre la configuración de ubicación del sistema operativo para que el usuario la active.
   Future<bool> abrirAjustesUbicacion() async {
-    return Geolocator.openLocationSettings();
+    try {
+      return await Geolocator.openLocationSettings();
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Abre los ajustes de la aplicación (útil cuando el permiso fue denegado permanentemente).
   Future<bool> abrirAjustesAplicacion() async {
-    return Geolocator.openAppSettings();
+    try {
+      return await Geolocator.openAppSettings();
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Obtiene la posición actual inmediata del sensor GPS.
@@ -81,33 +93,38 @@ class GpsLocationService {
     required void Function(GpsReading reading) onReading,
     void Function(dynamic error)? onError,
   }) async {
-    final estado = await verificarYSolicitarPermiso();
-    if (estado != EstadoPermisoUbicacion.concedido) {
-      return estado;
+    try {
+      final estado = await verificarYSolicitarPermiso();
+      if (estado != EstadoPermisoUbicacion.concedido) {
+        return estado;
+      }
+
+      detenerEscucha();
+
+      const locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+      );
+
+      _positionSubscription = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (position) {
+          onReading(GpsReading(
+            longitude: position.longitude,
+            latitude: position.latitude,
+            accuracy: position.accuracy,
+            timestamp: position.timestamp,
+          ));
+        },
+        onError: onError,
+      );
+
+      return EstadoPermisoUbicacion.concedido;
+    } catch (e) {
+      onError?.call(e);
+      return EstadoPermisoUbicacion.denegado;
     }
-
-    detenerEscucha();
-
-    const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.best,
-      distanceFilter: 0,
-    );
-
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen(
-      (position) {
-        onReading(GpsReading(
-          longitude: position.longitude,
-          latitude: position.latitude,
-          accuracy: position.accuracy,
-          timestamp: position.timestamp,
-        ));
-      },
-      onError: onError,
-    );
-
-    return EstadoPermisoUbicacion.concedido;
   }
 
   /// Inicia la escucha continua de actualizaciones del sensor GPS (directo).

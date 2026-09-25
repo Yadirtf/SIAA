@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/siaa/backend/internal/domain/rbac"
 )
 
 // LoginInput es la entrada del caso de uso de login.
@@ -38,10 +40,11 @@ type UsuarioInfo struct {
 // Se incluyen en el token y se leen en el middleware de autenticación.
 type JWTClaims struct {
 	jwt.RegisteredClaims
-	UsuarioID     string   `json:"uid"`
-	RolActivo     string   `json:"rol"`
-	Permisos      []string `json:"perms"`
-	DispositivoID string   `json:"did,omitempty"`
+	UsuarioID     string       `json:"uid"`
+	RolActivo     string       `json:"rol"`
+	Permisos      []string     `json:"perms"`
+	DispositivoID string       `json:"did,omitempty"`
+	Ambitos       []rbac.Scope `json:"ambs,omitempty"`
 }
 
 // Mailer es el contrato para el envío de correos del caso de uso de auth.

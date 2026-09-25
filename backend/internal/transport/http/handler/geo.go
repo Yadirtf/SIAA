@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/siaa/backend/internal/domain/geo"
+	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/dto"
 	"github.com/siaa/backend/internal/transport/http/middleware"
@@ -21,106 +22,6 @@ type GeoHandler struct {
 
 func NewGeoHandler(svc *usecaseGeo.Service) *GeoHandler {
 	return &GeoHandler{svc: svc}
-}
-
-// ─────────────────────────────────────────────────────────────
-// SEDES
-// ─────────────────────────────────────────────────────────────
-
-func (h *GeoHandler) CrearSede(c echo.Context) error {
-	var req dto.CrearSedeRequest
-	if err := c.Bind(&req); err != nil {
-		return err
-	}
-	if err := c.Validate(&req); err != nil {
-		return err
-	}
-
-	actor := extraerActor(c)
-	sede, err := h.svc.CrearSede(c.Request().Context(), usecaseGeo.CrearSedeCmd{
-		Codigo:    req.Codigo,
-		Nombre:    req.Nombre,
-		Direccion: req.Direccion,
-		Actor:     actor,
-	})
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, dto.SedeToResponse(sede))
-}
-
-func (h *GeoHandler) ListarSedes(c echo.Context) error {
-	sedes, err := h.svc.ListarSedes(c.Request().Context())
-	if err != nil {
-		return err
-	}
-
-	res := make([]dto.SedeResponse, 0, len(sedes))
-	for _, s := range sedes {
-		res = append(res, dto.SedeToResponse(s))
-	}
-	return c.JSON(http.StatusOK, res)
-}
-
-func (h *GeoHandler) ObtenerSede(c echo.Context) error {
-	id := c.Param("id")
-	sede, err := h.svc.ObtenerSedePorID(c.Request().Context(), id)
-	if err != nil {
-		return err
-	}
-	return c.JSON(http.StatusOK, dto.SedeToResponse(sede))
-}
-
-// ─────────────────────────────────────────────────────────────
-// BLOQUES
-// ─────────────────────────────────────────────────────────────
-
-func (h *GeoHandler) CrearBloque(c echo.Context) error {
-	var req dto.CrearBloqueRequest
-	if err := c.Bind(&req); err != nil {
-		return err
-	}
-	if err := c.Validate(&req); err != nil {
-		return err
-	}
-
-	actor := extraerActor(c)
-	bloque, err := h.svc.CrearBloque(c.Request().Context(), usecaseGeo.CrearBloqueCmd{
-		SedeID: req.SedeID,
-		Codigo: req.Codigo,
-		Nombre: req.Nombre,
-		Pisos:  req.Pisos,
-		Actor:  actor,
-	})
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, dto.BloqueToResponse(bloque))
-}
-
-func (h *GeoHandler) ListarBloques(c echo.Context) error {
-	sedeID := c.QueryParam("sedeId")
-	bloques, err := h.svc.ListarBloques(c.Request().Context(), sedeID)
-	if err != nil {
-		return err
-	}
-
-	res := make([]dto.BloqueResponse, 0, len(bloques))
-	for _, b := range bloques {
-		res = append(res, dto.BloqueToResponse(b))
-	}
-	return c.JSON(http.StatusOK, res)
-}
-
-func (h *GeoHandler) ObtenerBloque(c echo.Context) error {
-	id := c.Param("id")
-	bloque, err := h.svc.ObtenerBloquePorID(c.Request().Context(), id)
-	if err != nil {
-		return err
-	}
-	return c.JSON(http.StatusOK, dto.BloqueToResponse(bloque))
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -160,8 +61,14 @@ func (h *GeoHandler) CrearEspacio(c echo.Context) error {
 }
 
 func (h *GeoHandler) ListarEspacios(c echo.Context) error {
+	claims, _ := middleware.GetClaims(c)
+	sedeID, err := middleware.EnforceScopeFilter(claims, rbac.ScopeSede, c.QueryParam("sedeId"))
+	if err != nil {
+		return err
+	}
+
 	filter := repository.EspacioFilter{
-		SedeID:   c.QueryParam("sedeId"),
+		SedeID:   sedeID,
 		BloqueID: c.QueryParam("bloqueId"),
 	}
 	if pStr := c.QueryParam("piso"); pStr != "" {
@@ -196,6 +103,12 @@ func (h *GeoHandler) ObtenerEspacio(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	claims, _ := middleware.GetClaims(c)
+	if err := middleware.ValidateResourceScope(claims, rbac.ScopeSede, espacio.SedeID); err != nil {
+		return err
+	}
+
 	return c.JSON(http.StatusOK, dto.EspacioToResponse(espacio))
 }
 
@@ -265,10 +178,19 @@ func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
 		vertices = append(vertices, pt)
 	}
 
+	var centroide *geo.GeoPoint
+	if req.Centroide != nil {
+		if pt, errPt := geo.NewGeoPoint(req.Centroide[0], req.Centroide[1]); errPt == nil {
+			centroide = &pt
+		}
+	}
+
 	actor := extraerActor(c)
 	espacio, err := h.svc.GuardarGeometriaEspacio(c.Request().Context(), usecaseGeo.GuardarGeometriaCmd{
 		EspacioID:               id,
 		Vertices:                vertices,
+		Centroide:               centroide,
+		RadioMetros:             req.RadioMetros,
 		MetodoCaptura:           req.MetodoCaptura,
 		PrecisionPromedioMetros: req.PrecisionPromedioMetros,
 		ConfirmarSolapamiento:   req.ConfirmarSolapamiento,

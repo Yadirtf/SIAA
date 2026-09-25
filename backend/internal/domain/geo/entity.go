@@ -80,6 +80,8 @@ type Espacio struct {
 	NivelValidacion         NivelValidacion
 	BufferMetros            float64
 	Geometria               *GeoPolygon
+	GeometriaBuffer         *GeoPolygon
+	RadioMetros             *float64
 	AreaMetrosCuadrados     float64
 	Centroide               *GeoPoint
 	PrecisionPromedioMetros *float64
@@ -92,8 +94,8 @@ type Espacio struct {
 }
 
 // AsignarGeometria asigna la geometría de polígono validada al espacio, calculando
-// su área geodésica en m², centroide y actualizando la versión de geometría.
-// RF-GEO-002, AC-06, AC-07, T-GEO-02.1, T-GEO-02.2.
+// su área geodésica en m², centroide, buffer precalculado y actualizando la versión de geometría.
+// RF-GEO-002, AC-06, AC-07, US-GEO-08 (AC-01..AC-03), T-GEO-02.1, T-GEO-02.2.
 func (e *Espacio) AsignarGeometria(poligono GeoPolygon, metodo MetodoCaptura, precisionPromedio *float64) error {
 	if !EsMetodoCapturaValido(metodo) {
 		return shared.NewValidationError("Método de captura inválido", shared.FieldError{
@@ -116,12 +118,41 @@ func (e *Espacio) AsignarGeometria(poligono GeoPolygon, metodo MetodoCaptura, pr
 	area := CalcularAreaGeodesica(poligono)
 	centroide := CalcularCentroide(poligono)
 
+	// US-GEO-08 AC-01: buffer por defecto 10m si no está especificado
+	if e.BufferMetros <= 0 {
+		e.BufferMetros = 10.0
+	}
+	buf, err := CalcularBufferGeodesico(poligono, e.BufferMetros)
+	if err == nil {
+		e.GeometriaBuffer = &buf
+	}
+
 	e.Geometria = &poligono
 	e.AreaMetrosCuadrados = area
 	e.Centroide = &centroide
 	e.MetodoCaptura = &metodo
 	e.PrecisionPromedioMetros = precisionPromedio
 	e.VersionGeometria++
+	e.ActualizadoEn = time.Now().UTC()
+	return nil
+}
+
+// ActualizarBuffer recalcula y persiste el polígono expandido sin recapturar vértices (US-GEO-08 AC-01, AC-02).
+func (e *Espacio) ActualizarBuffer(bufferMetros float64) error {
+	if bufferMetros < 0 || bufferMetros > 50.0 {
+		return shared.NewValidationError("El buffer perimetral debe estar entre 0 y 50 metros", shared.FieldError{
+			Campo: "bufferMetros",
+			Error: "RANGO_INVALIDO",
+		})
+	}
+	e.BufferMetros = bufferMetros
+	if e.Geometria != nil {
+		buf, err := CalcularBufferGeodesico(*e.Geometria, bufferMetros)
+		if err != nil {
+			return err
+		}
+		e.GeometriaBuffer = &buf
+	}
 	e.ActualizadoEn = time.Now().UTC()
 	return nil
 }

@@ -18,12 +18,13 @@ const (
 	MetodoToqueMapa           MetodoCaptura = "TOQUE_MAPA"
 	MetodoMixto               MetodoCaptura = "MIXTO"
 	MetodoImportacion         MetodoCaptura = "IMPORTACION"
+	MetodoCentroideRadio      MetodoCaptura = "CENTROIDE_RADIO"
 )
 
 // EsMetodoCapturaValido valida si el método de captura es soportado.
 func EsMetodoCapturaValido(m MetodoCaptura) bool {
 	switch m {
-	case MetodoRecorridoPerimetral, MetodoToqueMapa, MetodoMixto, MetodoImportacion:
+	case MetodoRecorridoPerimetral, MetodoToqueMapa, MetodoMixto, MetodoImportacion, MetodoCentroideRadio:
 		return true
 	default:
 		return false
