@@ -24,4 +24,12 @@ class ApiConstants {
   static const String grupos = '$baseUrl/grupos';
   static const String asignaciones = '$baseUrl/asignaciones';
   static const String excepciones = '$baseUrl/calendario-excepciones';
+
+  // Dispositivos (US-AUT-03)
+  static String dispositivosUsuario(String usuarioId) =>
+      '$baseUrl/usuarios/$usuarioId/dispositivos';
+  static String aprobarDispositivo(String dispositivoId) =>
+      '$baseUrl/dispositivos/$dispositivoId/aprobar';
+  static String revocarDispositivo(String dispositivoId) =>
+      '$baseUrl/dispositivos/$dispositivoId/revocar';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
@@ -26,19 +27,25 @@ class SedesScreen extends StatelessWidget {
             children: [
               TextFormField(
                 controller: codigoCtrl,
-                decoration: const InputDecoration(labelText: 'Código (ej: SEDE-MED)'),
+                decoration: const InputDecoration(
+                  labelText: 'Código (ej: SEDE-MED)',
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: nombreCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre de la Sede'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de la Sede',
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: direccionCtrl,
-                decoration: const InputDecoration(labelText: 'Dirección o Campus'),
+                decoration: const InputDecoration(
+                  labelText: 'Dirección o Campus',
+                ),
               ),
             ],
           ),
@@ -52,12 +59,12 @@ class SedesScreen extends StatelessWidget {
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 context.read<GeoBloc>().add(
-                      CreateSedeEvent(
-                        codigo: codigoCtrl.text.trim(),
-                        nombre: nombreCtrl.text.trim(),
-                        direccion: direccionCtrl.text.trim(),
-                      ),
-                    );
+                  CreateSedeEvent(
+                    codigo: codigoCtrl.text.trim(),
+                    nombre: nombreCtrl.text.trim(),
+                    direccion: direccionCtrl.text.trim(),
+                  ),
+                );
                 Navigator.pop(dialogCtx);
               }
             },
@@ -83,7 +90,10 @@ class SedesScreen extends StatelessWidget {
                   children: [
                     Text('Sedes y Campus', style: AppTextStyles.h2),
                     const SizedBox(height: 4),
-                    Text('Administración de recintos físicos principales', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Administración de recintos físicos principales',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -97,7 +107,8 @@ class SedesScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: BlocBuilder<GeoBloc, GeoState>(
-              buildWhen: (prev, curr) => curr is GeoLoaded || curr is GeoLoading || curr is GeoError,
+              buildWhen: (prev, curr) =>
+                  curr is GeoLoaded || curr is GeoLoading || curr is GeoError,
               builder: (context, state) {
                 if (state is GeoLoading) {
                   return const Center(child: CircularProgressIndicator());
@@ -107,12 +118,18 @@ class SedesScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: AppColors.accentRose, size: 40),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.accentRose,
+                          size: 40,
+                        ),
                         const SizedBox(height: 12),
                         Text(state.message, style: AppTextStyles.bodyMedium),
                         const SizedBox(height: 12),
                         ElevatedButton(
-                          onPressed: () => context.read<GeoBloc>().add(const LoadGeoDataEvent()),
+                          onPressed: () => context.read<GeoBloc>().add(
+                            const LoadGeoDataEvent(),
+                          ),
                           child: const Text('Reintentar'),
                         ),
                       ],
@@ -130,23 +147,43 @@ class SedesScreen extends StatelessWidget {
                       final sede = state.sedes[index];
                       return Card(
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.primaryAccent.withOpacity(0.12),
-                            child: const Icon(Icons.domain_rounded, color: AppColors.primaryAccent),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
                           ),
-                          title: Text('${sede.nombre} (${sede.codigo})', style: AppTextStyles.h3),
-                          subtitle: Text(sede.direccion ?? 'Sin dirección especificada', style: AppTextStyles.bodyMedium),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.primaryAccent
+                                .withOpacity(0.12),
+                            child: const Icon(
+                              Icons.domain_rounded,
+                              color: AppColors.primaryAccent,
+                            ),
+                          ),
+                          title: Text(
+                            '${sede.nombre} (${sede.codigo})',
+                            style: AppTextStyles.h3,
+                          ),
+                          subtitle: Text(
+                            sede.direccion ?? 'Sin dirección especificada',
+                            style: AppTextStyles.bodyMedium,
+                          ),
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: sede.activo ? AppColors.statusSuccessBg : AppColors.statusWarningBg,
+                              color: sede.activo
+                                  ? AppColors.statusSuccessBg
+                                  : AppColors.statusWarningBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               sede.activo ? 'ACTIVO' : 'INACTIVO',
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: sede.activo ? AppColors.statusSuccessText : AppColors.statusWarningText,
+                                color: sede.activo
+                                    ? AppColors.statusSuccessText
+                                    : AppColors.statusWarningText,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -170,11 +207,18 @@ class SedesScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.domain_disabled_rounded, size: 48, color: AppColors.textMuted.withOpacity(0.5)),
+          Icon(
+            Icons.domain_disabled_rounded,
+            size: 48,
+            color: AppColors.textMuted.withOpacity(0.5),
+          ),
           const SizedBox(height: 16),
           Text('No hay sedes registradas', style: AppTextStyles.h3),
           const SizedBox(height: 6),
-          Text('Crea la primera sede para comenzar a registrar bloques y espacios.', style: AppTextStyles.bodyMedium),
+          Text(
+            'Crea la primera sede para comenzar a registrar bloques y espacios.',
+            style: AppTextStyles.bodyMedium,
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () => _showCreateDialog(context),

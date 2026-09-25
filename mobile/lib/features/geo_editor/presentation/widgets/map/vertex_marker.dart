@@ -40,7 +40,9 @@ class VertexMarker extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? Colors.amberAccent.withOpacity(0.6) : Colors.black45,
+              color: isSelected
+                  ? Colors.amberAccent.withOpacity(0.6)
+                  : Colors.black45,
               blurRadius: isSelected ? 8 : 3,
               spreadRadius: isSelected ? 2 : 0,
             ),

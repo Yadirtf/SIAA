@@ -24,8 +24,10 @@ class CrearEspacioDialog extends StatefulWidget {
 }
 
 class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
-  final TextEditingController _codCtrl = TextEditingController(text: 'AULA-101');
-  final TextEditingController _nomCtrl = TextEditingController(text: 'Aula Magistral 101');
+  final TextEditingController _codCtrl =
+      TextEditingController(text: 'AULA-101');
+  final TextEditingController _nomCtrl =
+      TextEditingController(text: 'Aula Magistral 101');
   final TextEditingController _capCtrl = TextEditingController(text: '35');
   late int _pisoSeleccionado;
   String _tipoSeleccionado = 'AULA';
@@ -34,7 +36,8 @@ class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
   @override
   void initState() {
     super.initState();
-    _pisoSeleccionado = widget.pisosDisponibles.isNotEmpty ? widget.pisosDisponibles.first : 1;
+    _pisoSeleccionado =
+        widget.pisosDisponibles.isNotEmpty ? widget.pisosDisponibles.first : 1;
   }
 
   @override
@@ -73,12 +76,14 @@ class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
           children: [
             TextField(
               controller: _codCtrl,
-              decoration: const InputDecoration(labelText: 'Código Aula (ej: A-101)'),
+              decoration:
+                  const InputDecoration(labelText: 'Código Aula (ej: A-101)'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _nomCtrl,
-              decoration: const InputDecoration(labelText: 'Nombre del Espacio'),
+              decoration:
+                  const InputDecoration(labelText: 'Nombre del Espacio'),
             ),
             const SizedBox(height: 8),
             Row(
@@ -88,9 +93,11 @@ class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
                     value: _pisoSeleccionado,
                     decoration: const InputDecoration(labelText: 'Piso'),
                     items: widget.pisosDisponibles
-                        .map((p) => DropdownMenuItem(value: p, child: Text('Piso $p')))
+                        .map((p) =>
+                            DropdownMenuItem(value: p, child: Text('Piso $p')))
                         .toList(),
-                    onChanged: (p) => setState(() => _pisoSeleccionado = p ?? 1),
+                    onChanged: (p) =>
+                        setState(() => _pisoSeleccionado = p ?? 1),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -109,10 +116,12 @@ class _CrearEspacioDialogState extends State<CrearEspacioDialog> {
               decoration: const InputDecoration(labelText: 'Tipo de Espacio'),
               items: const [
                 DropdownMenuItem(value: 'AULA', child: Text('Aula Magistral')),
-                DropdownMenuItem(value: 'LABORATORIO', child: Text('Laboratorio')),
+                DropdownMenuItem(
+                    value: 'LABORATORIO', child: Text('Laboratorio')),
                 DropdownMenuItem(value: 'AUDITORIO', child: Text('Auditorio')),
                 DropdownMenuItem(value: 'TALLER', child: Text('Taller')),
-                DropdownMenuItem(value: 'OFICINA', child: Text('Oficina / Sala')),
+                DropdownMenuItem(
+                    value: 'OFICINA', child: Text('Oficina / Sala')),
               ],
               onChanged: (t) => setState(() => _tipoSeleccionado = t ?? 'AULA'),
             ),

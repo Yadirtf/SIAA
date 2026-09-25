@@ -8,11 +8,14 @@ import 'vertex_marker.dart';
 class GeoEditorMapLayers {
   static List<Widget> buildVectorLayers(GeoEditorState state) {
     return [
-      if (state.versionPreview != null && state.versionPreview!.coordenadas.length >= 3)
+      if (state.versionPreview != null &&
+          state.versionPreview!.coordenadas.length >= 3)
         PolygonLayer<Object>(
           polygons: [
             Polygon(
-              points: state.versionPreview!.coordenadas.map((v) => ll.LatLng(v[1], v[0])).toList(),
+              points: state.versionPreview!.coordenadas
+                  .map((v) => ll.LatLng(v[1], v[0]))
+                  .toList(),
               color: Colors.purpleAccent.withOpacity(0.25),
               borderColor: Colors.purpleAccent,
               borderStrokeWidth: 2.5,
@@ -27,7 +30,8 @@ class GeoEditorMapLayers {
               color: state.isClosed
                   ? Colors.cyanAccent.withOpacity(0.30)
                   : Colors.amberAccent.withOpacity(0.20),
-              borderColor: state.isClosed ? Colors.cyanAccent : Colors.amberAccent,
+              borderColor:
+                  state.isClosed ? Colors.cyanAccent : Colors.amberAccent,
               borderStrokeWidth: 2.5,
             ),
           ],

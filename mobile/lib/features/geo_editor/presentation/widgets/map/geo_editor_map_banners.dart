@@ -25,19 +25,23 @@ class GeoEditorMapBanners extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               color: Colors.black87,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
-                    const Icon(Icons.touch_app_rounded, color: Colors.amberAccent, size: 20),
+                    const Icon(Icons.touch_app_rounded,
+                        color: Colors.amberAccent, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Vértice #${state.verticeSeleccionadoIndex! + 1} [Lat: ${state.vertices[state.verticeSeleccionadoIndex!][1].toStringAsFixed(6)}, Lon: ${state.vertices[state.verticeSeleccionadoIndex!][0].toStringAsFixed(6)}]: toque el mapa para moverlo.',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 18),
+                      icon: const Icon(Icons.close_rounded,
+                          color: Colors.white70, size: 18),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       onPressed: () => onSelectVertex?.call(-1),
@@ -57,15 +61,20 @@ class GeoEditorMapBanners extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               color: Colors.purple.shade900.withOpacity(0.9),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.history_toggle_off_rounded, color: Colors.purpleAccent, size: 20),
+                    const Icon(Icons.history_toggle_off_rounded,
+                        color: Colors.purpleAccent, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Superposición v${state.versionPreview!.version} (${state.versionPreview!.areaMetrosCuadrados.toStringAsFixed(1)} m²)',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],

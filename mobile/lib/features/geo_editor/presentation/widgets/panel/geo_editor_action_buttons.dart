@@ -74,7 +74,8 @@ class GeoEditorActionButtons extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.touch_app, size: 18, color: SIAAColors.primary600),
+                      const Icon(Icons.touch_app,
+                          size: 18, color: SIAAColors.primary600),
                       const SizedBox(width: 6),
                       Text(
                         state.isClosed
@@ -95,7 +96,6 @@ class GeoEditorActionButtons extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-
         Row(
           children: [
             if (!state.isClosed)
@@ -132,8 +132,9 @@ class GeoEditorActionButtons extends StatelessWidget {
                         ? 'Guardando...'
                         : 'Guardar Geometría',
                   ),
-                  onPressed: state.status != GeoEditorStatus.saving ? onGuardar : null,
-                  ),
+                  onPressed:
+                      state.status != GeoEditorStatus.saving ? onGuardar : null,
+                ),
               ),
           ],
         ),

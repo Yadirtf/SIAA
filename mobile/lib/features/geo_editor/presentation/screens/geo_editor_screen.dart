@@ -50,7 +50,8 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.coordenadasExistentes != null && widget.coordenadasExistentes!.isNotEmpty) {
+    if (widget.coordenadasExistentes != null &&
+        widget.coordenadasExistentes!.isNotEmpty) {
       _mapaCentradoInicialmente = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -64,8 +65,8 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
     if (coords.isEmpty) return;
     _mapaCentradoInicialmente = true;
     context.read<GeoEditorBloc>().add(
-      CargarGeometriaExistenteRequested(coords),
-    );
+          CargarGeometriaExistenteRequested(coords),
+        );
     Future.delayed(const Duration(milliseconds: 150), () {
       if (!mounted) return;
       _centrarEnCoordenadas(coords);
@@ -92,7 +93,8 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
         context.read<GeoEditorBloc>().add(GpsPositionUpdated(reading));
         if (!_mapaCentradoInicialmente) {
           _mapaCentradoInicialmente = true;
-          _mapController.move(ll.LatLng(reading.latitude, reading.longitude), 18.5);
+          _mapController.move(
+              ll.LatLng(reading.latitude, reading.longitude), 18.5);
         }
       },
       onError: (_) {},
@@ -156,14 +158,18 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
               children: [
                 LocationPermissionBanner(
                   estadoPermiso: _estadoPermiso,
-                  onAbrirAjustesUbicacion: () => _gpsService.abrirAjustesUbicacion(),
-                  onAbrirAjustesAplicacion: () => _gpsService.abrirAjustesAplicacion(),
+                  onAbrirAjustesUbicacion: () =>
+                      _gpsService.abrirAjustesUbicacion(),
+                  onAbrirAjustesAplicacion: () =>
+                      _gpsService.abrirAjustesAplicacion(),
                   onSolicitarPermiso: () => _iniciarGps(),
                 ),
                 GeoEditorHeader(
                   state: state,
                   onModoChanged: (nuevoModo) {
-                    context.read<GeoEditorBloc>().add(CambiarModoCapturaRequested(nuevoModo));
+                    context
+                        .read<GeoEditorBloc>()
+                        .add(CambiarModoCapturaRequested(nuevoModo));
                   },
                 ),
                 Expanded(
@@ -179,17 +185,22 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                           );
                     },
                     onSelectVertex: (index) {
-                      final selected = (index == -1 || state.verticeSeleccionadoIndex == index)
+                      final selected = (index == -1 ||
+                              state.verticeSeleccionadoIndex == index)
                           ? null
                           : index;
-                      context.read<GeoEditorBloc>().add(SeleccionarVerticeRequested(selected));
+                      context
+                          .read<GeoEditorBloc>()
+                          .add(SeleccionarVerticeRequested(selected));
                     },
                     onDeleteVertex: (index) {
                       EliminarVerticeDialog.mostrar(
                         context,
                         verticeNumero: index + 1,
                         onConfirmar: () {
-                          context.read<GeoEditorBloc>().add(EliminarVerticeRequested(index));
+                          context
+                              .read<GeoEditorBloc>()
+                              .add(EliminarVerticeRequested(index));
                         },
                       );
                     },
@@ -215,19 +226,24 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                 ),
                 GeoEditorBottomPanel(
                   state: state,
-                  onDeshacer: () =>
-                      context.read<GeoEditorBloc>().add(const DeshacerVerticeRequested()),
-                  onCapturar: () =>
-                      context.read<GeoEditorBloc>().add(const CapturarVerticeRequested()),
-                  onCerrarPoligono: () =>
-                      context.read<GeoEditorBloc>().add(const CerrarPoligonoRequested()),
+                  onDeshacer: () => context
+                      .read<GeoEditorBloc>()
+                      .add(const DeshacerVerticeRequested()),
+                  onCapturar: () => context
+                      .read<GeoEditorBloc>()
+                      .add(const CapturarVerticeRequested()),
+                  onCerrarPoligono: () => context
+                      .read<GeoEditorBloc>()
+                      .add(const CerrarPoligonoRequested()),
                   onGuardar: () => context.read<GeoEditorBloc>().add(
-                        GuardarGeometriaBackendRequested(espacioId: widget.espacioId),
+                        GuardarGeometriaBackendRequested(
+                            espacioId: widget.espacioId),
                       ),
                   onSelectVertex: (index) {
                     if (index >= 0 && index < state.vertices.length) {
                       final v = state.vertices[index];
-                      _mapController.move(ll.LatLng(v[1], v[0]), _mapController.camera.zoom);
+                      _mapController.move(
+                          ll.LatLng(v[1], v[0]), _mapController.camera.zoom);
                       context.read<GeoEditorBloc>().add(MoverVerticeRequested(
                             index: index,
                             nuevaLongitud: v[0],

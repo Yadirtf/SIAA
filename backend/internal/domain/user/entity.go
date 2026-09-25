@@ -36,7 +36,7 @@ type RolAsignado struct {
 	VigenciaFin    *time.Time
 }
 
-// Dispositivo representa un dispositivo móvil vinculado a un usuario.
+// Dispositivo representa un dispositivo móvil vinculado a un usuario (US-AUT-03).
 type Dispositivo struct {
 	ID                  string
 	UsuarioID           string
@@ -47,4 +47,26 @@ type Dispositivo struct {
 	Confiable           bool
 	PendienteAprobacion bool
 	CreadoEn            time.Time
+	ActualizadoEn       time.Time
+	RevocadoEn          *time.Time
+}
+
+// EsValidoParaMarcaje indica si el dispositivo está activo, es confiable y no está pendiente de aprobación (AC-02).
+func (d *Dispositivo) EsValidoParaMarcaje() bool {
+	return d.Confiable && !d.PendienteAprobacion && d.RevocadoEn == nil
+}
+
+// Aprobar autoriza el dispositivo como confiable (AC-03).
+func (d *Dispositivo) Aprobar(now time.Time) {
+	d.PendienteAprobacion = false
+	d.Confiable = true
+	d.RevocadoEn = nil
+	d.ActualizadoEn = now
+}
+
+// Revocar invalida el dispositivo para marcajes futuros (AC-06).
+func (d *Dispositivo) Revocar(now time.Time) {
+	d.Confiable = false
+	d.RevocadoEn = &now
+	d.ActualizadoEn = now
 }

@@ -151,12 +151,23 @@ func NewRouter(
 	authProtected := api.Group("/auth", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 	authProtected.POST("/logout", authH.Logout)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/logout")
+	authProtected.POST("/devices", authH.RegistrarDispositivo)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/devices")
 
 	// Administración de usuarios (requiere token válido y tasa de 120 req/min por usuario)
 	usuariosProtected := api.Group("/usuarios", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 	// Desbloqueo administrativo auditado (US-AUT-02 AC-02, T-AUT-02.3)
 	usuariosProtected.POST("/:id/desbloquear", authH.DesbloquearUsuario, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/usuarios/:id/desbloquear", rbac.PermUsuarioEditar)
+	usuariosProtected.GET("/:id/dispositivos", authH.ListarDispositivosUsuario, mw.RequirePermission(rbac.PermUsuarioLeer, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/usuarios/:id/dispositivos", rbac.PermUsuarioLeer)
+
+	// Gestión de dispositivos confiables (US-AUT-03)
+	dispositivosProtected := api.Group("/dispositivos", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+	dispositivosProtected.POST("/:id/aprobar", authH.AprobarDispositivo, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
+	registry.RegisterPermission(http.MethodPost, "/api/v1/dispositivos/:id/aprobar", rbac.PermUsuarioEditar)
+	dispositivosProtected.POST("/:id/revocar", authH.RevocarDispositivo, mw.RequirePermission(rbac.PermUsuarioEditar, auditoria))
+	registry.RegisterPermission(http.MethodPost, "/api/v1/dispositivos/:id/revocar", rbac.PermUsuarioEditar)
 
 	// Roles y permisos del sistema — US-ROL-01 AC-01
 	if rolesH != nil {
@@ -203,6 +214,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id/geometria/versiones", rbac.PermAulaLeer)
 		espaciosProtected.GET("/:id/geometria/versiones/:version", geoH.ObtenerVersionGeometria, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/espacios/:id/geometria/versiones/:version", rbac.PermAulaLeer)
+		espaciosProtected.POST("/validar-geometria", geoH.ValidarGeometria, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
+		registry.RegisterPermission(http.MethodPost, "/api/v1/espacios/validar-geometria", rbac.PermAulaLeer)
 		espaciosProtected.DELETE("/:id", geoH.EliminarEspacio, mw.RequirePermission(rbac.PermAulaEliminar, auditoria))
 		registry.RegisterPermission(http.MethodDelete, "/api/v1/espacios/:id", rbac.PermAulaEliminar)
 	}

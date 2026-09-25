@@ -52,7 +52,11 @@ class BloqueModel extends Equatable {
       sedeId: json['sedeId']?.toString() ?? '',
       codigo: json['codigo']?.toString() ?? '',
       nombre: json['nombre']?.toString() ?? '',
-      pisos: (json['pisos'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? [],
+      pisos:
+          (json['pisos'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          [],
       activo: json['activo'] == true,
     );
   }
@@ -108,28 +112,29 @@ class EspacioModel extends Equatable {
       facultadResponsable: json['facultadResponsable']?.toString(),
       estado: json['estado']?.toString() ?? 'DISPONIBLE',
       bufferMetros: (json['bufferMetros'] as num?)?.toDouble() ?? 0.0,
-      areaMetrosCuadrados: (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
+      areaMetrosCuadrados:
+          (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
       activo: json['activo'] == true,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        sedeId,
-        torre,
-        bloqueId,
-        piso,
-        codigo,
-        nombre,
-        capacidad,
-        tipo,
-        facultadResponsable,
-        estado,
-        bufferMetros,
-        areaMetrosCuadrados,
-        activo,
-      ];
+    id,
+    sedeId,
+    torre,
+    bloqueId,
+    piso,
+    codigo,
+    nombre,
+    capacidad,
+    tipo,
+    facultadResponsable,
+    estado,
+    bufferMetros,
+    areaMetrosCuadrados,
+    activo,
+  ];
 }
 
 class SolapamientoItemModel extends Equatable {
@@ -162,11 +167,11 @@ class SolapamientoItemModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        espacioAId,
-        espacioANombre,
-        espacioBId,
-        espacioBNombre,
-        areaInterseccion,
-        tipoSeveridad,
-      ];
+    espacioAId,
+    espacioANombre,
+    espacioBId,
+    espacioBNombre,
+    areaInterseccion,
+    tipoSeveridad,
+  ];
 }

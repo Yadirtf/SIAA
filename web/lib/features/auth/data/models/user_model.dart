@@ -25,8 +25,16 @@ class UserModel extends Equatable {
       correo: json['correo']?.toString() ?? '',
       nombre: json['nombre']?.toString() ?? '',
       apellido: json['apellido']?.toString() ?? '',
-      roles: (json['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      permisos: (json['permisos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      roles:
+          (json['roles'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      permisos:
+          (json['permisos'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 

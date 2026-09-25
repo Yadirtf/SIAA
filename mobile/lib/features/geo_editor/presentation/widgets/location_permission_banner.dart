@@ -19,7 +19,8 @@ class LocationPermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (estadoPermiso == null || estadoPermiso == EstadoPermisoUbicacion.concedido) {
+    if (estadoPermiso == null ||
+        estadoPermiso == EstadoPermisoUbicacion.concedido) {
       return const SizedBox.shrink();
     }
 
@@ -30,20 +31,23 @@ class LocationPermissionBanner extends StatelessWidget {
 
     switch (estadoPermiso!) {
       case EstadoPermisoUbicacion.servicioDesactivado:
-        titulo = 'El GPS del dispositivo está desactivado. Actívelo para capturar vértices.';
+        titulo =
+            'El GPS del dispositivo está desactivado. Actívelo para capturar vértices.';
         accionTexto = 'Activar GPS';
         onAccion = onAbrirAjustesUbicacion;
         icono = Icons.location_off;
         break;
       case EstadoPermisoUbicacion.denegadoPermanentemente:
-        titulo = 'Permiso de ubicación denegado en ajustes del sistema. Habilítelo para usar el GPS.';
+        titulo =
+            'Permiso de ubicación denegado en ajustes del sistema. Habilítelo para usar el GPS.';
         accionTexto = 'Abrir Ajustes';
         onAccion = onAbrirAjustesAplicacion;
         icono = Icons.settings;
         break;
       case EstadoPermisoUbicacion.denegado:
       default:
-        titulo = 'Se requiere permiso de ubicación para delimitar el espacio en sitio.';
+        titulo =
+            'Se requiere permiso de ubicación para delimitar el espacio en sitio.';
         accionTexto = 'Conceder';
         onAccion = onSolicitarPermiso;
         icono = Icons.location_searching;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/auth_bloc.dart';
@@ -29,11 +30,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            LoginSubmittedEvent(
-              correo: _correoController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+        LoginSubmittedEvent(
+          correo: _correoController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -65,7 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   side: const BorderSide(color: AppColors.border),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 40,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -132,7 +136,11 @@ class _LoginScreenState extends State<LoginScreen> {
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
             hintText: 'usuario@universidad.edu.co',
-            prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textMuted),
+            prefixIcon: Icon(
+              Icons.email_outlined,
+              size: 20,
+              color: AppColors.textMuted,
+            ),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -159,14 +167,21 @@ class _LoginScreenState extends State<LoginScreen> {
           obscureText: _obscurePassword,
           decoration: InputDecoration(
             hintText: '••••••••••••',
-            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppColors.textMuted),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              size: 20,
+              color: AppColors.textMuted,
+            ),
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
                 size: 20,
                 color: AppColors.textMuted,
               ),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
           validator: (value) {
@@ -183,7 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildSubmitButton() {
     return BlocBuilder<AuthBloc, AuthState>(
-      buildWhen: (previous, current) => current is AuthLoading || previous is AuthLoading,
+      buildWhen: (previous, current) =>
+          current is AuthLoading || previous is AuthLoading,
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return SizedBox(
@@ -192,13 +208,18 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: isLoading ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: isLoading
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text('Iniciar Sesión', style: AppTextStyles.button),
           ),

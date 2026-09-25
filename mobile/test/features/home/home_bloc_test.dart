@@ -19,7 +19,8 @@ class MockEspacioRepository extends EspacioRepository {
   Future<List<SedeModel>> obtenerSedes() async => sedesMock;
 
   @override
-  Future<List<BloqueModel>> obtenerBloques({String? sedeId}) async => bloquesMock;
+  Future<List<BloqueModel>> obtenerBloques({String? sedeId}) async =>
+      bloquesMock;
 
   @override
   Future<List<EspacioModel>> obtenerEspacios({
@@ -27,14 +28,23 @@ class MockEspacioRepository extends EspacioRepository {
     String? bloqueId,
     String? tipo,
     String? estado,
-  }) async => espaciosMock;
+  }) async =>
+      espaciosMock;
 }
 
 void main() {
   group('HomeBloc (Pruebas Unitarias de Lógica de Negocio)', () {
-    test('CargarSedesRequested: carga sedes, selecciona primera y encadena carga de bloques', () async {
-      const sede = SedeModel(id: 'sede-1', codigo: 'SEDE-01', nombre: 'Principal');
-      const bloque = BloqueModel(id: 'blq-1', sedeId: 'sede-1', codigo: 'B-1', nombre: 'Bloque 1', pisos: [1, 2]);
+    test(
+        'CargarSedesRequested: carga sedes, selecciona primera y encadena carga de bloques',
+        () async {
+      const sede =
+          SedeModel(id: 'sede-1', codigo: 'SEDE-01', nombre: 'Principal');
+      const bloque = BloqueModel(
+          id: 'blq-1',
+          sedeId: 'sede-1',
+          codigo: 'B-1',
+          nombre: 'Bloque 1',
+          pisos: [1, 2]);
       const espacio = EspacioModel(
         id: 'esp-1',
         sedeId: 'sede-1',
@@ -69,7 +79,9 @@ void main() {
       expect(bloc.state.espacios.length, equals(1));
     });
 
-    test('LimpiarMensajesHomeRequested: resetea error, exito y ultimoEspacioCreado', () async {
+    test(
+        'LimpiarMensajesHomeRequested: resetea error, exito y ultimoEspacioCreado',
+        () async {
       final bloc = HomeBloc();
       addTearDown(bloc.close);
 

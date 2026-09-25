@@ -22,9 +22,9 @@ class SedeModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'codigo': codigo,
-    'nombre': nombre,
-    if (direccion != null) 'direccion': direccion,
-  };
+        'id': id,
+        'codigo': codigo,
+        'nombre': nombre,
+        if (direccion != null) 'direccion': direccion,
+      };
 }

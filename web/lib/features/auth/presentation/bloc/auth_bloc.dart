@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -7,8 +8,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
 
   AuthBloc({required AuthRepository authRepository})
-      : _authRepository = authRepository,
-        super(const AuthInitial()) {
+    : _authRepository = authRepository,
+      super(const AuthInitial()) {
     on<CheckAuthStatusEvent>(_onCheckAuthStatus);
     on<LoginSubmittedEvent>(_onLoginSubmitted);
     on<LogoutRequestedEvent>(_onLogoutRequested);
@@ -43,7 +44,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(Authenticated(user));
     } catch (e) {
-      emit(AuthFailure(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AuthFailure(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 

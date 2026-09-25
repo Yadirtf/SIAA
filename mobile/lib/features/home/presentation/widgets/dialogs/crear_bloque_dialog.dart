@@ -21,7 +21,8 @@ class CrearBloqueDialog extends StatefulWidget {
 
 class _CrearBloqueDialogState extends State<CrearBloqueDialog> {
   final TextEditingController _codCtrl = TextEditingController(text: 'BLQ-A');
-  final TextEditingController _nomCtrl = TextEditingController(text: 'Bloque A — Ciencias e Ingenierías');
+  final TextEditingController _nomCtrl =
+      TextEditingController(text: 'Bloque A — Ciencias e Ingenierías');
   bool _enviando = false;
 
   @override
@@ -54,7 +55,8 @@ class _CrearBloqueDialogState extends State<CrearBloqueDialog> {
         children: [
           TextField(
             controller: _codCtrl,
-            decoration: const InputDecoration(labelText: 'Código de Bloque (ej: BLQ-A)'),
+            decoration: const InputDecoration(
+                labelText: 'Código de Bloque (ej: BLQ-A)'),
           ),
           const SizedBox(height: 8),
           TextField(

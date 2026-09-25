@@ -3,7 +3,8 @@ import '../../../../../core/theme/app_theme.dart';
 
 /// Diálogo modal para confirmar el reinicio y descarte de los vértices capturados.
 abstract class ConfirmarReinicioDialog {
-  static void mostrar(BuildContext context, {required VoidCallback onConfirmar}) {
+  static void mostrar(BuildContext context,
+      {required VoidCallback onConfirmar}) {
     showDialog(
       context: context,
       builder: (dlgContext) => AlertDialog(
@@ -15,12 +16,14 @@ abstract class ConfirmarReinicioDialog {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: SIAAColors.asistenciaAusente),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: SIAAColors.asistenciaAusente),
             onPressed: () {
               Navigator.of(dlgContext).pop();
               onConfirmar();
             },
-            child: const Text('Reiniciar', style: TextStyle(color: Colors.white)),
+            child:
+                const Text('Reiniciar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

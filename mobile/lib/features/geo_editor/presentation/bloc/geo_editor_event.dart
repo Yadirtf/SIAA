@@ -45,7 +45,8 @@ class GpsPositionUpdated extends GeoEditorEvent {
 
 /// Solicitud de captura de un vértice mediante el algoritmo de filtrado y promedio (AC-01, AC-02).
 class CapturarVerticeRequested extends GeoEditorEvent {
-  final List<GpsReading>? lecturasManuales; // Opcional, útil para testing o ráfagas directas
+  final List<GpsReading>?
+      lecturasManuales; // Opcional, útil para testing o ráfagas directas
 
   const CapturarVerticeRequested({this.lecturasManuales});
 
@@ -82,7 +83,8 @@ class GuardarGeometriaBackendRequested extends GeoEditorEvent {
   });
 
   @override
-  List<Object?> get props => [espacioId, confirmarSolapamiento, motivoSolapamiento];
+  List<Object?> get props =>
+      [espacioId, confirmarSolapamiento, motivoSolapamiento];
 }
 
 /// US-GEO-07 AC-01: Arrastrar o mover un vértice existente a una nueva posición con recálculo de área.
@@ -166,4 +168,3 @@ class SeleccionarVerticeRequested extends GeoEditorEvent {
   @override
   List<Object?> get props => [index];
 }
-

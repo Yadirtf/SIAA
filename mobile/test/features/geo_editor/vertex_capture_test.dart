@@ -30,13 +30,24 @@ void main() {
       expect(result.accuracy, closeTo(5.0, 1e-6));
     });
 
-    test('AC-02: descarta lecturas que superan el umbral (15 m) y promedia las válidas', () {
+    test(
+        'AC-02: descarta lecturas que superan el umbral (15 m) y promedia las válidas',
+        () {
       final readings = [
-        GpsReading(longitude: -74.08170, latitude: 4.60970, accuracy: 4.0), // Válida
-        GpsReading(longitude: -74.08999, latitude: 4.69999, accuracy: 18.5), // DESCARTAR (> 15m)
-        GpsReading(longitude: -74.08174, latitude: 4.60974, accuracy: 6.0), // Válida
-        GpsReading(longitude: -74.08888, latitude: 4.68888, accuracy: 25.0), // DESCARTAR (> 15m)
-        GpsReading(longitude: -74.08178, latitude: 4.60978, accuracy: 5.0), // Válida
+        GpsReading(
+            longitude: -74.08170, latitude: 4.60970, accuracy: 4.0), // Válida
+        GpsReading(
+            longitude: -74.08999,
+            latitude: 4.69999,
+            accuracy: 18.5), // DESCARTAR (> 15m)
+        GpsReading(
+            longitude: -74.08174, latitude: 4.60974, accuracy: 6.0), // Válida
+        GpsReading(
+            longitude: -74.08888,
+            latitude: 4.68888,
+            accuracy: 25.0), // DESCARTAR (> 15m)
+        GpsReading(
+            longitude: -74.08178, latitude: 4.60978, accuracy: 5.0), // Válida
       ];
 
       final result = algorithm.processReadings(readings);
@@ -51,7 +62,9 @@ void main() {
       expect(result.accuracy, closeTo(expectedAcc, 1e-6));
     });
 
-    test('AC-02: lanza PrecisionInsuficienteException si todas las lecturas superan el umbral', () {
+    test(
+        'AC-02: lanza PrecisionInsuficienteException si todas las lecturas superan el umbral',
+        () {
       final badReadings = [
         GpsReading(longitude: -74.08170, latitude: 4.60970, accuracy: 16.0),
         GpsReading(longitude: -74.08172, latitude: 4.60972, accuracy: 18.0),
@@ -68,16 +81,23 @@ void main() {
   });
 
   group('GpsAccuracyStatus — AC-03, AC-04, T-GEO-02.6', () {
-    test('AC-03: clasifica precisión en óptima (<=10m), aceptable (10-20m) e insuficiente (>20m)', () {
+    test(
+        'AC-03: clasifica precisión en óptima (<=10m), aceptable (10-20m) e insuficiente (>20m)',
+        () {
       expect(GpsAccuracyStatusX.fromAccuracy(5.0), GpsAccuracyStatus.optimal);
       expect(GpsAccuracyStatusX.fromAccuracy(10.0), GpsAccuracyStatus.optimal);
-      expect(GpsAccuracyStatusX.fromAccuracy(10.1), GpsAccuracyStatus.acceptable);
-      expect(GpsAccuracyStatusX.fromAccuracy(20.0), GpsAccuracyStatus.acceptable);
-      expect(GpsAccuracyStatusX.fromAccuracy(20.1), GpsAccuracyStatus.insufficient);
-      expect(GpsAccuracyStatusX.fromAccuracy(35.0), GpsAccuracyStatus.insufficient);
+      expect(
+          GpsAccuracyStatusX.fromAccuracy(10.1), GpsAccuracyStatus.acceptable);
+      expect(
+          GpsAccuracyStatusX.fromAccuracy(20.0), GpsAccuracyStatus.acceptable);
+      expect(GpsAccuracyStatusX.fromAccuracy(20.1),
+          GpsAccuracyStatus.insufficient);
+      expect(GpsAccuracyStatusX.fromAccuracy(35.0),
+          GpsAccuracyStatus.insufficient);
     });
 
-    test('AC-04: canCapture es false si la precisión es insuficiente (> 20m)', () {
+    test('AC-04: canCapture es false si la precisión es insuficiente (> 20m)',
+        () {
       expect(GpsAccuracyStatus.optimal.canCapture, isTrue);
       expect(GpsAccuracyStatus.acceptable.canCapture, isTrue);
       expect(GpsAccuracyStatus.insufficient.canCapture, isFalse);
@@ -131,12 +151,20 @@ void main() {
       });
     });
 
-    test('AC-06: cerrar polígono auto-completa el anillo y calcula área en pantalla', () async {
+    test(
+        'AC-06: cerrar polígono auto-completa el anillo y calcula área en pantalla',
+        () async {
       final bloc = GeoEditorBloc();
 
-      final p1 = [GpsReading(longitude: -74.08170, latitude: 4.60970, accuracy: 5.0)];
-      final p2 = [GpsReading(longitude: -74.08160, latitude: 4.60970, accuracy: 5.0)];
-      final p3 = [GpsReading(longitude: -74.08160, latitude: 4.60980, accuracy: 5.0)];
+      final p1 = [
+        GpsReading(longitude: -74.08170, latitude: 4.60970, accuracy: 5.0)
+      ];
+      final p2 = [
+        GpsReading(longitude: -74.08160, latitude: 4.60970, accuracy: 5.0)
+      ];
+      final p3 = [
+        GpsReading(longitude: -74.08160, latitude: 4.60980, accuracy: 5.0)
+      ];
 
       bloc.add(CapturarVerticeRequested(lecturasManuales: p1));
       bloc.add(CapturarVerticeRequested(lecturasManuales: p2));

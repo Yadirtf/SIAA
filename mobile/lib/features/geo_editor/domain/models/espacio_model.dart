@@ -61,7 +61,8 @@ class EspacioModel {
       estado: json['estado'] as String? ?? 'ACTIVO',
       nivelValidacion: json['nivelValidacion'] as String? ?? 'AULA',
       bufferMetros: (json['bufferMetros'] as num?)?.toDouble() ?? 10.0,
-      areaMetrosCuadrados: (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
+      areaMetrosCuadrados:
+          (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
       tieneGeometria: coords != null && coords.isNotEmpty,
       coordenadas: coords,
     );

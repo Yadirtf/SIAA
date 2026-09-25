@@ -15,10 +15,7 @@ class LoginSubmittedEvent extends AuthEvent {
   final String correo;
   final String password;
 
-  const LoginSubmittedEvent({
-    required this.correo,
-    required this.password,
-  });
+  const LoginSubmittedEvent({required this.correo, required this.password});
 
   @override
   List<Object?> get props => [correo, password];

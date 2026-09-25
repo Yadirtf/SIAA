@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../data/auth_repository.dart';
 import '../../../../core/storage/secure_storage.dart';
+import '../../../../core/device/device_info_service.dart';
 
 // ─── EVENTOS ──────────────────────────────────────────────────────────────────
 
@@ -93,13 +94,29 @@ class AuthRecuperarEnviado extends AuthState {}
 /// Contrasena cambiada correctamente.
 class AuthPasswordCambiado extends AuthState {}
 
+/// Dispositivo móvil pendiente de aprobación por el administrador (US-AUT-03 AC-03).
+class AuthDispositivoPendiente extends AuthState {
+  final String mensaje;
+  final String dispositivoId;
+  const AuthDispositivoPendiente({
+    required this.mensaje,
+    required this.dispositivoId,
+  });
+  @override
+  List<Object?> get props => [mensaje, dispositivoId];
+}
+
 // ─── BLOC ─────────────────────────────────────────────────────────────────────
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
+  final DeviceInfoService _deviceInfoService;
 
-  AuthBloc({required AuthRepository repository})
-      : _repository = repository,
+  AuthBloc({
+    required AuthRepository repository,
+    DeviceInfoService? deviceInfoService,
+  })  : _repository = repository,
+        _deviceInfoService = deviceInfoService ?? const DeviceInfoService(),
         super(AuthInitial()) {
     on<AuthSessionChecked>(_onSessionChecked);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -145,6 +162,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       );
+
+      // US-AUT-03: Registrar y verificar dispositivo móvil confiable
+      try {
+        final meta = await _deviceInfoService.getMetadata();
+        final disp = await _repository.registrarDispositivo(
+          instalacionId: meta.instalacionId,
+          modelo: meta.modelo,
+          so: meta.so,
+          versionApp: meta.versionApp,
+        );
+        if (disp.requiereAprobacion || disp.estado == 'pendiente') {
+          await SecureStorage.clearSession();
+          emit(AuthDispositivoPendiente(
+            mensaje: disp.mensaje.isNotEmpty
+                ? disp.mensaje
+                : 'Dispositivo no reconocido. Se ha enviado una solicitud de aprobación al administrador.',
+            dispositivoId: disp.id,
+          ));
+          return;
+        }
+      } catch (_) {
+        // En caso de fallo de red en registro de dispositivo, se continúa
+        // con la sesión autenticada.
+      }
 
       emit(AuthAuthenticated(
         usuarioId: result.usuario.id,

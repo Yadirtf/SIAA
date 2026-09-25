@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/geo_repository.dart';
 import 'geo_event.dart';
 import 'geo_state.dart';
@@ -7,8 +8,8 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
   final GeoRepository _repository;
 
   GeoBloc({required GeoRepository repository})
-      : _repository = repository,
-        super(const GeoInitial()) {
+    : _repository = repository,
+      super(const GeoInitial()) {
     on<LoadGeoDataEvent>(_onLoadGeoData);
     on<CreateSedeEvent>(_onCreateSede);
     on<CreateBloqueEvent>(_onCreateBloque);
@@ -24,22 +25,32 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
     emit(const GeoLoading());
     try {
       final sedes = await _repository.getSedes();
-      final selectedSede = event.sedeId ?? (sedes.isNotEmpty ? sedes.first.id : null);
+      final selectedSede =
+          event.sedeId ?? (sedes.isNotEmpty ? sedes.first.id : null);
       final bloques = await _repository.getBloques(sedeId: selectedSede);
       final espacios = await _repository.getEspacios(
         sedeId: selectedSede,
         bloqueId: event.bloqueId,
       );
 
-      emit(GeoLoaded(
-        sedes: sedes,
-        bloques: bloques,
-        espacios: espacios,
-        selectedSedeId: selectedSede,
-        selectedBloqueId: event.bloqueId,
-      ));
+      emit(
+        GeoLoaded(
+          sedes: sedes,
+          bloques: bloques,
+          espacios: espacios,
+          selectedSedeId: selectedSede,
+          selectedBloqueId: event.bloqueId,
+        ),
+      );
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -55,7 +66,14 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
       );
       add(const LoadGeoDataEvent());
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -72,7 +90,14 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
       );
       add(LoadGeoDataEvent(sedeId: event.sedeId));
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -93,7 +118,14 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
       );
       add(LoadGeoDataEvent(sedeId: event.sedeId, bloqueId: event.bloqueId));
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -105,15 +137,24 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
       await _repository.deleteEspacio(event.id);
       if (state is GeoLoaded) {
         final current = state as GeoLoaded;
-        add(LoadGeoDataEvent(
-          sedeId: current.selectedSedeId,
-          bloqueId: current.selectedBloqueId,
-        ));
+        add(
+          LoadGeoDataEvent(
+            sedeId: current.selectedSedeId,
+            bloqueId: current.selectedBloqueId,
+          ),
+        );
       } else {
         add(const LoadGeoDataEvent());
       }
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -122,12 +163,21 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
     Emitter<GeoState> emit,
   ) async {
     try {
-      final solapamientos = await _repository.getSolapamientos(sedeId: event.sedeId);
+      final solapamientos = await _repository.getSolapamientos(
+        sedeId: event.sedeId,
+      );
       if (state is GeoLoaded) {
         emit((state as GeoLoaded).copyWith(solapamientos: solapamientos));
       }
     } catch (e) {
-      emit(GeoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        GeoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 }

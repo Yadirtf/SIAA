@@ -17,7 +17,8 @@ typedef SaveGeometryCallback = Future<void> Function({
   String? motivoSolapamiento,
 });
 
-typedef FetchHistorialCallback = Future<List<GeometriaHistorialItem>> Function(String espacioId);
+typedef FetchHistorialCallback = Future<List<GeometriaHistorialItem>> Function(
+    String espacioId);
 
 class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
   final VertexCaptureAlgorithm captureAlgorithm;
@@ -42,14 +43,17 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
 
     // Edición fina de vértices
     on<MoverVerticeRequested>(onMoverVerticeRequested);
-    on<InsertarVerticeEnSegmentoRequested>(onInsertarVerticeEnSegmentoRequested);
+    on<InsertarVerticeEnSegmentoRequested>(
+        onInsertarVerticeEnSegmentoRequested);
     on<EliminarVerticeRequested>(onEliminarVerticeRequested);
     on<SeleccionarVerticeRequested>(onSeleccionarVerticeRequested);
 
     // Persistencia e historial
     on<GuardarGeometriaBackendRequested>(onGuardarGeometriaBackendRequested);
     on<CargarGeometriaExistenteRequested>(onCargarGeometriaExistenteRequested);
-    on<CargarVersionesHistoricasRequested>(onCargarVersionesHistoricasRequested);
-    on<SeleccionarVersionPreviewRequested>(onSeleccionarVersionPreviewRequested);
+    on<CargarVersionesHistoricasRequested>(
+        onCargarVersionesHistoricasRequested);
+    on<SeleccionarVersionPreviewRequested>(
+        onSeleccionarVersionPreviewRequested);
   }
 }

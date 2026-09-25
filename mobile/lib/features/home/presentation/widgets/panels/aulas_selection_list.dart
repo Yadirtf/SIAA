@@ -71,11 +71,13 @@ class AulasSelectionList extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Icon(Icons.meeting_room_outlined, size: 32, color: SIAAColors.neutral400),
+                const Icon(Icons.meeting_room_outlined,
+                    size: 32, color: SIAAColors.neutral400),
                 const SizedBox(height: 6),
                 Text(
                   'No hay aulas en ${bloqueSeleccionado!.nombre}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 const Text(

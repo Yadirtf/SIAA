@@ -93,6 +93,8 @@ func main() {
 	// En producción se inyecta la implementación SMTP en lugar del noop.
 	appMailer := mailer.NewNoopMailer(log)
 
+	dispositivoRepo := impl.NewDispositivoRepository(mongoClient)
+
 	// ─── Casos de uso ─────────────────────────────────────────
 	authSvc := auth.NewService(
 		usuarioRepo,
@@ -102,7 +104,7 @@ func main() {
 		clk,
 		cfg,
 		appMailer,
-	)
+	).WithDispositivos(dispositivoRepo)
 
 	geoSvc := usecaseGeo.NewService(
 		sedeRepo,

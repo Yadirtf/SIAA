@@ -17,7 +17,10 @@ extension GeoEditorVertexEdicionHandlers on GeoEditorBloc {
 
     if (state.isClosed && nuevosVertices.length >= 4) {
       if (event.index == 0) {
-        nuevosVertices[nuevosVertices.length - 1] = [event.nuevaLongitud, event.nuevaLatitud];
+        nuevosVertices[nuevosVertices.length - 1] = [
+          event.nuevaLongitud,
+          event.nuevaLatitud
+        ];
       } else if (event.index == nuevosVertices.length - 1) {
         nuevosVertices[0] = [event.nuevaLongitud, event.nuevaLatitud];
       }
@@ -98,7 +101,8 @@ extension GeoEditorVertexEdicionHandlers on GeoEditorBloc {
     if (distinctCount <= 3) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'No se puede eliminar: el polígono requiere al menos 3 vértices distintos.',
+        errorMessage:
+            'No se puede eliminar: el polígono requiere al menos 3 vértices distintos.',
       ));
       return;
     }
@@ -141,7 +145,9 @@ extension GeoEditorVertexEdicionHandlers on GeoEditorBloc {
     SeleccionarVerticeRequested event,
     Emitter<GeoEditorState> emit,
   ) {
-    if (event.index == null || event.index! < 0 || event.index! >= state.vertices.length) {
+    if (event.index == null ||
+        event.index! < 0 ||
+        event.index! >= state.vertices.length) {
       emit(state.copyWith(clearVerticeSeleccionado: true));
     } else {
       emit(state.copyWith(verticeSeleccionadoIndex: event.index));

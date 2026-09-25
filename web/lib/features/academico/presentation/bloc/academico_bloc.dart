@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/academico_repository.dart';
 import 'academico_event.dart';
 import 'academico_state.dart';
@@ -7,8 +8,8 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
   final AcademicoRepository _repository;
 
   AcademicoBloc({required AcademicoRepository repository})
-      : _repository = repository,
-        super(const AcademicoInitial()) {
+    : _repository = repository,
+      super(const AcademicoInitial()) {
     on<LoadAcademicoDataEvent>(_onLoadData);
     on<CreatePeriodoEvent>(_onCreatePeriodo);
     on<CreateFacultadEvent>(_onCreateFacultad);
@@ -38,21 +39,33 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
       final asignaciones = await _repository.getAsignaciones();
       final excepciones = await _repository.getExcepciones();
 
-      emit(AcademicoLoaded(
-        periodos: periodos,
-        facultades: facultades,
-        programas: programas,
-        asignaturas: asignaturas,
-        grupos: grupos,
-        asignaciones: asignaciones,
-        excepciones: excepciones,
-      ));
+      emit(
+        AcademicoLoaded(
+          periodos: periodos,
+          facultades: facultades,
+          programas: programas,
+          asignaturas: asignaturas,
+          grupos: grupos,
+          asignaciones: asignaciones,
+          excepciones: excepciones,
+        ),
+      );
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreatePeriodo(CreatePeriodoEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreatePeriodo(
+    CreatePeriodoEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.createPeriodo(
         codigo: event.codigo,
@@ -63,47 +76,105 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
       );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateFacultad(CreateFacultadEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreateFacultad(
+    CreateFacultadEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
-      await _repository.createFacultad(codigo: event.codigo, nombre: event.nombre, sedeId: event.sedeId);
+      await _repository.createFacultad(
+        codigo: event.codigo,
+        nombre: event.nombre,
+        sedeId: event.sedeId,
+      );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteFacultad(DeleteFacultadEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onDeleteFacultad(
+    DeleteFacultadEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.deleteFacultad(event.id);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreatePrograma(CreateProgramaEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreatePrograma(
+    CreateProgramaEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
-      await _repository.createPrograma(codigo: event.codigo, nombre: event.nombre, facultadId: event.facultadId);
+      await _repository.createPrograma(
+        codigo: event.codigo,
+        nombre: event.nombre,
+        facultadId: event.facultadId,
+      );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeletePrograma(DeleteProgramaEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onDeletePrograma(
+    DeleteProgramaEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.deletePrograma(event.id);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateAsignatura(CreateAsignaturaEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreateAsignatura(
+    CreateAsignaturaEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.createAsignatura(
         codigo: event.codigo,
@@ -113,20 +184,40 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
       );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteAsignatura(DeleteAsignaturaEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onDeleteAsignatura(
+    DeleteAsignaturaEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.deleteAsignatura(event.id);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateGrupo(CreateGrupoEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreateGrupo(
+    CreateGrupoEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.createGrupo(
         numero: event.numero,
@@ -136,29 +227,59 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
       );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateAsignacion(CreateAsignacionEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreateAsignacion(
+    CreateAsignacionEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.createAsignacion(event.body);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteAsignacion(DeleteAsignacionEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onDeleteAsignacion(
+    DeleteAsignacionEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.deleteAsignacion(event.id);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateExcepcion(CreateExcepcionEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onCreateExcepcion(
+    CreateExcepcionEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.createExcepcion(
         nombre: event.nombre,
@@ -169,16 +290,33 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
       );
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteExcepcion(DeleteExcepcionEvent event, Emitter<AcademicoState> emit) async {
+  Future<void> _onDeleteExcepcion(
+    DeleteExcepcionEvent event,
+    Emitter<AcademicoState> emit,
+  ) async {
     try {
       await _repository.deleteExcepcion(event.id);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
-      emit(AcademicoError(e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '')));
+      emit(
+        AcademicoError(
+          e
+              .toString()
+              .replaceAll('ApiException: ', '')
+              .replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 }

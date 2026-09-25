@@ -21,8 +21,8 @@ class SecureStorage {
   static final Map<String, String> _memoryCache = {};
 
   // ─── Claves ─────────────────────────────────────────────────
-  static const _keyAccessToken   = 'siaa_access_token';
-  static const _keyRefreshToken  = 'siaa_refresh_token';
+  static const _keyAccessToken = 'siaa_access_token';
+  static const _keyRefreshToken = 'siaa_refresh_token';
   static const _keyInstalacionId = 'siaa_instalacion_id';
   static const _keyConsentimiento = 'siaa_consentimiento_version';
 

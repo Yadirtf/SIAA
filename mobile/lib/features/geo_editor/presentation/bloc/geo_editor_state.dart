@@ -20,13 +20,16 @@ class GeoEditorState extends Equatable {
   final GpsReading? currentPosition;
   final GpsAccuracyStatus accuracyStatus;
   final List<List<double>> vertices; // Lista de [longitud, latitud] ADR-04
-  final List<TaggedVertex> verticesEtiquetados; // Trazabilidad de origen por vértice
+  final List<TaggedVertex>
+      verticesEtiquetados; // Trazabilidad de origen por vértice
   final bool isClosed;
   final double areaCalculadaM2;
   final double perimetroMetros;
   final int? verticeSeleccionadoIndex; // US-GEO-07: vértice en edición activa
-  final List<GeometriaHistorialItem> versionesHistoricas; // US-GEO-06: lista de versiones
-  final GeometriaHistorialItem? versionPreview; // US-GEO-06: versión histórica superpuesta
+  final List<GeometriaHistorialItem>
+      versionesHistoricas; // US-GEO-06: lista de versiones
+  final GeometriaHistorialItem?
+      versionPreview; // US-GEO-06: versión histórica superpuesta
   final bool isLoadingHistorial;
   final String? errorMessage;
   final String? successMessage;
@@ -55,7 +58,6 @@ class GeoEditorState extends Equatable {
     this.solapamientoCritico,
   });
 
-
   /// AC-04 (US-GEO-02): El botón de captura GPS solo está habilitado si la precisión es óptima o aceptable.
   bool get canCaptureGps =>
       modoCaptura == ModoCapturaEditor.recorrido &&
@@ -78,7 +80,8 @@ class GeoEditorState extends Equatable {
   bool get canUndo => vertices.isNotEmpty && status != GeoEditorStatus.saving;
 
   /// AC-06: Se puede cerrar si hay al menos 3 vértices distintos.
-  bool get canClose => vertices.length >= 3 && !isClosed && status != GeoEditorStatus.saving;
+  bool get canClose =>
+      vertices.length >= 3 && !isClosed && status != GeoEditorStatus.saving;
 
   /// AC-02, AC-03: Determina el método de captura efectivo según los vértices capturados.
   /// - Exclusivamente toque: TOQUE_MAPA
@@ -86,10 +89,14 @@ class GeoEditorState extends Equatable {
   /// - Combinado: MIXTO
   String get metodoCapturaEfectivo {
     if (verticesEtiquetados.isEmpty) {
-      return modoCaptura == ModoCapturaEditor.mapa ? 'TOQUE_MAPA' : 'RECORRIDO_PERIMETRAL';
+      return modoCaptura == ModoCapturaEditor.mapa
+          ? 'TOQUE_MAPA'
+          : 'RECORRIDO_PERIMETRAL';
     }
-    final hasGps = verticesEtiquetados.any((v) => v.origen == OrigenVertice.gps);
-    final hasToque = verticesEtiquetados.any((v) => v.origen == OrigenVertice.toqueMapa);
+    final hasGps =
+        verticesEtiquetados.any((v) => v.origen == OrigenVertice.gps);
+    final hasToque =
+        verticesEtiquetados.any((v) => v.origen == OrigenVertice.toqueMapa);
     if (hasGps && hasToque) return 'MIXTO';
     if (hasToque) return 'TOQUE_MAPA';
     return 'RECORRIDO_PERIMETRAL';
@@ -105,7 +112,8 @@ class GeoEditorState extends Equatable {
         .where((v) => v.origen == OrigenVertice.gps && v.precision != null)
         .toList();
     if (gpsVertices.isNotEmpty) {
-      final sum = gpsVertices.fold<double>(0.0, (acc, v) => acc + (v.precision ?? 0.0));
+      final sum =
+          gpsVertices.fold<double>(0.0, (acc, v) => acc + (v.precision ?? 0.0));
       return sum / gpsVertices.length;
     }
     return currentPosition?.accuracy;
@@ -145,15 +153,24 @@ class GeoEditorState extends Equatable {
       isClosed: isClosed ?? this.isClosed,
       areaCalculadaM2: areaCalculadaM2 ?? this.areaCalculadaM2,
       perimetroMetros: perimetroMetros ?? this.perimetroMetros,
-      verticeSeleccionadoIndex: clearVerticeSeleccionado ? null : (verticeSeleccionadoIndex ?? this.verticeSeleccionadoIndex),
+      verticeSeleccionadoIndex: clearVerticeSeleccionado
+          ? null
+          : (verticeSeleccionadoIndex ?? this.verticeSeleccionadoIndex),
       versionesHistoricas: versionesHistoricas ?? this.versionesHistoricas,
-      versionPreview: clearVersionPreview ? null : (versionPreview ?? this.versionPreview),
+      versionPreview:
+          clearVersionPreview ? null : (versionPreview ?? this.versionPreview),
       isLoadingHistorial: isLoadingHistorial ?? this.isLoadingHistorial,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       successMessage: successMessage ?? this.successMessage,
-      solapamientoAdvertencia: clearSolapamiento ? null : (solapamientoAdvertencia ?? this.solapamientoAdvertencia),
-      solapamientoDetalles: clearSolapamiento ? null : (solapamientoDetalles ?? this.solapamientoDetalles),
-      solapamientoCritico: clearSolapamiento ? null : (solapamientoCritico ?? this.solapamientoCritico),
+      solapamientoAdvertencia: clearSolapamiento
+          ? null
+          : (solapamientoAdvertencia ?? this.solapamientoAdvertencia),
+      solapamientoDetalles: clearSolapamiento
+          ? null
+          : (solapamientoDetalles ?? this.solapamientoDetalles),
+      solapamientoCritico: clearSolapamiento
+          ? null
+          : (solapamientoCritico ?? this.solapamientoCritico),
     );
   }
 

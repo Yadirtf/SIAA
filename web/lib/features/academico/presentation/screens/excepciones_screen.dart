@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/academico_bloc.dart';
@@ -28,18 +29,34 @@ class ExcepcionesScreen extends StatelessWidget {
               children: [
                 TextFormField(
                   controller: nombreCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre / Motivo (ej: Día Festivo)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre / Motivo (ej: Día Festivo)',
+                  ),
                   validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedTipo,
-                  decoration: const InputDecoration(labelText: 'Tipo de Excepción'),
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Excepción',
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'FESTIVO', child: Text('Festivo Oficial')),
-                    DropdownMenuItem(value: 'RECESO', child: Text('Semana de Receso')),
-                    DropdownMenuItem(value: 'JORNADA_INSTITUCIONAL', child: Text('Jornada Institucional')),
-                    DropdownMenuItem(value: 'PARO', child: Text('Suspensión / Paro')),
+                    DropdownMenuItem(
+                      value: 'FESTIVO',
+                      child: Text('Festivo Oficial'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'RECESO',
+                      child: Text('Semana de Receso'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'JORNADA_INSTITUCIONAL',
+                      child: Text('Jornada Institucional'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'PARO',
+                      child: Text('Suspensión / Paro'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) setMState(() => selectedTipo = val);
@@ -51,16 +68,22 @@ class ExcepcionesScreen extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: inicioCtrl,
-                        decoration: const InputDecoration(labelText: 'Fecha Inicio'),
-                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha Inicio',
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
                         controller: finCtrl,
-                        decoration: const InputDecoration(labelText: 'Fecha Fin'),
-                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha Fin',
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                   ],
@@ -69,19 +92,22 @@ class ExcepcionesScreen extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancelar'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (formKey.currentState?.validate() ?? false) {
                   context.read<AcademicoBloc>().add(
-                        CreateExcepcionEvent(
-                          nombre: nombreCtrl.text.trim(),
-                          tipo: selectedTipo,
-                          ambito: 'GLOBAL',
-                          fechaInicio: inicioCtrl.text.trim(),
-                          fechaFin: finCtrl.text.trim(),
-                        ),
-                      );
+                    CreateExcepcionEvent(
+                      nombre: nombreCtrl.text.trim(),
+                      tipo: selectedTipo,
+                      ambito: 'GLOBAL',
+                      fechaInicio: inicioCtrl.text.trim(),
+                      fechaFin: finCtrl.text.trim(),
+                    ),
+                  );
                   Navigator.pop(dialogCtx);
                 }
               },
@@ -108,7 +134,10 @@ class ExcepcionesScreen extends StatelessWidget {
                   children: [
                     Text('Calendario de Excepciones', style: AppTextStyles.h2),
                     const SizedBox(height: 4),
-                    Text('Días festivos, recesos académicos y suspensiones de jornada', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Días festivos, recesos académicos y suspensiones de jornada',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -122,13 +151,18 @@ class ExcepcionesScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: BlocBuilder<AcademicoBloc, AcademicoState>(
-              buildWhen: (prev, curr) => curr is AcademicoLoaded || curr is AcademicoLoading || curr is AcademicoError,
+              buildWhen: (prev, curr) =>
+                  curr is AcademicoLoaded ||
+                  curr is AcademicoLoading ||
+                  curr is AcademicoError,
               builder: (context, state) {
                 if (state is AcademicoLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state is AcademicoError) {
-                  return Center(child: Text(state.message, style: AppTextStyles.bodyMedium));
+                  return Center(
+                    child: Text(state.message, style: AppTextStyles.bodyMedium),
+                  );
                 }
                 if (state is AcademicoLoaded) {
                   if (state.excepciones.isEmpty) {
@@ -136,9 +170,16 @@ class ExcepcionesScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.event_available_rounded, size: 48, color: AppColors.textMuted.withOpacity(0.5)),
+                          Icon(
+                            Icons.event_available_rounded,
+                            size: 48,
+                            color: AppColors.textMuted.withOpacity(0.5),
+                          ),
                           const SizedBox(height: 16),
-                          Text('No hay excepciones registradas en el calendario', style: AppTextStyles.h3),
+                          Text(
+                            'No hay excepciones registradas en el calendario',
+                            style: AppTextStyles.h3,
+                          ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: () => _showCreateDialog(context),
@@ -156,16 +197,35 @@ class ExcepcionesScreen extends StatelessWidget {
                       final e = state.excepciones[index];
                       return Card(
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.accentRose.withOpacity(0.12),
-                            child: const Icon(Icons.event_busy_rounded, color: AppColors.accentRose),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
                           ),
-                          title: Text('${e.nombre} (${e.tipo})', style: AppTextStyles.h3),
-                          subtitle: Text('Del ${e.fechaInicio} al ${e.fechaFin} • Ámbito: ${e.ambito}', style: AppTextStyles.bodyMedium),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.accentRose.withOpacity(
+                              0.12,
+                            ),
+                            child: const Icon(
+                              Icons.event_busy_rounded,
+                              color: AppColors.accentRose,
+                            ),
+                          ),
+                          title: Text(
+                            '${e.nombre} (${e.tipo})',
+                            style: AppTextStyles.h3,
+                          ),
+                          subtitle: Text(
+                            'Del ${e.fechaInicio} al ${e.fechaFin} • Ámbito: ${e.ambito}',
+                            style: AppTextStyles.bodyMedium,
+                          ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-                            onPressed: () => context.read<AcademicoBloc>().add(DeleteExcepcionEvent(e.id)),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: AppColors.accentRose,
+                            ),
+                            onPressed: () => context.read<AcademicoBloc>().add(
+                              DeleteExcepcionEvent(e.id),
+                            ),
                           ),
                         ),
                       );

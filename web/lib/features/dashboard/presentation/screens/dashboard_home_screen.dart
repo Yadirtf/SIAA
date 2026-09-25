@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../models/nav_item.dart';
@@ -50,7 +51,10 @@ class DashboardHomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.accentCyan.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -71,7 +75,9 @@ class DashboardHomeScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Gestión integral de infraestructura geoespacial, periodos lectivos, mallas curriculares y asignación de aulas.',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textLight.withOpacity(0.8)),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textLight.withOpacity(0.8),
+                  ),
                 ),
               ],
             ),
@@ -112,21 +118,24 @@ class DashboardHomeScreen extends StatelessWidget {
       ),
       _ModuleCard(
         title: 'Espacios y Aulas',
-        description: 'Aulas, laboratorios y recintos con soporte GIS y capacidad.',
+        description:
+            'Aulas, laboratorios y recintos con soporte GIS y capacidad.',
         icon: Icons.meeting_room_outlined,
         color: AppColors.accentEmerald,
         onTap: () => onNavigate(NavSection.espacios),
       ),
       _ModuleCard(
         title: 'Control Solapamientos',
-        description: 'Validación topológica geoespacial y prevención de colisiones.',
+        description:
+            'Validación topológica geoespacial y prevención de colisiones.',
         icon: Icons.layers_outlined,
         color: AppColors.accentAmber,
         onTap: () => onNavigate(NavSection.solapamientos),
       ),
       _ModuleCard(
         title: 'Periodos Académicos',
-        description: 'Ciclos lectivos, fechas operativas y estados de planeación.',
+        description:
+            'Ciclos lectivos, fechas operativas y estados de planeación.',
         icon: Icons.calendar_month_outlined,
         color: AppColors.primaryLight,
         onTap: () => onNavigate(NavSection.periodos),
@@ -140,7 +149,8 @@ class DashboardHomeScreen extends StatelessWidget {
       ),
       _ModuleCard(
         title: 'Asignaciones Horarias',
-        description: 'Vinculación de grupos, docentes, franjas y espacios físicos.',
+        description:
+            'Vinculación de grupos, docentes, franjas y espacios físicos.',
         icon: Icons.schedule_rounded,
         color: const Color(0xFF8B5CF6), // Violet
         onTap: () => onNavigate(NavSection.asignaciones),
@@ -219,7 +229,11 @@ class _ModuleCard extends StatelessWidget {
                     child: Icon(icon, color: color, size: 22),
                   ),
                   const Spacer(),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppColors.textMuted,
+                  ),
                 ],
               ),
               const Spacer(),

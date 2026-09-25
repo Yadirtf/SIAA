@@ -30,7 +30,8 @@ class GeoEditorVertexStrip extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.pin_drop, size: 14, color: SIAAColors.primary600),
+                const Icon(Icons.pin_drop,
+                    size: 14, color: SIAAColors.primary600),
                 const SizedBox(width: 4),
                 Text(
                   'Puntos registrados ($distinctCount)',
@@ -47,7 +48,9 @@ class GeoEditorVertexStrip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: state.isClosed ? SIAAColors.asistenciaPresente : SIAAColors.neutral500,
+                color: state.isClosed
+                    ? SIAAColors.asistenciaPresente
+                    : SIAAColors.neutral500,
               ),
             ),
           ],
@@ -71,9 +74,12 @@ class GeoEditorVertexStrip extends StatelessWidget {
                 onTap: () => onSelectVertex?.call(index),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFFEF3C7) : const Color(0xFFF8FAFC),
+                    color: isSelected
+                        ? const Color(0xFFFEF3C7)
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isSelected
@@ -90,9 +96,12 @@ class GeoEditorVertexStrip extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: isGps ? const Color(0xFF2563EB) : const Color(0xFFD97706),
+                              color: isGps
+                                  ? const Color(0xFF2563EB)
+                                  : const Color(0xFFD97706),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -106,7 +115,8 @@ class GeoEditorVertexStrip extends StatelessWidget {
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.edit, size: 10, color: Color(0xFFD97706)),
+                            const Icon(Icons.edit,
+                                size: 10, color: Color(0xFFD97706)),
                           ],
                         ],
                       ),

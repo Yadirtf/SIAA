@@ -29,10 +29,10 @@ class BloqueModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'sedeId': sedeId,
-    'codigo': codigo,
-    'nombre': nombre,
-    'pisos': pisos,
-  };
+        'id': id,
+        'sedeId': sedeId,
+        'codigo': codigo,
+        'nombre': nombre,
+        'pisos': pisos,
+      };
 }

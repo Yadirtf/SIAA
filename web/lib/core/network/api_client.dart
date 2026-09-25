@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
 
@@ -7,11 +9,9 @@ class ApiClient {
   final http.Client _client;
   final TokenStorage _tokenStorage;
 
-  ApiClient({
-    http.Client? client,
-    TokenStorage? tokenStorage,
-  })  : _client = client ?? http.Client(),
-        _tokenStorage = tokenStorage ?? TokenStorage();
+  ApiClient({http.Client? client, TokenStorage? tokenStorage})
+    : _client = client ?? http.Client(),
+      _tokenStorage = tokenStorage ?? TokenStorage();
 
   Future<Map<String, String>> _getHeaders({bool requiresAuth = true}) async {
     final headers = <String, String>{

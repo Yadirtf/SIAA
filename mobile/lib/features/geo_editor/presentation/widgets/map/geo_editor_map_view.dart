@@ -21,8 +21,10 @@ class GeoEditorMapView extends StatelessWidget {
   final void Function(double longitud, double latitud)? onMapTap;
   final void Function(int index)? onSelectVertex;
   final void Function(int index)? onDeleteVertex;
-  final void Function(int index, double nuevaLongitud, double nuevaLatitud)? onMoveVertex;
-  final void Function(int indexDespuesDe, double longitud, double latitud)? onInsertVertex;
+  final void Function(int index, double nuevaLongitud, double nuevaLatitud)?
+      onMoveVertex;
+  final void Function(int indexDespuesDe, double longitud, double latitud)?
+      onInsertVertex;
 
   const GeoEditorMapView({
     super.key,
@@ -43,15 +45,18 @@ class GeoEditorMapView extends StatelessWidget {
       return ll.LatLng(state.vertices.first[1], state.vertices.first[0]);
     }
     if (state.currentPosition != null) {
-      return ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude);
+      return ll.LatLng(
+          state.currentPosition!.latitude, state.currentPosition!.longitude);
     }
-    return const ll.LatLng(4.6372, -74.0839); // Coordenadas de referencia (Bogotá)
+    return const ll.LatLng(
+        4.6372, -74.0839); // Coordenadas de referencia (Bogotá)
   }
 
   void _centrarGps() {
     if (state.currentPosition != null) {
       mapController.move(
-        ll.LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude),
+        ll.LatLng(
+            state.currentPosition!.latitude, state.currentPosition!.longitude),
         19.5,
       );
     } else {
@@ -89,7 +94,8 @@ class GeoEditorMapView extends StatelessWidget {
     }
   }
 
-  int? _buscarSegmentoCercano(ll.LatLng tap, List<List<double>> vertices, double umbralMetros) {
+  int? _buscarSegmentoCercano(
+      ll.LatLng tap, List<List<double>> vertices, double umbralMetros) {
     if (vertices.length < 2) return null;
     int? mejorSegmento;
     double menorDistancia = double.infinity;
@@ -109,13 +115,20 @@ class GeoEditorMapView extends StatelessWidget {
     return mejorSegmento;
   }
 
-  double _distanciaPuntoASegmento(ll.LatLng p, ll.LatLng a, ll.LatLng b, ll.Distance distance) {
+  double _distanciaPuntoASegmento(
+      ll.LatLng p, ll.LatLng a, ll.LatLng b, ll.Distance distance) {
     final dx = b.longitude - a.longitude;
     final dy = b.latitude - a.latitude;
     final lenSq = dx * dx + dy * dy;
     if (lenSq == 0) return distance.as(ll.LengthUnit.Meter, p, a);
 
-    final t = math.max(0.0, math.min(1.0, ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) / lenSq));
+    final t = math.max(
+        0.0,
+        math.min(
+            1.0,
+            ((p.longitude - a.longitude) * dx +
+                    (p.latitude - a.latitude) * dy) /
+                lenSq));
     final proj = ll.LatLng(a.latitude + t * dy, a.longitude + t * dx);
     return distance.as(ll.LengthUnit.Meter, p, proj);
   }
@@ -133,7 +146,8 @@ class GeoEditorMapView extends StatelessWidget {
             maxZoom: 22.5,
             onTap: (tapPosition, point) {
               if (state.verticeSeleccionadoIndex != null) {
-                onMoveVertex?.call(state.verticeSeleccionadoIndex!, point.longitude, point.latitude);
+                onMoveVertex?.call(state.verticeSeleccionadoIndex!,
+                    point.longitude, point.latitude);
                 return;
               }
               if (state.isClosed && state.vertices.length >= 4) {
@@ -143,7 +157,8 @@ class GeoEditorMapView extends StatelessWidget {
                   return;
                 }
               }
-              if (state.modoCaptura == ModoCapturaEditor.mapa && !state.isClosed) {
+              if (state.modoCaptura == ModoCapturaEditor.mapa &&
+                  !state.isClosed) {
                 onMapTap?.call(point.longitude, point.latitude);
               }
             },

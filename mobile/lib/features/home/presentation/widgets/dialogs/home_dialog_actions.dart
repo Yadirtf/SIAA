@@ -13,7 +13,10 @@ class HomeDialogActions {
     return showDialog(
       context: context,
       builder: (_) => CrearSedeDialog(
-        onGuardar: ({required String codigo, required String nombre, String? direccion}) async {
+        onGuardar: (
+            {required String codigo,
+            required String nombre,
+            String? direccion}) async {
           context.read<HomeBloc>().add(CrearSedeRequested(
                 codigo: codigo,
                 nombre: nombre,
@@ -27,7 +30,8 @@ class HomeDialogActions {
   static Future<void> crearBloque(BuildContext context, SedeModel? sede) {
     if (sede == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Primero debe registrar o seleccionar una Sede.')),
+        const SnackBar(
+            content: Text('Primero debe registrar o seleccionar una Sede.')),
       );
       return Future.value();
     }
@@ -36,7 +40,10 @@ class HomeDialogActions {
       context: context,
       builder: (_) => CrearBloqueDialog(
         sedeNombre: sede.nombre,
-        onGuardar: ({required String codigo, required String nombre, required List<int> pisos}) async {
+        onGuardar: (
+            {required String codigo,
+            required String nombre,
+            required List<int> pisos}) async {
           context.read<HomeBloc>().add(CrearBloqueRequested(
                 sedeId: sede.id,
                 codigo: codigo,
@@ -48,10 +55,13 @@ class HomeDialogActions {
     );
   }
 
-  static Future<void> crearAula(BuildContext context, SedeModel? sede, BloqueModel? bloque) {
+  static Future<void> crearAula(
+      BuildContext context, SedeModel? sede, BloqueModel? bloque) {
     if (sede == null || bloque == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione una Sede y un Bloque antes de crear un aula.')),
+        const SnackBar(
+            content: Text(
+                'Seleccione una Sede y un Bloque antes de crear un aula.')),
       );
       return Future.value();
     }

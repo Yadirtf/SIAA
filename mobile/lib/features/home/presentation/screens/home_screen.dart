@@ -69,7 +69,9 @@ class _HomeScreenView extends StatelessWidget {
                   backgroundColor: SIAAColors.asistenciaAusente,
                 ),
               );
-              context.read<HomeBloc>().add(const LimpiarMensajesHomeRequested());
+              context
+                  .read<HomeBloc>()
+                  .add(const LimpiarMensajesHomeRequested());
             } else if (state.successMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -80,7 +82,9 @@ class _HomeScreenView extends StatelessWidget {
               if (state.ultimoEspacioCreado != null) {
                 _abrirGeoEditor(context, state.ultimoEspacioCreado!);
               }
-              context.read<HomeBloc>().add(const LimpiarMensajesHomeRequested());
+              context
+                  .read<HomeBloc>()
+                  .add(const LimpiarMensajesHomeRequested());
             }
           },
         ),
@@ -99,7 +103,8 @@ class _HomeScreenView extends StatelessWidget {
                 child: const Icon(Icons.school, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
-              const Text('SIAA Móvil', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text('SIAA Móvil',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           actions: [
@@ -122,9 +127,12 @@ class _HomeScreenView extends StatelessWidget {
                   List<String> roles = ['Docente'];
                   if (authState is AuthAuthenticated) {
                     nombre = authState.nombre;
-                    roles = authState.roles.isNotEmpty ? authState.roles : ['Docente'];
+                    roles = authState.roles.isNotEmpty
+                        ? authState.roles
+                        : ['Docente'];
                   }
-                  return UserProfileCard(nombre: nombre, roles: roles, isDark: isDark);
+                  return UserProfileCard(
+                      nombre: nombre, roles: roles, isDark: isDark);
                 },
               ),
               const SizedBox(height: SIAASpacing.lg),
@@ -139,7 +147,9 @@ class _HomeScreenView extends StatelessWidget {
                     cargandoSedes: homeState.cargandoSedes,
                     onSedeChanged: (nueva) {
                       if (nueva != null) {
-                        context.read<HomeBloc>().add(SeleccionarSedeRequested(nueva));
+                        context
+                            .read<HomeBloc>()
+                            .add(SeleccionarSedeRequested(nueva));
                       }
                     },
                     onNuevaSede: () => HomeDialogActions.crearSede(context),
@@ -148,7 +158,9 @@ class _HomeScreenView extends StatelessWidget {
                     cargandoBloques: homeState.cargandoBloques,
                     onBloqueChanged: (nuevo) {
                       if (nuevo != null) {
-                        context.read<HomeBloc>().add(SeleccionarBloqueRequested(nuevo));
+                        context
+                            .read<HomeBloc>()
+                            .add(SeleccionarBloqueRequested(nuevo));
                       }
                     },
                     onNuevoBloque: () => HomeDialogActions.crearBloque(

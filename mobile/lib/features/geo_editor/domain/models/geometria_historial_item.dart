@@ -55,9 +55,11 @@ class GeometriaHistorialItem {
       espacioId: json['espacioId'] as String? ?? '',
       version: json['version'] as int? ?? 1,
       coordenadas: coords,
-      areaMetrosCuadrados: (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
+      areaMetrosCuadrados:
+          (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
       metodoCaptura: json['metodoCaptura'] as String?,
-      precisionPromedioMetros: (json['precisionPromedioMetros'] as num?)?.toDouble(),
+      precisionPromedioMetros:
+          (json['precisionPromedioMetros'] as num?)?.toDouble(),
       creadoPor: json['creadoPor'] as String? ?? 'Admin',
       creadoEn: date,
       motivoCambio: json['motivoCambio'] as String?,

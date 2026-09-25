@@ -49,7 +49,8 @@ class HistorialVersionesDialog extends StatelessWidget {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.history_rounded, color: Colors.cyanAccent, size: 24),
+                  Icon(Icons.history_rounded,
+                      color: Colors.cyanAccent, size: 24),
                   SizedBox(width: 8),
                   Text(
                     'Historial de Geometrías (US-GEO-06)',
@@ -108,14 +109,17 @@ class HistorialVersionesDialog extends StatelessWidget {
                           : SIAAColors.neutral800,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isPreviewing ? Colors.purpleAccent : SIAAColors.neutral700,
+                        color: isPreviewing
+                            ? Colors.purpleAccent
+                            : SIAAColors.neutral700,
                         width: isPreviewing ? 2 : 1,
                       ),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.purple.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(8),
@@ -150,7 +154,8 @@ class HistorialVersionesDialog extends StatelessWidget {
                                   fontSize: 11,
                                 ),
                               ),
-                              if (v.motivoCambio != null && v.motivoCambio!.isNotEmpty)
+                              if (v.motivoCambio != null &&
+                                  v.motivoCambio!.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 2),
                                   child: Text(
@@ -166,13 +171,20 @@ class HistorialVersionesDialog extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          tooltip: isPreviewing ? 'Ocultar superposición' : 'Previsualizar en mapa',
+                          tooltip: isPreviewing
+                              ? 'Ocultar superposición'
+                              : 'Previsualizar en mapa',
                           icon: Icon(
-                            isPreviewing ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                            color: isPreviewing ? Colors.purpleAccent : Colors.white70,
+                            isPreviewing
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: isPreviewing
+                                ? Colors.purpleAccent
+                                : Colors.white70,
                           ),
                           onPressed: () {
-                            onSeleccionarPreview(isPreviewing ? null : v.version);
+                            onSeleccionarPreview(
+                                isPreviewing ? null : v.version);
                             Navigator.of(context).pop();
                           },
                         ),

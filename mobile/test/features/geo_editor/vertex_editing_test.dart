@@ -17,7 +17,9 @@ void main() {
       bloc.close();
     });
 
-    test('AC-01: Mover vértice actualiza coordenadas y recalcula área en vivo (T-GEO-07.3)', () async {
+    test(
+        'AC-01: Mover vértice actualiza coordenadas y recalcula área en vivo (T-GEO-07.3)',
+        () async {
       // Polígono cuadrado inicial: (0,0) -> (10,0) -> (10,10) -> (0,10) -> (0,0)
       final verticesIniciales = [
         [-74.081750, 4.638190],
@@ -75,7 +77,8 @@ void main() {
       expect(bloc.state.vertices[1][1], equals(4.638190));
     });
 
-    test('AC-03: Eliminar vértice cuando hay más de 3 vértices permitidos', () async {
+    test('AC-03: Eliminar vértice cuando hay más de 3 vértices permitidos',
+        () async {
       final vertices = [
         [-74.081750, 4.638190],
         [-74.081650, 4.638190],
@@ -97,7 +100,8 @@ void main() {
       expect(bloc.state.errorMessage, isNull);
     });
 
-    test('AC-03: Impedir eliminar vértice si solo quedan 3 vértices distintos', () async {
+    test('AC-03: Impedir eliminar vértice si solo quedan 3 vértices distintos',
+        () async {
       // Triángulo cerrado: 3 vértices distintos + cierre (longitud = 4)
       final vertices = [
         [-74.081750, 4.638190],
@@ -120,7 +124,8 @@ void main() {
   });
 
   group('US-GEO-06: Historial y visor de versiones de geometría en móvil', () {
-    test('AC-04: Cargar historial y superponer versión previa en el mapa', () async {
+    test('AC-04: Cargar historial y superponer versión previa en el mapa',
+        () async {
       final mockHistorial = [
         GeometriaHistorialItem(
           id: 'hist-01',
@@ -166,7 +171,9 @@ void main() {
       await bloc.close();
     });
 
-    test('CargarGeometriaExistenteRequested inicializa polígono para edición de referencia', () async {
+    test(
+        'CargarGeometriaExistenteRequested inicializa polígono para edición de referencia',
+        () async {
       final bloc = GeoEditorBloc();
       addTearDown(bloc.close);
 
@@ -180,7 +187,8 @@ void main() {
       bloc.add(CargarGeometriaExistenteRequested(coordsAbiertas));
       await Future.delayed(Duration.zero);
 
-      expect(bloc.state.vertices.length, equals(5)); // auto-cerrado con p0 al final
+      expect(bloc.state.vertices.length,
+          equals(5)); // auto-cerrado con p0 al final
       expect(bloc.state.isClosed, isTrue);
       expect(bloc.state.status, equals(GeoEditorStatus.readyToSave));
       expect(bloc.state.modoCaptura, equals(ModoCapturaEditor.mapa));
@@ -188,7 +196,9 @@ void main() {
       expect(bloc.state.perimetroMetros, greaterThan(0));
     });
 
-    test('SeleccionarVerticeRequested selecciona y deselecciona vértice correctamente', () async {
+    test(
+        'SeleccionarVerticeRequested selecciona y deselecciona vértice correctamente',
+        () async {
       final bloc = GeoEditorBloc();
       addTearDown(bloc.close);
 

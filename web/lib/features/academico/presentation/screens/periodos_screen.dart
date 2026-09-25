@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/academico_bloc.dart';
@@ -29,7 +30,9 @@ class PeriodosScreen extends StatelessWidget {
               children: [
                 TextFormField(
                   controller: codigoCtrl,
-                  decoration: const InputDecoration(labelText: 'Código (ej: 2026-1)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Código (ej: 2026-1)',
+                  ),
                   validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 12),
@@ -44,16 +47,22 @@ class PeriodosScreen extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: inicioCtrl,
-                        decoration: const InputDecoration(labelText: 'Fecha Inicio (YYYY-MM-DD)'),
-                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha Inicio (YYYY-MM-DD)',
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
                         controller: finCtrl,
-                        decoration: const InputDecoration(labelText: 'Fecha Fin (YYYY-MM-DD)'),
-                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha Fin (YYYY-MM-DD)',
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                   ],
@@ -61,9 +70,14 @@ class PeriodosScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedEstado,
-                  decoration: const InputDecoration(labelText: 'Estado Inicial'),
+                  decoration: const InputDecoration(
+                    labelText: 'Estado Inicial',
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'PLANEACION', child: Text('PLANEACIÓN')),
+                    DropdownMenuItem(
+                      value: 'PLANEACION',
+                      child: Text('PLANEACIÓN'),
+                    ),
                     DropdownMenuItem(value: 'ACTIVO', child: Text('ACTIVO')),
                     DropdownMenuItem(value: 'CERRADO', child: Text('CERRADO')),
                   ],
@@ -83,14 +97,14 @@ class PeriodosScreen extends StatelessWidget {
               onPressed: () {
                 if (formKey.currentState?.validate() ?? false) {
                   context.read<AcademicoBloc>().add(
-                        CreatePeriodoEvent(
-                          codigo: codigoCtrl.text.trim(),
-                          nombre: nombreCtrl.text.trim(),
-                          fechaInicio: inicioCtrl.text.trim(),
-                          fechaFin: finCtrl.text.trim(),
-                          estado: selectedEstado,
-                        ),
-                      );
+                    CreatePeriodoEvent(
+                      codigo: codigoCtrl.text.trim(),
+                      nombre: nombreCtrl.text.trim(),
+                      fechaInicio: inicioCtrl.text.trim(),
+                      fechaFin: finCtrl.text.trim(),
+                      estado: selectedEstado,
+                    ),
+                  );
                   Navigator.pop(dialogCtx);
                 }
               },
@@ -117,7 +131,10 @@ class PeriodosScreen extends StatelessWidget {
                   children: [
                     Text('Periodos Académicos', style: AppTextStyles.h2),
                     const SizedBox(height: 4),
-                    Text('Ciclos lectivos, planeación operativa y rangos de fecha', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Ciclos lectivos, planeación operativa y rangos de fecha',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -131,13 +148,18 @@ class PeriodosScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: BlocBuilder<AcademicoBloc, AcademicoState>(
-              buildWhen: (prev, curr) => curr is AcademicoLoaded || curr is AcademicoLoading || curr is AcademicoError,
+              buildWhen: (prev, curr) =>
+                  curr is AcademicoLoaded ||
+                  curr is AcademicoLoading ||
+                  curr is AcademicoError,
               builder: (context, state) {
                 if (state is AcademicoLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state is AcademicoError) {
-                  return Center(child: Text(state.message, style: AppTextStyles.bodyMedium));
+                  return Center(
+                    child: Text(state.message, style: AppTextStyles.bodyMedium),
+                  );
                 }
                 if (state is AcademicoLoaded) {
                   if (state.periodos.isEmpty) {
@@ -145,9 +167,16 @@ class PeriodosScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.calendar_today_outlined, size: 48, color: AppColors.textMuted.withOpacity(0.5)),
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 48,
+                            color: AppColors.textMuted.withOpacity(0.5),
+                          ),
                           const SizedBox(height: 16),
-                          Text('No hay periodos académicos registrados', style: AppTextStyles.h3),
+                          Text(
+                            'No hay periodos académicos registrados',
+                            style: AppTextStyles.h3,
+                          ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: () => _showCreateDialog(context),
@@ -165,23 +194,44 @@ class PeriodosScreen extends StatelessWidget {
                       final p = state.periodos[index];
                       return Card(
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.primaryLight.withOpacity(0.12),
-                            child: const Icon(Icons.calendar_month_rounded, color: AppColors.primaryLight),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
                           ),
-                          title: Text('${p.nombre} (${p.codigo})', style: AppTextStyles.h3),
-                          subtitle: Text('Del ${p.fechaInicio} al ${p.fechaFin}', style: AppTextStyles.bodyMedium),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.primaryLight.withOpacity(
+                              0.12,
+                            ),
+                            child: const Icon(
+                              Icons.calendar_month_rounded,
+                              color: AppColors.primaryLight,
+                            ),
+                          ),
+                          title: Text(
+                            '${p.nombre} (${p.codigo})',
+                            style: AppTextStyles.h3,
+                          ),
+                          subtitle: Text(
+                            'Del ${p.fechaInicio} al ${p.fechaFin}',
+                            style: AppTextStyles.bodyMedium,
+                          ),
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: p.estado == 'ACTIVO' ? AppColors.statusSuccessBg : AppColors.statusInfoBg,
+                              color: p.estado == 'ACTIVO'
+                                  ? AppColors.statusSuccessBg
+                                  : AppColors.statusInfoBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               p.estado,
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: p.estado == 'ACTIVO' ? AppColors.statusSuccessText : AppColors.statusInfoText,
+                                color: p.estado == 'ACTIVO'
+                                    ? AppColors.statusSuccessText
+                                    : AppColors.statusInfoText,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

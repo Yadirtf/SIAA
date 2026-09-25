@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import '../../../core/storage/token_storage.dart';
 import '../data/auth_remote_datasource.dart';
 import '../data/models/login_response_model.dart';
@@ -9,7 +10,10 @@ abstract class AuthRepository {
   Future<UserModel?> checkAuthStatus();
   Future<void> logout();
   Future<void> recuperarPassword({required String correo});
-  Future<void> confirmarRecuperacion({required String token, required String newPassword});
+  Future<void> confirmarRecuperacion({
+    required String token,
+    required String newPassword,
+  });
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -19,8 +23,8 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     AuthRemoteDataSource? remoteDataSource,
     TokenStorage? tokenStorage,
-  })  : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource(),
-        _tokenStorage = tokenStorage ?? TokenStorage();
+  }) : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource(),
+       _tokenStorage = tokenStorage ?? TokenStorage();
 
   @override
   Future<UserModel> login({

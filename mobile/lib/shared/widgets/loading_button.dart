@@ -128,8 +128,10 @@ class GPSStatusIndicator extends StatelessWidget {
   String get _label {
     if (buscando) return 'Buscando GPS...';
     if (precisionMetros == null) return 'Sin señal';
-    if (precisionMetros! <= 10) return 'GPS excelente (±${precisionMetros!.toStringAsFixed(0)} m)';
-    if (precisionMetros! <= 35) return 'GPS aceptable (±${precisionMetros!.toStringAsFixed(0)} m)';
+    if (precisionMetros! <= 10)
+      return 'GPS excelente (±${precisionMetros!.toStringAsFixed(0)} m)';
+    if (precisionMetros! <= 35)
+      return 'GPS aceptable (±${precisionMetros!.toStringAsFixed(0)} m)';
     return 'Señal débil (±${precisionMetros!.toStringAsFixed(0)} m)';
   }
 }
@@ -183,15 +185,24 @@ class AttendanceStatusChip extends StatelessWidget {
 
   String get _label {
     switch (resultado.toUpperCase()) {
-      case 'PRESENTE': return 'Presente';
-      case 'TARDANZA': return 'Tardanza';
-      case 'AUSENTE': return 'Ausente';
-      case 'AUSENCIA_JUSTIFICADA': return 'Justificado';
-      case 'RECHAZADO_FUERA_DE_AREA': return 'Fuera de área';
-      case 'RECHAZADO_FUERA_DE_HORARIO': return 'Fuera de horario';
-      case 'RECHAZADO_INTEGRIDAD': return 'Error de integridad';
-      case 'RECHAZADO_SIN_ASIGNACION': return 'Sin asignación';
-      default: return resultado;
+      case 'PRESENTE':
+        return 'Presente';
+      case 'TARDANZA':
+        return 'Tardanza';
+      case 'AUSENTE':
+        return 'Ausente';
+      case 'AUSENCIA_JUSTIFICADA':
+        return 'Justificado';
+      case 'RECHAZADO_FUERA_DE_AREA':
+        return 'Fuera de área';
+      case 'RECHAZADO_FUERA_DE_HORARIO':
+        return 'Fuera de horario';
+      case 'RECHAZADO_INTEGRIDAD':
+        return 'Error de integridad';
+      case 'RECHAZADO_SIN_ASIGNACION':
+        return 'Sin asignación';
+      default:
+        return resultado;
     }
   }
 }

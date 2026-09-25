@@ -19,11 +19,11 @@ class TokenPair {
   });
 
   factory TokenPair.fromJson(Map<String, dynamic> json) => TokenPair(
-    accessToken: json['accessToken'] as String,
-    refreshToken: json['refreshToken'] as String,
-    expiraEn: json['expiraEn'] as String,
-    usuario: UsuarioInfo.fromJson(json['usuario'] as Map<String, dynamic>),
-  );
+        accessToken: json['accessToken'] as String,
+        refreshToken: json['refreshToken'] as String,
+        expiraEn: json['expiraEn'] as String,
+        usuario: UsuarioInfo.fromJson(json['usuario'] as Map<String, dynamic>),
+      );
 }
 
 class UsuarioInfo {
@@ -44,13 +44,55 @@ class UsuarioInfo {
   });
 
   factory UsuarioInfo.fromJson(Map<String, dynamic> json) => UsuarioInfo(
-    id: json['id'] as String? ?? '',
-    correo: json['correo'] as String? ?? '',
-    nombre: json['nombre'] as String? ?? '',
-    apellido: json['apellido'] as String? ?? '',
-    roles: (json['roles'] as List<dynamic>? ?? []).cast<String>(),
-    permisos: (json['permisos'] as List<dynamic>? ?? []).cast<String>(),
-  );
+        id: json['id'] as String? ?? '',
+        correo: json['correo'] as String? ?? '',
+        nombre: json['nombre'] as String? ?? '',
+        apellido: json['apellido'] as String? ?? '',
+        roles: (json['roles'] as List<dynamic>? ?? []).cast<String>(),
+        permisos: (json['permisos'] as List<dynamic>? ?? []).cast<String>(),
+      );
+}
+
+class DispositivoInfo {
+  final String id;
+  final String usuarioId;
+  final String instalacionId;
+  final String modelo;
+  final String so;
+  final String versionApp;
+  final String estado;
+  final String mensaje;
+  final bool requiereAprobacion;
+
+  const DispositivoInfo({
+    required this.id,
+    this.usuarioId = '',
+    this.instalacionId = '',
+    this.modelo = '',
+    this.so = '',
+    this.versionApp = '',
+    this.estado = 'aprobado',
+    this.mensaje = '',
+    this.requiereAprobacion = false,
+  });
+
+  bool get confiable => estado == 'aprobado';
+  bool get pendienteAprobacion => requiereAprobacion || estado == 'pendiente';
+
+  factory DispositivoInfo.fromJson(Map<String, dynamic> json) =>
+      DispositivoInfo(
+        id: json['id'] as String? ?? '',
+        usuarioId: json['usuarioId'] as String? ?? '',
+        instalacionId: json['instalacionId'] as String? ?? '',
+        modelo: json['modelo'] as String? ?? '',
+        so: json['so'] as String? ?? '',
+        versionApp: json['versionApp'] as String? ?? '',
+        estado: json['estado'] as String? ??
+            (json['confiable'] == true ? 'aprobado' : 'pendiente'),
+        mensaje: json['mensaje'] as String? ?? '',
+        requiereAprobacion: json['requiereAprobacion'] as bool? ??
+            (json['pendienteAprobacion'] as bool? ?? false),
+      );
 }
 
 /// Excepción tipada de autenticación con código de error del backend.
@@ -123,6 +165,26 @@ class AuthRepository {
         'token': token,
         'password': password,
       });
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
+  /// Vincula o registra el dispositivo móvil como confiable (US-AUT-03).
+  Future<DispositivoInfo> registrarDispositivo({
+    required String instalacionId,
+    required String modelo,
+    required String so,
+    required String versionApp,
+  }) async {
+    try {
+      final response = await _client.post('/auth/devices', data: {
+        'instalacionId': instalacionId,
+        'modelo': modelo,
+        'so': so,
+        'versionApp': versionApp,
+      });
+      return DispositivoInfo.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioError(e);
     }

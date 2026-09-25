@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
@@ -22,9 +23,15 @@ class SolapamientosScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Control de Solapamientos Geoespaciales', style: AppTextStyles.h2),
+                    Text(
+                      'Control de Solapamientos Geoespaciales',
+                      style: AppTextStyles.h2,
+                    ),
                     const SizedBox(height: 4),
-                    Text('Validación topológica 2D en tiempo real (US-GEO-01 / JTS)', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Validación topológica 2D en tiempo real (US-GEO-01 / JTS)',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -49,9 +56,16 @@ class SolapamientosScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.check_circle_outline_rounded, color: AppColors.accentEmerald, size: 48),
+                          const Icon(
+                            Icons.check_circle_outline_rounded,
+                            color: AppColors.accentEmerald,
+                            size: 48,
+                          ),
                           const SizedBox(height: 16),
-                          Text('Sin conflictos topológicos detectados', style: AppTextStyles.h3),
+                          Text(
+                            'Sin conflictos topológicos detectados',
+                            style: AppTextStyles.h3,
+                          ),
                           const SizedBox(height: 6),
                           Text(
                             'Todas las geometrías de espacios son mutuamente disjuntas.',
@@ -71,10 +85,16 @@ class SolapamientosScreen extends StatelessWidget {
                       return Card(
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: (isCrit ? AppColors.accentRose : AppColors.accentAmber).withOpacity(0.15),
+                            backgroundColor:
+                                (isCrit
+                                        ? AppColors.accentRose
+                                        : AppColors.accentAmber)
+                                    .withOpacity(0.15),
                             child: Icon(
                               Icons.warning_amber_rounded,
-                              color: isCrit ? AppColors.accentRose : AppColors.accentAmber,
+                              color: isCrit
+                                  ? AppColors.accentRose
+                                  : AppColors.accentAmber,
                             ),
                           ),
                           title: Text(
@@ -86,15 +106,22 @@ class SolapamientosScreen extends StatelessWidget {
                             style: AppTextStyles.bodyMedium,
                           ),
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isCrit ? AppColors.statusDangerBg : AppColors.statusWarningBg,
+                              color: isCrit
+                                  ? AppColors.statusDangerBg
+                                  : AppColors.statusWarningBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               item.tipoSeveridad,
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: isCrit ? AppColors.statusDangerText : AppColors.statusWarningText,
+                                color: isCrit
+                                    ? AppColors.statusDangerText
+                                    : AppColors.statusWarningText,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -104,7 +131,11 @@ class SolapamientosScreen extends StatelessWidget {
                     },
                   );
                 }
-                return const Center(child: Text('Presiona "Ejecutar Análisis" para evaluar la topología.'));
+                return const Center(
+                  child: Text(
+                    'Presiona "Ejecutar Análisis" para evaluar la topología.',
+                  ),
+                );
               },
             ),
           ),

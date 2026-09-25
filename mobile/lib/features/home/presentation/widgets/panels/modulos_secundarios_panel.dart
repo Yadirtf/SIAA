@@ -65,7 +65,8 @@ class ModulosSecundariosPanel extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 11, color: SIAAColors.neutral400),
+                  style: const TextStyle(
+                      fontSize: 11, color: SIAAColors.neutral400),
                 ),
               ],
             ),

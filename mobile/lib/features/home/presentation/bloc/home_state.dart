@@ -63,7 +63,8 @@ class HomeState extends Equatable {
       espacios: espacios ?? this.espacios,
       cargandoEspacios: cargandoEspacios ?? this.cargandoEspacios,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      successMessage: clearSuccess ? null : (successMessage ?? this.successMessage),
+      successMessage:
+          clearSuccess ? null : (successMessage ?? this.successMessage),
       ultimoEspacioCreado: clearUltimoEspacio
           ? null
           : (ultimoEspacioCreado ?? this.ultimoEspacioCreado),

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../data/models/geo_models.dart';
 
 abstract class GeoState extends Equatable {
@@ -57,14 +58,14 @@ class GeoLoaded extends GeoState {
 
   @override
   List<Object?> get props => [
-        sedes,
-        bloques,
-        espacios,
-        solapamientos,
-        selectedSedeId,
-        selectedBloqueId,
-        actionSuccessMessage,
-      ];
+    sedes,
+    bloques,
+    espacios,
+    solapamientos,
+    selectedSedeId,
+    selectedBloqueId,
+    actionSuccessMessage,
+  ];
 }
 
 class GeoError extends GeoState {

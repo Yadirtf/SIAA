@@ -14,7 +14,8 @@ class PrecisionInsuficienteException implements Exception {
   });
 
   @override
-  String toString() => 'PrecisionInsuficienteException: $message (umbral: ${umbralMetros}m, muestras: $totalMuestras)';
+  String toString() =>
+      'PrecisionInsuficienteException: $message (umbral: ${umbralMetros}m, muestras: $totalMuestras)';
 }
 
 /// Algoritmo de captura y filtrado estadístico de vértices GPS.
@@ -43,13 +44,13 @@ class VertexCaptureAlgorithm {
     }
 
     // AC-02: descartar lecturas que superen el umbral configurable (15 m por defecto)
-    final lecturasValidas = readings
-        .where((r) => r.accuracy <= umbralPrecisionMetros)
-        .toList();
+    final lecturasValidas =
+        readings.where((r) => r.accuracy <= umbralPrecisionMetros).toList();
 
     if (lecturasValidas.isEmpty) {
       throw PrecisionInsuficienteException(
-        message: 'Todas las $muestrasRequeridas lecturas superaron el umbral de precisión permitido (${umbralPrecisionMetros.toStringAsFixed(1)} m).',
+        message:
+            'Todas las $muestrasRequeridas lecturas superaron el umbral de precisión permitido (${umbralPrecisionMetros.toStringAsFixed(1)} m).',
         umbralMetros: umbralPrecisionMetros,
         totalMuestras: readings.length,
       );

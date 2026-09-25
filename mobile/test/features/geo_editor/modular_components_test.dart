@@ -26,7 +26,9 @@ void main() {
       expect(CapaMapa.openStreetMap.urlTemplate, contains('openstreetmap.org'));
     });
 
-    testWidgets('LocationPermissionBanner: muestra banner de servicio apagado con botón de acción', (tester) async {
+    testWidgets(
+        'LocationPermissionBanner: muestra banner de servicio apagado con botón de acción',
+        (tester) async {
       bool ajustesLlamados = false;
 
       await tester.pumpWidget(
@@ -49,7 +51,9 @@ void main() {
       expect(ajustesLlamados, isTrue);
     });
 
-    testWidgets('LocationPermissionBanner: oculto cuando permiso está concedido', (tester) async {
+    testWidgets(
+        'LocationPermissionBanner: oculto cuando permiso está concedido',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -67,7 +71,9 @@ void main() {
       expect(find.byType(ElevatedButton), findsNothing);
     });
 
-    testWidgets('VertexMarker: muestra número secuencial y respeta color por origen', (tester) async {
+    testWidgets(
+        'VertexMarker: muestra número secuencial y respeta color por origen',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -75,11 +81,17 @@ void main() {
               children: [
                 VertexMarker(
                   index: 1,
-                  vertex: TaggedVertex(longitude: -74.0, latitude: 4.0, origen: OrigenVertice.gps),
+                  vertex: TaggedVertex(
+                      longitude: -74.0,
+                      latitude: 4.0,
+                      origen: OrigenVertice.gps),
                 ),
                 VertexMarker(
                   index: 2,
-                  vertex: TaggedVertex(longitude: -74.1, latitude: 4.1, origen: OrigenVertice.toqueMapa),
+                  vertex: TaggedVertex(
+                      longitude: -74.1,
+                      latitude: 4.1,
+                      origen: OrigenVertice.toqueMapa),
                 ),
               ],
             ),
@@ -91,7 +103,8 @@ void main() {
       expect(find.text('2'), findsOneWidget);
     });
 
-    testWidgets('GpsMarker: renderiza halo y punto central para estado óptimo', (tester) async {
+    testWidgets('GpsMarker: renderiza halo y punto central para estado óptimo',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -104,7 +117,9 @@ void main() {
       expect(find.byType(Container), findsWidgets);
     });
 
-    testWidgets('GeoEditorBottomPanel: renderiza métricas y dispara callbacks de acción', (tester) async {
+    testWidgets(
+        'GeoEditorBottomPanel: renderiza métricas y dispara callbacks de acción',
+        (tester) async {
       bool undoPresionado = false;
       bool capturePresionado = false;
 

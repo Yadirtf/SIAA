@@ -44,6 +44,6 @@ class TaggedVertex {
   }
 
   @override
-  String toString() => 'TaggedVertex(lon: $longitude, lat: $latitude, origen: $origen, acc: $precision)';
+  String toString() =>
+      'TaggedVertex(lon: $longitude, lat: $latitude, origen: $origen, acc: $precision)';
 }
-

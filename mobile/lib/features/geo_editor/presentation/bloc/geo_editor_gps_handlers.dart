@@ -27,7 +27,9 @@ extension GeoEditorGpsHandlers on GeoEditorBloc {
     emit(state.copyWith(
       currentPosition: event.reading,
       accuracyStatus: status,
-      status: state.status == GeoEditorStatus.initial ? GeoEditorStatus.tracking : state.status,
+      status: state.status == GeoEditorStatus.initial
+          ? GeoEditorStatus.tracking
+          : state.status,
     ));
   }
 
@@ -38,7 +40,8 @@ extension GeoEditorGpsHandlers on GeoEditorBloc {
     if (!state.canCapture && event.lecturasManuales == null) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'No se puede capturar el punto: la precisión del GPS es insuficiente.',
+        errorMessage:
+            'No se puede capturar el punto: la precisión del GPS es insuficiente.',
       ));
       return;
     }
@@ -47,7 +50,8 @@ extension GeoEditorGpsHandlers on GeoEditorBloc {
 
     try {
       final List<GpsReading> lecturasParaProcesar;
-      if (event.lecturasManuales != null && event.lecturasManuales!.isNotEmpty) {
+      if (event.lecturasManuales != null &&
+          event.lecturasManuales!.isNotEmpty) {
         lecturasParaProcesar = event.lecturasManuales!;
       } else if (state.currentPosition != null) {
         lecturasParaProcesar = List.filled(
@@ -72,8 +76,10 @@ extension GeoEditorGpsHandlers on GeoEditorBloc {
         precision: resultado.accuracy,
       );
 
-      final nuevosVertices = List<List<double>>.from(state.vertices)..add(nuevoVertice);
-      final nuevosTagged = List<TaggedVertex>.from(state.verticesEtiquetados)..add(nuevoTagged);
+      final nuevosVertices = List<List<double>>.from(state.vertices)
+        ..add(nuevoVertice);
+      final nuevosTagged = List<TaggedVertex>.from(state.verticesEtiquetados)
+        ..add(nuevoTagged);
 
       final area = GeodesicCalculator.calcularArea(nuevosVertices);
       final perimetro = GeodesicCalculator.calcularPerimetro(nuevosVertices);

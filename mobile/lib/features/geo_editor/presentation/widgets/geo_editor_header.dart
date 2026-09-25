@@ -92,7 +92,8 @@ class GeoEditorHeader extends StatelessWidget {
             color: const Color(0xFFF0FDF4),
             child: Row(
               children: [
-                const Icon(Icons.my_location, size: 16, color: Color(0xFF16A34A)),
+                const Icon(Icons.my_location,
+                    size: 16, color: Color(0xFF16A34A)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -125,7 +126,10 @@ class GeoEditorHeader extends StatelessWidget {
                     state.vertices.isNotEmpty
                         ? 'Último punto marcado [#${state.vertices.length}]: Lat ${state.vertices.last[1].toStringAsFixed(6)}, Lon ${state.vertices.last[0].toStringAsFixed(6)}'
                         : 'Modo Toque en Mapa: Toque el mapa para colocar los vértices con precisión milimétrica.',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF92400E)),
                   ),
                 ),
               ],

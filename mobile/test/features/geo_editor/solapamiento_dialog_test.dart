@@ -6,8 +6,12 @@ import 'package:siaa_mobile/features/geo_editor/presentation/bloc/geo_editor_eve
 import 'package:siaa_mobile/features/geo_editor/presentation/bloc/geo_editor_state.dart';
 
 void main() {
-  group('US-GEO-05 / T-GEO-05.4: Detección y confirmación de solapamientos en Frontend', () {
-    test('AC-01 & AC-02: Solapamiento <= 50% emite advertencia y permite confirmar con motivo', () async {
+  group(
+      'US-GEO-05 / T-GEO-05.4: Detección y confirmación de solapamientos en Frontend',
+      () {
+    test(
+        'AC-01 & AC-02: Solapamiento <= 50% emite advertencia y permite confirmar con motivo',
+        () async {
       bool intento1Hecho = false;
       bool intento2Confirmado = false;
       String? motivoRecibido;
@@ -25,7 +29,9 @@ void main() {
             intento1Hecho = true;
             throw SolapamientoAdvertenciaException(
               mensaje: 'Se detectó solapamiento con Aula 101 (25.50%)',
-              detalles: ['solapamiento_detectado: 25.50% de área solapada con espacio Aula 101'],
+              detalles: [
+                'solapamiento_detectado: 25.50% de área solapada con espacio Aula 101'
+              ],
             );
           } else {
             intento2Confirmado = true;
@@ -36,9 +42,12 @@ void main() {
 
       // Crear polígono cerrado mínimo (4 vértices)
       bloc.add(const CambiarModoCapturaRequested(ModoCapturaEditor.mapa));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08170, latitud: 4.60970));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08160, latitud: 4.60970));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08165, latitud: 4.60980));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08170, latitud: 4.60970));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08160, latitud: 4.60970));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08165, latitud: 4.60980));
       await bloc.stream.firstWhere((s) => s.vertices.length == 3);
 
       bloc.add(const CerrarPoligonoRequested());
@@ -46,7 +55,8 @@ void main() {
 
       // Primer intento sin confirmación -> debe fallar con solapamientoAdvertencia
       bloc.add(const GuardarGeometriaBackendRequested(espacioId: 'esp-001'));
-      final stateAdv = await bloc.stream.firstWhere((s) => s.status == GeoEditorStatus.error);
+      final stateAdv = await bloc.stream
+          .firstWhere((s) => s.status == GeoEditorStatus.error);
 
       expect(intento1Hecho, isTrue);
       expect(stateAdv.solapamientoAdvertencia, contains('Aula 101'));
@@ -58,7 +68,8 @@ void main() {
         confirmarSolapamiento: true,
         motivoSolapamiento: 'Tolerancia de muro divisorio',
       ));
-      final stateSuccess = await bloc.stream.firstWhere((s) => s.status == GeoEditorStatus.success);
+      final stateSuccess = await bloc.stream
+          .firstWhere((s) => s.status == GeoEditorStatus.success);
 
       expect(intento2Confirmado, isTrue);
       expect(motivoRecibido, 'Tolerancia de muro divisorio');
@@ -66,7 +77,8 @@ void main() {
       expect(stateSuccess.successMessage, contains('exitosamente'));
     });
 
-    test('AC-03: Solapamiento > 50% emite solapamientoCritico con bloqueo', () async {
+    test('AC-03: Solapamiento > 50% emite solapamientoCritico con bloqueo',
+        () async {
       final bloc = GeoEditorBloc(
         onSaveGeometry: ({
           required String espacioId,
@@ -77,22 +89,27 @@ void main() {
           String? motivoSolapamiento,
         }) async {
           throw SolapamientoCriticoException(
-            mensaje: 'Solapamiento crítico del 80.00% detectado con el espacio Aula 101. Supera el límite del 50%.',
+            mensaje:
+                'Solapamiento crítico del 80.00% detectado con el espacio Aula 101. Supera el límite del 50%.',
           );
         },
       );
 
       bloc.add(const CambiarModoCapturaRequested(ModoCapturaEditor.mapa));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08170, latitud: 4.60970));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08160, latitud: 4.60970));
-      bloc.add(const ToqueEnMapaRequested(longitud: -74.08165, latitud: 4.60980));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08170, latitud: 4.60970));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08160, latitud: 4.60970));
+      bloc.add(
+          const ToqueEnMapaRequested(longitud: -74.08165, latitud: 4.60980));
       await bloc.stream.firstWhere((s) => s.vertices.length == 3);
 
       bloc.add(const CerrarPoligonoRequested());
       await bloc.stream.firstWhere((s) => s.isClosed);
 
       bloc.add(const GuardarGeometriaBackendRequested(espacioId: 'esp-001'));
-      final stateCrit = await bloc.stream.firstWhere((s) => s.status == GeoEditorStatus.error);
+      final stateCrit = await bloc.stream
+          .firstWhere((s) => s.status == GeoEditorStatus.error);
 
       expect(stateCrit.solapamientoCritico, contains('Solapamiento crítico'));
       expect(stateCrit.solapamientoCritico, contains('80.00%'));

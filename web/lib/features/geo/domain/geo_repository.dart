@@ -3,7 +3,11 @@ import '../data/models/geo_models.dart';
 
 abstract class GeoRepository {
   Future<List<SedeModel>> getSedes();
-  Future<SedeModel> createSede({required String codigo, required String nombre, String? direccion});
+  Future<SedeModel> createSede({
+    required String codigo,
+    required String nombre,
+    String? direccion,
+  });
   Future<List<BloqueModel>> getBloques({String? sedeId});
   Future<BloqueModel> createBloque({
     required String sedeId,
@@ -30,14 +34,21 @@ class GeoRepositoryImpl implements GeoRepository {
   final GeoRemoteDataSource _remoteDataSource;
 
   GeoRepositoryImpl({GeoRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? GeoRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? GeoRemoteDataSource();
 
   @override
   Future<List<SedeModel>> getSedes() => _remoteDataSource.getSedes();
 
   @override
-  Future<SedeModel> createSede({required String codigo, required String nombre, String? direccion}) =>
-      _remoteDataSource.createSede(codigo: codigo, nombre: nombre, direccion: direccion);
+  Future<SedeModel> createSede({
+    required String codigo,
+    required String nombre,
+    String? direccion,
+  }) => _remoteDataSource.createSede(
+    codigo: codigo,
+    nombre: nombre,
+    direccion: direccion,
+  );
 
   @override
   Future<List<BloqueModel>> getBloques({String? sedeId}) =>
@@ -49,8 +60,12 @@ class GeoRepositoryImpl implements GeoRepository {
     required String codigo,
     required String nombre,
     required List<int> pisos,
-  }) =>
-      _remoteDataSource.createBloque(sedeId: sedeId, codigo: codigo, nombre: nombre, pisos: pisos);
+  }) => _remoteDataSource.createBloque(
+    sedeId: sedeId,
+    codigo: codigo,
+    nombre: nombre,
+    pisos: pisos,
+  );
 
   @override
   Future<List<EspacioModel>> getEspacios({String? sedeId, String? bloqueId}) =>
@@ -66,17 +81,16 @@ class GeoRepositoryImpl implements GeoRepository {
     required int capacidad,
     required String tipo,
     String? facultadResponsable,
-  }) =>
-      _remoteDataSource.createEspacio(
-        sedeId: sedeId,
-        bloqueId: bloqueId,
-        piso: piso,
-        codigo: codigo,
-        nombre: nombre,
-        capacidad: capacidad,
-        tipo: tipo,
-        facultadResponsable: facultadResponsable,
-      );
+  }) => _remoteDataSource.createEspacio(
+    sedeId: sedeId,
+    bloqueId: bloqueId,
+    piso: piso,
+    codigo: codigo,
+    nombre: nombre,
+    capacidad: capacidad,
+    tipo: tipo,
+    facultadResponsable: facultadResponsable,
+  );
 
   @override
   Future<void> deleteEspacio(String id) => _remoteDataSource.deleteEspacio(id);

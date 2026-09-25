@@ -53,11 +53,12 @@ class ApiClient {
       _CorrelationIdInterceptor(),
       _AuthInterceptor(dio),
       _RetryInterceptor(dio),
-      if (_isDebug()) LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) => print('[SIAA-HTTP] $obj'),
-      ),
+      if (_isDebug())
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          logPrint: (obj) => print('[SIAA-HTTP] $obj'),
+        ),
     ]);
 
     return dio;

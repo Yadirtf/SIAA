@@ -29,7 +29,14 @@ class PeriodoModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, codigo, nombre, fechaInicio, fechaFin, estado];
+  List<Object?> get props => [
+    id,
+    codigo,
+    nombre,
+    fechaInicio,
+    fechaFin,
+    estado,
+  ];
 }
 
 class FacultadModel extends Equatable {
@@ -191,19 +198,19 @@ class AsignacionModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        periodoId,
-        docenteNombre,
-        grupoId,
-        asignaturaId,
-        espacioId,
-        espacioNombre,
-        diaSemana,
-        horaInicio,
-        horaFin,
-        modalidad,
-        estado,
-      ];
+    id,
+    periodoId,
+    docenteNombre,
+    grupoId,
+    asignaturaId,
+    espacioId,
+    espacioNombre,
+    diaSemana,
+    horaInicio,
+    horaFin,
+    modalidad,
+    estado,
+  ];
 }
 
 class ExcepcionModel extends Equatable {

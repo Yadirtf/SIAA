@@ -13,7 +13,8 @@ enum GpsAccuracyStatus {
 
 extension GpsAccuracyStatusX on GpsAccuracyStatus {
   /// AC-04: bloquea el botón de captura si la precisión es insuficiente.
-  bool get canCapture => this == GpsAccuracyStatus.optimal || this == GpsAccuracyStatus.acceptable;
+  bool get canCapture =>
+      this == GpsAccuracyStatus.optimal || this == GpsAccuracyStatus.acceptable;
 
   Color get color {
     switch (this) {

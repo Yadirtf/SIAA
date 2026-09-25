@@ -62,8 +62,12 @@ class _MetricaItem extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: SIAAColors.neutral500)),
-            Text(valor, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 11, color: SIAAColors.neutral500)),
+            Text(valor,
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ],

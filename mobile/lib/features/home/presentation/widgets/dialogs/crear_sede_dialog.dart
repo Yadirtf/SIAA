@@ -19,8 +19,10 @@ class CrearSedeDialog extends StatefulWidget {
 
 class _CrearSedeDialogState extends State<CrearSedeDialog> {
   final TextEditingController _codCtrl = TextEditingController(text: 'SEDE-01');
-  final TextEditingController _nomCtrl = TextEditingController(text: 'Campus Principal');
-  final TextEditingController _dirCtrl = TextEditingController(text: 'Calle Universitaria #1');
+  final TextEditingController _nomCtrl =
+      TextEditingController(text: 'Campus Principal');
+  final TextEditingController _dirCtrl =
+      TextEditingController(text: 'Calle Universitaria #1');
   bool _enviando = false;
 
   @override
@@ -54,7 +56,8 @@ class _CrearSedeDialogState extends State<CrearSedeDialog> {
         children: [
           TextField(
             controller: _codCtrl,
-            decoration: const InputDecoration(labelText: 'Código de Sede (ej: SEDE-01)'),
+            decoration: const InputDecoration(
+                labelText: 'Código de Sede (ej: SEDE-01)'),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -64,7 +67,8 @@ class _CrearSedeDialogState extends State<CrearSedeDialog> {
           const SizedBox(height: 8),
           TextField(
             controller: _dirCtrl,
-            decoration: const InputDecoration(labelText: 'Dirección (opcional)'),
+            decoration:
+                const InputDecoration(labelText: 'Dirección (opcional)'),
           ),
         ],
       ),

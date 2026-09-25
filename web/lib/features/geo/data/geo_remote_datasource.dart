@@ -65,11 +65,15 @@ class GeoRemoteDataSource {
     return BloqueModel.fromJson(response as Map<String, dynamic>);
   }
 
-  Future<List<EspacioModel>> getEspacios({String? sedeId, String? bloqueId}) async {
+  Future<List<EspacioModel>> getEspacios({
+    String? sedeId,
+    String? bloqueId,
+  }) async {
     var url = ApiConstants.espacios;
     final params = <String>[];
     if (sedeId != null && sedeId.isNotEmpty) params.add('sedeId=$sedeId');
-    if (bloqueId != null && bloqueId.isNotEmpty) params.add('bloqueId=$bloqueId');
+    if (bloqueId != null && bloqueId.isNotEmpty)
+      params.add('bloqueId=$bloqueId');
     if (params.isNotEmpty) {
       url += '?${params.join('&')}';
     }
@@ -103,7 +107,8 @@ class GeoRemoteDataSource {
         'nombre': nombre,
         'capacidad': capacidad,
         'tipo': tipo,
-        if (facultadResponsable != null) 'facultadResponsable': facultadResponsable,
+        if (facultadResponsable != null)
+          'facultadResponsable': facultadResponsable,
       },
     );
     return EspacioModel.fromJson(response as Map<String, dynamic>);
@@ -121,7 +126,10 @@ class GeoRemoteDataSource {
     final response = await _client.get(url);
     if (response is List) {
       return response
-          .map((item) => SolapamientoItemModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                SolapamientoItemModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     }
     return [];

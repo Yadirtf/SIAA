@@ -5,13 +5,16 @@ import 'models/academico_models.dart';
 class AcademicoRemoteDataSource {
   final ApiClient _client;
 
-  AcademicoRemoteDataSource({ApiClient? client}) : _client = client ?? ApiClient();
+  AcademicoRemoteDataSource({ApiClient? client})
+    : _client = client ?? ApiClient();
 
   // ─── Periodos ───
   Future<List<PeriodoModel>> getPeriodos() async {
     final response = await _client.get(ApiConstants.periodos);
     if (response is List) {
-      return response.map((item) => PeriodoModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => PeriodoModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -40,7 +43,9 @@ class AcademicoRemoteDataSource {
   Future<List<FacultadModel>> getFacultades() async {
     final response = await _client.get(ApiConstants.facultades);
     if (response is List) {
-      return response.map((item) => FacultadModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => FacultadModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -69,7 +74,9 @@ class AcademicoRemoteDataSource {
   Future<List<ProgramaModel>> getProgramas() async {
     final response = await _client.get(ApiConstants.programas);
     if (response is List) {
-      return response.map((item) => ProgramaModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => ProgramaModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -94,7 +101,9 @@ class AcademicoRemoteDataSource {
   Future<List<AsignaturaModel>> getAsignaturas() async {
     final response = await _client.get(ApiConstants.asignaturas);
     if (response is List) {
-      return response.map((item) => AsignaturaModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => AsignaturaModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -125,7 +134,9 @@ class AcademicoRemoteDataSource {
   Future<List<GrupoModel>> getGrupos() async {
     final response = await _client.get(ApiConstants.grupos);
     if (response is List) {
-      return response.map((item) => GrupoModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => GrupoModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -152,7 +163,9 @@ class AcademicoRemoteDataSource {
   Future<List<AsignacionModel>> getAsignaciones() async {
     final response = await _client.get(ApiConstants.asignaciones);
     if (response is List) {
-      return response.map((item) => AsignacionModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => AsignacionModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -170,7 +183,9 @@ class AcademicoRemoteDataSource {
   Future<List<ExcepcionModel>> getExcepciones() async {
     final response = await _client.get(ApiConstants.excepciones);
     if (response is List) {
-      return response.map((item) => ExcepcionModel.fromJson(item as Map<String, dynamic>)).toList();
+      return response
+          .map((item) => ExcepcionModel.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }

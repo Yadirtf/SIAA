@@ -14,7 +14,8 @@ extension GeoEditorPersistenceHandlers on GeoEditorBloc {
     if (!state.isClosed || state.vertices.length < 4) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'El polígono debe estar cerrado antes de enviarse al backend.',
+        errorMessage:
+            'El polígono debe estar cerrado antes de enviarse al backend.',
       ));
       return;
     }
@@ -66,15 +67,18 @@ extension GeoEditorPersistenceHandlers on GeoEditorBloc {
 
     final vertices = List<List<double>>.from(event.coordenadas);
     if (vertices.length >= 3 &&
-        (vertices.first[0] != vertices.last[0] || vertices.first[1] != vertices.last[1])) {
+        (vertices.first[0] != vertices.last[0] ||
+            vertices.first[1] != vertices.last[1])) {
       vertices.add([vertices.first[0], vertices.first[1]]);
     }
 
-    final tagged = vertices.map((c) => TaggedVertex(
-      longitude: c[0],
-      latitude: c[1],
-      origen: OrigenVertice.toqueMapa,
-    )).toList();
+    final tagged = vertices
+        .map((c) => TaggedVertex(
+              longitude: c[0],
+              latitude: c[1],
+              origen: OrigenVertice.toqueMapa,
+            ))
+        .toList();
 
     final isClosed = vertices.length >= 4 &&
         vertices.first[0] == vertices.last[0] &&
@@ -128,7 +132,9 @@ extension GeoEditorPersistenceHandlers on GeoEditorBloc {
       return;
     }
 
-    final match = state.versionesHistoricas.where((v) => v.version == event.version).firstOrNull;
+    final match = state.versionesHistoricas
+        .where((v) => v.version == event.version)
+        .firstOrNull;
     if (match != null) {
       emit(state.copyWith(versionPreview: match));
     } else {

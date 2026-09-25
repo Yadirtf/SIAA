@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../models/nav_item.dart';
@@ -19,7 +20,9 @@ class DashboardSidebar extends StatelessWidget {
       width: 260,
       decoration: const BoxDecoration(
         color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.borderDark, width: 1)),
+        border: Border(
+          right: BorderSide(color: AppColors.borderDark, width: 1),
+        ),
       ),
       child: Column(
         children: [
@@ -49,7 +52,11 @@ class DashboardSidebar extends StatelessWidget {
               color: AppColors.primaryAccent,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
+            child: const Icon(
+              Icons.school_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Column(
@@ -57,11 +64,16 @@ class DashboardSidebar extends StatelessWidget {
             children: [
               Text(
                 'SIAA Web',
-                style: AppTextStyles.h3.copyWith(color: AppColors.textWhite, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.textWhite,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 'Gestión Universitaria',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),
@@ -124,8 +136,12 @@ class DashboardSidebar extends StatelessWidget {
                   child: Text(
                     item.title,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: isSelected ? Colors.white : AppColors.textLight.withOpacity(0.85),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textLight.withOpacity(0.85),
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                     ),
                   ),
                 ),

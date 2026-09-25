@@ -27,9 +27,9 @@ class _LoginFormCardState extends State<LoginFormCard> {
   void _onLogin() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(AuthLoginRequested(
-      correo: _correoController.text.trim(),
-      password: _passwordController.text,
-    ));
+          correo: _correoController.text.trim(),
+          password: _passwordController.text,
+        ));
   }
 
   @override
@@ -115,7 +115,8 @@ class _LoginFormCardState extends State<LoginFormCard> {
                 ),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'La contraseña es obligatoria';
+                if (v == null || v.isEmpty)
+                  return 'La contraseña es obligatoria';
                 return null;
               },
             ),

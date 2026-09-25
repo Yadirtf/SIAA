@@ -138,7 +138,8 @@ class GeodesicCalculator {
 
   /// Asegura que el polígono esté ordenado en sentido antihorario (CCW),
   /// requerido por la especificación GeoJSON RFC 7946 e índices 2dsphere de MongoDB.
-  static List<List<double>> normalizarSentidoAntihorario(List<List<double>> vertices) {
+  static List<List<double>> normalizarSentidoAntihorario(
+      List<List<double>> vertices) {
     if (vertices.length < 3) return List.from(vertices);
 
     final lista = List<List<double>>.from(vertices);

@@ -27,7 +27,8 @@ abstract class SolapamientoDialogs {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Entendido', style: TextStyle(color: Colors.cyanAccent)),
+            child: const Text('Entendido',
+                style: TextStyle(color: Colors.cyanAccent)),
           ),
         ],
       ),
@@ -64,12 +65,15 @@ abstract class SolapamientoDialogs {
           children: [
             Text(
               advertencia,
-              style: const TextStyle(color: SIAAColors.neutral200, fontSize: 13),
+              style:
+                  const TextStyle(color: SIAAColors.neutral200, fontSize: 13),
             ),
             if (detalles != null && detalles.isNotEmpty) ...[
               const SizedBox(height: 8),
               ...detalles.map(
-                (d) => Text('• $d', style: const TextStyle(color: SIAAColors.neutral400, fontSize: 12)),
+                (d) => Text('• $d',
+                    style: const TextStyle(
+                        color: SIAAColors.neutral400, fontSize: 12)),
               ),
             ],
             const SizedBox(height: 16),
@@ -83,7 +87,8 @@ abstract class SolapamientoDialogs {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               decoration: const InputDecoration(
                 hintText: 'Ej. Tolerancia por muro divisorio compartido',
-                hintStyle: TextStyle(color: SIAAColors.neutral500, fontSize: 12),
+                hintStyle:
+                    TextStyle(color: SIAAColors.neutral500, fontSize: 12),
                 filled: true,
                 fillColor: Color(0xFF0F172A),
                 border: OutlineInputBorder(),
@@ -94,16 +99,20 @@ abstract class SolapamientoDialogs {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Cancelar', style: TextStyle(color: SIAAColors.neutral400)),
+            child: const Text('Cancelar',
+                style: TextStyle(color: SIAAColors.neutral400)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700]),
             onPressed: () {
               final motivo = motivoCtrl.text.trim();
               Navigator.of(dialogCtx).pop();
-              onConfirmar(motivo.isNotEmpty ? motivo : 'Confirmado por usuario en campo');
+              onConfirmar(motivo.isNotEmpty
+                  ? motivo
+                  : 'Confirmado por usuario en campo');
             },
-            child: const Text('Confirmar y Guardar', style: TextStyle(color: Colors.white)),
+            child: const Text('Confirmar y Guardar',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

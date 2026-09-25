@@ -35,7 +35,11 @@ class CreateFacultadEvent extends AcademicoEvent {
   final String nombre;
   final String? sedeId;
 
-  const CreateFacultadEvent({required this.codigo, required this.nombre, this.sedeId});
+  const CreateFacultadEvent({
+    required this.codigo,
+    required this.nombre,
+    this.sedeId,
+  });
 
   @override
   List<Object?> get props => [codigo, nombre, sedeId];
@@ -54,7 +58,11 @@ class CreateProgramaEvent extends AcademicoEvent {
   final String nombre;
   final String facultadId;
 
-  const CreateProgramaEvent({required this.codigo, required this.nombre, required this.facultadId});
+  const CreateProgramaEvent({
+    required this.codigo,
+    required this.nombre,
+    required this.facultadId,
+  });
 
   @override
   List<Object?> get props => [codigo, nombre, facultadId];

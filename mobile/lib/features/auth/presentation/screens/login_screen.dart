@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/navigation/nav_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
+import '../widgets/dispositivo_pendiente_dialog.dart';
 import '../widgets/login_form_card.dart';
 import '../widgets/login_header.dart';
 
@@ -58,6 +59,12 @@ class _LoginScreenState extends State<LoginScreen>
                   permisosUsuario: state.permisos,
                 ));
             Navigator.of(context).pushReplacementNamed('/shell');
+          }
+          if (state is AuthDispositivoPendiente) {
+            DispositivoPendienteDialog.show(
+              context,
+              mensaje: state.mensaje,
+            );
           }
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(

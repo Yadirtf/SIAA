@@ -50,7 +50,8 @@ class UserProfileCard extends StatelessWidget {
               children: [
                 Text(
                   nombre,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -59,7 +60,8 @@ class UserProfileCard extends StatelessWidget {
                   spacing: 6,
                   children: roles.map((r) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: SIAAColors.primary50,
                         borderRadius: BorderRadius.circular(8),

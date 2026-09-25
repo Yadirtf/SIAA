@@ -88,7 +88,8 @@ class CrearEspacioRequested extends HomeEvent {
   });
 
   @override
-  List<Object?> get props => [sedeId, bloqueId, codigo, nombre, piso, capacidad, tipo];
+  List<Object?> get props =>
+      [sedeId, bloqueId, codigo, nombre, piso, capacidad, tipo];
 }
 
 /// Recargar lista de aulas del bloque activo (ej. tras regresar del GeoEditor).

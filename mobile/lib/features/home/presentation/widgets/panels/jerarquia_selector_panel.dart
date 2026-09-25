@@ -84,7 +84,8 @@ class JerarquiaSelectorPanel extends StatelessWidget {
             color: SIAAColors.primary500,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.account_tree_rounded, color: Colors.white, size: 24),
+          child: const Icon(Icons.account_tree_rounded,
+              color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
         const Expanded(
@@ -122,7 +123,8 @@ class JerarquiaSelectorPanel extends StatelessWidget {
                   ),
                   hint: const Text('Seleccionar o crear sede'),
                   items: sedes.map((s) {
-                    return DropdownMenuItem(value: s, child: Text('${s.codigo} — ${s.nombre}'));
+                    return DropdownMenuItem(
+                        value: s, child: Text('${s.codigo} — ${s.nombre}'));
                   }).toList(),
                   onChanged: onSedeChanged,
                 ),
@@ -153,7 +155,8 @@ class JerarquiaSelectorPanel extends StatelessWidget {
                   ),
                   hint: const Text('Seleccionar o crear bloque'),
                   items: bloques.map((b) {
-                    return DropdownMenuItem(value: b, child: Text('${b.codigo} — ${b.nombre}'));
+                    return DropdownMenuItem(
+                        value: b, child: Text('${b.codigo} — ${b.nombre}'));
                   }).toList(),
                   onChanged: onBloqueChanged,
                 ),

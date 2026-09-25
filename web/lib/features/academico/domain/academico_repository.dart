@@ -12,11 +12,19 @@ abstract class AcademicoRepository {
   });
 
   Future<List<FacultadModel>> getFacultades();
-  Future<FacultadModel> createFacultad({required String codigo, required String nombre, String? sedeId});
+  Future<FacultadModel> createFacultad({
+    required String codigo,
+    required String nombre,
+    String? sedeId,
+  });
   Future<void> deleteFacultad(String id);
 
   Future<List<ProgramaModel>> getProgramas();
-  Future<ProgramaModel> createPrograma({required String codigo, required String nombre, required String facultadId});
+  Future<ProgramaModel> createPrograma({
+    required String codigo,
+    required String nombre,
+    required String facultadId,
+  });
   Future<void> deletePrograma(String id);
 
   Future<List<AsignaturaModel>> getAsignaturas();
@@ -55,7 +63,7 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
   final AcademicoRemoteDataSource _remoteDataSource;
 
   AcademicoRepositoryImpl({AcademicoRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? AcademicoRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? AcademicoRemoteDataSource();
 
   @override
   Future<List<PeriodoModel>> getPeriodos() => _remoteDataSource.getPeriodos();
@@ -67,37 +75,55 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     required String fechaInicio,
     required String fechaFin,
     required String estado,
-  }) =>
-      _remoteDataSource.createPeriodo(
-        codigo: codigo,
-        nombre: nombre,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-        estado: estado,
-      );
+  }) => _remoteDataSource.createPeriodo(
+    codigo: codigo,
+    nombre: nombre,
+    fechaInicio: fechaInicio,
+    fechaFin: fechaFin,
+    estado: estado,
+  );
 
   @override
-  Future<List<FacultadModel>> getFacultades() => _remoteDataSource.getFacultades();
+  Future<List<FacultadModel>> getFacultades() =>
+      _remoteDataSource.getFacultades();
 
   @override
-  Future<FacultadModel> createFacultad({required String codigo, required String nombre, String? sedeId}) =>
-      _remoteDataSource.createFacultad(codigo: codigo, nombre: nombre, sedeId: sedeId);
+  Future<FacultadModel> createFacultad({
+    required String codigo,
+    required String nombre,
+    String? sedeId,
+  }) => _remoteDataSource.createFacultad(
+    codigo: codigo,
+    nombre: nombre,
+    sedeId: sedeId,
+  );
 
   @override
-  Future<void> deleteFacultad(String id) => _remoteDataSource.deleteFacultad(id);
+  Future<void> deleteFacultad(String id) =>
+      _remoteDataSource.deleteFacultad(id);
 
   @override
-  Future<List<ProgramaModel>> getProgramas() => _remoteDataSource.getProgramas();
+  Future<List<ProgramaModel>> getProgramas() =>
+      _remoteDataSource.getProgramas();
 
   @override
-  Future<ProgramaModel> createPrograma({required String codigo, required String nombre, required String facultadId}) =>
-      _remoteDataSource.createPrograma(codigo: codigo, nombre: nombre, facultadId: facultadId);
+  Future<ProgramaModel> createPrograma({
+    required String codigo,
+    required String nombre,
+    required String facultadId,
+  }) => _remoteDataSource.createPrograma(
+    codigo: codigo,
+    nombre: nombre,
+    facultadId: facultadId,
+  );
 
   @override
-  Future<void> deletePrograma(String id) => _remoteDataSource.deletePrograma(id);
+  Future<void> deletePrograma(String id) =>
+      _remoteDataSource.deletePrograma(id);
 
   @override
-  Future<List<AsignaturaModel>> getAsignaturas() => _remoteDataSource.getAsignaturas();
+  Future<List<AsignaturaModel>> getAsignaturas() =>
+      _remoteDataSource.getAsignaturas();
 
   @override
   Future<AsignaturaModel> createAsignatura({
@@ -105,16 +131,16 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     required String nombre,
     required String programaId,
     required int creditos,
-  }) =>
-      _remoteDataSource.createAsignatura(
-        codigo: codigo,
-        nombre: nombre,
-        programaId: programaId,
-        creditos: creditos,
-      );
+  }) => _remoteDataSource.createAsignatura(
+    codigo: codigo,
+    nombre: nombre,
+    programaId: programaId,
+    creditos: creditos,
+  );
 
   @override
-  Future<void> deleteAsignatura(String id) => _remoteDataSource.deleteAsignatura(id);
+  Future<void> deleteAsignatura(String id) =>
+      _remoteDataSource.deleteAsignatura(id);
 
   @override
   Future<List<GrupoModel>> getGrupos() => _remoteDataSource.getGrupos();
@@ -125,26 +151,28 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     required String asignaturaId,
     required String periodoId,
     required int cupo,
-  }) =>
-      _remoteDataSource.createGrupo(
-        numero: numero,
-        asignaturaId: asignaturaId,
-        periodoId: periodoId,
-        cupo: cupo,
-      );
+  }) => _remoteDataSource.createGrupo(
+    numero: numero,
+    asignaturaId: asignaturaId,
+    periodoId: periodoId,
+    cupo: cupo,
+  );
 
   @override
-  Future<List<AsignacionModel>> getAsignaciones() => _remoteDataSource.getAsignaciones();
+  Future<List<AsignacionModel>> getAsignaciones() =>
+      _remoteDataSource.getAsignaciones();
 
   @override
   Future<AsignacionModel> createAsignacion(Map<String, dynamic> body) =>
       _remoteDataSource.createAsignacion(body);
 
   @override
-  Future<void> deleteAsignacion(String id) => _remoteDataSource.deleteAsignacion(id);
+  Future<void> deleteAsignacion(String id) =>
+      _remoteDataSource.deleteAsignacion(id);
 
   @override
-  Future<List<ExcepcionModel>> getExcepciones() => _remoteDataSource.getExcepciones();
+  Future<List<ExcepcionModel>> getExcepciones() =>
+      _remoteDataSource.getExcepciones();
 
   @override
   Future<ExcepcionModel> createExcepcion({
@@ -153,15 +181,15 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     required String ambito,
     required String fechaInicio,
     required String fechaFin,
-  }) =>
-      _remoteDataSource.createExcepcion(
-        nombre: nombre,
-        tipo: tipo,
-        ambito: ambito,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-      );
+  }) => _remoteDataSource.createExcepcion(
+    nombre: nombre,
+    tipo: tipo,
+    ambito: ambito,
+    fechaInicio: fechaInicio,
+    fechaFin: fechaFin,
+  );
 
   @override
-  Future<void> deleteExcepcion(String id) => _remoteDataSource.deleteExcepcion(id);
+  Future<void> deleteExcepcion(String id) =>
+      _remoteDataSource.deleteExcepcion(id);
 }

@@ -13,7 +13,8 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
     if (state.isClosed) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'El polígono ya está cerrado. Para agregar nuevos puntos reinicie el levantamiento.',
+        errorMessage:
+            'El polígono ya está cerrado. Para agregar nuevos puntos reinicie el levantamiento.',
       ));
       return;
     }
@@ -25,8 +26,10 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
       origen: OrigenVertice.toqueMapa,
     );
 
-    final nuevosVertices = List<List<double>>.from(state.vertices)..add(nuevoCoord);
-    final nuevosTagged = List<TaggedVertex>.from(state.verticesEtiquetados)..add(nuevoTagged);
+    final nuevosVertices = List<List<double>>.from(state.vertices)
+      ..add(nuevoCoord);
+    final nuevosTagged = List<TaggedVertex>.from(state.verticesEtiquetados)
+      ..add(nuevoTagged);
 
     final area = GeodesicCalculator.calcularArea(nuevosVertices);
     final perimetro = GeodesicCalculator.calcularPerimetro(nuevosVertices);
@@ -47,7 +50,8 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
   ) {
     if (state.vertices.isEmpty) return;
 
-    final nuevosVertices = List<List<double>>.from(state.vertices)..removeLast();
+    final nuevosVertices = List<List<double>>.from(state.vertices)
+      ..removeLast();
     final nuevosTagged = List<TaggedVertex>.from(state.verticesEtiquetados);
     if (nuevosTagged.isNotEmpty) {
       nuevosTagged.removeLast();
@@ -88,7 +92,8 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
     if (state.vertices.length < 3) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'Se requieren al menos 3 vértices distintos para cerrar el polígono.',
+        errorMessage:
+            'Se requieren al menos 3 vértices distintos para cerrar el polígono.',
       ));
       return;
     }
@@ -107,7 +112,8 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
     if (GeodesicCalculator.tieneAutoInterseccion(ring)) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
-        errorMessage: 'El perímetro se cruza a sí mismo (forma de X). Ajuste los vértices o use Deshacer para trazar el contorno en orden continuo.',
+        errorMessage:
+            'El perímetro se cruza a sí mismo (forma de X). Ajuste los vértices o use Deshacer para trazar el contorno en orden continuo.',
       ));
       return;
     }
@@ -118,7 +124,8 @@ extension GeoEditorVertexTrazadoHandlers on GeoEditorBloc {
         ringCCW.length == ring.length &&
         ringTagged.length == ring.length &&
         (ringCCW[1][0] != ring[1][0] || ringCCW[1][1] != ring[1][1])) {
-      final sinCierre = ringTagged.sublist(0, ringTagged.length - 1).reversed.toList();
+      final sinCierre =
+          ringTagged.sublist(0, ringTagged.length - 1).reversed.toList();
       sinCierre.add(sinCierre.first);
       ringTaggedCCW = sinCierre;
     }

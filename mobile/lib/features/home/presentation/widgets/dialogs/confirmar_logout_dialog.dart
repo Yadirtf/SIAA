@@ -25,7 +25,8 @@ class ConfirmarLogoutDialog extends StatelessWidget {
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: SIAAColors.asistenciaAusente),
+          style: ElevatedButton.styleFrom(
+              backgroundColor: SIAAColors.asistenciaAusente),
           onPressed: () {
             Navigator.of(context).pop();
             context.read<AuthBloc>().add(AuthLogoutRequested());

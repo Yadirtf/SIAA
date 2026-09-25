@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../academico/presentation/bloc/academico_bloc.dart';
 import '../../../academico/presentation/bloc/academico_event.dart';
@@ -13,6 +14,7 @@ import '../../../geo/presentation/screens/bloques_screen.dart';
 import '../../../geo/presentation/screens/espacios_screen.dart';
 import '../../../geo/presentation/screens/sedes_screen.dart';
 import '../../../geo/presentation/screens/solapamientos_screen.dart';
+import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/topbar.dart';
@@ -64,6 +66,8 @@ class _DashboardShellState extends State<DashboardShell> {
         return const AsignacionesScreen();
       case NavSection.excepciones:
         return const ExcepcionesScreen();
+      case NavSection.dispositivos:
+        return const DispositivosScreen();
     }
   }
 
@@ -97,11 +101,11 @@ class _DashboardShellState extends State<DashboardShell> {
                 children: [
                   DashboardTopbar(
                     currentSection: _currentSection,
-                    onMenuPressed: isWide ? null : () => _scaffoldKey.currentState?.openDrawer(),
+                    onMenuPressed: isWide
+                        ? null
+                        : () => _scaffoldKey.currentState?.openDrawer(),
                   ),
-                  Expanded(
-                    child: _buildBody(),
-                  ),
+                  Expanded(child: _buildBody()),
                 ],
               ),
             ),

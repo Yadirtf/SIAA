@@ -30,9 +30,11 @@ class GeoEditorAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Cartografía: $espacioCodigo', style: const TextStyle(fontSize: 16)),
+          Text('Cartografía: $espacioCodigo',
+              style: const TextStyle(fontSize: 16)),
           Text(espacioNombre,
-              style: const TextStyle(fontSize: 12, color: SIAAColors.neutral400)),
+              style:
+                  const TextStyle(fontSize: 12, color: SIAAColors.neutral400)),
         ],
       ),
       actions: [
@@ -61,8 +63,9 @@ class GeoEditorAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: state.vertices.isNotEmpty
               ? () => ConfirmarReinicioDialog.mostrar(
                     context,
-                    onConfirmar: () =>
-                        context.read<GeoEditorBloc>().add(const LimpiarVerticesRequested()),
+                    onConfirmar: () => context
+                        .read<GeoEditorBloc>()
+                        .add(const LimpiarVerticesRequested()),
                   )
               : null,
         ),

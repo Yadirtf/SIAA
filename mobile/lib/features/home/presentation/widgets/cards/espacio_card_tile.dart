@@ -47,11 +47,13 @@ class EspacioCardTile extends StatelessWidget {
                   children: [
                     Text(
                       espacio.codigo,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
                         color: tieneGeo
                             ? SIAAColors.asistenciaPresente.withOpacity(0.15)
@@ -65,7 +67,9 @@ class EspacioCardTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: tieneGeo ? SIAAColors.asistenciaPresente : Colors.orange.shade800,
+                          color: tieneGeo
+                              ? SIAAColors.asistenciaPresente
+                              : Colors.orange.shade800,
                         ),
                       ),
                     ),
@@ -74,11 +78,13 @@ class EspacioCardTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   espacio.nombre,
-                  style: const TextStyle(fontSize: 12, color: SIAAColors.neutral700),
+                  style: const TextStyle(
+                      fontSize: 12, color: SIAAColors.neutral700),
                 ),
                 Text(
                   'Piso ${espacio.piso ?? 1} · Capacidad: ${espacio.capacidad} est. · Tipo: ${espacio.tipo}',
-                  style: const TextStyle(fontSize: 10, color: SIAAColors.neutral500),
+                  style: const TextStyle(
+                      fontSize: 10, color: SIAAColors.neutral500),
                 ),
               ],
             ),

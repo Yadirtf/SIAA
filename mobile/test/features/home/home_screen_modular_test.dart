@@ -7,7 +7,8 @@ import 'package:siaa_mobile/features/home/presentation/widgets/panels/modulos_se
 
 void main() {
   group('Piezas del Rompecabezas HomeScreen (Pruebas Modulares)', () {
-    testWidgets('UserProfileCard: renderiza nombre, inicial y chips de rol', (tester) async {
+    testWidgets('UserProfileCard: renderiza nombre, inicial y chips de rol',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -26,7 +27,9 @@ void main() {
       expect(find.text('Docente'), findsOneWidget);
     });
 
-    testWidgets('EspacioCardTile: muestra estado delimitado con área y ejecuta callback', (tester) async {
+    testWidgets(
+        'EspacioCardTile: muestra estado delimitado con área y ejecuta callback',
+        (tester) async {
       bool editado = false;
       const espacio = EspacioModel(
         id: 'esp-01',
@@ -63,7 +66,9 @@ void main() {
       expect(editado, isTrue);
     });
 
-    testWidgets('ModulosSecundariosPanel: renderiza accesos a módulos con badges de pronto', (tester) async {
+    testWidgets(
+        'ModulosSecundariosPanel: renderiza accesos a módulos con badges de pronto',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(

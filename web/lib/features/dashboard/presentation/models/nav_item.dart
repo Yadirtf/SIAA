@@ -10,6 +10,7 @@ enum NavSection {
   estructura,
   asignaciones,
   excepciones,
+  dispositivos,
 }
 
 class NavItem {
@@ -79,6 +80,12 @@ class NavItem {
       title: 'Calendario Excepciones',
       icon: Icons.event_busy_outlined,
       category: 'ACADÉMICO',
+    ),
+    NavItem(
+      section: NavSection.dispositivos,
+      title: 'Dispositivos Confiables',
+      icon: Icons.phonelink_lock_rounded,
+      category: 'SEGURIDAD Y CONTROL',
     ),
   ];
 }

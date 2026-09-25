@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
@@ -26,13 +27,17 @@ class BloquesScreen extends StatelessWidget {
             children: [
               TextFormField(
                 controller: codigoCtrl,
-                decoration: const InputDecoration(labelText: 'Código (ej: BLQ-A)'),
+                decoration: const InputDecoration(
+                  labelText: 'Código (ej: BLQ-A)',
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: nombreCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre del Bloque'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del Bloque',
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
@@ -61,13 +66,13 @@ class BloquesScreen extends StatelessWidget {
                     .toList();
 
                 context.read<GeoBloc>().add(
-                      CreateBloqueEvent(
-                        sedeId: currentSedeId,
-                        codigo: codigoCtrl.text.trim(),
-                        nombre: nombreCtrl.text.trim(),
-                        pisos: floors.isNotEmpty ? floors : [1],
-                      ),
-                    );
+                  CreateBloqueEvent(
+                    sedeId: currentSedeId,
+                    codigo: codigoCtrl.text.trim(),
+                    nombre: nombreCtrl.text.trim(),
+                    pisos: floors.isNotEmpty ? floors : [1],
+                  ),
+                );
                 Navigator.pop(dialogCtx);
               }
             },
@@ -83,17 +88,22 @@ class BloquesScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(28),
       child: BlocBuilder<GeoBloc, GeoState>(
-        buildWhen: (prev, curr) => curr is GeoLoaded || curr is GeoLoading || curr is GeoError,
+        buildWhen: (prev, curr) =>
+            curr is GeoLoaded || curr is GeoLoading || curr is GeoError,
         builder: (context, state) {
           if (state is GeoLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is GeoError) {
-            return Center(child: Text(state.message, style: AppTextStyles.bodyMedium));
+            return Center(
+              child: Text(state.message, style: AppTextStyles.bodyMedium),
+            );
           }
           if (state is GeoLoaded) {
             final sedes = state.sedes;
-            final selectedSedeId = state.selectedSedeId ?? (sedes.isNotEmpty ? sedes.first.id : '');
+            final selectedSedeId =
+                state.selectedSedeId ??
+                (sedes.isNotEmpty ? sedes.first.id : '');
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,19 +116,29 @@ class BloquesScreen extends StatelessWidget {
                         children: [
                           Text('Bloques y Edificios', style: AppTextStyles.h2),
                           const SizedBox(height: 4),
-                          Text('Estructuras físicas divididas por niveles y pisos', style: AppTextStyles.bodyMedium),
+                          Text(
+                            'Estructuras físicas divididas por niveles y pisos',
+                            style: AppTextStyles.bodyMedium,
+                          ),
                         ],
                       ),
                     ),
                     if (sedes.isNotEmpty) ...[
                       DropdownButton<String>(
-                        value: selectedSedeId.isNotEmpty ? selectedSedeId : null,
+                        value: selectedSedeId.isNotEmpty
+                            ? selectedSedeId
+                            : null,
                         items: sedes.map((s) {
-                          return DropdownMenuItem(value: s.id, child: Text(s.nombre));
+                          return DropdownMenuItem(
+                            value: s.id,
+                            child: Text(s.nombre),
+                          );
                         }).toList(),
                         onChanged: (val) {
                           if (val != null) {
-                            context.read<GeoBloc>().add(LoadGeoDataEvent(sedeId: val));
+                            context.read<GeoBloc>().add(
+                              LoadGeoDataEvent(sedeId: val),
+                            );
                           }
                         },
                       ),
@@ -146,17 +166,28 @@ class BloquesScreen extends StatelessWidget {
                         )
                       : ListView.separated(
                           itemCount: state.bloques.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final bloque = state.bloques[index];
                             return Card(
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: AppColors.accentCyan.withOpacity(0.12),
-                                  child: const Icon(Icons.apartment_rounded, color: AppColors.accentCyan),
+                                  backgroundColor: AppColors.accentCyan
+                                      .withOpacity(0.12),
+                                  child: const Icon(
+                                    Icons.apartment_rounded,
+                                    color: AppColors.accentCyan,
+                                  ),
                                 ),
-                                title: Text('${bloque.nombre} (${bloque.codigo})', style: AppTextStyles.h3),
-                                subtitle: Text('Pisos registrados: ${bloque.pisos.join(", ")}', style: AppTextStyles.bodyMedium),
+                                title: Text(
+                                  '${bloque.nombre} (${bloque.codigo})',
+                                  style: AppTextStyles.h3,
+                                ),
+                                subtitle: Text(
+                                  'Pisos registrados: ${bloque.pisos.join(", ")}',
+                                  style: AppTextStyles.bodyMedium,
+                                ),
                               ),
                             );
                           },

@@ -7,6 +7,7 @@
 //   - refresh.go  → US-AUT-01 AC-05/AC-06: rotación y detección de robo de tokens
 //   - logout.go   → US-AUT-01: revocación del token de refresco
 //   - recovery.go → US-AUT-04: solicitud y confirmación de recuperación
+//   - device.go   → US-AUT-03: vinculación y gestión de dispositivos confiables
 //   - tokens.go   → emisión de JWT y refresh tokens (interno)
 //   - crypto/     → utilidades criptográficas puras (hash, validación)
 //
@@ -22,13 +23,14 @@ import (
 // Service es el punto de entrada del caso de uso de autenticación.
 // Sus métodos están distribuidos en archivos separados por responsabilidad.
 type Service struct {
-	usuarios  repository.UsuarioRepository
-	tokens    repository.RefreshTokenRepository
-	recovery  repository.RecoveryTokenRepository
-	auditoria repository.AuditoriaRepository
-	clock     shared.Clock
-	cfg       *config.Config
-	mailer    Mailer
+	usuarios     repository.UsuarioRepository
+	tokens       repository.RefreshTokenRepository
+	recovery     repository.RecoveryTokenRepository
+	auditoria    repository.AuditoriaRepository
+	dispositivos repository.DispositivoRepository
+	clock        shared.Clock
+	cfg          *config.Config
+	mailer       Mailer
 }
 
 // NewService crea un nuevo servicio de autenticación con todas sus dependencias.
@@ -50,4 +52,10 @@ func NewService(
 		cfg:       cfg,
 		mailer:    mailer,
 	}
+}
+
+// WithDispositivos inyecta el repositorio de dispositivos confiables (US-AUT-03).
+func (s *Service) WithDispositivos(dispositivos repository.DispositivoRepository) *Service {
+	s.dispositivos = dispositivos
+	return s
 }

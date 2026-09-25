@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../data/models/academico_models.dart';
 
 abstract class AcademicoState extends Equatable {
@@ -37,14 +38,14 @@ class AcademicoLoaded extends AcademicoState {
 
   @override
   List<Object?> get props => [
-        periodos,
-        facultades,
-        programas,
-        asignaturas,
-        grupos,
-        asignaciones,
-        excepciones,
-      ];
+    periodos,
+    facultades,
+    programas,
+    asignaturas,
+    grupos,
+    asignaciones,
+    excepciones,
+  ];
 }
 
 class AcademicoError extends AcademicoState {

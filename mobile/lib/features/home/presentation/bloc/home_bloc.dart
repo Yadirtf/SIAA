@@ -152,7 +152,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     RefrescarEspaciosRequested event,
     Emitter<HomeState> emit,
   ) async {
-    if (state.sedeSeleccionada == null || state.bloqueSeleccionado == null) return;
+    if (state.sedeSeleccionada == null || state.bloqueSeleccionado == null)
+      return;
     try {
       final espacios = await repository.obtenerEspacios(
         sedeId: state.sedeSeleccionada!.id,
@@ -166,6 +167,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     LimpiarMensajesHomeRequested event,
     Emitter<HomeState> emit,
   ) {
-    emit(state.copyWith(clearError: true, clearSuccess: true, clearUltimoEspacio: true));
+    emit(state.copyWith(
+        clearError: true, clearSuccess: true, clearUltimoEspacio: true));
   }
 }

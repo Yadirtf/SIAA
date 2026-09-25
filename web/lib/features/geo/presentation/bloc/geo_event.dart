@@ -72,15 +72,15 @@ class CreateEspacioEvent extends GeoEvent {
 
   @override
   List<Object?> get props => [
-        sedeId,
-        bloqueId,
-        piso,
-        codigo,
-        nombre,
-        capacidad,
-        tipo,
-        facultadResponsable,
-      ];
+    sedeId,
+    bloqueId,
+    piso,
+    codigo,
+    nombre,
+    capacidad,
+    tipo,
+    facultadResponsable,
+  ];
 }
 
 class DeleteEspacioEvent extends GeoEvent {

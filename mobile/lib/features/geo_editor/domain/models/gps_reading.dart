@@ -18,5 +18,6 @@ class GpsReading {
   List<double> toCoordinates() => [longitude, latitude];
 
   @override
-  String toString() => 'GpsReading(lon: $longitude, lat: $latitude, acc: ${accuracy}m)';
+  String toString() =>
+      'GpsReading(lon: $longitude, lat: $latitude, acc: ${accuracy}m)';
 }
