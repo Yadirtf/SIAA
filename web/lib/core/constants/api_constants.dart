@@ -32,4 +32,8 @@ class ApiConstants {
       '$baseUrl/dispositivos/$dispositivoId/aprobar';
   static String revocarDispositivo(String dispositivoId) =>
       '$baseUrl/dispositivos/$dispositivoId/revocar';
+
+  // Parámetros jerárquicos (EP-05, US-PAR-01/02/03)
+  static const String parametros = '$baseUrl/parametros';
+  static const String parametrosEfectivos = '$baseUrl/parametros/efectivos';
 }

@@ -11,6 +11,7 @@ enum NavSection {
   asignaciones,
   excepciones,
   dispositivos,
+  parametros,
 }
 
 class NavItem {
@@ -87,5 +88,12 @@ class NavItem {
       icon: Icons.phonelink_lock_rounded,
       category: 'SEGURIDAD Y CONTROL',
     ),
+    NavItem(
+      section: NavSection.parametros,
+      title: 'Parametrización',
+      icon: Icons.tune_rounded,
+      category: 'CONFIGURACIÓN',
+    ),
   ];
 }
+

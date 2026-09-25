@@ -20,6 +20,9 @@ import 'features/dispositivos/presentation/bloc/dispositivos_bloc.dart';
 import 'features/geo/data/geo_remote_datasource.dart';
 import 'features/geo/domain/geo_repository.dart';
 import 'features/geo/presentation/bloc/geo_bloc.dart';
+import 'features/parametros/data/parametros_data.dart';
+import 'features/parametros/domain/parametros_repository.dart';
+import 'features/parametros/presentation/bloc/parametros_bloc.dart';
 
 class SiaaApp extends StatelessWidget {
   const SiaaApp({super.key});
@@ -46,6 +49,11 @@ class SiaaApp extends StatelessWidget {
             remoteDataSource: DispositivosRemoteDataSource(),
           ),
         ),
+        RepositoryProvider<ParametrosRepository>(
+          create: (_) => ParametrosRepositoryImpl(
+            remote: ParametrosRemoteDataSource(),
+          ),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -64,6 +72,11 @@ class SiaaApp extends StatelessWidget {
           BlocProvider<DispositivosBloc>(
             create: (ctx) => DispositivosBloc(
               repository: ctx.read<DispositivosRepository>(),
+            ),
+          ),
+          BlocProvider<ParametrosBloc>(
+            create: (ctx) => ParametrosBloc(
+              repository: ctx.read<ParametrosRepository>(),
             ),
           ),
         ],

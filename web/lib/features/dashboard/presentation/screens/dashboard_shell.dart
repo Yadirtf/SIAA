@@ -15,6 +15,7 @@ import '../../../geo/presentation/screens/espacios_screen.dart';
 import '../../../geo/presentation/screens/sedes_screen.dart';
 import '../../../geo/presentation/screens/solapamientos_screen.dart';
 import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
+import '../../../parametros/presentation/screens/parametros_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/topbar.dart';
@@ -68,6 +69,8 @@ class _DashboardShellState extends State<DashboardShell> {
         return const ExcepcionesScreen();
       case NavSection.dispositivos:
         return const DispositivosScreen();
+      case NavSection.parametros:
+        return const ParametrosScreen();
     }
   }
 
