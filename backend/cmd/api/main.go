@@ -26,6 +26,7 @@ import (
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
 	"github.com/siaa/backend/internal/usecase/auth"
 	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
+	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
 )
 
 func main() {
@@ -89,6 +90,9 @@ func main() {
 	asignacionRepo := impl.NewAsignacionRepository(mongoClient)
 	excepcionRepo := impl.NewCalendarioExcepcionRepository(mongoClient)
 
+	// Parametrización jerárquica (EP-05)
+	parametroRepo := impl.NewParametroRepo(mongoClient.DB())
+
 	// ─── Infraestructura ──────────────────────────────────────
 	// En producción se inyecta la implementación SMTP en lugar del noop.
 	appMailer := mailer.NewNoopMailer(log)
@@ -129,6 +133,8 @@ func main() {
 		log,
 	)
 
+	parametroSvc := usecasePar.New(parametroRepo)
+
 	// ─── Handlers ─────────────────────────────────────────────
 	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH := handler.NewAuthHandler(authSvc)
@@ -136,9 +142,10 @@ func main() {
 	rolesH := handler.NewRolesHandler()
 	geoH := handler.NewGeoHandler(geoSvc)
 	acaH := handler.NewAcademicoHandler(acaSvc)
+	parametroH := handler.NewParametroHandler(parametroSvc)
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, auditoriaRepo, nil)
 	if err != nil {
 		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
 		os.Exit(1)
