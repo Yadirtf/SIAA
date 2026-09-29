@@ -31,3 +31,18 @@ type AuditoriaRepository interface {
 	// Create agrega una nueva entrada de auditoría. No puede fallar silenciosamente.
 	Create(ctx context.Context, e *AuditEntry) error
 }
+
+// FiltroAuditoria define los criterios de consulta de la bitácora (RF-AUD-003).
+type FiltroAuditoria struct {
+	Entidad   string
+	EntidadID string
+	ActorID   string
+	Accion    string
+	Desde     *time.Time
+	Hasta     *time.Time
+}
+
+// AuditoriaConsultaRepository lee la bitácora. No existe operación de edición ni borrado.
+type AuditoriaConsultaRepository interface {
+	Buscar(ctx context.Context, f FiltroAuditoria, skip, limit int64) ([]*AuditEntry, int64, error)
+}

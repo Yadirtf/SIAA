@@ -19,3 +19,11 @@ var zonaInstitucional = func() *time.Location {
 func HoraLocal(t time.Time) string {
 	return t.In(zonaInstitucional).Format("15:04")
 }
+
+// ZonaInstitucional devuelve la zona horaria de la institución.
+func ZonaInstitucional() *time.Location { return zonaInstitucional }
+
+// FechaLocal devuelve la fecha AAAA-MM-DD del instante en la zona institucional.
+func FechaLocal(t time.Time) string {
+	return t.In(zonaInstitucional).Format("2006-01-02")
+}

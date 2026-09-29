@@ -110,6 +110,10 @@ func (r *fakeMarcajeRepo) RegistrarAjuste(ctx context.Context, originalID string
 	return nil
 }
 
+func (r *fakeMarcajeRepo) ListarConsolidados(ctx context.Context, sesionIDs []string, tipo domainMarcaje.TipoMarcaje) ([]*domainMarcaje.Marcaje, error) {
+	return nil, nil
+}
+
 func (r *fakeMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error) {
 	return nil, nil
 }

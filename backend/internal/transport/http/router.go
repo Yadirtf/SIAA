@@ -36,6 +36,7 @@ func NewRouter(
 	marcajeAdminH *handler.MarcajeAdminHandler,
 	marcajeSyncH *handler.MarcajeSyncHandler,
 	usuariosH *handler.UsuariosHandler,
+	seguimiento *HandlersSeguimiento,
 	auditoria repository.AuditoriaRepository,
 	registry *RouteRegistry,
 ) (*echo.Echo, error) {
@@ -268,6 +269,9 @@ func NewRouter(
 
 	// ─── Motor de marcaje — EP-06 (US-MAR-01..15) ─────────────
 	registerMarcajeRoutes(api, cfg, auditoria, registry, marcajeH, marcajeAdminH, marcajeSyncH)
+
+	// ─── Justificaciones, reportes y bitácora — EP-07, EP-08, RF-AUD-003 ─────
+	registerSeguimientoRoutes(api, cfg, auditoria, registry, seguimiento)
 
 	// ─── Verificación al arranque — T-ROL-01.4, AC-03 ─────────
 	// Toda ruta bajo /api/v1 DEBE declarar su permiso o estar explícitamente marcada como pública.

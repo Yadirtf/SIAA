@@ -1,4 +1,5 @@
-// Package impl — registro de ajustes de marcaje como eventos nuevos (US-MAR-09, RF-JUS-004).
+// Package impl — ajustes de marcaje como eventos nuevos (US-MAR-09, RF-JUS-004) y lectura
+// de los marcajes consolidados para reportes (EP-08).
 package impl
 
 import (
@@ -59,4 +60,21 @@ func (r *marcajeMongoRepo) RegistrarAjuste(ctx context.Context, originalID strin
 		return fmt.Errorf("insertar ajuste de marcaje: %w", err)
 	}
 	return nil
+}
+
+// ListarConsolidados devuelve los marcajes que definen el estado de cada sesión
+// (uno por sesión, usuario y tipo) para un lote de sesiones (reportes, EP-08).
+func (r *marcajeMongoRepo) ListarConsolidados(ctx context.Context, sesionIDs []string, tipo marcaje.TipoMarcaje) ([]*marcaje.Marcaje, error) {
+	if len(sesionIDs) == 0 {
+		return nil, nil
+	}
+	cur, err := r.col.Find(ctx, bson.M{"sesionId": bson.M{"$in": sesionIDs}, "tipo": tipo, "consolidado": true})
+	if err != nil {
+		return nil, fmt.Errorf("listar marcajes consolidados: %w", err)
+	}
+	var lista []*marcaje.Marcaje
+	if err := cur.All(ctx, &lista); err != nil {
+		return nil, fmt.Errorf("decodificar marcajes consolidados: %w", err)
+	}
+	return lista, nil
 }

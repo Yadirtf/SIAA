@@ -41,6 +41,8 @@ type MarcajeRepository interface {
 	// RegistrarAjuste inserta el evento de ajuste y marca al original como reemplazado sin
 	// alterar sus datos (RF-JUS-004). Devuelve ErrMarcajeYaAjustado o ErrRanuraOcupada.
 	RegistrarAjuste(ctx context.Context, originalID string, ajuste *marcaje.Marcaje) error
+	// ListarConsolidados devuelve los marcajes vigentes de un lote de sesiones (EP-08).
+	ListarConsolidados(ctx context.Context, sesionIDs []string, tipo marcaje.TipoMarcaje) ([]*marcaje.Marcaje, error)
 	ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error)
 	ObtenerUltimoMarcajeUsuario(ctx context.Context, usuarioID string) (*marcaje.Marcaje, error)
 	RevertirAusenciaPorOffline(ctx context.Context, sesionID, usuarioID string, nuevoMarcaje *marcaje.Marcaje) error

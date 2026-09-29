@@ -53,6 +53,11 @@ type Config struct {
 	AdminInicialPassword string
 	PasswordMinLength    int
 
+	// Justificaciones (EP-07): plazo en días hábiles y secreto de cifrado de los soportes
+	// (si se omite se deriva de JWT_SECRET).
+	JustificacionPlazoDias int
+	AdjuntosClave          string
+
 	// Parámetros GPS por defecto — SRS §3.5
 	DefaultHolguraEntradaAntesMin   int
 	DefaultHolguraEntradaDespuesMin int
@@ -117,6 +122,8 @@ func Load() (*Config, error) {
 	cfg.AdminInicialCorreo = getEnv("ADMIN_INICIAL_CORREO", "")
 	cfg.AdminInicialPassword = getEnv("ADMIN_INICIAL_PASSWORD", "")
 	cfg.PasswordMinLength = getEnvInt("PASSWORD_MIN_LENGTH", 12)
+	cfg.JustificacionPlazoDias = getEnvInt("JUSTIFICACION_PLAZO_DIAS", 5)
+	cfg.AdjuntosClave = getEnv("ADJUNTOS_CLAVE", "")
 
 	// Parámetros GPS por defecto
 	cfg.DefaultHolguraEntradaAntesMin = getEnvInt("DEFAULT_HOLGURA_ENTRADA_ANTES", 15)
