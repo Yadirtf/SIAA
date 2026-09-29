@@ -31,7 +31,7 @@ func (h *AcademicoHandler) CrearFacultad(c echo.Context) error {
 
 func (h *AcademicoHandler) ListarFacultades(c echo.Context) error {
 	sedeID := c.QueryParam("sedeId")
-	lista, err := h.svc.ListarFacultades(c.Request().Context(), sedeID)
+	lista, err := h.svc.ListarFacultadesEnAlcance(c.Request().Context(), extraerActorAcademico(c), sedeID)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}
@@ -70,7 +70,7 @@ func (h *AcademicoHandler) CrearPrograma(c echo.Context) error {
 
 func (h *AcademicoHandler) ListarProgramas(c echo.Context) error {
 	facultadID := c.QueryParam("facultadId")
-	lista, err := h.svc.ListarProgramas(c.Request().Context(), facultadID)
+	lista, err := h.svc.ListarProgramasEnAlcance(c.Request().Context(), extraerActorAcademico(c), facultadID)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}

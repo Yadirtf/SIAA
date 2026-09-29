@@ -399,3 +399,11 @@ func TestAuth_DesbloqueoUsuarioNoExiste(t *testing.T) {
 		t.Fatal("se esperaba error de usuario no encontrado")
 	}
 }
+
+func (m *mockUsuarioRepo) FindByDocumento(_ context.Context, _ string) (*user.Usuario, error) {
+	return nil, nil
+}
+
+func (m *mockUsuarioRepo) Buscar(_ context.Context, _ repository.FiltroUsuarios) ([]*user.Usuario, int64, error) {
+	return nil, 0, nil
+}

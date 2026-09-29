@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	domainAca "github.com/siaa/backend/internal/domain/academico"
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/transport/http/middleware"
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
 )
@@ -21,14 +22,14 @@ func NewAcademicoHandler(svc *usecaseAca.Service) *AcademicoHandler {
 
 func extraerActorAcademico(c echo.Context) usecaseAca.ContextoActor {
 	actorID, _ := c.Get(middleware.CtxUsuarioID).(string)
-	rol := ""
+	actor := usecaseAca.ContextoActor{UsuarioID: actorID}
 	if claims, ok := middleware.GetClaims(c); ok {
-		rol = claims.RolActivo
+		alcance := middleware.AlcanceDe(c)
+		actor.Rol = claims.RolActivo
+		actor.Scopes = claims.Ambitos
+		actor.Alcance = &alcance
 	}
-	return usecaseAca.ContextoActor{
-		UsuarioID: actorID,
-		Rol:       rol,
-	}
+	return actor
 }
 
 func mapearErrorAcademico(err error) error {
@@ -39,7 +40,8 @@ func mapearErrorAcademico(err error) error {
 		return echo.NewHTTPError(http.StatusConflict, err.Error())
 	}
 	if errors.Is(err, usecaseAca.ErrFueraDeAmbitoFacultad) {
-		return echo.NewHTTPError(http.StatusForbidden, err.Error())
+		// Como DomainError para que el middleware de auditoría registre el 403 (CA-010).
+		return &shared.DomainError{Code: shared.ErrAmbitoDenegado, Message: err.Error()}
 	}
 	if errors.Is(err, usecaseAca.ErrPeriodoNoEncontrado) ||
 		errors.Is(err, usecaseAca.ErrFacultadNoEncontrada) ||

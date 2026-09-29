@@ -65,7 +65,7 @@ func (h *AcademicoHandler) CrearAsignacion(c echo.Context) error {
 
 func (h *AcademicoHandler) ListarAsignaciones(c echo.Context) error {
 	periodoID := c.QueryParam("periodoId")
-	lista, err := h.svc.ListarAsignaciones(c.Request().Context(), periodoID)
+	lista, err := h.svc.ListarAsignacionesEnAlcance(c.Request().Context(), extraerActorAcademico(c), periodoID)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}

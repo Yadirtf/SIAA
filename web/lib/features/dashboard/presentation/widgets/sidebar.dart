@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../models/nav_item.dart';
 
 class DashboardSidebar extends StatelessWidget {
@@ -29,9 +32,19 @@ class DashboardSidebar extends StatelessWidget {
           _buildBrand(),
           const Divider(color: AppColors.borderDark, height: 1),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-              children: _buildNavCategories(),
+            // Oculta entradas sin permiso; conserva los últimos permisos
+            // conocidos mientras el AuthBloc atraviesa estados transitorios.
+            child: BlocBuilder<AuthBloc, AuthState>(
+              buildWhen: (_, current) => current is Authenticated,
+              builder: (context, state) => ListView(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 12,
+                ),
+                children: _buildNavCategories(
+                  state is Authenticated ? state.user.permisos : const [],
+                ),
+              ),
             ),
           ),
           const Divider(color: AppColors.borderDark, height: 1),
@@ -82,11 +95,11 @@ class DashboardSidebar extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildNavCategories() {
+  List<Widget> _buildNavCategories(List<String> permisos) {
     final widgets = <Widget>[];
     String? lastCategory;
 
-    for (final item in NavItem.items) {
+    for (final item in NavItem.visiblesPara(permisos)) {
       if (item.category != lastCategory) {
         lastCategory = item.category;
         widgets.add(

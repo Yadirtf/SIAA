@@ -42,11 +42,26 @@ class ApiConstants {
 
   // Marcajes (EP-06, US-MAR-09)
   static const String marcajes = '$baseUrl/marcajes';
-  static String ajustarMarcaje(String marcajeId) => '$baseUrl/marcajes/$marcajeId';
+  static String ajustarMarcaje(String marcajeId) =>
+      '$baseUrl/marcajes/$marcajeId';
   static const String marcajeManual = '$baseUrl/marcajes/manual';
-  static const String usuarios = '$baseUrl/usuarios';
   static const String sesiones = '$baseUrl/sesiones';
-  static const String academicoImportarPreview = '$baseUrl/academico/importar/preview';
+  static const String academicoImportarPreview =
+      '$baseUrl/academico/importar/preview';
   static const String academicoImportar = '$baseUrl/academico/importar';
-}
 
+  // Usuarios (US-ROL-01..05, US-AUT-02/07)
+  static const String usuarios = '$baseUrl/usuarios';
+  static const String usuariosImportar = '$baseUrl/usuarios/importar';
+  static const String roles = '$baseUrl/roles';
+  static String usuario(String id) => '$baseUrl/usuarios/$id';
+  static String activarUsuario(String id) => '$baseUrl/usuarios/$id/activar';
+  static String desactivarUsuario(String id) =>
+      '$baseUrl/usuarios/$id/desactivar';
+  static String rolesUsuario(String id) => '$baseUrl/usuarios/$id/roles';
+  static String ambitosUsuario(String id) => '$baseUrl/usuarios/$id/ambitos';
+  static String desbloquearUsuario(String id) =>
+      '$baseUrl/usuarios/$id/desbloquear';
+  static String revocarSesionesUsuario(String id) =>
+      '$baseUrl/usuarios/$id/revocar-sesiones';
+}

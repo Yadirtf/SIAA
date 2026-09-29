@@ -29,6 +29,11 @@ import 'features/marcajes/data/datasources/marcajes_admin_remote_datasource.dart
 import 'features/marcajes/data/repositories/marcajes_admin_repository_impl.dart';
 import 'features/marcajes/domain/repositories/marcajes_admin_repository.dart';
 import 'features/marcajes/presentation/bloc/marcajes_admin_bloc.dart';
+import 'features/usuarios/domain/usuarios_repository.dart';
+import 'features/usuarios/domain/usuarios_repository_impl.dart';
+import 'features/usuarios/presentation/bloc/catalogo_usuarios_cubit.dart';
+import 'features/usuarios/presentation/bloc/importacion_usuarios_bloc.dart';
+import 'features/usuarios/presentation/bloc/usuarios_bloc.dart';
 
 class SiaaApp extends StatelessWidget {
   const SiaaApp({super.key});
@@ -64,6 +69,9 @@ class SiaaApp extends StatelessWidget {
           create: (_) => MarcajesAdminRepositoryImpl(
             remoteDataSource: MarcajesAdminRemoteDataSource(),
           ),
+        ),
+        RepositoryProvider<UsuariosRepository>(
+          create: (_) => UsuariosRepositoryImpl(),
         ),
       ],
       child: MultiBlocProvider(
@@ -101,6 +109,20 @@ class SiaaApp extends StatelessWidget {
           BlocProvider<MarcajesAdminBloc>(
             create: (ctx) => MarcajesAdminBloc(
               repository: ctx.read<MarcajesAdminRepository>(),
+            ),
+          ),
+          BlocProvider<UsuariosBloc>(
+            create: (ctx) =>
+                UsuariosBloc(repository: ctx.read<UsuariosRepository>()),
+          ),
+          BlocProvider<CatalogoUsuariosCubit>(
+            create: (ctx) => CatalogoUsuariosCubit(
+              repository: ctx.read<UsuariosRepository>(),
+            ),
+          ),
+          BlocProvider<ImportacionUsuariosBloc>(
+            create: (ctx) => ImportacionUsuariosBloc(
+              repository: ctx.read<UsuariosRepository>(),
             ),
           ),
         ],

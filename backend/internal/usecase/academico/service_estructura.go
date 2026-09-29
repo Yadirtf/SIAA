@@ -13,6 +13,10 @@ import (
 
 // Facultades
 func (s *Service) CrearFacultad(ctx context.Context, actor ContextoActor, codigo, nombre, sedeID string, codigoExterno *string) (*domainAca.Facultad, error) {
+	// Solo quien tiene la sede completa en su ámbito crea facultades en ella (RF-ROL-003).
+	if al := actor.alcanceEfectivo(); al != nil && !al.PermiteSede(sedeID) {
+		return nil, ErrFueraDeAmbitoFacultad
+	}
 	f, err := domainAca.NuevaFacultad(shared.NewID(), codigo, nombre, sedeID, codigoExterno, s.clk.Now())
 	if err != nil {
 		return nil, err
@@ -37,6 +41,9 @@ func (s *Service) CrearPrograma(ctx context.Context, actor ContextoActor, codigo
 	fac, err := s.estructuraRepo.GetFacultadByID(ctx, facultadID)
 	if err != nil || fac == nil {
 		return nil, ErrFacultadNoEncontrada
+	}
+	if !actor.permiteFacultad(fac.ID(), fac.SedeID()) {
+		return nil, ErrFueraDeAmbitoFacultad
 	}
 	p, err := domainAca.NuevoPrograma(shared.NewID(), codigo, nombre, facultadID, codigoExterno, s.clk.Now())
 	if err != nil {

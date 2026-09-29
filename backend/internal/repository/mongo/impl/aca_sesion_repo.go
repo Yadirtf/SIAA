@@ -42,6 +42,8 @@ type sesionDoc struct {
 	GeometriaBufferSnapshot *geoJSONPolygonDoc `bson:"geometriaBufferSnapshot,omitempty"`
 	ParametrosCongelados    bson.M             `bson:"parametrosCongelados"`
 	MotivoCancelacion       string             `bson:"motivoCancelacion,omitempty"`
+	SedeID                  string             `bson:"sedeId"`
+	FacultadID              string             `bson:"facultadId"`
 	Eliminado               bool               `bson:"eliminado"`
 	CreadoEn                time.Time          `bson:"creadoEn"`
 	ActualizadoEn           time.Time          `bson:"actualizadoEn"`
@@ -152,6 +154,9 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	if filter.Estado != nil {
 		criteria = append(criteria, bson.E{Key: "estado", Value: string(*filter.Estado)})
 	}
+	if cond := condicionAlcance(filter.Alcance, "docenteIds"); cond != nil {
+		criteria = append(criteria, bson.E{Key: "$and", Value: []bson.M{cond}})
+	}
 
 	opts := options.Find().SetSort(bson.D{{Key: "inicioProgramado", Value: 1}})
 	cursor, err := r.col.Find(ctx, criteria, opts)
@@ -218,6 +223,8 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 		EspacioVersionGeometria: s.EspacioVersionGeometria(),
 		ParametrosCongelados:    s.ParametrosCongelados(),
 		MotivoCancelacion:       s.MotivoCancelacion(),
+		SedeID:                  s.SedeID(),
+		FacultadID:              s.FacultadID(),
 		Eliminado:               false,
 		CreadoEn:                s.CreadoEn(),
 		ActualizadoEn:           s.ActualizadoEn(),
@@ -299,5 +306,5 @@ func docToSesion(doc *sesionDoc) *academico.Sesion {
 		doc.MotivoCancelacion,
 		doc.CreadoEn,
 		doc.ActualizadoEn,
-	)
+	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID)
 }

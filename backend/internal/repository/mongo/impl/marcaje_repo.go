@@ -44,6 +44,7 @@ func (r *marcajeMongoRepo) Crear(ctx context.Context, m *marcaje.Marcaje) error 
 		m.Timestamp = m.TimestampServidor
 	}
 	m.Consolidado = !m.Anulado && m.ConsolidaSesion()
+	r.completarUbicacion(ctx, m)
 
 	_, err := r.col.InsertOne(ctx, m)
 	if err != nil {

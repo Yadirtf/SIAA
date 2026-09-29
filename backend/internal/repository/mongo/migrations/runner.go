@@ -19,6 +19,9 @@ func Run(ctx context.Context, db *mongo.Database, usuariosDemo bool, admin seed.
 	if err := MigrarIdempotenciaMarcajes(ctx, db); err != nil {
 		return fmt.Errorf("migrar idempotencia de marcajes: %w", err)
 	}
+	if err := MigrarUbicacionAlcance(ctx, db); err != nil {
+		return fmt.Errorf("migrar ubicación de alcance: %w", err)
+	}
 	if err := CreateIndexes(ctx, db); err != nil {
 		return fmt.Errorf("create indexes: %w", err)
 	}

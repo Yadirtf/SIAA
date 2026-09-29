@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/loading_button.dart';
 import '../bloc/auth_bloc.dart';
+import '../screens/recuperar_password_screen.dart';
 
 class LoginFormCard extends StatefulWidget {
   const LoginFormCard({super.key});
@@ -127,7 +128,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () =>
-                    Navigator.of(context).pushNamed('/recuperar-password'),
+                    Navigator.of(context).pushNamed(RecuperarPasswordScreen.routeName),
                 child: Text(
                   '¿Olvidaste tu contraseña?',
                   style: SIAATypography.labelLarge.copyWith(

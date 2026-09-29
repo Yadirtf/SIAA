@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
+import 'api_response.dart';
 
 class ApiClient {
   final http.Client _client;
@@ -101,6 +102,44 @@ class ApiClient {
     }
   }
 
+  /// GET que además expone las cabeceras de la respuesta (p. ej. X-Total-Count).
+  Future<ApiResponse> getWithHeaders(
+    String url, {
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      final response = await _client.get(Uri.parse(url), headers: headers);
+      return ApiResponse(
+        body: _processResponse(response),
+        headers: response.headers,
+      );
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  /// POST con cuerpo crudo (sin codificar a JSON), p. ej. un CSV `text/csv`.
+  Future<dynamic> postRaw(
+    String url, {
+    required String body,
+    String contentType = 'text/plain',
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      headers['Content-Type'] = contentType;
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: headers,
+        body: utf8.encode(body),
+      );
+      return _processResponse(response);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
   Future<dynamic> postMultipart(
     String url, {
     required List<int> fileBytes,
@@ -127,7 +166,6 @@ class ApiClient {
       _handleError(e);
     }
   }
-
 
   dynamic _processResponse(http.Response response) {
     final statusCode = response.statusCode;

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/siaa/backend/internal/domain/academico"
+	"github.com/siaa/backend/internal/domain/geo"
 	"github.com/siaa/backend/internal/domain/parametro"
 )
 
@@ -123,4 +124,12 @@ func getParamInt(m map[string]interface{}, clave parametro.Clave, fallback int) 
 		}
 	}
 	return fallback
+}
+
+// sedeSesion toma la sede del aula; si la sesión no tiene aula (virtual), la del periodo.
+func sedeSesion(sedePeriodo string, espacio *geo.Espacio) string {
+	if espacio != nil && espacio.SedeID != "" {
+		return espacio.SedeID
+	}
+	return sedePeriodo
 }

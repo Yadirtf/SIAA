@@ -320,3 +320,11 @@ func TestDispositivo_AprobacionYRevocacion(t *testing.T) {
 	assert.False(t, d2Revocado.Confiable)
 	assert.NotNil(t, d2Revocado.RevocadoEn)
 }
+
+func (m *mockUserRepoForDevice) FindByDocumento(_ context.Context, _ string) (*user.Usuario, error) {
+	return nil, nil
+}
+
+func (m *mockUserRepoForDevice) Buscar(_ context.Context, _ repository.FiltroUsuarios) ([]*user.Usuario, int64, error) {
+	return nil, 0, nil
+}

@@ -16,6 +16,7 @@ type Usuario struct {
 	PasswordHash           string
 	Nombre                 string
 	Apellido               string
+	Documento              string // Documento de identidad institucional (importación de docentes).
 	Activo                 bool
 	Eliminado              bool
 	Roles                  []RolAsignado

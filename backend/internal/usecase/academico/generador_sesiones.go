@@ -43,14 +43,20 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 		if errAsig != nil || asig == nil {
 			return nil, shared.NewNotFoundError("Asignacion", *cmd.AsignacionID)
 		}
+		if !cmd.Actor.permiteFacultad(asig.FacultadID(), periodo.SedeID()) {
+			return nil, ErrFueraDeAmbitoFacultad
+		}
 		asignaciones = []*academico.Asignacion{asig}
 	} else {
 		list, errList := s.asignacionRepo.ListByPeriodoID(ctx, cmd.PeriodoID)
 		if errList != nil {
 			return nil, fmt.Errorf("consultar asignaciones: %w", errList)
 		}
+		// Un coordinador solo genera las sesiones de las asignaciones de su ámbito.
 		for i := range list {
-			asignaciones = append(asignaciones, &list[i])
+			if cmd.Actor.permiteFacultad(list[i].FacultadID(), periodo.SedeID()) {
+				asignaciones = append(asignaciones, &list[i])
+			}
 		}
 	}
 
@@ -197,7 +203,7 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 					s.clk.Now(),
 				)
 				if errSesion == nil {
-					sesionesNuevas = append(sesionesNuevas, sesion)
+					sesionesNuevas = append(sesionesNuevas, sesion.ConUbicacionAcademica(sedeSesion(periodo.SedeID(), espacioSnap), asig.FacultadID()))
 				}
 			}
 

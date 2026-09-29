@@ -46,6 +46,8 @@ type Sesion struct {
 	geometriaBufferSnapshot *geo.GeoPolygon
 	parametrosCongelados    map[string]interface{} // AC-02, AC-06: congelados e inmutables
 	motivoCancelacion       string
+	sedeID                  string // ubicación académica para el alcance ABAC (RF-ROL-003)
+	facultadID              string
 	creadoEn                time.Time
 	actualizadoEn           time.Time
 }

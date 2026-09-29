@@ -43,6 +43,8 @@ type Marcaje struct {
 	UsuarioID              string               `json:"usuarioId" bson:"usuarioId"`
 	DocenteID              string               `json:"docenteId,omitempty" bson:"docenteId,omitempty"` // alias para retrocompatibilidad
 	EspacioID              string               `json:"espacioId,omitempty" bson:"espacioId,omitempty"`
+	SedeID                 string               `json:"sedeId,omitempty" bson:"sedeId"`         // alcance ABAC (RF-ROL-003)
+	FacultadID             string               `json:"facultadId,omitempty" bson:"facultadId"` // alcance ABAC (RF-ROL-003)
 	RolMarcaje             RolMarcaje           `json:"rolMarcaje" bson:"rolMarcaje"`
 	Tipo                   TipoMarcaje          `json:"tipo" bson:"tipo"`
 	Resultado              ResultadoMarcaje     `json:"resultado" bson:"resultado"`
