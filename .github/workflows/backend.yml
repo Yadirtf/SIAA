@@ -30,6 +30,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # TruffleHog escanea el rango de commits del PR: necesita el historial completo.
+          fetch-depth: 0
 
       - uses: actions/setup-go@v5
         with:
@@ -53,7 +56,8 @@ jobs:
       - name: Escaneo de secretos (T-PLT-02.4)
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./backend
+          # El escaneo git requiere la raíz del repositorio (./backend no es un repo git).
+          path: ./
 
       - name: Vulnerabilidades de dependencias (T-PLT-02.4)
         run: |
