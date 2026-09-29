@@ -40,7 +40,21 @@ type Service struct {
 	auditoriaRepo  repository.AuditoriaRepository
 	clk            shared.Clock
 	log            *applog.Logger
+	resolutor      ResolutorParametros
 }
+
+// AmbitoParametros identifica los niveles de la cascada que aplican a una asignación (RN-002).
+type AmbitoParametros struct {
+	SedeID       string
+	FacultadID   string
+	BloqueID     string
+	EspacioID    string
+	AsignacionID string
+}
+
+// ResolutorParametros resuelve la cascada Global → Sede → Facultad → Bloque → Aula → Asignación
+// y devuelve el valor efectivo de cada clave del catálogo.
+type ResolutorParametros func(ctx context.Context, ambito AmbitoParametros) (map[string]interface{}, error)
 
 func NewService(
 	periodoRepo repository.PeriodoRepository,
@@ -64,6 +78,13 @@ func NewService(
 		clk:            clk,
 		log:            log,
 	}
+}
+
+// WithResolutorParametros inyecta la resolución jerárquica usada al congelar parámetros en
+// cada sesión generada (US-ACA-05 AC-02, CA-008).
+func (s *Service) WithResolutorParametros(r ResolutorParametros) *Service {
+	s.resolutor = r
+	return s
 }
 
 // WithSesiones inyecta el repositorio de sesiones en el servicio académico.

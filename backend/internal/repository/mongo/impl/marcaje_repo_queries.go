@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/siaa/backend/internal/domain/academico"
@@ -117,9 +118,10 @@ func (r *marcajeMongoRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Contex
 		}
 		// Verificar si ya tiene un marcaje de entrada no anulado
 		count, errMarc := r.col.CountDocuments(ctx, bson.M{
-			"sesionId": sDoc.ID,
-			"tipo":     marcaje.TipoEntrada,
-			"anulado":  false,
+			"sesionId":    sDoc.ID,
+			"tipo":        marcaje.TipoEntrada,
+			"anulado":     false,
+			"consolidado": true,
 		})
 		if errMarc == nil && count == 0 {
 			resultado = append(resultado, docToSesion(&sDoc))
@@ -146,6 +148,7 @@ func (r *marcajeMongoRepo) RevertirAusenciaPorOffline(ctx context.Context, sesio
 	updateAusencia := bson.M{
 		"$set": bson.M{
 			"anulado":      true,
+			"consolidado":  false,
 			"motivoAjuste": "Reversión automática por sincronización posterior de marcaje offline válido (US-MAR-07 AC-05)",
 			"ajustadoPor":  "SISTEMA_OFFLINE_SYNC",
 			"ajustadoEn":   ahora,
@@ -161,7 +164,11 @@ func (r *marcajeMongoRepo) RevertirAusenciaPorOffline(ctx context.Context, sesio
 
 	// 3. Actualizar estado de la sesión a REALIZADA
 	colSesiones := r.db.Collection("sesiones")
-	_, _ = colSesiones.UpdateOne(ctx, bson.M{"_id": sesionID}, bson.M{
+	sesionOID, errOID := primitive.ObjectIDFromHex(sesionID)
+	if errOID != nil {
+		return nil
+	}
+	_, _ = colSesiones.UpdateOne(ctx, bson.M{"_id": sesionOID}, bson.M{
 		"$set": bson.M{
 			"estado":        academico.EstadoSesionRealizada,
 			"actualizadoEn": ahora,

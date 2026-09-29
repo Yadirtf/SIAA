@@ -43,6 +43,10 @@ func NewRouter(
 	}
 
 	e := echo.New()
+	// La IP del cliente (límite de tasa y auditoría) solo se toma de X-Forwarded-For cuando la
+	// petición llega desde un proxy de red privada (Traefik); así un cliente no puede
+	// falsificar la cabecera para esquivar el límite de 20 intentos/min (US-AUT-02 AC-03).
+	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.HideBanner = true
 	e.HidePort = true
 

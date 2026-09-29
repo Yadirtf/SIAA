@@ -72,8 +72,9 @@ class GeoRemoteDataSource {
     var url = ApiConstants.espacios;
     final params = <String>[];
     if (sedeId != null && sedeId.isNotEmpty) params.add('sedeId=$sedeId');
-    if (bloqueId != null && bloqueId.isNotEmpty)
+    if (bloqueId != null && bloqueId.isNotEmpty) {
       params.add('bloqueId=$bloqueId');
+    }
     if (params.isNotEmpty) {
       url += '?${params.join('&')}';
     }

@@ -43,6 +43,7 @@ func (r *marcajeMongoRepo) Crear(ctx context.Context, m *marcaje.Marcaje) error 
 	if m.Timestamp.IsZero() {
 		m.Timestamp = m.TimestampServidor
 	}
+	m.Consolidado = !m.Anulado && m.ConsolidaSesion()
 
 	_, err := r.col.InsertOne(ctx, m)
 	if err != nil {
@@ -81,8 +82,9 @@ func (r *marcajeMongoRepo) ObtenerPrevio(ctx context.Context, sesionID, usuarioI
 			{"usuarioId": usuarioID},
 			{"docenteId": usuarioID},
 		},
-		"tipo":    tipo,
-		"anulado": false,
+		"tipo":        tipo,
+		"anulado":     false,
+		"consolidado": true,
 	}
 
 	var m marcaje.Marcaje
@@ -161,6 +163,15 @@ func (r *marcajeMongoRepo) ActualizarAjuste(ctx context.Context, id string, nuev
 	if nuevoResultado != "" {
 		update["$set"].(bson.M)["resultado"] = nuevoResultado
 	}
+	// Recalcular si el registro ocupa la ranura de idempotencia tras el ajuste.
+	var original marcaje.Marcaje
+	if err := r.col.FindOne(ctx, bson.M{"_id": id}).Decode(&original); err != nil {
+		return nil, fmt.Errorf("actualizar ajuste marcaje: %w", err)
+	}
+	if nuevoResultado != "" {
+		original.Resultado = nuevoResultado
+	}
+	update["$set"].(bson.M)["consolidado"] = !anulado && original.ConsolidaSesion()
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	var actualizado marcaje.Marcaje

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/siaa/backend/internal/domain/shared"
 )
 
 // DatosMensaje contiene los datos contextuales para interpolar en los mensajes de usuario.
@@ -29,7 +31,7 @@ func GenerarMensaje(res ResultadoMarcaje, motivo MotivoRechazo, datos DatosMensa
 	switch res {
 	case ResultadoPresente:
 		if !datos.Hora.IsZero() {
-			return fmt.Sprintf("Asistencia registrada exitosamente a las %s.", datos.Hora.Format("15:04"))
+			return fmt.Sprintf("Asistencia registrada exitosamente a las %s.", shared.HoraLocal(datos.Hora))
 		}
 		return "Asistencia registrada exitosamente a tiempo."
 

@@ -53,16 +53,34 @@ func esFechaExcluida(fecha time.Time, sedeID, facultadID string, excepciones []*
 	return false, ""
 }
 
-func resolverParametrosCongelados(asig *academico.Asignacion) map[string]interface{} {
+// resolverParametrosCongelados combina los parámetros efectivos de la cascada jerárquica
+// (o los valores por defecto si no hay resolutor) con los overrides propios de la asignación,
+// que tienen la mayor precedencia. Los overrides se normalizan a la clave del catálogo para
+// aceptar tanto "holgura_entrada_despues_min" como "holguraEntradaDespuesMin" (SRS §6.2).
+func resolverParametrosCongelados(base map[string]interface{}, asig *academico.Asignacion) map[string]interface{} {
 	congelados := make(map[string]interface{})
 	for k, v := range parametro.ValoresPorDefecto() {
 		congelados[string(k)] = v
 	}
-	// Aplicar overrides específicos de la asignación (AC-02)
+	for k, v := range base {
+		congelados[k] = v
+	}
+	catalogo := make(map[string]string, len(congelados))
+	for k := range parametro.ValoresPorDefecto() {
+		catalogo[normalizarClaveParametro(string(k))] = string(k)
+	}
 	for k, v := range asig.ParametrosOverride() {
+		if clave, ok := catalogo[normalizarClaveParametro(k)]; ok {
+			congelados[clave] = v
+			continue
+		}
 		congelados[k] = v
 	}
 	return congelados
+}
+
+func normalizarClaveParametro(k string) string {
+	return strings.ToLower(strings.ReplaceAll(k, "_", ""))
 }
 
 func calcularTiemposSesion(fecha time.Time, horaInicio, horaFin string, loc *time.Location) (time.Time, time.Time, error) {

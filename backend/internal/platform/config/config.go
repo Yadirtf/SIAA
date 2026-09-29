@@ -46,6 +46,11 @@ type Config struct {
 
 	// Recuperación de contraseña
 	RecoveryTokenMinutes int
+	RecoveryURL          string
+
+	// Superadministrador de arranque (solo se crea si no existe)
+	AdminInicialCorreo   string
+	AdminInicialPassword string
 	PasswordMinLength    int
 
 	// Parámetros GPS por defecto — SRS §3.5
@@ -108,6 +113,9 @@ func Load() (*Config, error) {
 
 	// Recuperación
 	cfg.RecoveryTokenMinutes = getEnvInt("RECOVERY_TOKEN_MINUTES", 30)
+	cfg.RecoveryURL = getEnv("RECOVERY_URL", "")
+	cfg.AdminInicialCorreo = getEnv("ADMIN_INICIAL_CORREO", "")
+	cfg.AdminInicialPassword = getEnv("ADMIN_INICIAL_PASSWORD", "")
 	cfg.PasswordMinLength = getEnvInt("PASSWORD_MIN_LENGTH", 12)
 
 	// Parámetros GPS por defecto

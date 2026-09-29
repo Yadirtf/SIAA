@@ -148,8 +148,11 @@ func CreateIndexes(ctx context.Context, db *mongo.Database) error {
 				},
 				Options: options.Index().
 					SetUnique(true).
-					SetName("marcajes_sesion_usuario_tipo_unique").
-					SetPartialFilterExpression(bson.D{{Key: "anulado", Value: false}}),
+					SetName(indiceIdempotenciaMarcajes).
+					SetPartialFilterExpression(bson.D{
+						{Key: "anulado", Value: false},
+						{Key: "consolidado", Value: true},
+					}),
 			},
 		},
 		{

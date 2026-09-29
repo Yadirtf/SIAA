@@ -182,10 +182,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 	// Consultar si ya existe marcaje de entrada para esta sesión y docente
 	previo, _ := uc.marcajeRepo.ObtenerPrevio(ctx, s.ID(), docenteID, domainMarcaje.TipoEntrada)
 
-	params := map[string]interface{}{
-		"precisionGpsMaxMetros": 35.0,
-		"umbralTardanzaMin":     10,
-	}
+	params := ParametrosPublicos(ParametrosDesdeSesion(s.ParametrosCongelados()))
 
 	return &DetalleSesionActiva{
 		Sesion: &SesionItemDTO{

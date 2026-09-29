@@ -21,6 +21,7 @@ import (
 	mongoRepo "github.com/siaa/backend/internal/repository/mongo"
 	"github.com/siaa/backend/internal/repository/mongo/impl"
 	"github.com/siaa/backend/internal/repository/mongo/migrations"
+	"github.com/siaa/backend/internal/repository/mongo/seed"
 	apphttp "github.com/siaa/backend/internal/transport/http"
 	"github.com/siaa/backend/internal/transport/http/handler"
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
@@ -32,6 +33,12 @@ import (
 )
 
 func main() {
+	// Sonda de salud para el HEALTHCHECK del contenedor (imagen scratch sin curl):
+	// consulta /health del proceso que ya está corriendo y sale con 0 o 1.
+	if len(os.Args) > 1 && os.Args[1] == "--health-check" {
+		os.Exit(sondaSalud())
+	}
+
 	// Cargar .env en entornos de desarrollo (ignorar error si no existe)
 	_ = godotenv.Load(".env", "../.env")
 
@@ -68,7 +75,10 @@ func main() {
 	log.Info("MongoDB conectado")
 
 	// Ejecutar migraciones (índices + semillas) — idempotente
-	if err := migrations.Run(ctx, mongoClient.DB()); err != nil {
+	if err := migrations.Run(ctx, mongoClient.DB(), cfg.Env != "production", seed.AdminInicial{
+		Correo:   cfg.AdminInicialCorreo,
+		Password: cfg.AdminInicialPassword,
+	}); err != nil {
 		log.Error("migraciones fallidas", applog.Err(err))
 		os.Exit(1)
 	}
@@ -99,8 +109,19 @@ func main() {
 	parametroRepo := impl.NewParametroRepo(mongoClient.DB())
 
 	// ─── Infraestructura ──────────────────────────────────────
-	// En producción se inyecta la implementación SMTP en lugar del noop.
-	appMailer := mailer.NewNoopMailer(log)
+	// Con SMTP_HOST definido se envían correos reales (MailHog en desarrollo); si no, solo se registran.
+	var appMailer auth.Mailer = mailer.NewNoopMailer(log)
+	if cfg.SMTPHost != "" {
+		appMailer = mailer.NewSMTPMailer(mailer.SMTPConfig{
+			Host:     cfg.SMTPHost,
+			Port:     cfg.SMTPPort,
+			User:     cfg.SMTPUser,
+			Pass:     cfg.SMTPPass,
+			From:     cfg.SMTPFrom,
+			LinkBase: cfg.RecoveryURL,
+			Minutos:  cfg.RecoveryTokenMinutes,
+		})
+	}
 
 	dispositivoRepo := impl.NewDispositivoRepository(mongoClient)
 
@@ -141,10 +162,29 @@ func main() {
 	).WithSesiones(sesionRepo)
 
 	parametroSvc := usecasePar.New(parametroRepo)
+	// RN-002: las sesiones se generan con los parámetros efectivos de la cascada jerárquica.
+	acaSvc.WithResolutorParametros(func(ctx context.Context, a usecaseAca.AmbitoParametros) (map[string]interface{}, error) {
+		snap, err := parametroSvc.ResolverEfectivos(ctx, usecasePar.EspecCascada{
+			SedeID:       a.SedeID,
+			FacultadID:   a.FacultadID,
+			BloqueID:     a.BloqueID,
+			EspacioID:    a.EspacioID,
+			AsignacionID: a.AsignacionID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		valores := make(map[string]interface{}, len(snap))
+		for clave, efectivo := range snap {
+			valores[string(clave)] = efectivo.Origen.Valor
+		}
+		return valores, nil
+	})
 
 	// ─── Motor de Marcaje (EP-06) ─────────────────────────────
 	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
-	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil)
+	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
+		WithAsignaciones(asignacionRepo)
 	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo)
 	historialUC := usecaseMarcaje.NewHistorialUseCase(marcajeRepo)
 	ajustarUC := usecaseMarcaje.NewAjustarMarcajeUseCase(marcajeRepo, sesionRepo, auditoriaRepo)
@@ -165,7 +205,11 @@ func main() {
 	// ─── Handlers ─────────────────────────────────────────────
 	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH := handler.NewAuthHandler(authSvc)
-	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
+	openapiPath := os.Getenv("OPENAPI_SPEC_PATH")
+	if openapiPath == "" {
+		openapiPath = "../contracts/openapi.json"
+	}
+	openapiH := handler.NewOpenAPIHandler(openapiPath)
 	rolesH := handler.NewRolesHandler(rbacSvc)
 	geoH := handler.NewGeoHandler(geoSvc)
 	acaH := handler.NewAcademicoHandler(acaSvc)
@@ -224,4 +268,22 @@ func main() {
 	}
 
 	log.Info("servidor detenido correctamente")
+}
+
+// sondaSalud consulta GET /api/v1/health en el puerto local del servicio.
+func sondaSalud() int {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:" + port + "/api/v1/health")
+	if err != nil {
+		return 1
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
 }
