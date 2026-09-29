@@ -115,7 +115,7 @@ func NewRouter(
 			http.MethodDelete,
 			http.MethodOptions,
 		},
-		ExposeHeaders:    []string{mw.HeaderCorrelationID},
+		ExposeHeaders:    []string{mw.HeaderCorrelationID, "X-Total-Count"},
 		AllowCredentials: true,
 		MaxAge:           86400,
 	}))

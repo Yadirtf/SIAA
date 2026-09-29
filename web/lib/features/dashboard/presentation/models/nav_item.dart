@@ -15,6 +15,7 @@ enum NavSection {
 
   parametros,
   marcajes,
+  usuarios,
 }
 
 class NavItem {
@@ -23,12 +24,21 @@ class NavItem {
   final IconData icon;
   final String category;
 
+  /// Permiso RBAC requerido para mostrar la entrada (null = siempre visible).
+  final String? permiso;
+
   const NavItem({
     required this.section,
     required this.title,
     required this.icon,
     required this.category,
+    this.permiso,
   });
+
+  /// Entradas visibles para un usuario con los [permisos] indicados.
+  static List<NavItem> visiblesPara(List<String> permisos) => items
+      .where((i) => i.permiso == null || permisos.contains(i.permiso))
+      .toList();
 
   static const List<NavItem> items = [
     NavItem(
@@ -110,6 +120,12 @@ class NavItem {
       icon: Icons.how_to_reg_rounded,
       category: 'CONTROL Y ASISTENCIA',
     ),
+    NavItem(
+      section: NavSection.usuarios,
+      title: 'Usuarios',
+      icon: Icons.people_alt_outlined,
+      category: 'ADMINISTRACIÓN',
+      permiso: 'usuario:leer',
+    ),
   ];
 }
-

@@ -19,6 +19,7 @@ import '../../../geo/presentation/screens/solapamientos_screen.dart';
 import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
 import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
+import '../../../usuarios/presentation/screens/usuarios_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/topbar.dart';
@@ -79,6 +80,8 @@ class _DashboardShellState extends State<DashboardShell> {
         return const ParametrosScreen();
       case NavSection.marcajes:
         return const MarcajesAdminScreen();
+      case NavSection.usuarios:
+        return const UsuariosScreen();
     }
   }
 
