@@ -15,10 +15,7 @@
 package auth
 
 import (
-	"context"
-
 	"github.com/siaa/backend/internal/domain/shared"
-	"github.com/siaa/backend/internal/domain/user"
 	"github.com/siaa/backend/internal/platform/config"
 	"github.com/siaa/backend/internal/repository"
 )
@@ -61,9 +58,4 @@ func NewService(
 func (s *Service) WithDispositivos(dispositivos repository.DispositivoRepository) *Service {
 	s.dispositivos = dispositivos
 	return s
-}
-
-// ListarUsuarios retorna los usuarios registrados activos para administración y selección en interfaz.
-func (s *Service) ListarUsuarios(ctx context.Context, limite int) ([]*user.Usuario, error) {
-	return s.usuarios.Listar(ctx, limite)
 }

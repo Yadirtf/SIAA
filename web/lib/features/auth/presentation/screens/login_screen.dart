@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'recuperar_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,24 @@ class _LoginScreenState extends State<LoginScreen> {
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // El enlace del correo de recuperación abre la app con ?token=… (US-AUT-04).
+    final token = Uri.base.queryParameters['token'];
+    if (token != null && token.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _abrirRecuperacion(token),
+      );
+    }
+  }
+
+  void _abrirRecuperacion([String? token]) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => RecuperarPasswordScreen(token: token)),
+    );
+  }
 
   @override
   void dispose() {
@@ -81,7 +100,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         _buildCorreoField(),
                         const SizedBox(height: 20),
                         _buildPasswordField(),
-                        const SizedBox(height: 28),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _abrirRecuperacion,
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         _buildSubmitButton(),
                         const SizedBox(height: 20),
                         _buildFooter(),

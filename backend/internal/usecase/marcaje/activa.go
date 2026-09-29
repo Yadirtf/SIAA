@@ -66,6 +66,7 @@ type SesionActivaUseCase struct {
 	marcajeRepo repository.MarcajeRepository
 	// asignacionRepo permite informar la modalidad real de la sesión (virtual, híbrida).
 	asignacionRepo repository.AsignacionRepository
+	estructuraRepo repository.EstructuraRepository
 }
 
 // WithAsignaciones habilita que la sesión activa informe su modalidad (RF-ACA-013).
@@ -91,7 +92,7 @@ func (uc *SesionActivaUseCase) ObtenerSesionActiva(ctx context.Context, docenteI
 	if ahora.IsZero() {
 		ahora = time.Now().UTC()
 	}
-	fechaHoy := ahora.Format("2006-01-02")
+	fechaHoy := fechaInstitucional(ahora)
 
 	sesiones, err := uc.sesionRepo.ListByDocenteYFecha(ctx, docenteID, fechaHoy)
 	if err != nil {
@@ -195,8 +196,8 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 	return &DetalleSesionActiva{
 		Sesion: &SesionItemDTO{
 			ID:         s.ID(),
-			Asignatura: s.AsignaturaID(),
-			Grupo:      s.GrupoID(),
+			Asignatura: uc.nombreAsignatura(ctx, s.AsignaturaID()),
+			Grupo:      uc.numeroGrupo(ctx, s.GrupoID()),
 			Espacio: EspacioItemDTO{
 				ID:     s.EspacioID(),
 				Codigo: codigoEspacio,
@@ -219,7 +220,7 @@ func (uc *SesionActivaUseCase) ListarSesionesHoy(ctx context.Context, docenteID 
 	if ahora.IsZero() {
 		ahora = time.Now().UTC()
 	}
-	fechaHoy := ahora.Format("2006-01-02")
+	fechaHoy := fechaInstitucional(ahora)
 
 	sesiones, err := uc.sesionRepo.ListByDocenteYFecha(ctx, docenteID, fechaHoy)
 	if err != nil {
@@ -240,8 +241,8 @@ func (uc *SesionActivaUseCase) ListarSesionesHoy(ctx context.Context, docenteID 
 
 		resultado = append(resultado, ResumenSesionHoy{
 			SesionID:         s.ID(),
-			Asignatura:       s.AsignaturaID(),
-			Grupo:            s.GrupoID(),
+			Asignatura:       uc.nombreAsignatura(ctx, s.AsignaturaID()),
+			Grupo:            uc.numeroGrupo(ctx, s.GrupoID()),
 			EspacioCodigo:    codigoEspacio,
 			InicioProgramado: s.InicioProgramado(),
 			FinProgramado:    s.FinProgramado(),

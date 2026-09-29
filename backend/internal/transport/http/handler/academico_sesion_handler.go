@@ -8,7 +8,9 @@ import (
 	"github.com/labstack/echo/v4"
 
 	domainAca "github.com/siaa/backend/internal/domain/academico"
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
+	"github.com/siaa/backend/internal/transport/http/middleware"
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
 )
 
@@ -51,6 +53,13 @@ type SesionResponseDTO struct {
 	EspacioVersionGeometria int                    `json:"espacioVersionGeometria"`
 	ParametrosCongelados    map[string]interface{} `json:"parametrosCongelados"`
 	MotivoCancelacion       string                 `json:"motivoCancelacion,omitempty"`
+	// Nombres legibles para la interfaz (asignatura, grupo, aula y docentes).
+	AsignaturaCodigo string   `json:"asignaturaCodigo,omitempty"`
+	AsignaturaNombre string   `json:"asignaturaNombre,omitempty"`
+	GrupoNumero      string   `json:"grupoNumero,omitempty"`
+	EspacioCodigo    string   `json:"espacioCodigo,omitempty"`
+	EspacioNombre    string   `json:"espacioNombre,omitempty"`
+	DocentesNombres  []string `json:"docentesNombres,omitempty"`
 }
 
 // GenerarSesiones maneja POST /api/v1/periodos/:id/generar-sesiones (US-ACA-05).
@@ -80,6 +89,7 @@ func (h *AcademicoHandler) ListarSesiones(c echo.Context) error {
 		DocenteID:    c.QueryParam("docenteId"),
 		EspacioID:    c.QueryParam("espacioId"),
 		Fecha:        c.QueryParam("fecha"),
+		Alcance:      middleware.FiltroAlcanceDe(c),
 	}
 	if estStr := c.QueryParam("estado"); estStr != "" {
 		st := domainAca.EstadoSesion(estStr)
@@ -91,9 +101,10 @@ func (h *AcademicoHandler) ListarSesiones(c echo.Context) error {
 		return mapearErrorAcademico(err)
 	}
 
+	nombres := h.svc.NombresDeSesiones(c.Request().Context(), sesiones)
 	res := make([]SesionResponseDTO, len(sesiones))
 	for i, s := range sesiones {
-		res[i] = sesionToDTO(s)
+		res[i] = conNombres(sesionToDTO(s), nombres[s.ID()])
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -105,7 +116,11 @@ func (h *AcademicoHandler) ObtenerSesion(c echo.Context) error {
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}
-	return c.JSON(http.StatusOK, sesionToDTO(sesion))
+	if !middleware.AlcanceDe(c).PermiteSesion(sesion.DocenteIDs(), sesion.FacultadID(), sesion.SedeID()) {
+		return shared.NewScopeError()
+	}
+	nombres := h.svc.NombresDeSesiones(c.Request().Context(), []*domainAca.Sesion{sesion})
+	return c.JSON(http.StatusOK, conNombres(sesionToDTO(sesion), nombres[sesion.ID()]))
 }
 
 // CancelarSesion maneja POST /api/v1/sesiones/:id/cancelar (US-ACA-08).
@@ -194,4 +209,10 @@ func sesionToDTO(s *domainAca.Sesion) SesionResponseDTO {
 		dto.VentanaSalidaCierra = &v
 	}
 	return dto
+}
+
+func conNombres(d SesionResponseDTO, n usecaseAca.NombresSesion) SesionResponseDTO {
+	d.AsignaturaCodigo, d.AsignaturaNombre, d.GrupoNumero = n.AsignaturaCodigo, n.AsignaturaNombre, n.GrupoNumero
+	d.EspacioCodigo, d.EspacioNombre, d.DocentesNombres = n.EspacioCodigo, n.EspacioNombre, n.Docentes
+	return d
 }

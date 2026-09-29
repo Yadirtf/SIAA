@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/dto"
@@ -53,9 +52,11 @@ func (h *MarcajeAdminHandler) ListarMarcajes(c echo.Context) error {
 		Origen:    domainMarcaje.OrigenMarcaje(c.QueryParam("origen")),
 	}
 
-	// Docentes y estudiantes marcan pero no administran marcajes: solo ven los propios.
-	if claims, ok := middleware.GetClaims(c); ok && soloMarcajesPropios(claims.Permisos) {
-		filtros.UsuarioID = claims.UsuarioID
+	// RF-ROL-003: cada rol ve solo su alcance (propios, su facultad/sede o todo).
+	filtros.Alcance = middleware.FiltroAlcanceDe(c)
+	if filtros.Alcance != nil && filtros.Alcance.UsuarioID != "" {
+		// Quien solo ve lo propio consulta siempre sus marcajes, pida lo que pida (RF-ROL-003).
+		filtros.UsuarioID = filtros.Alcance.UsuarioID
 	}
 
 	if desdeStr := c.QueryParam("desde"); desdeStr != "" {
@@ -102,6 +103,8 @@ func (h *MarcajeAdminHandler) AjustarMarcaje(c echo.Context) error {
 		Anulado:        req.Anulado,
 		Motivo:         req.Motivo,
 	}
+	alcance := middleware.AlcanceDe(c)
+	sol.Alcance = &alcance
 
 	m, err := h.ajustarUC.Ajustar(c.Request().Context(), sol, claims.UsuarioID)
 	if err != nil {
@@ -135,6 +138,8 @@ func (h *MarcajeAdminHandler) CrearManual(c echo.Context) error {
 		Resultado: domainMarcaje.ResultadoMarcaje(req.Resultado),
 		Motivo:    req.Motivo,
 	}
+	alcanceManual := middleware.AlcanceDe(c)
+	sol.Alcance = &alcanceManual
 
 	m, err := h.ajustarUC.CrearManual(c.Request().Context(), sol, claims.UsuarioID)
 	if err != nil {
@@ -213,14 +218,4 @@ func (h *MarcajeAdminHandler) ListaManual(c echo.Context) error {
 		"mensaje":     "Lista manual registrada y auditada exitosamente",
 		"estudiantes": len(items),
 	})
-}
-
-// soloMarcajesPropios indica si el rol registra sus propios marcajes sin poder ajustarlos
-// (docente, estudiante): su consulta se limita a sus registros (RF-ROL-003).
-func soloMarcajesPropios(permisos []string) bool {
-	perms := make([]rbac.Permission, len(permisos))
-	for i, p := range permisos {
-		perms[i] = rbac.Permission(p)
-	}
-	return rbac.HasPermission(perms, rbac.PermMarcajeCrear) && !rbac.HasPermission(perms, rbac.PermMarcajeAjustar)
 }

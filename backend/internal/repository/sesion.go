@@ -17,6 +17,7 @@ type SesionFilter struct {
 	EspacioID    string
 	Fecha        string
 	Estado       *academico.EstadoSesion
+	Alcance      *FiltroAlcance
 }
 
 // SesionRepository define las operaciones de persistencia sobre sesiones.

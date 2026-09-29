@@ -2,6 +2,7 @@
 // Desacopla la declaracion de rutas de main.dart
 import 'package:flutter/material.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
+import '../../../features/auth/presentation/screens/recuperar_password_screen.dart';
 import '../../../features/splash/presentation/screens/splash_router.dart';
 import '../presentation/screens/app_shell.dart';
 
@@ -11,6 +12,7 @@ class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const shell = '/shell';
+  static const recuperarPassword = RecuperarPasswordScreen.routeName;
 
   // Sub-rutas del shell
   static const inicio = '/shell/inicio';
@@ -32,6 +34,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
         splash: (_) => const SplashRouter(),
         login: (_) => const LoginScreen(),
+        recuperarPassword: (_) => const RecuperarPasswordScreen(),
         shell: (_) => const AppShell(),
         inicio: (_) => const AppShell(),
         horario: (_) => const AppShell(),

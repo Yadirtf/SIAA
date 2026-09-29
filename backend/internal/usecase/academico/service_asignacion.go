@@ -6,7 +6,6 @@ import (
 	"time"
 
 	domainAca "github.com/siaa/backend/internal/domain/academico"
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
 	applog "github.com/siaa/backend/internal/platform/log"
 )
@@ -41,19 +40,6 @@ type ResultadoAsignacion struct {
 }
 
 func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd CrearAsignacionCmd) (*ResultadoAsignacion, error) {
-	// 1. Validar alcance ABAC del actor si es coordinador (US-ACA-03 AC-07)
-	if cmd.FacultadID != "" && (actor.Rol == string(rbac.RolCoordinador) || len(actor.Scopes) > 0) {
-		scopes := actor.Scopes
-		if len(scopes) == 0 && s.usuarioRepo != nil && actor.UsuarioID != "" {
-			if u, err := s.usuarioRepo.FindByID(ctx, actor.UsuarioID); err == nil && u != nil {
-				scopes = u.Ambitos
-			}
-		}
-		if len(scopes) > 0 && !rbac.IsInScope(scopes, rbac.ScopeFacultad, cmd.FacultadID) {
-			return nil, ErrFueraDeAmbitoFacultad
-		}
-	}
-
 	// 2. Validar periodo
 	periodo, err := s.periodoRepo.GetByID(ctx, cmd.PeriodoID)
 	if err != nil || periodo == nil {
@@ -61,6 +47,10 @@ func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd 
 	}
 	if err := periodo.PuedeModificar(); err != nil {
 		return nil, err
+	}
+	// Alcance ABAC: el coordinador solo programa en su facultad o sede (US-ACA-03 AC-07).
+	if !actor.permiteFacultad(cmd.FacultadID, periodo.SedeID()) {
+		return nil, ErrFueraDeAmbitoFacultad
 	}
 
 	// 3. Construir y validar franja horaria (US-ACA-02)
@@ -141,5 +131,14 @@ func (s *Service) ListarAsignaciones(ctx context.Context, periodoID string) ([]d
 }
 
 func (s *Service) EliminarAsignacion(ctx context.Context, actor ContextoActor, id string) error {
+	if actor.alcanceEfectivo() != nil {
+		asig, err := s.asignacionRepo.GetByID(ctx, id)
+		if err != nil || asig == nil {
+			return ErrAsignacionNoEncontrada
+		}
+		if !actor.permiteFacultad(asig.FacultadID(), s.sedeDePeriodo(ctx, asig.PeriodoID())) {
+			return ErrFueraDeAmbitoFacultad
+		}
+	}
 	return s.asignacionRepo.DeleteLogico(ctx, id)
 }

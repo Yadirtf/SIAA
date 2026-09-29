@@ -44,6 +44,9 @@ func (r *marcajeMongoRepo) ListarConFiltros(ctx context.Context, f repository.Fi
 	if f.Anulado != nil {
 		filtro["anulado"] = *f.Anulado
 	}
+	if cond := condicionAlcance(f.Alcance, "usuarioId"); cond != nil {
+		filtro["$and"] = []bson.M{cond}
+	}
 
 	if f.Desde != nil || f.Hasta != nil {
 		rango := bson.M{}

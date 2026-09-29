@@ -101,6 +101,49 @@
         ],
         "type": "object"
       },
+      "ActualizarUsuarioRequest": {
+        "properties": {
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "format": "email",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "correo",
+          "nombre",
+          "apellido"
+        ],
+        "type": "object"
+      },
+      "Ambito": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "SEDE",
+              "FACULTAD",
+              "BLOQUE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id"
+        ],
+        "type": "object"
+      },
       "BloqueDTO": {
         "properties": {
           "activo": {
@@ -299,6 +342,46 @@
         "required": [
           "codigo",
           "nombre"
+        ],
+        "type": "object"
+      },
+      "CrearUsuarioRequest": {
+        "properties": {
+          "ambitos": {
+            "items": {
+              "$ref": "#/components/schemas/Ambito"
+            },
+            "type": "array"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "format": "email",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "password": {
+            "description": "Opcional. Sin contraseña se envía una invitación por correo para definirla.",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RolAsignado"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "correo",
+          "nombre",
+          "apellido",
+          "roles"
         ],
         "type": "object"
       },
@@ -545,6 +628,52 @@
         ],
         "type": "object"
       },
+      "ImportacionUsuariosResponse": {
+        "properties": {
+          "confirmado": {
+            "type": "boolean"
+          },
+          "creados": {
+            "type": "integer"
+          },
+          "filas": {
+            "items": {
+              "properties": {
+                "correo": {
+                  "type": "string"
+                },
+                "creado": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "fila": {
+                  "type": "integer"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "usuarioId": {
+                  "type": "string"
+                },
+                "valida": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "validas": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "correo": {
@@ -615,6 +744,25 @@
         },
         "required": [
           "refreshToken"
+        ],
+        "type": "object"
+      },
+      "RolAsignado": {
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "vigenciaFin": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vigenciaInicio": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nombre"
         ],
         "type": "object"
       },
@@ -717,6 +865,57 @@
           "tipoToken",
           "usuario"
         ],
+        "type": "object"
+      },
+      "UsuarioDTO": {
+        "properties": {
+          "activo": {
+            "type": "boolean"
+          },
+          "ambitos": {
+            "items": {
+              "$ref": "#/components/schemas/Ambito"
+            },
+            "type": "array"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "bloqueado": {
+            "type": "boolean"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rolesDetalle": {
+            "items": {
+              "$ref": "#/components/schemas/RolAsignado"
+            },
+            "type": "array"
+          },
+          "totpActivado": {
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "UsuarioInfo": {
@@ -3477,6 +3676,529 @@
         ]
       }
     },
+    "/usuarios": {
+      "get": {
+        "description": "Usuarios visibles según el alcance del actor (RF-ROL-003). El total va en la cabecera X-Total-Count. Requiere usuario:leer.",
+        "operationId": "listarUsuarios",
+        "parameters": [
+          {
+            "description": "Texto en nombre, apellido, correo o documento",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "rol",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "activo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Usuarios"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Listar usuarios",
+        "tags": [
+          "usuarios"
+        ]
+      },
+      "post": {
+        "description": "Alta con roles y ámbitos, auditada (RF-ROL-005). Requiere usuario:crear.",
+        "operationId": "crearUsuario",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Correo o documento ya registrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos inválidos"
+          }
+        },
+        "summary": "Crear usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/importar": {
+      "post": {
+        "description": "CSV con encabezados correo, nombre, apellido, documento y opcionales roles (separados por |, DOCENTE por defecto) y ambitos (TIPO:id|...). Sin confirmar=true solo valida. Requiere usuario:crear.",
+        "operationId": "importarUsuarios",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "confirmar",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportacionUsuariosResponse"
+                }
+              }
+            },
+            "description": "Resultado por fila"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Importar usuarios por CSV",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}": {
+      "get": {
+        "description": "Requiere usuario:leer.",
+        "operationId": "obtenerUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrado"
+          }
+        },
+        "summary": "Obtener usuario",
+        "tags": [
+          "usuarios"
+        ]
+      },
+      "put": {
+        "description": "Requiere usuario:editar.",
+        "operationId": "actualizarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Actualizar datos del usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/activar": {
+      "post": {
+        "description": "Requiere usuario:editar.",
+        "operationId": "activarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Activar usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/ambitos": {
+      "put": {
+        "description": "Reemplaza sedes, facultades y bloques del usuario. Requiere usuario:editar.",
+        "operationId": "asignarAmbitos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ambitos": {
+                    "items": {
+                      "$ref": "#/components/schemas/Ambito"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Asignar ámbitos",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/desactivar": {
+      "post": {
+        "description": "Exige motivo y cierra las sesiones del usuario. Requiere usuario:editar.",
+        "operationId": "desactivarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Desactivar usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
     "/usuarios/{id}/desbloquear": {
       "post": {
         "description": "Desbloquea una cuenta bloqueada por exceder intentos fallidos (AC-02 US-AUT-02).\nRequiere token de acceso con permiso usuario:editar.\n",
@@ -3535,6 +4257,76 @@
           }
         },
         "summary": "Desbloquear cuenta de usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/roles": {
+      "put": {
+        "description": "Reemplaza los roles. Solo un superadministrador otorga SUPERADMIN. Requiere usuario:editar.",
+        "operationId": "asignarRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "roles": {
+                    "items": {
+                      "$ref": "#/components/schemas/RolAsignado"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Asignar roles",
         "tags": [
           "usuarios"
         ]

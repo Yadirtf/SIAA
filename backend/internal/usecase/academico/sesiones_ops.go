@@ -36,7 +36,7 @@ func (s *Service) ObtenerSesionPorID(ctx context.Context, id string) (*academico
 
 // CancelarSesion cancela administrativamente una sesión de clase con motivo auditado (US-ACA-08).
 func (s *Service) CancelarSesion(ctx context.Context, id, motivo string, actor ContextoActor) error {
-	sesion, err := s.ObtenerSesionPorID(ctx, id)
+	sesion, err := s.sesionEnAlcance(ctx, id, actor)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (s *Service) CancelarSesion(ctx context.Context, id, motivo string, actor C
 
 // ReasignarAulaSesion actualiza el aula de una sesión puntual y congela la versión de la nueva geometría (US-ACA-06).
 func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspacioID, motivo string, actor ContextoActor) (*academico.Sesion, error) {
-	sesion, err := s.ObtenerSesionPorID(ctx, sesionID)
+	sesion, err := s.sesionEnAlcance(ctx, sesionID, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDo
 		})
 	}
 
-	sesion, err := s.ObtenerSesionPorID(ctx, sesionID)
+	sesion, err := s.sesionEnAlcance(ctx, sesionID, actor)
 	if err != nil {
 		return nil, err
 	}

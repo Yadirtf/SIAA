@@ -10,6 +10,7 @@ import (
 	"time"
 
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 )
@@ -20,6 +21,8 @@ type SolicitudAjuste struct {
 	NuevoResultado domainMarcaje.ResultadoMarcaje `json:"nuevoResultado,omitempty"`
 	Anulado        bool                           `json:"anulado"`
 	Motivo         string                         `json:"motivo"` // Mínimo 20 caracteres obligatorio (AC-01)
+	// Alcance del administrador que ajusta (RF-ROL-003); nil solo en usos internos.
+	Alcance *rbac.Alcance `json:"-"`
 }
 
 // SolicitudMarcajeManual contiene los datos para crear un registro manual por contingencia.
@@ -29,6 +32,7 @@ type SolicitudMarcajeManual struct {
 	Tipo      domainMarcaje.TipoMarcaje      `json:"tipo"`
 	Resultado domainMarcaje.ResultadoMarcaje `json:"resultado"`
 	Motivo    string                         `json:"motivo"` // Mínimo 20 caracteres obligatorio
+	Alcance   *rbac.Alcance                  `json:"-"`
 }
 
 // AjustarMarcajeUseCase coordina las modificaciones con motivo obligatorio y bitácora de auditoría.
@@ -63,6 +67,9 @@ func (uc *AjustarMarcajeUseCase) Ajustar(ctx context.Context, req SolicitudAjust
 	}
 	if original == nil {
 		return nil, shared.NewNotFoundError("marcaje", req.MarcajeID)
+	}
+	if req.Alcance != nil && !req.Alcance.PermiteRegistroDe(original.UsuarioID, original.FacultadID, original.SedeID) {
+		return nil, shared.NewScopeError()
 	}
 
 	ahora := time.Now().UTC()
@@ -100,6 +107,17 @@ func (uc *AjustarMarcajeUseCase) CrearManual(ctx context.Context, req SolicitudM
 	motivo := strings.TrimSpace(req.Motivo)
 	if len(motivo) < 20 {
 		return nil, domainMarcaje.ErrMotivoInsuficiente
+	}
+	// La sesión debe existir y estar dentro del alcance de quien registra (RF-ROL-003).
+	s, err := uc.sesionRepo.FindByID(ctx, req.SesionID)
+	if err != nil {
+		return nil, fmt.Errorf("buscar sesión: %w", err)
+	}
+	if s == nil {
+		return nil, shared.NewNotFoundError("sesión", req.SesionID)
+	}
+	if req.Alcance != nil && !req.Alcance.PermiteSesion(s.DocenteIDs(), s.FacultadID(), s.SedeID()) {
+		return nil, shared.NewScopeError()
 	}
 
 	ahora := time.Now().UTC()

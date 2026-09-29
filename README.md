@@ -94,7 +94,7 @@ flutter run --dart-define=API_BASE_URL=http://localhost:8080/api/v1
 ```bash
 cd web
 flutter pub get
-flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080/api/v1
+flutter run -d chrome --web-port 5000 --dart-define=API_BASE_URL=http://localhost:8080/api/v1
 ```
 
 ## Servicios de desarrollo

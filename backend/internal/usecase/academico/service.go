@@ -27,6 +27,8 @@ type ContextoActor struct {
 	UsuarioID string
 	Rol       string
 	Scopes    []rbac.Scope
+	// Alcance efectivo calculado del token (RF-ROL-003). nil = uso interno sin restricción.
+	Alcance *rbac.Alcance
 }
 
 type Service struct {

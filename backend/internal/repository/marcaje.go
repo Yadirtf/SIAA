@@ -21,6 +21,7 @@ type FiltrosMarcaje struct {
 	Desde     *time.Time
 	Hasta     *time.Time
 	Anulado   *bool
+	Alcance   *FiltroAlcance
 }
 
 // MarcajeRepository define el contrato de persistencia inmutable y consultas de marcaje.

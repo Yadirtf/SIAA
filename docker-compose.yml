@@ -20,6 +20,8 @@ services:
       - SMTP_HOST=${SMTP_HOST:-mailhog}
       - SMTP_PORT=${SMTP_PORT:-1025}
       - SMTP_FROM=noreply@siaa.local
+      # Enlace del correo de recuperación: la web abre la pantalla con ?token=…
+      - RECOVERY_URL=${RECOVERY_URL:-http://localhost:5000/}
       - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS:-}
       - RATE_LIMIT_PER_MINUTE=120
     depends_on:

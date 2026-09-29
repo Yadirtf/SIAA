@@ -23,6 +23,7 @@ import (
 	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
 	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
 	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
+	usecaseUsuarios "github.com/siaa/backend/internal/usecase/usuarios"
 )
 
 // App agrupa lo que el proceso necesita para servir: el router HTTP y el worker de ausencias.
@@ -88,6 +89,11 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 		appMailer,
 	).WithDispositivos(dispositivoRepo)
 
+	// Gestión de usuarios: sin contraseña inicial se invita por correo; al desactivar se cierran sesiones.
+	usuariosSvc := usecaseUsuarios.NewService(usuarioRepo, rolRepo, auditoriaRepo, clk, cfg.PasswordMinLength).
+		WithInvitador(authSvc).
+		WithRevocador(authSvc)
+
 	geoSvc := usecaseGeo.NewService(
 		sedeRepo,
 		bloqueRepo,
@@ -136,7 +142,8 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
 		WithAsignaciones(asignacionRepo)
 	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo).
-		WithAsignaciones(asignacionRepo)
+		WithAsignaciones(asignacionRepo).
+		WithEstructura(estructuraRepo)
 	historialUC := usecaseMarcaje.NewHistorialUseCase(marcajeRepo)
 	ajustarUC := usecaseMarcaje.NewAjustarMarcajeUseCase(marcajeRepo, sesionRepo, auditoriaRepo)
 	syncUC := usecaseMarcaje.NewSyncOfflineUseCase(crearMarcajeUC, marcajeRepo)
@@ -155,9 +162,10 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC)
 	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC)
 	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
+	usuariosH := handler.NewUsuariosHandler(usuariosSvc)
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, usuariosH, auditoriaRepo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("inicializar rutas: %w", err)
 	}
