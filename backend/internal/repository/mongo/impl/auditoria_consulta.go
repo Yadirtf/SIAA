@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -96,10 +95,10 @@ func (r *auditoriaConsulta) Buscar(ctx context.Context, f repository.FiltroAudit
 // valorOpcional convierte el valor guardado (documento, texto u otro) a un tipo que se
 // serializa como JSON legible; los documentos anidados quedan como mapas.
 func valorOpcional(v bson.RawValue) interface{} {
-	if v.Type == 0 || v.Type == bsontype.Null {
+	if v.Type == 0 || v.Type == bson.TypeNull {
 		return nil
 	}
-	if v.Type == bsontype.EmbeddedDocument {
+	if v.Type == bson.TypeEmbeddedDocument {
 		var m bson.M
 		if err := v.Unmarshal(&m); err == nil {
 			return m

@@ -385,6 +385,47 @@
         ],
         "type": "object"
       },
+      "EntradaAuditoria": {
+        "properties": {
+          "accion": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorNombre": {
+            "type": "string"
+          },
+          "agenteUsuario": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "entidad": {
+            "type": "string"
+          },
+          "entidadId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ipOrigen": {
+            "type": "string"
+          },
+          "rolActivo": {
+            "type": "string"
+          },
+          "valorAnterior": {},
+          "valorNuevo": {}
+        },
+        "type": "object"
+      },
       "ErrorResponse": {
         "properties": {
           "codigo": {
@@ -588,6 +629,50 @@
         ],
         "type": "object"
       },
+      "FilaCumplimiento": {
+        "properties": {
+          "ajustadas": {
+            "type": "integer"
+          },
+          "ausenciasInjustificadas": {
+            "type": "integer"
+          },
+          "ausenciasJustificadas": {
+            "type": "integer"
+          },
+          "docenteId": {
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "horasDictadas": {
+            "type": "number"
+          },
+          "horasJustificadas": {
+            "type": "number"
+          },
+          "horasProgramadas": {
+            "type": "number"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "porcentajeCumplimiento": {
+            "type": "number"
+          },
+          "presentes": {
+            "type": "integer"
+          },
+          "sesiones": {
+            "type": "integer"
+          },
+          "tardanzas": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "commit": {
@@ -674,6 +759,119 @@
         },
         "type": "object"
       },
+      "Justificacion": {
+        "properties": {
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "adjuntos": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "mime": {
+                  "type": "string"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string"
+                },
+                "tamano": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "docenteId": {
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "RADICADA",
+              "EN_REVISION",
+              "APROBADA",
+              "RECHAZADA"
+            ],
+            "type": "string"
+          },
+          "facultadId": {
+            "type": "string"
+          },
+          "fechaSesion": {
+            "format": "date",
+            "type": "string"
+          },
+          "historial": {
+            "items": {
+              "properties": {
+                "actorId": {
+                  "type": "string"
+                },
+                "en": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "estado": {
+                  "enum": [
+                    "RADICADA",
+                    "EN_REVISION",
+                    "APROBADA",
+                    "RECHAZADA"
+                  ],
+                  "type": "string"
+                },
+                "observaciones": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombreSesion": {
+            "type": "string"
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "revisorId": {
+            "type": "string"
+          },
+          "sedeId": {
+            "type": "string"
+          },
+          "sesionId": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "INCAPACIDAD",
+              "COMISION",
+              "PERMISO",
+              "FALLA_TECNICA",
+              "CALAMIDAD"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "correo": {
@@ -745,6 +943,34 @@
         "required": [
           "refreshToken"
         ],
+        "type": "object"
+      },
+      "ReporteCumplimiento": {
+        "properties": {
+          "docentes": {
+            "items": {
+              "$ref": "#/components/schemas/FilaCumplimiento"
+            },
+            "type": "array"
+          },
+          "falsosRechazos": {
+            "description": "Justificaciones aprobadas por falla técnica",
+            "type": "integer"
+          },
+          "filtro": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "generadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "totales": {
+            "$ref": "#/components/schemas/FilaCumplimiento"
+          }
+        },
         "type": "object"
       },
       "RolAsignado": {
@@ -1223,6 +1449,248 @@
         "summary": "Eliminar asignatura (lógico)",
         "tags": [
           "académico"
+        ]
+      }
+    },
+    "/auditoria": {
+      "get": {
+        "description": "Bitácora de solo lectura, de la más reciente a la más antigua (RF-AUD-003). El total va en X-Total-Count. Requiere auditoria:leer.",
+        "operationId": "consultarAuditoria",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "actorId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Prefijo de la acción, p. ej. JUSTIFICACION_",
+            "in": "query",
+            "name": "accion",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD o RFC 3339",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD (incluye el día) o RFC 3339",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntradaAuditoria"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Registros"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Fecha inválida"
+          }
+        },
+        "summary": "Consultar bitácora",
+        "tags": [
+          "auditoria"
+        ]
+      }
+    },
+    "/auditoria/exportar": {
+      "get": {
+        "description": "XLSX o PDF con los 10 000 registros más recientes del filtro; la exportación queda auditada. Requiere auditoria:leer.",
+        "operationId": "exportarAuditoria",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "actorId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Prefijo de la acción, p. ej. JUSTIFICACION_",
+            "in": "query",
+            "name": "accion",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD o RFC 3339",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD (incluye el día) o RFC 3339",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Archivo de la bitácora"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Formato o fecha inválidos"
+          }
+        },
+        "summary": "Exportar bitácora",
+        "tags": [
+          "auditoria"
         ]
       }
     },
@@ -2421,6 +2889,478 @@
         ]
       }
     },
+    "/justificaciones": {
+      "get": {
+        "description": "El docente ve las propias; el coordinador, las de su ámbito (RF-ROL-003). El total va en X-Total-Count. Requiere justificacion:leer.",
+        "operationId": "listarJustificaciones",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "estado",
+            "schema": {
+              "enum": [
+                "RADICADA",
+                "EN_REVISION",
+                "APROBADA",
+                "RECHAZADA"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "enum": [
+                "INCAPACIDAD",
+                "COMISION",
+                "PERMISO",
+                "FALLA_TECNICA",
+                "CALAMIDAD"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha de sesión desde (AAAA-MM-DD)",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha de sesión hasta (AAAA-MM-DD)",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Justificacion"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Justificaciones"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Bandeja de justificaciones",
+        "tags": [
+          "justificaciones"
+        ]
+      },
+      "post": {
+        "description": "El docente justifica una sesión propia ya iniciada, sin asistencia válida y dentro del plazo en días hábiles (RF-JUS-001, RF-JUS-003). Soportes JPG, PNG o PDF de hasta 10 MB (máximo 3), guardados cifrados. Requiere justificacion:crear.",
+        "operationId": "radicarJustificacion",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "descripcion": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "sesionId": {
+                    "type": "string"
+                  },
+                  "soportes": {
+                    "items": {
+                      "format": "binary",
+                      "type": "string"
+                    },
+                    "maxItems": 3,
+                    "type": "array"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "INCAPACIDAD",
+                      "COMISION",
+                      "PERMISO",
+                      "FALLA_TECNICA",
+                      "CALAMIDAD"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sesionId",
+                  "tipo",
+                  "descripcion",
+                  "soportes"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación radicada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sesión no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Ya existe una justificación en curso o aprobada para la sesión"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos, soporte, plazo o sesión no elegibles"
+          }
+        },
+        "summary": "Radicar justificación",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
+    "/justificaciones/{id}": {
+      "get": {
+        "operationId": "obtenerJustificacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrada"
+          }
+        },
+        "summary": "Detalle de justificación",
+        "tags": [
+          "justificaciones"
+        ]
+      },
+      "patch": {
+        "description": "Flujo RADICADA → EN_REVISION → APROBADA / RECHAZADA con responsable y observaciones (RF-JUS-002); rechazar exige observaciones. Notifica al solicitante (RF-JUS-005). Requiere justificacion:aprobar.",
+        "operationId": "revisarJustificacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "estado": {
+                    "enum": [
+                      "EN_REVISION",
+                      "APROBADA",
+                      "RECHAZADA"
+                    ],
+                    "type": "string"
+                  },
+                  "observaciones": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "estado"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación actualizada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Otra persona ya la revisó"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Transición u observaciones inválidas"
+          }
+        },
+        "summary": "Aprobar o rechazar",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
+    "/justificaciones/{id}/soportes/{soporteId}": {
+      "get": {
+        "operationId": "descargarSoporte",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "soporteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Contenido del soporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrado"
+          }
+        },
+        "summary": "Descargar soporte",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
     "/marcajes": {
       "get": {
         "operationId": "listarMarcajesAdmin",
@@ -2649,6 +3589,7 @@
     },
     "/marcajes/{id}": {
       "patch": {
+        "description": "Registra un marcaje nuevo de origen AJUSTE que apunta al original (ajusteDe); el original conserva sus datos y queda con reemplazadoPor (RF-JUS-004, US-MAR-09).",
         "operationId": "ajustarMarcaje",
         "parameters": [
           {
@@ -2687,10 +3628,13 @@
         },
         "responses": {
           "200": {
-            "description": "Marcaje ajustado exitosamente"
+            "description": "Evento de ajuste creado"
           },
           "400": {
             "description": "Motivo inválido o menor a 20 caracteres"
+          },
+          "409": {
+            "description": "El marcaje ya fue ajustado o la sesión tiene otro marcaje vigente"
           }
         },
         "summary": "Ajustar o anular un marcaje administrativamente (US-MAR-09)",
@@ -3087,6 +4031,229 @@
         "summary": "Eliminar programa (lógico)",
         "tags": [
           "académico"
+        ]
+      }
+    },
+    "/reportes/cumplimiento": {
+      "get": {
+        "description": "Horas programadas, dictadas y justificadas, tardanzas y ausencias por docente de las sesiones ya terminadas (RF-REP-001). Las justificaciones aprobadas se reflejan sin modificar los marcajes (RF-JUS-004). Requiere reporte:leer.",
+        "operationId": "reporteCumplimiento",
+        "parameters": [
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "programaId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteCumplimiento"
+                }
+              }
+            },
+            "description": "Reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Falta el periodo o el rango de fechas"
+          }
+        },
+        "summary": "Reporte de cumplimiento docente",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/cumplimiento/exportar": {
+      "get": {
+        "description": "XLSX o PDF con marca de agua institucional, sello de generación y huella SHA-256 de los datos (RF-REP-004). La exportación queda auditada. Requiere reporte:exportar.",
+        "operationId": "exportarCumplimiento",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "programaId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Archivo del reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Formato o filtros inválidos"
+          }
+        },
+        "summary": "Exportar reporte de cumplimiento",
+        "tags": [
+          "reportes"
         ]
       }
     },

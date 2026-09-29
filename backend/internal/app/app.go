@@ -25,8 +25,8 @@ import (
 	usecaseJus "github.com/siaa/backend/internal/usecase/justificaciones"
 	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
 	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
-	usecaseRep "github.com/siaa/backend/internal/usecase/reportes"
 	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
+	usecaseRep "github.com/siaa/backend/internal/usecase/reportes"
 	usecaseUsuarios "github.com/siaa/backend/internal/usecase/usuarios"
 )
 
