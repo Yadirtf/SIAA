@@ -135,7 +135,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 				DocenteIDs:       s.DocenteIDs(),
 				InicioProgramado: s.InicioProgramado(),
 				FinProgramado:    s.FinProgramado(),
-				Modalidad:        uc.modalidadSesion(ctx, s.AsignacionID()),
+				Modalidad:        modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID()),
 			}
 			// Parámetros efectivos congelados al generar la sesión (RN-002, ADR-05)
 			contexto.Parametros = ParametrosDesdeSesion(s.ParametrosCongelados())
@@ -184,17 +184,6 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 	}
 
 	return contexto, nil
-}
-
-func (uc *CrearMarcajeUseCase) modalidadSesion(ctx context.Context, asignacionID string) string {
-	if uc.asignacionRepo == nil || asignacionID == "" {
-		return "PRESENCIAL"
-	}
-	asig, err := uc.asignacionRepo.GetByID(ctx, asignacionID)
-	if err != nil || asig == nil || asig.Modalidad() == "" {
-		return "PRESENCIAL"
-	}
-	return string(asig.Modalidad())
 }
 
 func (uc *CrearMarcajeUseCase) verificarSaltoImposible(ctx context.Context, req domainMarcaje.SolicitudMarcaje, contexto *domainMarcaje.ContextoSesion, ahora time.Time) {

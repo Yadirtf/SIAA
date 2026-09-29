@@ -14,22 +14,12 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/siaa/backend/internal/platform/clock"
+	"github.com/siaa/backend/internal/app"
 	"github.com/siaa/backend/internal/platform/config"
 	applog "github.com/siaa/backend/internal/platform/log"
-	"github.com/siaa/backend/internal/platform/mailer"
 	mongoRepo "github.com/siaa/backend/internal/repository/mongo"
-	"github.com/siaa/backend/internal/repository/mongo/impl"
 	"github.com/siaa/backend/internal/repository/mongo/migrations"
 	"github.com/siaa/backend/internal/repository/mongo/seed"
-	apphttp "github.com/siaa/backend/internal/transport/http"
-	"github.com/siaa/backend/internal/transport/http/handler"
-	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
-	"github.com/siaa/backend/internal/usecase/auth"
-	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
-	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
-	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
-	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
 )
 
 func main() {
@@ -84,151 +74,29 @@ func main() {
 	}
 	log.Info("migraciones ejecutadas")
 
-	// ─── Repositorios ─────────────────────────────────────────
-	clk := clock.RealClock{}
-	usuarioRepo := impl.NewUsuarioRepository(mongoClient)
-	refreshRepo := impl.NewRefreshTokenRepository(mongoClient)
-	recoveryRepo := impl.NewRecoveryTokenRepository(mongoClient)
-	auditoriaRepo := impl.NewAuditoriaRepository(mongoClient)
-	sedeRepo := impl.NewSedeRepository(mongoClient)
-	bloqueRepo := impl.NewBloqueRepository(mongoClient)
-	espacioRepo := impl.NewEspacioRepository(mongoClient)
-	histRepo := impl.NewEspacioGeometriaHistRepository(mongoClient)
-	sesionChecker := impl.NewSesionFutureChecker(mongoClient)
-
-	// Académico (EP-04)
-	periodoRepo := impl.NewPeriodoRepository(mongoClient)
-	estructuraRepo := impl.NewEstructuraRepository(mongoClient)
-	asignacionRepo := impl.NewAsignacionRepository(mongoClient)
-	excepcionRepo := impl.NewCalendarioExcepcionRepository(mongoClient)
-	sesionRepo := impl.NewSesionRepository(mongoClient)
-
-	rolRepo := impl.NewRolRepository(mongoClient)
-
-	// Parametrización jerárquica (EP-05)
-	parametroRepo := impl.NewParametroRepo(mongoClient.DB())
-
-	// ─── Infraestructura ──────────────────────────────────────
-	// Con SMTP_HOST definido se envían correos reales (MailHog en desarrollo); si no, solo se registran.
-	var appMailer auth.Mailer = mailer.NewNoopMailer(log)
-	if cfg.SMTPHost != "" {
-		appMailer = mailer.NewSMTPMailer(mailer.SMTPConfig{
-			Host:     cfg.SMTPHost,
-			Port:     cfg.SMTPPort,
-			User:     cfg.SMTPUser,
-			Pass:     cfg.SMTPPass,
-			From:     cfg.SMTPFrom,
-			LinkBase: cfg.RecoveryURL,
-			Minutos:  cfg.RecoveryTokenMinutes,
-		})
+	openapiPath := os.Getenv("OPENAPI_SPEC_PATH")
+	if openapiPath == "" {
+		openapiPath = "../contracts/openapi.json"
 	}
-
-	dispositivoRepo := impl.NewDispositivoRepository(mongoClient)
-
-	// ─── Casos de uso ─────────────────────────────────────────
-	rbacSvc := usecaseRbac.NewService(rolRepo, auditoriaRepo, clk)
-
-	authSvc := auth.NewService(
-		usuarioRepo,
-		refreshRepo,
-		recoveryRepo,
-		auditoriaRepo,
-		clk,
-		cfg,
-		appMailer,
-	).WithDispositivos(dispositivoRepo)
-
-	geoSvc := usecaseGeo.NewService(
-		sedeRepo,
-		bloqueRepo,
-		espacioRepo,
-		histRepo,
-		sesionChecker,
-		auditoriaRepo,
-		clk,
-		log,
-	)
-
-	acaSvc := usecaseAca.NewService(
-		periodoRepo,
-		estructuraRepo,
-		asignacionRepo,
-		excepcionRepo,
-		usuarioRepo,
-		espacioRepo,
-		auditoriaRepo,
-		clk,
-		log,
-	).WithSesiones(sesionRepo)
-
-	parametroSvc := usecasePar.New(parametroRepo)
-	// RN-002: las sesiones se generan con los parámetros efectivos de la cascada jerárquica.
-	acaSvc.WithResolutorParametros(func(ctx context.Context, a usecaseAca.AmbitoParametros) (map[string]interface{}, error) {
-		snap, err := parametroSvc.ResolverEfectivos(ctx, usecasePar.EspecCascada{
-			SedeID:       a.SedeID,
-			FacultadID:   a.FacultadID,
-			BloqueID:     a.BloqueID,
-			EspacioID:    a.EspacioID,
-			AsignacionID: a.AsignacionID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		valores := make(map[string]interface{}, len(snap))
-		for clave, efectivo := range snap {
-			valores[string(clave)] = efectivo.Origen.Valor
-		}
-		return valores, nil
-	})
-
-	// ─── Motor de Marcaje (EP-06) ─────────────────────────────
-	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
-	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
-		WithAsignaciones(asignacionRepo)
-	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo)
-	historialUC := usecaseMarcaje.NewHistorialUseCase(marcajeRepo)
-	ajustarUC := usecaseMarcaje.NewAjustarMarcajeUseCase(marcajeRepo, sesionRepo, auditoriaRepo)
-	syncUC := usecaseMarcaje.NewSyncOfflineUseCase(crearMarcajeUC, marcajeRepo)
-	ventanaEstudiantilUC := usecaseMarcaje.NewVentanaEstudiantilUseCase(sesionRepo, marcajeRepo)
-	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo)
-	ausenciasWorker := usecaseMarcaje.NewAusenciasWorker(marcajeRepo, sesionRepo)
+	aplicacion, err := app.Construir(cfg, log, mongoClient, openapiPath)
+	if err != nil {
+		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
+		os.Exit(1)
+	}
 
 	// Worker periódico de ausencias automáticas (US-MAR-07, cada 15 min)
 	go func() {
 		ticker := time.NewTicker(15 * time.Minute)
 		defer ticker.Stop()
 		for range ticker.C {
-			_, _ = ausenciasWorker.EjecutarCiclo(context.Background(), time.Now().UTC())
+			_, _ = aplicacion.AusenciasWorker.EjecutarCiclo(context.Background(), time.Now().UTC())
 		}
 	}()
-
-	// ─── Handlers ─────────────────────────────────────────────
-	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
-	authH := handler.NewAuthHandler(authSvc)
-	openapiPath := os.Getenv("OPENAPI_SPEC_PATH")
-	if openapiPath == "" {
-		openapiPath = "../contracts/openapi.json"
-	}
-	openapiH := handler.NewOpenAPIHandler(openapiPath)
-	rolesH := handler.NewRolesHandler(rbacSvc)
-	geoH := handler.NewGeoHandler(geoSvc)
-	acaH := handler.NewAcademicoHandler(acaSvc)
-	parametroH := handler.NewParametroHandler(parametroSvc)
-	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC)
-	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC)
-	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
-
-	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, auditoriaRepo, nil)
-	if err != nil {
-		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
-		os.Exit(1)
-	}
 
 	// ─── Servidor HTTP ────────────────────────────────────────
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      router,
+		Handler:      aplicacion.Router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,

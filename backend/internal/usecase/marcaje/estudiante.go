@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 )
 
@@ -31,8 +32,11 @@ func NewVentanaEstudiantilUseCase(sesionRepo repository.SesionRepository, marcaj
 // AbrirVentana abre la ventana temporal para que los estudiantes del grupo registren asistencia (AC-01).
 func (uc *VentanaEstudiantilUseCase) AbrirVentana(ctx context.Context, sesionID, docenteID string, duracionMinutos int) (time.Time, error) {
 	s, err := uc.sesionRepo.FindByID(ctx, sesionID)
-	if err != nil || s == nil {
-		return time.Time{}, fmt.Errorf("sesión no encontrada: %s", sesionID)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("buscar sesión: %w", err)
+	}
+	if s == nil {
+		return time.Time{}, shared.NewNotFoundError("sesión", sesionID)
 	}
 
 	if !s.TieneDocente(docenteID) {
