@@ -88,6 +88,9 @@ const (
 	OrigenManual          OrigenMarcaje = "MANUAL"
 	OrigenManualDocente   OrigenMarcaje = "MANUAL_DOCENTE"
 	OrigenSistemaAusencia OrigenMarcaje = "SISTEMA_AUSENCIA"
+	// OrigenAjuste es un evento de corrección administrativa: reemplaza a otro marcaje sin
+	// modificar sus datos (RF-JUS-004, US-MAR-09).
+	OrigenAjuste OrigenMarcaje = "AJUSTE"
 )
 
 // IntegridadDispositivo contiene las señales de seguridad levantadas por el cliente móvil.

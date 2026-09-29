@@ -4,11 +4,18 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/siaa/backend/internal/domain/academico"
 	"github.com/siaa/backend/internal/domain/marcaje"
 )
+
+// ErrMarcajeYaAjustado indica que el marcaje ya fue reemplazado por un ajuste previo.
+var ErrMarcajeYaAjustado = errors.New("el marcaje ya fue ajustado")
+
+// ErrRanuraOcupada indica que la sesión ya tiene otro marcaje consolidado del mismo tipo.
+var ErrRanuraOcupada = errors.New("la sesión ya tiene un marcaje consolidado de ese tipo")
 
 // FiltrosMarcaje define los criterios de búsqueda administrativa para marcajes.
 type FiltrosMarcaje struct {
@@ -31,7 +38,9 @@ type MarcajeRepository interface {
 	ObtenerPrevio(ctx context.Context, sesionID, usuarioID string, tipo marcaje.TipoMarcaje) (*marcaje.Marcaje, error)
 	ListarPorUsuario(ctx context.Context, usuarioID string, mes string, skip, limit int64) ([]*marcaje.Marcaje, int64, error)
 	ListarConFiltros(ctx context.Context, filtros FiltrosMarcaje, skip, limit int64) ([]*marcaje.Marcaje, int64, error)
-	ActualizarAjuste(ctx context.Context, id string, nuevoResultado marcaje.ResultadoMarcaje, anulado bool, motivo string, ajustadorID string, ajustadoEn time.Time) (*marcaje.Marcaje, error)
+	// RegistrarAjuste inserta el evento de ajuste y marca al original como reemplazado sin
+	// alterar sus datos (RF-JUS-004). Devuelve ErrMarcajeYaAjustado o ErrRanuraOcupada.
+	RegistrarAjuste(ctx context.Context, originalID string, ajuste *marcaje.Marcaje) error
 	ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error)
 	ObtenerUltimoMarcajeUsuario(ctx context.Context, usuarioID string) (*marcaje.Marcaje, error)
 	RevertirAusenciaPorOffline(ctx context.Context, sesionID, usuarioID string, nuevoMarcaje *marcaje.Marcaje) error
