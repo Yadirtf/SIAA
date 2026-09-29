@@ -1,5 +1,8 @@
+# Contexto de construcción: raíz del repositorio (necesita contracts/openapi.json).
+#   docker build -f backend/Dockerfile .
+
 # ─── Stage 1: Build ────────────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 # Instalar dependencias del sistema
 RUN apk add --no-cache git ca-certificates tzdata
@@ -7,25 +10,29 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /build
 
 # Copiar módulos primero para aprovechar el caché de Docker
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 # Copiar el código fuente
-COPY . .
+COPY backend/ .
 
 # Construir binario estático único (ADR-01, US-PLT-01 AC-01)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-w -s -X main.Version=${VERSION:-dev} -X main.Commit=${COMMIT:-local}" \
-    -o /dist/siaa-api \
-    ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /dist/siaa-api ./cmd/api
 
 # ─── Stage 2: Runtime ──────────────────────────────────────────────────────
-# Imagen mínima: solo el binario y certificados CA
+# Imagen mínima: solo el binario, certificados CA, zonas horarias y el contrato OpenAPI
 FROM scratch
+
+ARG VERSION=dev
+ARG COMMIT=local
+ENV APP_VERSION=${VERSION} \
+    APP_COMMIT=${COMMIT} \
+    OPENAPI_SPEC_PATH=/contracts/openapi.json
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /dist/siaa-api /siaa-api
+COPY contracts/openapi.json /contracts/openapi.json
 
 EXPOSE 8080
 

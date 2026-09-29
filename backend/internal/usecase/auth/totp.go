@@ -117,7 +117,7 @@ func (s *Service) VerificarTOTP(ctx context.Context, usuarioID, codigo, disposit
 	if u.BloqueadoHastaTOTP != nil && now.Before(*u.BloqueadoHastaTOTP) {
 		return nil, shared.NewAuthError(shared.ErrCuentaBloqueada,
 			fmt.Sprintf("Segundo factor bloqueado por intentos fallidos hasta las %s",
-				u.BloqueadoHastaTOTP.Format("15:04")))
+				shared.HoraLocal(*u.BloqueadoHastaTOTP)))
 	}
 
 	codigoLimpio := strings.ToUpper(strings.TrimSpace(codigo))

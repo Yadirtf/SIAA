@@ -2,8 +2,8 @@ services:
   # ─── API Principal ────────────────────────────────────────────
   siaa-api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: siaa-api
     restart: unless-stopped
     ports:

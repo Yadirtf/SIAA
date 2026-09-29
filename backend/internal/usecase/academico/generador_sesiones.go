@@ -84,9 +84,6 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 		franja := asig.Franja()
 		diaSemanaObjetivo := franja.DiaSemana() // 1=Lunes .. 7=Domingo
 
-		// Resolver snapshot de parámetros efectivos (AC-02, AC-06, SRS §3.5)
-		paramsCongelados := resolverParametrosCongelados(asig)
-
 		// Recuperar geometría del aula para congelar versión (AC-02)
 		var espacioSnap *geo.Espacio
 		if asig.EspacioID() != "" {
@@ -100,6 +97,9 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 				}
 			}
 		}
+
+		// Resolver snapshot de parámetros efectivos en cascada (AC-02, AC-06, RN-002, SRS §3.5)
+		paramsCongelados := resolverParametrosCongelados(s.parametrosEfectivos(ctx, periodo.SedeID(), asig, espacioSnap), asig)
 
 		versionGeometria := 0
 		var geomSnapshot *geo.GeoPolygon

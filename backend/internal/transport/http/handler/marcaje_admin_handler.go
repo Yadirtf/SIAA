@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/dto"
@@ -52,6 +53,11 @@ func (h *MarcajeAdminHandler) ListarMarcajes(c echo.Context) error {
 		Origen:    domainMarcaje.OrigenMarcaje(c.QueryParam("origen")),
 	}
 
+	// Docentes y estudiantes marcan pero no administran marcajes: solo ven los propios.
+	if claims, ok := middleware.GetClaims(c); ok && soloMarcajesPropios(claims.Permisos) {
+		filtros.UsuarioID = claims.UsuarioID
+	}
+
 	if desdeStr := c.QueryParam("desde"); desdeStr != "" {
 		if t, err := time.Parse(time.RFC3339, desdeStr); err == nil {
 			filtros.Desde = &t
@@ -65,7 +71,8 @@ func (h *MarcajeAdminHandler) ListarMarcajes(c echo.Context) error {
 
 	resp, err := h.ajustarUC.ListarAdministrativo(c.Request().Context(), filtros, pagina, limite)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// El manejador central traduce los errores de dominio y oculta los internos.
+		return err
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -101,7 +108,8 @@ func (h *MarcajeAdminHandler) AjustarMarcaje(c echo.Context) error {
 		if errors.Is(err, domainMarcaje.ErrMotivoInsuficiente) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// El manejador central traduce los errores de dominio y oculta los internos.
+		return err
 	}
 
 	return c.JSON(http.StatusOK, m)
@@ -133,7 +141,8 @@ func (h *MarcajeAdminHandler) CrearManual(c echo.Context) error {
 		if errors.Is(err, domainMarcaje.ErrMotivoInsuficiente) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// El manejador central traduce los errores de dominio y oculta los internos.
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, m)
@@ -156,7 +165,8 @@ func (h *MarcajeAdminHandler) VentanaEstudiantil(c echo.Context) error {
 		if errors.Is(err, usecaseMarcaje.ErrDocenteNoAutorizado) {
 			return echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// El manejador central traduce los errores de dominio y oculta los internos.
+		return err
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -195,11 +205,22 @@ func (h *MarcajeAdminHandler) ListaManual(c echo.Context) error {
 		if errors.Is(err, usecaseMarcaje.ErrMotivoListaRequerido) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// El manejador central traduce los errores de dominio y oculta los internos.
+		return err
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"mensaje":     "Lista manual registrada y auditada exitosamente",
 		"estudiantes": len(items),
 	})
+}
+
+// soloMarcajesPropios indica si el rol registra sus propios marcajes sin poder ajustarlos
+// (docente, estudiante): su consulta se limita a sus registros (RF-ROL-003).
+func soloMarcajesPropios(permisos []string) bool {
+	perms := make([]rbac.Permission, len(permisos))
+	for i, p := range permisos {
+		perms[i] = rbac.Permission(p)
+	}
+	return rbac.HasPermission(perms, rbac.PermMarcajeCrear) && !rbac.HasPermission(perms, rbac.PermMarcajeAjustar)
 }

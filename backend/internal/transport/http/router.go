@@ -43,6 +43,10 @@ func NewRouter(
 	}
 
 	e := echo.New()
+	// La IP del cliente (límite de tasa y auditoría) solo se toma de X-Forwarded-For cuando la
+	// petición llega desde un proxy de red privada (Traefik); así un cliente no puede
+	// falsificar la cabecera para esquivar el límite de 20 intentos/min (US-AUT-02 AC-03).
+	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.HideBanner = true
 	e.HidePort = true
 
@@ -50,7 +54,7 @@ func NewRouter(
 	e.Use(mw.Recovery(log))
 	e.Use(mw.CorrelationID())
 	e.Use(mw.RequestLogger(log))
-	e.Use(echoMiddleware.TimeoutWithConfig(echoMiddleware.TimeoutConfig{
+	e.Use(echoMiddleware.ContextTimeoutWithConfig(echoMiddleware.ContextTimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
 	origins := cfg.CORSAllowedOrigins
@@ -77,7 +81,7 @@ func NewRouter(
 			if cfg.Env != "production" {
 				return true, nil
 			}
-			for _, allowed := range cfg.CORSAllowedOrigins {
+			for _, allowed := range origins {
 				if allowed == "*" || allowed == origin {
 					return true, nil
 				}

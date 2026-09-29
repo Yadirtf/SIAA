@@ -5,14 +5,17 @@ on:
     branches: [main, develop]
     paths:
       - 'backend/**'
+      - 'contracts/**'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'backend/**'
+      - 'contracts/**'
+      - '.github/workflows/backend.yml'
 
 env:
-  GO_VERSION: "1.23"
+  GO_VERSION: "1.26"
   MIN_COVERAGE: "70"
   MIN_COVERAGE_MARCAJE: "90"
 
@@ -27,6 +30,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # TruffleHog escanea el rango de commits del PR: necesita el historial completo.
+          fetch-depth: 0
 
       - uses: actions/setup-go@v5
         with:
@@ -44,13 +50,14 @@ jobs:
       - name: staticcheck
         uses: dominikh/staticcheck-action@v1
         with:
-          version: "2024.1"
+          version: "latest"
           working-directory: backend
 
       - name: Escaneo de secretos (T-PLT-02.4)
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./backend
+          # El escaneo git requiere la raíz del repositorio (./backend no es un repo git).
+          path: ./
 
       - name: Vulnerabilidades de dependencias (T-PLT-02.4)
         run: |
@@ -100,7 +107,7 @@ jobs:
           MONGO_DB: siaa_test
           JWT_SECRET: test-secret-min-32-characters-long
         run: |
-          go test ./... -coverprofile=coverage.out -covermode=atomic -race -timeout 120s
+          go test ./... -coverpkg=./internal/... -coverprofile=coverage.out -covermode=atomic -race -timeout 300s
 
       - name: Verificar cobertura global ≥ 70 % (T-PLT-02.2)
         run: |
@@ -159,7 +166,8 @@ jobs:
       - name: Build y push imagen (T-PLT-02.5)
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: .
+          file: backend/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/siaa-api:latest

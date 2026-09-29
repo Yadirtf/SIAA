@@ -10,6 +10,7 @@ import (
 	"time"
 
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 )
 
@@ -57,8 +58,11 @@ func (uc *AjustarMarcajeUseCase) Ajustar(ctx context.Context, req SolicitudAjust
 	}
 
 	original, err := uc.marcajeRepo.ObtenerPorID(ctx, req.MarcajeID)
-	if err != nil || original == nil {
-		return nil, fmt.Errorf("marcaje no encontrado: %s", req.MarcajeID)
+	if err != nil {
+		return nil, fmt.Errorf("buscar marcaje: %w", err)
+	}
+	if original == nil {
+		return nil, shared.NewNotFoundError("marcaje", req.MarcajeID)
 	}
 
 	ahora := time.Now().UTC()

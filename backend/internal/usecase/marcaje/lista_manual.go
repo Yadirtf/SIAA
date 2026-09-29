@@ -10,6 +10,7 @@ import (
 	"time"
 
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 )
 
@@ -50,8 +51,11 @@ func (uc *ListaManualUseCase) Registrar(ctx context.Context, sesionID, docenteID
 	}
 
 	s, err := uc.sesionRepo.FindByID(ctx, sesionID)
-	if err != nil || s == nil {
-		return fmt.Errorf("sesión no encontrada: %s", sesionID)
+	if err != nil {
+		return fmt.Errorf("buscar sesión: %w", err)
+	}
+	if s == nil {
+		return shared.NewNotFoundError("sesión", sesionID)
 	}
 
 	if !s.TieneDocente(docenteID) {

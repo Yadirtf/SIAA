@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	ErrDispositivoNoEncontrado = errors.New("dispositivo no encontrado")
-	ErrInstalacionIDRequerido  = errors.New("el identificador de instalación es obligatorio")
+	ErrDispositivoNoEncontrado = &shared.DomainError{Code: shared.ErrRecursoNoEncontrado, Message: "Dispositivo no encontrado"}
+	ErrInstalacionIDRequerido  = shared.NewValidationError("El identificador de instalación es obligatorio")
 	ErrRepoDispositivoNoConfig = errors.New("repositorio de dispositivos no configurado")
 )
 

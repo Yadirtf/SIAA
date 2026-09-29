@@ -64,6 +64,14 @@ type SesionActivaUseCase struct {
 	sesionRepo  repository.SesionRepository
 	espacioRepo repository.EspacioRepository
 	marcajeRepo repository.MarcajeRepository
+	// asignacionRepo permite informar la modalidad real de la sesión (virtual, híbrida).
+	asignacionRepo repository.AsignacionRepository
+}
+
+// WithAsignaciones habilita que la sesión activa informe su modalidad (RF-ACA-013).
+func (uc *SesionActivaUseCase) WithAsignaciones(r repository.AsignacionRepository) *SesionActivaUseCase {
+	uc.asignacionRepo = r
+	return uc
 }
 
 func NewSesionActivaUseCase(
@@ -182,10 +190,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 	// Consultar si ya existe marcaje de entrada para esta sesión y docente
 	previo, _ := uc.marcajeRepo.ObtenerPrevio(ctx, s.ID(), docenteID, domainMarcaje.TipoEntrada)
 
-	params := map[string]interface{}{
-		"precisionGpsMaxMetros": 35.0,
-		"umbralTardanzaMin":     10,
-	}
+	params := ParametrosPublicos(ParametrosDesdeSesion(s.ParametrosCongelados()))
 
 	return &DetalleSesionActiva{
 		Sesion: &SesionItemDTO{
@@ -199,7 +204,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 			},
 			InicioProgramado: s.InicioProgramado(),
 			FinProgramado:    s.FinProgramado(),
-			Modalidad:        "PRESENCIAL",
+			Modalidad:        modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID()),
 		},
 		Ventana:          ventana,
 		Parametros:       params,

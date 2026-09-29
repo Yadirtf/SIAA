@@ -20,7 +20,15 @@ type CrearMarcajeUseCase struct {
 	espacioRepo     repository.EspacioRepository
 	dispositivoRepo repository.DispositivoRepository
 	auditoriaRepo   repository.AuditoriaRepository
+	asignacionRepo  repository.AsignacionRepository
 	metrics         *metrics.Collector
+}
+
+// WithAsignaciones habilita la consulta de la modalidad de la asignación (RF-ACA-013):
+// las sesiones virtuales quedan exentas de la validación geoespacial.
+func (uc *CrearMarcajeUseCase) WithAsignaciones(r repository.AsignacionRepository) *CrearMarcajeUseCase {
+	uc.asignacionRepo = r
+	return uc
 }
 
 // NewCrearMarcajeUseCase construye el caso de uso con sus dependencias.
@@ -52,6 +60,22 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	contexto, err := uc.armarContexto(ctx, req, ahora)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// 1b. Idempotencia (US-MAR-05, CA-012): si el usuario ya tiene un marcaje consolidado para
+	// esta sesión y tipo, se devuelve tal cual. Un intento posterior (doble toque, reintento de
+	// red o un toque desde fuera del aula) no debe presentarse como rechazo ni crear registros.
+	if previo := contexto.MarcajePrevio; previo != nil && contexto.Sesion != nil && previo.ConsolidaSesion() {
+		res := domainMarcaje.ResultadoEvaluacion{
+			Resultado:             previo.Resultado,
+			MotivoRechazo:         domainMarcaje.MotivoRechazo(previo.MotivoRechazo),
+			Mensaje:               "Tu marcaje ya estaba registrado.",
+			DistanciaMetros:       previo.DistanciaMetros,
+			MinutosRespectoInicio: previo.MinutosRespectoInicio,
+			MarcajeExistenteID:    previo.ID,
+			PuedeJustificar:       previo.RequiereJustificacion(),
+		}
+		return &res, previo, nil
 	}
 
 	// 2. Detección de saltos imposibles entre marcajes consecutivos (US-MAR-10 AC-04)
@@ -98,17 +122,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 	contexto := &domainMarcaje.ContextoSesion{
 		UsuarioActivo: true,
 		TienePermiso:  true,
-		Parametros: domainMarcaje.ParametrosMarcaje{
-			HolguraEntradaAntesMin:   15,
-			HolguraEntradaDespuesMin: 15,
-			HolguraSalidaAntesMin:    10,
-			HolguraSalidaDespuesMin:  15,
-			PrecisionGpsMaxMetros:    35.0,
-			UmbralTardanzaMin:        10,
-			BloquearMockLocation:     true,
-			BloquearRooteado:         true,
-			DesfaseRelojMaxSegundos:  300,
-		},
+		Parametros:    parametrosPorDefecto(),
 	}
 
 	// Consultar sesión
@@ -121,8 +135,10 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 				DocenteIDs:       s.DocenteIDs(),
 				InicioProgramado: s.InicioProgramado(),
 				FinProgramado:    s.FinProgramado(),
-				Modalidad:        "PRESENCIAL",
+				Modalidad:        modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID()),
 			}
+			// Parámetros efectivos congelados al generar la sesión (RN-002, ADR-05)
+			contexto.Parametros = ParametrosDesdeSesion(s.ParametrosCongelados())
 
 			// Geometría y buffer desde la sesión o espacio
 			if s.GeometriaSnapshot() != nil {

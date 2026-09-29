@@ -7,11 +7,19 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/usecase/auth/crypto"
-	"golang.org/x/net/context"
 )
+
+// hashFicticio es un hash Argon2id válido que se verifica cuando el correo no existe, para que
+// la respuesta tarde lo mismo que con un usuario real y no revele qué correos están
+// registrados (AC-02 anti-enumeración). Un hash malformado retornaría de inmediato.
+var hashFicticio = func() string {
+	h, _ := crypto.HashArgon2id("siaa-anti-enumeracion")
+	return h
+}()
 
 // Login autentica un usuario con correo y contraseña institucional.
 // Devuelve un par de tokens (access + refresh) si las credenciales son válidas.
@@ -28,7 +36,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (*TokenPair, erro
 	usuario, err := s.usuarios.FindByCorreo(ctx, correo)
 	if err != nil || usuario == nil {
 		// Simular trabajo de hash para evitar timing attack
-		_ = crypto.VerifyArgon2id("dummy", "$argon2id$v=19$m=65536,t=1,p=2$dummysalt$dummyhash")
+		_ = crypto.VerifyArgon2id(input.Password, hashFicticio)
 		return nil, shared.NewAuthError(shared.ErrCredencialesInvalidas, "Credenciales incorrectas")
 	}
 
@@ -36,7 +44,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (*TokenPair, erro
 	if usuario.BloqueadoHasta != nil && s.clock.Now().Before(*usuario.BloqueadoHasta) {
 		return nil, shared.NewAuthError(shared.ErrCuentaBloqueada,
 			fmt.Sprintf("Cuenta bloqueada. Inténtalo de nuevo a las %s",
-				usuario.BloqueadoHasta.Format("15:04")))
+				shared.HoraLocal(*usuario.BloqueadoHasta)))
 	}
 
 	// Verificar estado activo — AC-03 US-AUT-01 (rechazado con 403)

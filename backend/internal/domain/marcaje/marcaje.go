@@ -61,6 +61,7 @@ type Marcaje struct {
 	VerificacionComplement *VerificacionEntrada `json:"verificacionComplementaria,omitempty" bson:"verificacionComplementaria,omitempty"`
 	Origen                 OrigenMarcaje        `json:"origen" bson:"origen"`
 	Anulado                bool                 `json:"anulado" bson:"anulado"`
+	Consolidado            bool                 `json:"consolidado" bson:"consolidado"` // ocupa la ranura de idempotencia (ADR-07)
 	MotivoAjuste           string               `json:"motivoAjuste,omitempty" bson:"motivoAjuste,omitempty"`
 	AjustadoPor            string               `json:"ajustadoPor,omitempty" bson:"ajustadoPor,omitempty"`
 	AjustadoEn             *time.Time           `json:"ajustadoEn,omitempty" bson:"ajustadoEn,omitempty"`
@@ -99,6 +100,14 @@ func (m *Marcaje) EsExitoso() bool {
 		m.Resultado == ResultadoTardanza ||
 		m.Resultado == ResultadoValido ||
 		m.Resultado == ResultadoRetardo
+}
+
+// ConsolidaSesion indica si el marcaje define el estado de la sesión para el usuario
+// (asistencia válida o ausencia). Solo estos registros ocupan la ranura única de
+// idempotencia (sesión, usuario, tipo); los rechazos se conservan como evidencia
+// (RF-AUD-004) sin impedir que el usuario vuelva a intentar desde el aula.
+func (m *Marcaje) ConsolidaSesion() bool {
+	return m.EsExitoso() || m.Resultado == ResultadoAusente
 }
 
 // RequiereJustificacion indica si el resultado fue un rechazo que habilita justificación posterior (EP-07).

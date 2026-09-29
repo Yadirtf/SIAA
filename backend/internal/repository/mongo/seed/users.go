@@ -15,19 +15,39 @@ import (
 	"github.com/siaa/backend/internal/usecase/auth/crypto"
 )
 
+type usuarioSemilla struct {
+	correo   string
+	password string
+	nombre   string
+	apellido string
+	rol      rbac.RoleName
+}
+
+// AdminInicial describe el superadministrador que se crea en producción a partir de
+// variables de entorno, para poder entrar por primera vez sin cuentas de demostración.
+type AdminInicial struct {
+	Correo   string
+	Password string
+}
+
+// seedAdminInicial crea el superadministrador de arranque si se configuró y aún no existe.
+func seedAdminInicial(ctx context.Context, db *mongo.Database, admin AdminInicial) error {
+	if admin.Correo == "" || admin.Password == "" {
+		return nil
+	}
+	return upsertUsuarios(ctx, db, []usuarioSemilla{{
+		correo:   admin.Correo,
+		password: admin.Password,
+		nombre:   "Super",
+		apellido: "Administrador",
+		rol:      rbac.RolSuperadmin,
+	}})
+}
+
 // seedUsers inserta usuarios iniciales para pruebas y desarrollo.
 // Los usuarios solo se crean si no existen ($setOnInsert).
 func seedUsers(ctx context.Context, db *mongo.Database) error {
-	col := db.Collection("usuarios")
-	now := time.Now().UTC()
-
-	users := []struct {
-		correo   string
-		password string
-		nombre   string
-		apellido string
-		rol      rbac.RoleName
-	}{
+	return upsertUsuarios(ctx, db, []usuarioSemilla{
 		{
 			correo:   "admin@siaa.edu.co",
 			password: "Admin12345678*",
@@ -49,8 +69,12 @@ func seedUsers(ctx context.Context, db *mongo.Database) error {
 			apellido: "Gómez",
 			rol:      rbac.RolCoordinador,
 		},
-	}
+	})
+}
 
+func upsertUsuarios(ctx context.Context, db *mongo.Database, users []usuarioSemilla) error {
+	col := db.Collection("usuarios")
+	now := time.Now().UTC()
 	upsertOpts := options.Update().SetUpsert(true)
 	for _, u := range users {
 		// Reutiliza crypto compartido — elimina duplicación de hashPasswordArgon2id

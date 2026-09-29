@@ -1,7 +1,6 @@
 // marcajes_admin_screen.dart — Pantalla principal de administración y ajuste de marcajes (US-MAR-09, US-MAR-10)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/marcaje_admin_model.dart';
 import '../bloc/marcajes_admin_bloc.dart';
 import '../bloc/marcajes_admin_event.dart';
