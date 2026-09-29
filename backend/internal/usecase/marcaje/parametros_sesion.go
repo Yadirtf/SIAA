@@ -34,9 +34,18 @@ func ParametrosDesdeSesion(congelados map[string]interface{}) domainMarcaje.Para
 	if len(congelados) == 0 {
 		return p
 	}
+	// Las claves snake_case del catálogo prevalecen sobre sus alias camelCase: se cargan
+	// en una segunda pasada para que el resultado no dependa del orden del mapa.
 	norm := make(map[string]interface{}, len(congelados))
 	for k, v := range congelados {
-		norm[normalizarClave(k)] = v
+		if !strings.Contains(k, "_") {
+			norm[normalizarClave(k)] = v
+		}
+	}
+	for k, v := range congelados {
+		if strings.Contains(k, "_") {
+			norm[normalizarClave(k)] = v
+		}
 	}
 	buscar := func(claves ...string) (interface{}, bool) {
 		for _, c := range claves {

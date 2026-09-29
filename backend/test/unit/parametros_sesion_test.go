@@ -60,3 +60,16 @@ func TestNewID_FormatoObjectIDUnico(t *testing.T) {
 		vistos[id] = true
 	}
 }
+
+// Una sesión con la clave del catálogo y su alias heredado usa siempre la del catálogo.
+func TestParametrosDesdeSesion_ClaveCatalogoPrevaleceSobreAlias(t *testing.T) {
+	for i := 0; i < 200; i++ {
+		p := ucmarcaje.ParametrosDesdeSesion(map[string]interface{}{
+			"holguraEntradaDespuesMin":    15,
+			"holgura_entrada_despues_min": 20,
+		})
+		if p.HolguraEntradaDespuesMin != 20 {
+			t.Fatalf("iteración %d: holgura = %d, want 20", i, p.HolguraEntradaDespuesMin)
+		}
+	}
+}

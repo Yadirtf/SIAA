@@ -54,7 +54,7 @@ func NewRouter(
 	e.Use(mw.Recovery(log))
 	e.Use(mw.CorrelationID())
 	e.Use(mw.RequestLogger(log))
-	e.Use(echoMiddleware.TimeoutWithConfig(echoMiddleware.TimeoutConfig{
+	e.Use(echoMiddleware.ContextTimeoutWithConfig(echoMiddleware.ContextTimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
 	origins := cfg.CORSAllowedOrigins
