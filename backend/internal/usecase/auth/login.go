@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/usecase/auth/crypto"
-	"golang.org/x/net/context"
 )
 
 // hashFicticio es un hash Argon2id válido que se verifica cuando el correo no existe, para que

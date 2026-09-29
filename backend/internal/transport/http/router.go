@@ -81,7 +81,7 @@ func NewRouter(
 			if cfg.Env != "production" {
 				return true, nil
 			}
-			for _, allowed := range cfg.CORSAllowedOrigins {
+			for _, allowed := range origins {
 				if allowed == "*" || allowed == origin {
 					return true, nil
 				}

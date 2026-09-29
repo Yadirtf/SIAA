@@ -14,10 +14,6 @@ func toRadians(grados float64) float64 {
 	return grados * math.Pi / 180.0
 }
 
-func toDegrees(rad float64) float64 {
-	return rad * 180.0 / math.Pi
-}
-
 // CalcularDistanciaHaversine calcula la distancia ortodrómica en metros entre dos puntos geográficos.
 func CalcularDistanciaHaversine(p1, p2 GeoPoint) float64 {
 	lat1Rad := toRadians(p1.Latitud())
