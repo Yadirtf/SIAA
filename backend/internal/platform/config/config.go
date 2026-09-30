@@ -58,6 +58,11 @@ type Config struct {
 	JustificacionPlazoDias int
 	AdjuntosClave          string
 
+	// Play Integrity: paquete de la app Android y JSON de la cuenta de servicio con permiso
+	// para descifrar tokens. Sin ambos, ningún marcaje tiene attestation válida.
+	PlayIntegrityPaquete      string
+	PlayIntegrityCredenciales string
+
 	// Parámetros GPS por defecto — SRS §3.5
 	DefaultHolguraEntradaAntesMin   int
 	DefaultHolguraEntradaDespuesMin int
@@ -124,6 +129,8 @@ func Load() (*Config, error) {
 	cfg.PasswordMinLength = getEnvInt("PASSWORD_MIN_LENGTH", 12)
 	cfg.JustificacionPlazoDias = getEnvInt("JUSTIFICACION_PLAZO_DIAS", 5)
 	cfg.AdjuntosClave = getEnv("ADJUNTOS_CLAVE", "")
+	cfg.PlayIntegrityPaquete = getEnv("PLAY_INTEGRITY_PACKAGE", "")
+	cfg.PlayIntegrityCredenciales = getEnv("PLAY_INTEGRITY_CREDENTIALS", "")
 
 	// Parámetros GPS por defecto
 	cfg.DefaultHolguraEntradaAntesMin = getEnvInt("DEFAULT_HOLGURA_ENTRADA_ANTES", 15)

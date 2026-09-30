@@ -27,6 +27,10 @@ abstract class GeoRepository {
     String? facultadResponsable,
   });
   Future<void> deleteEspacio(String id);
+  Future<EspacioModel> actualizarVerificacion(
+    String espacioId,
+    VerificacionEspacioModel verificacion,
+  );
   Future<List<SolapamientoItemModel>> getSolapamientos({String? sedeId});
 }
 
@@ -94,6 +98,12 @@ class GeoRepositoryImpl implements GeoRepository {
 
   @override
   Future<void> deleteEspacio(String id) => _remoteDataSource.deleteEspacio(id);
+
+  @override
+  Future<EspacioModel> actualizarVerificacion(
+    String espacioId,
+    VerificacionEspacioModel verificacion,
+  ) => _remoteDataSource.actualizarVerificacion(espacioId, verificacion);
 
   @override
   Future<List<SolapamientoItemModel>> getSolapamientos({String? sedeId}) =>

@@ -1,10 +1,16 @@
 // marcaje_screen.dart — Pantalla principal de marcaje de un solo toque (US-MAR-01..US-MAR-15)
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
+import '../../data/services/marcaje_sync_service.dart';
+import '../../domain/models/marcaje_result_model.dart';
+import '../../domain/models/offline_marcaje_item.dart';
 import '../bloc/marcaje_bloc.dart';
 import '../bloc/marcaje_event.dart';
 import '../bloc/marcaje_state.dart';
+import '../helpers/verificacion_resolver.dart';
+import '../widgets/cola_offline_panel.dart';
 import '../widgets/one_touch_button.dart';
 import '../widgets/rejection_dialog.dart';
 import '../widgets/sesion_card.dart';
@@ -20,25 +26,40 @@ class MarcajeScreen extends StatefulWidget {
 
 class _MarcajeScreenState extends State<MarcajeScreen> {
   late final MarcajeBloc _bloc;
+  late final StreamSubscription<void> _colaSub;
+  final _verificacionResolver = VerificacionResolver();
+  MarcajeResultModel? _resultadoMostrado;
 
   @override
   void initState() {
     super.initState();
-    _bloc = MarcajeBloc()..add(const CargarSesionActivaEvent());
+    _bloc = MarcajeBloc()
+      ..add(const CargarSesionActivaEvent())
+      ..add(const SincronizarOfflineEvent());
+    // Sincronizaciones disparadas por red/ciclo de vida fuera de esta pantalla.
+    _colaSub = MarcajeSyncService.actualizaciones
+        .listen((_) => _bloc.add(const RefrescarColaOfflineEvent()));
   }
 
   @override
   void dispose() {
+    _colaSub.cancel();
     _bloc.close();
     super.dispose();
   }
 
-  void _onMarcarPressed(MarcajeState state) {
+  Future<void> _onMarcarPressed(MarcajeState state) async {
     final sesion = state.sesionActiva;
     if (sesion == null) return;
 
     final tipo = sesion.tieneMarcajeEntrada ? 'SALIDA' : 'ENTRADA';
-    _bloc.add(RealizarMarcajeEvent(tipo: tipo));
+    final res = await _verificacionResolver.resolver(context, sesion);
+    if (res.cancelado) return;
+    _bloc.add(RealizarMarcajeEvent(tipo: tipo, verificacion: res.verificacion));
+  }
+
+  void _justificarOffline(OfflineMarcajeItem item) {
+    JustificacionFormScreen.abrir(context, sesionId: item.request.sesionId);
   }
 
   @override
@@ -60,6 +81,10 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
           ],
         ),
         body: BlocConsumer<MarcajeBloc, MarcajeState>(
+          // Solo reaccionar a errores/resultados nuevos (no a refrescos de la cola).
+          listenWhen: (prev, curr) =>
+              prev.error != curr.error ||
+              !identical(prev.ultimoResultado, curr.ultimoResultado),
           listener: (context, state) {
             if (state.error != null && !state.isCapturingGps) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +96,8 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
             }
 
             final res = state.ultimoResultado;
-            if (res != null) {
+            if (res != null && !identical(res, _resultadoMostrado)) {
+              _resultadoMostrado = res;
               if (res.esRechazado || res.esPrecisionInsuficiente) {
                 RejectionDialog.show(
                   context,
@@ -124,6 +150,13 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                       count: state.colaOfflineCount,
                       onSyncPressed: () =>
                           _bloc.add(const SincronizarOfflineEvent()),
+                    ),
+                    ColaOfflinePanel(
+                      rechazados: state.colaRechazados,
+                      fallidos: state.colaFallidos,
+                      onJustificar: _justificarOffline,
+                      onReintentar: (it) =>
+                          _bloc.add(ReintentarMarcajeOfflineEvent(it.localId)),
                     ),
                     const SizedBox(height: 8),
                     Center(

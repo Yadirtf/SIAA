@@ -87,10 +87,7 @@ func (uc *SyncOfflineUseCase) Sincronizar(ctx context.Context, items []domainMar
 
 		exitoso := evalRes.Resultado == domainMarcaje.ResultadoPresente || evalRes.Resultado == domainMarcaje.ResultadoTardanza
 
-		// Si el marcaje offline fue exitoso, revertir ausencia previa si existía (US-MAR-07 AC-05)
-		if exitoso && m != nil {
-			_ = uc.marcajeRepo.RevertirAusenciaPorOffline(ctx, item.SesionID, usuarioID, m)
-		}
+		// Si había una ausencia automática, Ejecutar ya la reemplazó por este marcaje (US-MAR-07 AC-05).
 
 		marcajeID := ""
 		if m != nil {

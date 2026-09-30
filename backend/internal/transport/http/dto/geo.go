@@ -156,34 +156,37 @@ type EspacioResponse struct {
 	PrecisionPromedioMetros *float64            `json:"precisionPromedioMetros,omitempty"`
 	MetodoCaptura           *geo.MetodoCaptura  `json:"metodoCaptura,omitempty"`
 	VersionGeometria        int                 `json:"versionGeometria"`
-	Activo                  bool                `json:"activo"`
-	CreadoEn                time.Time           `json:"creadoEn"`
-	ActualizadoEn           time.Time           `json:"actualizadoEn"`
+	// Solo la leen roles con aula:leer; los docentes nunca ven los valores (RF-GEO-016).
+	VerificacionComplementaria *VerificacionEspacioDTO `json:"verificacionComplementaria,omitempty"`
+	Activo                     bool                    `json:"activo"`
+	CreadoEn                   time.Time               `json:"creadoEn"`
+	ActualizadoEn              time.Time               `json:"actualizadoEn"`
 }
 
 func EspacioToResponse(e *geo.Espacio) EspacioResponse {
 	resp := EspacioResponse{
-		ID:                      e.ID,
-		SedeID:                  e.SedeID,
-		Torre:                   e.Torre,
-		BloqueID:                e.BloqueID,
-		Piso:                    e.Piso,
-		Codigo:                  e.Codigo,
-		Nombre:                  e.Nombre,
-		Capacidad:               e.Capacidad,
-		Tipo:                    e.Tipo,
-		FacultadResponsable:     e.FacultadResponsable,
-		Estado:                  e.Estado,
-		NivelValidacion:         e.NivelValidacion,
-		BufferMetros:            e.BufferMetros,
-		RadioMetros:             e.RadioMetros,
-		AreaMetrosCuadrados:     e.AreaMetrosCuadrados,
-		PrecisionPromedioMetros: e.PrecisionPromedioMetros,
-		MetodoCaptura:           e.MetodoCaptura,
-		VersionGeometria:        e.VersionGeometria,
-		Activo:                  e.Activo,
-		CreadoEn:                e.CreadoEn,
-		ActualizadoEn:           e.ActualizadoEn,
+		ID:                         e.ID,
+		SedeID:                     e.SedeID,
+		Torre:                      e.Torre,
+		BloqueID:                   e.BloqueID,
+		Piso:                       e.Piso,
+		Codigo:                     e.Codigo,
+		Nombre:                     e.Nombre,
+		Capacidad:                  e.Capacidad,
+		Tipo:                       e.Tipo,
+		FacultadResponsable:        e.FacultadResponsable,
+		Estado:                     e.Estado,
+		NivelValidacion:            e.NivelValidacion,
+		BufferMetros:               e.BufferMetros,
+		RadioMetros:                e.RadioMetros,
+		AreaMetrosCuadrados:        e.AreaMetrosCuadrados,
+		PrecisionPromedioMetros:    e.PrecisionPromedioMetros,
+		MetodoCaptura:              e.MetodoCaptura,
+		VersionGeometria:           e.VersionGeometria,
+		Activo:                     e.Activo,
+		VerificacionComplementaria: verificacionADTO(e.VerificacionComplementaria),
+		CreadoEn:                   e.CreadoEn,
+		ActualizadoEn:              e.ActualizadoEn,
 	}
 	if e.Geometria != nil {
 		resp.Geometria = &GeometriaResponse{

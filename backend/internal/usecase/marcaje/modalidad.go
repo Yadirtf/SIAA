@@ -3,6 +3,7 @@ package marcaje
 
 import (
 	"context"
+	"strings"
 
 	"github.com/siaa/backend/internal/repository"
 )
@@ -18,4 +19,9 @@ func modalidadDeAsignacion(ctx context.Context, repo repository.AsignacionReposi
 		return "PRESENCIAL"
 	}
 	return string(asig.Modalidad())
+}
+
+// esModalidadVirtual replica el criterio del motor: solo VIRTUAL queda exenta de geocerca.
+func esModalidadVirtual(modalidad string) bool {
+	return strings.ToUpper(modalidad) == "VIRTUAL"
 }

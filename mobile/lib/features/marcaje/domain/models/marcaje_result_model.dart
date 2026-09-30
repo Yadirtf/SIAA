@@ -31,8 +31,17 @@ class MarcajeResultModel extends Equatable {
     this.puedeJustificar = false,
   });
 
-  bool get esAceptado => resultado == 'ACEPTADO';
-  bool get esRechazado => resultado == 'RECHAZADO';
+  /// Resultados de aceptación: el motor devuelve PRESENTE/TARDANZA (y VALIDO/RETARDO heredados).
+  static const resultadosAceptados = {
+    'ACEPTADO',
+    'PRESENTE',
+    'TARDANZA',
+    'VALIDO',
+    'RETARDO',
+  };
+
+  bool get esAceptado => resultadosAceptados.contains(resultado);
+  bool get esRechazado => resultado.startsWith('RECHAZADO');
   bool get esPrecisionInsuficiente => resultado == 'PRECISION_INSUFICIENTE';
 
   factory MarcajeResultModel.fromJson(Map<String, dynamic> json) {
@@ -42,7 +51,8 @@ class MarcajeResultModel extends Equatable {
       motivoRechazo: json['motivoRechazo'] as String?,
       mensaje: json['mensaje'] as String? ?? '',
       distanciaMetros: (json['distanciaMetros'] as num?)?.toDouble(),
-      minutosRespectoInicio: (json['minutosRespectoInicio'] as num?)?.toInt() ?? 0,
+      minutosRespectoInicio:
+          (json['minutosRespectoInicio'] as num?)?.toInt() ?? 0,
       precisionRecibida: (json['precisionRecibida'] as num?)?.toDouble(),
       precisionRequerida: (json['precisionRequerida'] as num?)?.toDouble(),
       timestampServidor: json['timestampServidor'] as String?,
@@ -60,7 +70,8 @@ class MarcajeResultModel extends Equatable {
         if (distanciaMetros != null) 'distanciaMetros': distanciaMetros,
         'minutosRespectoInicio': minutosRespectoInicio,
         if (precisionRecibida != null) 'precisionRecibida': precisionRecibida,
-        if (precisionRequerida != null) 'precisionRequerida': precisionRequerida,
+        if (precisionRequerida != null)
+          'precisionRequerida': precisionRequerida,
         if (timestampServidor != null) 'timestampServidor': timestampServidor,
         'pasoFallido': pasoFallido,
         'permiteReintento': permiteReintento,

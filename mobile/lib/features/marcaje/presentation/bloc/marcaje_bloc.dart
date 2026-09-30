@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/marcaje_repository.dart';
-import '../../data/services/location_service.dart';
 import 'marcaje_event.dart';
 import 'marcaje_state.dart';
 
@@ -16,6 +15,8 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
     on<CapturarUbicacionEvent>(_onCapturarUbicacion);
     on<RealizarMarcajeEvent>(_onRealizarMarcaje);
     on<SincronizarOfflineEvent>(_onSincronizarOffline);
+    on<RefrescarColaOfflineEvent>(_onRefrescarCola);
+    on<ReintentarMarcajeOfflineEvent>(_onReintentarOffline);
   }
 
   Future<void> _onCargarSesionActiva(
@@ -42,12 +43,14 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         isLoading: false,
         sesionActiva: sesion,
         clearSesion: sesion == null,
-        colaOfflineCount: cola.length,
+        colaOffline: cola,
         semaforo: semaforo,
       ));
 
       // Si la ventana está abierta y no tiene entrada, capturar GPS automáticamente
-      if (sesion != null && sesion.ventana.estaAbierta && !sesion.tieneMarcajeEntrada) {
+      if (sesion != null &&
+          sesion.ventana.estaAbierta &&
+          !sesion.tieneMarcajeEntrada) {
         add(const CapturarUbicacionEvent());
       }
     } catch (e) {
@@ -85,7 +88,8 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         isCapturingGps: false,
         location: location,
         semaforo: SemaforoMarcaje.precisionInsuficiente,
-        error: 'Precisión GPS actual (${location.precisionMetros.toStringAsFixed(1)}m) insuficiente. Se requiere menor a 30m.',
+        error:
+            'Precisión GPS actual (${location.precisionMetros.toStringAsFixed(1)}m) insuficiente. Se requiere menor a 30m.',
       ));
       return;
     }
@@ -132,6 +136,8 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         sesionId: sesion.id,
         tipo: event.tipo,
         location: loc,
+        verificacion: event.verificacion,
+        exigirAttestation: sesion.exigirAttestation,
       );
 
       final cola = await _repository.obtenerColaOffline();
@@ -148,7 +154,7 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
       emit(state.copyWith(
         isSubmitting: false,
         ultimoResultado: resultado,
-        colaOfflineCount: cola.length,
+        colaOffline: cola,
         semaforo: sem,
       ));
     } catch (e) {
@@ -163,11 +169,35 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
     SincronizarOfflineEvent event,
     Emitter<MarcajeState> emit,
   ) async {
-    final sincs = await _repository.sincronizarMarcajesOffline();
-    final cola = await _repository.obtenerColaOffline();
-    emit(state.copyWith(colaOfflineCount: cola.length));
-    if (sincs > 0) {
-      add(const CargarSesionActivaEvent());
+    try {
+      final resumen = await _repository.sincronizarMarcajesOffline();
+      await _emitirCola(emit);
+      if (resumen.evaluados > 0) {
+        add(const CargarSesionActivaEvent());
+      }
+    } catch (e) {
+      emit(
+          state.copyWith(error: 'No fue posible sincronizar: ${e.toString()}'));
     }
+  }
+
+  Future<void> _onRefrescarCola(
+    RefrescarColaOfflineEvent event,
+    Emitter<MarcajeState> emit,
+  ) =>
+      _emitirCola(emit);
+
+  Future<void> _onReintentarOffline(
+    ReintentarMarcajeOfflineEvent event,
+    Emitter<MarcajeState> emit,
+  ) async {
+    await _repository.reintentarMarcajeOffline(event.localId);
+    await _emitirCola(emit);
+    add(const SincronizarOfflineEvent());
+  }
+
+  Future<void> _emitirCola(Emitter<MarcajeState> emit) async {
+    final cola = await _repository.obtenerColaOffline();
+    emit(state.copyWith(colaOffline: cola));
   }
 }

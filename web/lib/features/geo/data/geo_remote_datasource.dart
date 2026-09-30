@@ -119,6 +119,18 @@ class GeoRemoteDataSource {
     await _client.delete('${ApiConstants.espacios}/$id');
   }
 
+  /// PUT /espacios/:id/verificacion (RF-GEO-016). Todo vacío la elimina.
+  Future<EspacioModel> actualizarVerificacion(
+    String espacioId,
+    VerificacionEspacioModel verificacion,
+  ) async {
+    final response = await _client.put(
+      '${ApiConstants.espacios}/$espacioId/verificacion',
+      body: verificacion.toJson(),
+    );
+    return EspacioModel.fromJson(response as Map<String, dynamic>);
+  }
+
   Future<List<SolapamientoItemModel>> getSolapamientos({String? sedeId}) async {
     var url = ApiConstants.solapamientos;
     if (sedeId != null && sedeId.isNotEmpty) {

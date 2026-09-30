@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Play Integrity (Standard API) para attestation de marcajes (US-MAR-10)
+    implementation("com.google.android.play:integrity:1.4.0")
+}

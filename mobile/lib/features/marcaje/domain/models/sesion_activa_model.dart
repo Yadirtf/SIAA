@@ -1,5 +1,6 @@
 // sesion_activa_model.dart — Modelo de sesión activa y ventana para marcaje (US-MAR-01)
 import 'package:equatable/equatable.dart';
+import 'marcaje_result_model.dart';
 
 class EspacioInfo extends Equatable {
   final String id;
@@ -49,8 +50,10 @@ class VentanaInfo extends Equatable {
 
   factory VentanaInfo.fromJson(Map<String, dynamic> json) {
     return VentanaInfo(
-      abreEn: DateTime.tryParse(json['abreEn'] as String? ?? '') ?? DateTime.now(),
-      cierraEn: DateTime.tryParse(json['cierraEn'] as String? ?? '') ?? DateTime.now(),
+      abreEn:
+          DateTime.tryParse(json['abreEn'] as String? ?? '') ?? DateTime.now(),
+      cierraEn: DateTime.tryParse(json['cierraEn'] as String? ?? '') ??
+          DateTime.now(),
       estado: json['estado'] as String? ?? 'NO_ABIERTA',
       minutosParaAbrir: (json['minutosParaAbrir'] as num?)?.toInt() ?? 0,
     );
@@ -77,6 +80,12 @@ class SesionActivaModel extends Equatable {
   final String modalidad;
   final VentanaInfo ventana;
   final bool verificacionComplementariaExigida;
+
+  /// Métodos aceptados por el aula (WIFI | BLE | QR); solo viene cuando es exigida.
+  final List<String> metodosVerificacion;
+
+  /// Parámetro de sesión: el servidor exige token de Play Integrity válido.
+  final bool exigirAttestation;
   final bool tieneMarcajeEntrada;
   final bool tieneMarcajeSalida;
   final String? marcajeEntradaEstado;
@@ -91,6 +100,8 @@ class SesionActivaModel extends Equatable {
     required this.modalidad,
     required this.ventana,
     this.verificacionComplementariaExigida = false,
+    this.metodosVerificacion = const [],
+    this.exigirAttestation = false,
     this.tieneMarcajeEntrada = false,
     this.tieneMarcajeSalida = false,
     this.marcajeEntradaEstado,
@@ -101,21 +112,34 @@ class SesionActivaModel extends Equatable {
     final ventanaMap = json['ventana'] as Map<String, dynamic>? ?? {};
     final espacioMap = sesionMap['espacio'] as Map<String, dynamic>? ?? {};
     final marcajeExistente = json['marcajeExistente'] as Map<String, dynamic>?;
+    final parametros = json['parametros'] as Map<String, dynamic>? ?? {};
+    final metodos = (json['metodosVerificacion'] as List<dynamic>? ?? [])
+        .whereType<String>()
+        .map((m) => m.toUpperCase())
+        .toList();
 
     final tieneEntrada = marcajeExistente != null &&
         marcajeExistente['tipo'] == 'ENTRADA' &&
-        marcajeExistente['resultado'] == 'ACEPTADO';
+        MarcajeResultModel.resultadosAceptados
+            .contains(marcajeExistente['resultado']);
 
     return SesionActivaModel(
       id: sesionMap['id'] as String? ?? '',
       asignatura: sesionMap['asignatura'] as String? ?? 'Sin Asignatura',
       grupo: sesionMap['grupo'] as String? ?? 'G1',
       espacio: EspacioInfo.fromJson(espacioMap),
-      inicioProgramado: DateTime.tryParse(sesionMap['inicioProgramado'] as String? ?? '') ?? DateTime.now(),
-      finProgramado: DateTime.tryParse(sesionMap['finProgramado'] as String? ?? '') ?? DateTime.now(),
+      inicioProgramado:
+          DateTime.tryParse(sesionMap['inicioProgramado'] as String? ?? '') ??
+              DateTime.now(),
+      finProgramado:
+          DateTime.tryParse(sesionMap['finProgramado'] as String? ?? '') ??
+              DateTime.now(),
       modalidad: sesionMap['modalidad'] as String? ?? 'PRESENCIAL',
       ventana: VentanaInfo.fromJson(ventanaMap),
-      verificacionComplementariaExigida: json['verificacionComplementariaExigida'] as bool? ?? false,
+      verificacionComplementariaExigida:
+          json['verificacionComplementariaExigida'] as bool? ?? false,
+      metodosVerificacion: metodos,
+      exigirAttestation: parametros['exigirAttestation'] as bool? ?? false,
       tieneMarcajeEntrada: tieneEntrada,
       tieneMarcajeSalida: false,
       marcajeEntradaEstado: marcajeExistente?['resultado'] as String?,
@@ -133,6 +157,8 @@ class SesionActivaModel extends Equatable {
         modalidad,
         ventana,
         verificacionComplementariaExigida,
+        metodosVerificacion,
+        exigirAttestation,
         tieneMarcajeEntrada,
         tieneMarcajeSalida,
         marcajeEntradaEstado,

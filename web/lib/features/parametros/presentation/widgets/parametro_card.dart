@@ -5,6 +5,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/parametro_model.dart';
 import '../bloc/parametros_bloc.dart';
 import '../bloc/parametros_event.dart';
+import 'parametro_badges.dart';
+import 'parametro_editor.dart';
+import 'parametro_labels.dart';
 
 /// Tarjeta editable para un parámetro individual.
 /// Muestra el valor actual, el nivel de origen y permite editar inline.
@@ -43,6 +46,12 @@ class _ParametroCardState extends State<ParametroCard> {
   void dispose() {
     _ctrl.dispose();
     super.dispose();
+  }
+
+  /// Parte siempre del valor efectivo vigente, no de una edición cancelada.
+  void _empezarEdicion() {
+    _ctrl.text = widget.parametro.valor?.toString() ?? '';
+    setState(() => _editing = true);
   }
 
   void _onSave() {
@@ -96,7 +105,7 @@ class _ParametroCardState extends State<ParametroCard> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Icono de origen
-            _OrigenIcon(nivel: widget.parametro.nivel),
+            OrigenIcon(nivel: widget.parametro.nivel),
             const SizedBox(width: 14),
 
             // Nombre + clave técnica
@@ -106,7 +115,7 @@ class _ParametroCardState extends State<ParametroCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _claveLabel(widget.parametro.clave),
+                    etiquetaParametro(widget.parametro.clave),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -122,6 +131,16 @@ class _ParametroCardState extends State<ParametroCard> {
                       fontFamily: 'monospace',
                     ),
                   ),
+                  if (ayudaParametro(widget.parametro.clave) != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      ayudaParametro(widget.parametro.clave)!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -129,7 +148,7 @@ class _ParametroCardState extends State<ParametroCard> {
             const SizedBox(width: 16),
 
             // Badge de nivel
-            _NivelBadge(nivel: widget.parametro.nivelLabel),
+            NivelBadge(nivel: widget.parametro.nivelLabel),
 
             const SizedBox(width: 16),
 
@@ -137,7 +156,7 @@ class _ParametroCardState extends State<ParametroCard> {
             Expanded(
               flex: 2,
               child: _editing
-                  ? _Editor(
+                  ? ParametroEditor(
                       ctrl: _ctrl,
                       isBool: widget.parametro.valor is bool,
                       onSave: _onSave,
@@ -145,7 +164,7 @@ class _ParametroCardState extends State<ParametroCard> {
                       isSaving: widget.isSaving,
                     )
                   : GestureDetector(
-                      onTap: () => setState(() => _editing = true),
+                      onTap: _empezarEdicion,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -181,190 +200,6 @@ class _ParametroCardState extends State<ParametroCard> {
           ],
         ),
       ),
-    );
-  }
-
-  String _claveLabel(String clave) {
-    const labels = {
-      'holgura_entrada_antes_min': 'Holgura entrada (antes)',
-      'holgura_entrada_despues_min': 'Holgura entrada (después)',
-      'umbral_tardanza_min': 'Umbral de tardanza',
-      'holgura_salida_antes_min': 'Holgura salida (antes)',
-      'holgura_salida_despues_min': 'Holgura salida (después)',
-      'precision_gps_max_metros': 'Precisión GPS máxima (m)',
-      'buffer_perimetral_metros': 'Buffer perimetral (m)',
-      'promedio_lecturas_vertice': 'Lecturas por vértice',
-      'salida_obligatoria': 'Marcaje de salida',
-      'offline_permitido': 'Marcaje offline',
-      'bloqueo_mock_location': 'Bloquear ubicación simulada',
-      'bloqueo_dispositivo_rooteado': 'Bloquear dispositivo rooteado',
-      'verificacion_complementaria': 'Verificación complementaria',
-    };
-    return labels[clave] ?? clave;
-  }
-}
-
-// ─── Sub-widgets ────────────────────────────────────────────────
-
-class _OrigenIcon extends StatelessWidget {
-  final String nivel;
-
-  const _OrigenIcon({required this.nivel});
-
-  @override
-  Widget build(BuildContext context) {
-    final isGlobal = nivel == 'GLOBAL';
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: isGlobal
-            ? AppColors.surfaceMuted
-            : AppColors.primaryAccent.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        isGlobal ? Icons.public_rounded : Icons.tune_rounded,
-        size: 18,
-        color: isGlobal ? AppColors.textMuted : AppColors.primaryAccent,
-      ),
-    );
-  }
-}
-
-class _NivelBadge extends StatelessWidget {
-  final String nivel;
-
-  const _NivelBadge({required this.nivel});
-
-  @override
-  Widget build(BuildContext context) {
-    final isGlobal = nivel == 'Global';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isGlobal
-            ? AppColors.surfaceMuted
-            : AppColors.primaryAccent.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isGlobal ? AppColors.border : AppColors.primaryAccent.withOpacity(0.25),
-        ),
-      ),
-      child: Text(
-        nivel,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: isGlobal ? AppColors.textMuted : AppColors.primaryAccent,
-        ),
-      ),
-    );
-  }
-}
-
-class _Editor extends StatelessWidget {
-  final TextEditingController ctrl;
-  final bool isBool;
-  final bool isSaving;
-  final VoidCallback onSave;
-  final VoidCallback onCancel;
-
-  const _Editor({
-    required this.ctrl,
-    required this.isBool,
-    required this.isSaving,
-    required this.onSave,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isBool) {
-      return Row(
-        children: [
-          DropdownButton<String>(
-            value: ctrl.text.toLowerCase() == 'true' ? 'true' : 'false',
-            underline: const SizedBox.shrink(),
-            items: const [
-              DropdownMenuItem(value: 'true', child: Text('Sí')),
-              DropdownMenuItem(value: 'false', child: Text('No')),
-            ],
-            onChanged: (v) {
-              ctrl.text = v ?? 'false';
-            },
-          ),
-          const SizedBox(width: 8),
-          _actionButtons(onSave, onCancel, isSaving),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: ctrl,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: AppColors.primaryAccent),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryAccent,
-                  width: 1.5,
-                ),
-              ),
-            ),
-            onSubmitted: (_) => onSave(),
-          ),
-        ),
-        const SizedBox(width: 6),
-        _actionButtons(onSave, onCancel, isSaving),
-      ],
-    );
-  }
-
-  Widget _actionButtons(
-    VoidCallback onSave,
-    VoidCallback onCancel,
-    bool isSaving,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: isSaving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.check_rounded, size: 18),
-          color: AppColors.accentEmerald,
-          onPressed: isSaving ? null : onSave,
-          tooltip: 'Guardar',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-        ),
-        IconButton(
-          icon: const Icon(Icons.close_rounded, size: 18),
-          color: AppColors.textMuted,
-          onPressed: onCancel,
-          tooltip: 'Cancelar',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-        ),
-      ],
     );
   }
 }

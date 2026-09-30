@@ -1,6 +1,7 @@
 // marcaje_remote_datasource.dart — Cliente HTTP para endpoints de marcaje
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
+import '../../domain/models/item_sync_resultado_model.dart';
 import '../../domain/models/marcaje_historial_model.dart';
 import '../../domain/models/marcaje_request_model.dart';
 import '../../domain/models/marcaje_result_model.dart';
@@ -56,19 +57,25 @@ class MarcajeRemoteDataSource {
     }
   }
 
-  /// Sincroniza un lote de marcajes offline (US-MAR-11)
-  Future<List<MarcajeResultModel>> sincronizarLote(List<MarcajeRequestModel> lote) async {
+  /// Máximo de items que el servidor procesa por llamada (el resto se descarta).
+  static const maxItemsPorLote = 50;
+
+  /// Sincroniza un lote de marcajes offline (US-MAR-11). Los resultados vienen en el
+  /// mismo orden que [lote]. Lanza [DioException] ante errores de red o HTTP.
+  Future<List<ItemSyncResultadoModel>> sincronizarLote(
+      List<MarcajeRequestModel> lote) async {
+    assert(lote.length <= maxItemsPorLote);
     final body = {
       'items': lote.map((e) => e.toJson()).toList(),
     };
 
     final response = await _dio.post('/marcajes/sync', data: body);
-    if (response.statusCode == 200 || response.statusCode == 207) {
-      final data = response.data as Map<String, dynamic>;
-      final items = data['items'] as List<dynamic>? ?? [];
-      return items.map((e) => MarcajeResultModel.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    return [];
+    final data = response.data;
+    if (data is! Map<String, dynamic>) return [];
+    final items = data['resultados'] as List<dynamic>? ?? [];
+    return items
+        .map((e) => ItemSyncResultadoModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Consulta el historial cronológico paginado con filtro de mes (US-MAR-08)
@@ -91,14 +98,16 @@ class MarcajeRemoteDataSource {
   }
 
   /// Abre la ventana para marcaje de estudiantes del grupo (US-MAR-13)
-  Future<DateTime> abrirVentanaEstudiantil(String sesionId, {int duracionMinutos = 5}) async {
+  Future<DateTime> abrirVentanaEstudiantil(String sesionId,
+      {int duracionMinutos = 5}) async {
     final response = await _dio.post(
       '/sesiones/$sesionId/ventana-estudiantil',
       data: {'duracionMinutos': duracionMinutos},
     );
     final data = response.data as Map<String, dynamic>;
     final cierraEnStr = data['cierraEn'] as String? ?? '';
-    return DateTime.tryParse(cierraEnStr) ?? DateTime.now().add(Duration(minutes: duracionMinutos));
+    return DateTime.tryParse(cierraEnStr) ??
+        DateTime.now().add(Duration(minutes: duracionMinutos));
   }
 
   /// Registra el pase de lista manual docente (US-MAR-14)

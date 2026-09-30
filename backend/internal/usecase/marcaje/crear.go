@@ -21,6 +21,7 @@ type CrearMarcajeUseCase struct {
 	dispositivoRepo repository.DispositivoRepository
 	auditoriaRepo   repository.AuditoriaRepository
 	asignacionRepo  repository.AsignacionRepository
+	attestation     VerificadorAttestation
 	metrics         *metrics.Collector
 }
 
@@ -55,6 +56,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	if ahora.IsZero() {
 		ahora = time.Now().UTC()
 	}
+	uc.resolverAttestation(ctx, &req)
 
 	// 1. Armar contexto en una sola ronda de consultas (T-MAR-03.4)
 	contexto, err := uc.armarContexto(ctx, req, ahora)
@@ -66,6 +68,12 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	// esta sesión y tipo, se devuelve tal cual. Un intento posterior (doble toque, reintento de
 	// red o un toque desde fuera del aula) no debe presentarse como rechazo ni crear registros.
 	if previo := contexto.MarcajePrevio; previo != nil && contexto.Sesion != nil && previo.ConsolidaSesion() {
+		// Un intento con señales de manipulación queda auditado aunque ya exista el marcaje (RF-AUD-004).
+		uc.auditarIntentoSobreExistente(ctx, req, previo, ahora)
+		// Un marcaje offline tardío puede reemplazar la ausencia automática (US-MAR-07 AC-05).
+		if esAusenciaReemplazable(previo, req) {
+			return uc.reemplazarAusencia(ctx, req, contexto, previo, ahora)
+		}
 		res := domainMarcaje.ResultadoEvaluacion{
 			Resultado:             previo.Resultado,
 			MotivoRechazo:         domainMarcaje.MotivoRechazo(previo.MotivoRechazo),
@@ -82,7 +90,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	uc.verificarSaltoImposible(ctx, req, contexto, ahora)
 
 	// 3. Evaluar deterministamente con la función pura de dominio
-	res := domainMarcaje.EvaluarMarcaje(req, *contexto, ahora)
+	res := domainMarcaje.EvaluarMarcaje(solicitudParaEvaluar(req), *contexto, ahora)
 
 	// 4. Si el resultado es PRECISION_INSUFICIENTE, no persiste ni consume idempotencia (Paso 6, AC-07)
 	if res.Resultado == domainMarcaje.ResultadoPrecisionInsuficiente {
@@ -161,6 +169,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 					contexto.Sesion.EspacioCodigo = esp.Codigo
 				}
 			}
+			uc.cargarVerificacion(ctx, contexto, s.EspacioID())
 		}
 	}
 

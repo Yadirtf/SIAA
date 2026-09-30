@@ -43,7 +43,11 @@ type MarcajeRepository interface {
 	RegistrarAjuste(ctx context.Context, originalID string, ajuste *marcaje.Marcaje) error
 	// ListarConsolidados devuelve los marcajes vigentes de un lote de sesiones (EP-08).
 	ListarConsolidados(ctx context.Context, sesionIDs []string, tipo marcaje.TipoMarcaje) ([]*marcaje.Marcaje, error)
-	ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error)
+	// ObtenerSesionesExpiradasSinMarcaje devuelve las sesiones cuya ventana de entrada cerró en
+	// [desde, hasta) y a las que les falta la entrada de al menos un docente (ADR-09, incremental).
+	ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, desde, hasta time.Time) ([]*academico.Sesion, error)
 	ObtenerUltimoMarcajeUsuario(ctx context.Context, usuarioID string) (*marcaje.Marcaje, error)
-	RevertirAusenciaPorOffline(ctx context.Context, sesionID, usuarioID string, nuevoMarcaje *marcaje.Marcaje) error
+	// RevertirAusenciaPorOffline reemplaza la ausencia automática por el marcaje offline válido
+	// sin borrarla (evento nuevo, RF-JUS-004) y deja la sesión REALIZADA (US-MAR-07 AC-05).
+	RevertirAusenciaPorOffline(ctx context.Context, ausenciaID string, nuevoMarcaje *marcaje.Marcaje) error
 }

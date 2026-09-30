@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../data/models/geo_models.dart';
+
 abstract class GeoEvent extends Equatable {
   const GeoEvent();
 
@@ -97,4 +99,14 @@ class LoadSolapamientosEvent extends GeoEvent {
 
   @override
   List<Object?> get props => [sedeId];
+}
+
+/// Reemplaza en la lista un espacio ya actualizado por el backend
+/// (p. ej. tras guardar su verificación complementaria), sin recargar todo.
+class EspacioActualizadoEvent extends GeoEvent {
+  final EspacioModel espacio;
+  const EspacioActualizadoEvent(this.espacio);
+
+  @override
+  List<Object?> get props => [espacio];
 }

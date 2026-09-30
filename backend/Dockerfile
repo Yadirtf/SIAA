@@ -18,6 +18,8 @@ COPY backend/ .
 
 # Construir binario estático único (ADR-01, US-PLT-01 AC-01)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /dist/siaa-api ./cmd/api
+# Worker de procesos periódicos (ADR-09): misma imagen, otro punto de entrada.
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /dist/siaa-worker ./cmd/worker
 
 # ─── Stage 2: Runtime ──────────────────────────────────────────────────────
 # Imagen mínima: solo el binario, certificados CA, zonas horarias y el contrato OpenAPI
@@ -32,6 +34,7 @@ ENV APP_VERSION=${VERSION} \
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /dist/siaa-api /siaa-api
+COPY --from=builder /dist/siaa-worker /siaa-worker
 COPY contracts/openapi.json /contracts/openapi.json
 
 EXPOSE 8080

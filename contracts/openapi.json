@@ -590,6 +590,9 @@
             "example": "Torre A",
             "type": "string"
           },
+          "verificacionComplementaria": {
+            "$ref": "#/components/schemas/VerificacionEspacio"
+          },
           "versionGeometria": {
             "example": 1,
             "type": "integer"
@@ -1188,6 +1191,28 @@
           "roles",
           "permisos"
         ],
+        "type": "object"
+      },
+      "VerificacionEspacio": {
+        "description": "Métodos complementarios del aula para desambiguar pisos (RF-GEO-016). Solo visibles con aula:leer.",
+        "properties": {
+          "bleUuid": {
+            "type": "string"
+          },
+          "qrCodigo": {
+            "example": "SIAA-A301-7X2K",
+            "type": "string"
+          },
+          "wifiBssids": {
+            "example": [
+              "a4:2b:8c:11:02:9f"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       }
     },
@@ -2673,6 +2698,59 @@
           }
         },
         "summary": "Guardar geometría perimetral del espacio (US-GEO-02, T-GEO-02.7)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}/verificacion": {
+      "put": {
+        "operationId": "actualizarVerificacionEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificacionEspacio"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio actualizado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Sin permiso aula:editar"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          },
+          "422": {
+            "description": "BSSID con formato inválido o QR de menos de 6 caracteres"
+          }
+        },
+        "summary": "Configurar BSSID WiFi, baliza BLE o QR fijo del espacio (RF-GEO-016). Valores vacíos la eliminan.",
         "tags": [
           "espacios"
         ]

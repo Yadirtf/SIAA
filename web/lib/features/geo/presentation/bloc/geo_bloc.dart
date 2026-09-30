@@ -16,6 +16,19 @@ class GeoBloc extends Bloc<GeoEvent, GeoState> {
     on<CreateEspacioEvent>(_onCreateEspacio);
     on<DeleteEspacioEvent>(_onDeleteEspacio);
     on<LoadSolapamientosEvent>(_onLoadSolapamientos);
+    on<EspacioActualizadoEvent>(_onEspacioActualizado);
+  }
+
+  void _onEspacioActualizado(
+    EspacioActualizadoEvent event,
+    Emitter<GeoState> emit,
+  ) {
+    final actual = state;
+    if (actual is! GeoLoaded) return;
+    final espacios = actual.espacios
+        .map((e) => e.id == event.espacio.id ? event.espacio : e)
+        .toList();
+    emit(actual.copyWith(espacios: espacios));
   }
 
   Future<void> _onLoadGeoData(

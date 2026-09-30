@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
 import '../bloc/geo_state.dart';
+import '../widgets/espacio_tile.dart';
 
 class EspaciosScreen extends StatelessWidget {
   const EspaciosScreen({super.key});
@@ -220,39 +220,7 @@ class EspaciosScreen extends StatelessWidget {
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            final esp = state.espacios[index];
-                            return Card(
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.accentEmerald
-                                      .withOpacity(0.12),
-                                  child: const Icon(
-                                    Icons.meeting_room_outlined,
-                                    color: AppColors.accentEmerald,
-                                  ),
-                                ),
-                                title: Text(
-                                  '${esp.nombre} (${esp.codigo})',
-                                  style: AppTextStyles.h3,
-                                ),
-                                subtitle: Text(
-                                  'Tipo: ${esp.tipo} • Capacidad: ${esp.capacidad} est. • Piso: ${esp.piso ?? 1}',
-                                  style: AppTextStyles.bodyMedium,
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: AppColors.accentRose,
-                                  ),
-                                  tooltip: 'Eliminar espacio',
-                                  onPressed: () {
-                                    context.read<GeoBloc>().add(
-                                      DeleteEspacioEvent(esp.id),
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
+                            return EspacioTile(espacio: state.espacios[index]);
                           },
                         ),
                 ),
