@@ -43,6 +43,18 @@ class NavTabCambiado extends NavEvent {
   List<Object?> get props => [nuevoIndex];
 }
 
+/// Abre una ruta solicitada desde fuera del shell (p. ej. al tocar una notificación).
+/// Solo se atiende si la ruta es un destino permitido para el rol activo.
+class NavRutaSolicitada extends NavEvent {
+  final String route;
+  final String? sesionId;
+
+  const NavRutaSolicitada(this.route, {this.sesionId});
+
+  @override
+  List<Object?> get props => [route, sesionId];
+}
+
 /// Selecciona un destino desde el Drawer (modulo extra o destino comun).
 class NavDrawerItemSelected extends NavEvent {
   final String route;

@@ -1,6 +1,7 @@
 // nav_bloc.dart - BLoC orquestador de navegacion por rol (SIAA Movil)
 // RF-ROL-001, RF-ROL-004
 import 'package:bloc/bloc.dart';
+import '../../config/nav_destinations.dart';
 import '../../domain/services/nav_permission_service.dart';
 import 'nav_event.dart';
 import 'nav_state.dart';
@@ -15,6 +16,7 @@ class NavBloc extends Bloc<NavEvent, NavState> {
     on<NavContextoCambiado>(_onContextoCambiado);
     on<NavTabCambiado>(_onTabCambiado);
     on<NavDrawerItemSelected>(_onDrawerItemSelected);
+    on<NavRutaSolicitada>(_onRutaSolicitada);
   }
 
   void _onInicializado(NavInicializado event, Emitter<NavState> emit) {
@@ -55,6 +57,28 @@ class NavBloc extends Bloc<NavEvent, NavState> {
     emit(state.copyWith(
       tabIndex: event.nuevoIndex,
       clearDrawerRoute: true,
+    ));
+  }
+
+  void _onRutaSolicitada(NavRutaSolicitada event, Emitter<NavState> emit) {
+    final tab = state.bottomItems.indexWhere((i) => i.route == event.route);
+    if (tab >= 0) {
+      emit(state.copyWith(
+        tabIndex: tab,
+        clearDrawerRoute: true,
+        sesionIdObjetivo: event.sesionId,
+        clearSesionObjetivo: event.sesionId == null,
+      ));
+      return;
+    }
+    final permitida =
+        state.drawerExtraItems.any((i) => i.route == event.route) ||
+            NavDestinations.comunes.any((i) => i.route == event.route);
+    if (!permitida) return;
+    emit(state.copyWith(
+      activeDrawerRoute: event.route,
+      sesionIdObjetivo: event.sesionId,
+      clearSesionObjetivo: event.sesionId == null,
     ));
   }
 

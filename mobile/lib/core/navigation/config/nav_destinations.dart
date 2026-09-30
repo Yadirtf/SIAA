@@ -105,11 +105,22 @@ class NavDestinations {
     permiso: null,
   );
 
+  static const notificaciones = NavItem(
+    label: 'Notificaciones',
+    icon: Icons.notifications_outlined,
+    iconSelected: Icons.notifications_rounded,
+    route: '/shell/notificaciones',
+    permiso: null,
+  );
+
   static const privacidad = NavItem(
-    label: 'Aviso de privacidad',
+    label: 'Privacidad y datos',
     icon: Icons.privacy_tip_outlined,
     iconSelected: Icons.privacy_tip_rounded,
     route: '/shell/privacidad',
     permiso: null,
   );
+
+  /// Destinos de cuenta disponibles para cualquier rol (Drawer).
+  static const comunes = [perfil, notificaciones, privacidad];
 }

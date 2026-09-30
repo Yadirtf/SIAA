@@ -56,7 +56,8 @@ void main() {
       when(() => mockRepo.obtenerColaOffline()).thenAnswer((_) async => []);
       when(() => mockRepo.capturarUbicacion())
           .thenAnswer((_) async => dummyLocationOptima);
-      return MarcajeBloc(repository: mockRepo);
+      return MarcajeBloc(
+          repository: mockRepo, consentimientoOtorgado: () => true);
     },
     act: (bloc) => bloc.add(const CargarSesionActivaEvent()),
     expect: () => [
@@ -90,7 +91,8 @@ void main() {
             mensaje: 'Marcaje verificado y aceptado',
           ));
       when(() => mockRepo.obtenerColaOffline()).thenAnswer((_) async => []);
-      return MarcajeBloc(repository: mockRepo);
+      return MarcajeBloc(
+          repository: mockRepo, consentimientoOtorgado: () => true);
     },
     seed: () => MarcajeState(
       sesionActiva: dummySesion,
@@ -126,7 +128,8 @@ void main() {
             mensaje: 'Fuera del perímetro del aula',
           ));
       when(() => mockRepo.obtenerColaOffline()).thenAnswer((_) async => []);
-      return MarcajeBloc(repository: mockRepo);
+      return MarcajeBloc(
+          repository: mockRepo, consentimientoOtorgado: () => true);
     },
     seed: () => MarcajeState(
       sesionActiva: dummySesion,

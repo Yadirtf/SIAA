@@ -8,20 +8,23 @@ import '../../../../features/marcaje/presentation/screens/marcaje_grupal_screen.
 import '../../../../features/marcaje/presentation/screens/marcaje_historial_screen.dart';
 import '../../../../features/marcaje/presentation/screens/marcaje_screen.dart';
 import '../../../../features/horario/presentation/screens/mi_horario_screen.dart';
+import '../../../../features/notificaciones/presentation/screens/bandeja_notificaciones_screen.dart';
+import '../../../../features/privacidad/presentation/widgets/privacidad_view.dart';
 import '../../../../shared/widgets/placeholder_screen.dart';
 
 /// Registrador centralizado que mapea una ruta de navegacion a su Widget correspondiente.
 class NavScreenRegistry {
   NavScreenRegistry._();
 
-  static Widget buildScreenForRoute(String route) {
+  /// [sesionIdObjetivo] llega de una notificación que apunta a una sesión concreta.
+  static Widget buildScreenForRoute(String route, {String? sesionIdObjetivo}) {
     switch (route) {
       case '/shell/espacios':
       case '/shell/editor-gps':
         return const HomeScreen();
 
       case '/shell/inicio':
-        return const MarcajeScreen();
+        return MarcajeScreen(sesionIdObjetivo: sesionIdObjetivo);
 
       case '/shell/horario':
         return const MiHorarioScreen();
@@ -71,12 +74,10 @@ class NavScreenRegistry {
         );
 
       case '/shell/privacidad':
-        return const PlaceholderScreen(
-          titulo: 'Aviso de privacidad',
-          descripcion:
-              'Politica de tratamiento de datos personales (Ley 1581/2012).',
-          icono: Icons.privacy_tip_rounded,
-        );
+        return const PrivacidadView();
+
+      case '/shell/notificaciones':
+        return const BandejaNotificacionesScreen();
 
       default:
         return const PlaceholderScreen(

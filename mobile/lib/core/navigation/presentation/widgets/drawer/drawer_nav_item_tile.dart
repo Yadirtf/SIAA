@@ -6,12 +6,14 @@ class DrawerNavItemTile extends StatelessWidget {
   final NavItem item;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const DrawerNavItemTile({
     super.key,
     required this.item,
     required this.isSelected,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -36,6 +38,7 @@ class DrawerNavItemTile extends StatelessWidget {
               : (isDark ? SIAAColors.neutral200 : SIAAColors.neutral700),
         ),
       ),
+      trailing: trailing,
       selected: isSelected,
       selectedTileColor: SIAAColors.primary500.withValues(alpha: 0.08),
       onTap: onTap,

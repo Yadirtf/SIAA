@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
+import '../../../privacidad/data/consentimiento_gate.dart';
+import '../../../privacidad/presentation/cubit/consentimiento_cubit.dart';
+import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
+import '../../../privacidad/presentation/widgets/consentimiento_banner.dart';
 import '../../data/services/marcaje_sync_service.dart';
 import '../../domain/models/marcaje_result_model.dart';
 import '../../domain/models/offline_marcaje_item.dart';
@@ -18,7 +22,10 @@ import '../widgets/sync_status_bar.dart';
 import '../widgets/traffic_light_badge.dart';
 
 class MarcajeScreen extends StatefulWidget {
-  const MarcajeScreen({super.key});
+  /// Sesión indicada por una notificación (US-MAR-12); null al entrar normalmente.
+  final String? sesionIdObjetivo;
+
+  const MarcajeScreen({super.key, this.sesionIdObjetivo});
 
   @override
   State<MarcajeScreen> createState() => _MarcajeScreenState();
@@ -29,6 +36,8 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
   late final StreamSubscription<void> _colaSub;
   final _verificacionResolver = VerificacionResolver();
   MarcajeResultModel? _resultadoMostrado;
+  int _rechazosAtendidos = 0;
+  late bool _objetivoPendiente = widget.sesionIdObjetivo != null;
 
   @override
   void initState() {
@@ -39,10 +48,41 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
     // Sincronizaciones disparadas por red/ciclo de vida fuera de esta pantalla.
     _colaSub = MarcajeSyncService.actualizaciones
         .listen((_) => _bloc.add(const RefrescarColaOfflineEvent()));
+    // Al aceptar/rechazar el aviso se reevalúa la sesión (y la captura GPS).
+    ConsentimientoGate.instance.cambios.addListener(_recargar);
+  }
+
+  @override
+  void didUpdateWidget(MarcajeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.sesionIdObjetivo != oldWidget.sesionIdObjetivo) {
+      _objetivoPendiente = widget.sesionIdObjetivo != null;
+      _recargar();
+    }
+  }
+
+  void _recargar() => _bloc.add(const CargarSesionActivaEvent());
+
+  /// 403 CONSENTIMIENTO_REQUERIDO en línea: se reconsulta y se presenta el aviso.
+  Future<void> _solicitarConsentimiento() async {
+    await context.read<ConsentimientoCubit>().requerirDeNuevo();
+    if (!mounted || AvisoPrivacidadScreen.visible) return;
+    await AvisoPrivacidadScreen.mostrar(context);
+  }
+
+  /// La notificación apuntaba a una sesión que no es la activa en este momento.
+  void _avisarSesionObjetivo(MarcajeState state) {
+    final objetivo = widget.sesionIdObjetivo;
+    if (objetivo == null || state.sesionActiva?.id == objetivo) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+          'La sesión de la notificación no tiene la ventana de marcaje abierta en este momento.'),
+    ));
   }
 
   @override
   void dispose() {
+    ConsentimientoGate.instance.cambios.removeListener(_recargar);
     _colaSub.cancel();
     _bloc.close();
     super.dispose();
@@ -80,117 +120,136 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
             ),
           ],
         ),
-        body: BlocConsumer<MarcajeBloc, MarcajeState>(
-          // Solo reaccionar a errores/resultados nuevos (no a refrescos de la cola).
+        body: BlocListener<MarcajeBloc, MarcajeState>(
           listenWhen: (prev, curr) =>
-              prev.error != curr.error ||
-              !identical(prev.ultimoResultado, curr.ultimoResultado),
+              prev.rechazosPorConsentimiento !=
+                  curr.rechazosPorConsentimiento ||
+              (prev.isLoading && !curr.isLoading),
           listener: (context, state) {
-            if (state.error != null && !state.isCapturingGps) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.error!),
-                  backgroundColor: Colors.red.shade800,
-                ),
-              );
+            if (state.rechazosPorConsentimiento > _rechazosAtendidos) {
+              _rechazosAtendidos = state.rechazosPorConsentimiento;
+              _solicitarConsentimiento();
             }
-
-            final res = state.ultimoResultado;
-            if (res != null && !identical(res, _resultadoMostrado)) {
-              _resultadoMostrado = res;
-              if (res.esRechazado || res.esPrecisionInsuficiente) {
-                RejectionDialog.show(
-                  context,
-                  resultado: res,
-                  onReintentar: () => _bloc.add(const CapturarUbicacionEvent()),
-                  onJustificar: state.sesionActiva == null
-                      ? null
-                      : () => JustificacionFormScreen.abrir(
-                            context,
-                            sesionId: state.sesionActiva!.id,
-                            nombreSesion: state.sesionActiva!.asignatura,
-                          ),
-                );
-              } else if (res.resultado == 'PENDIENTE_SINCRONIZACION') {
+            if (!state.isLoading && _objetivoPendiente) {
+              _objetivoPendiente = false;
+              _avisarSesionObjetivo(state);
+            }
+          },
+          child: BlocConsumer<MarcajeBloc, MarcajeState>(
+            // Solo reaccionar a errores/resultados nuevos (no a refrescos de la cola).
+            listenWhen: (prev, curr) =>
+                prev.error != curr.error ||
+                !identical(prev.ultimoResultado, curr.ultimoResultado),
+            listener: (context, state) {
+              if (state.error != null && !state.isCapturingGps) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(res.mensaje),
-                    backgroundColor: Colors.amber.shade800,
-                    duration: const Duration(seconds: 4),
-                  ),
-                );
-              } else if (res.esAceptado) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('¡Marcaje registrado y verificado exitosamente!'),
-                    backgroundColor: Colors.green,
+                    content: Text(state.error!),
+                    backgroundColor: Colors.red.shade800,
                   ),
                 );
               }
-            }
-          },
-          builder: (context, state) {
-            if (state.isLoading && state.sesionActiva == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                _bloc.add(const CargarSesionActivaEvent());
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SyncStatusBar(
-                      count: state.colaOfflineCount,
-                      onSyncPressed: () =>
-                          _bloc.add(const SincronizarOfflineEvent()),
+              final res = state.ultimoResultado;
+              if (res != null && !identical(res, _resultadoMostrado)) {
+                _resultadoMostrado = res;
+                if (res.esRechazado || res.esPrecisionInsuficiente) {
+                  RejectionDialog.show(
+                    context,
+                    resultado: res,
+                    onReintentar: () =>
+                        _bloc.add(const CapturarUbicacionEvent()),
+                    onJustificar: state.sesionActiva == null
+                        ? null
+                        : () => JustificacionFormScreen.abrir(
+                              context,
+                              sesionId: state.sesionActiva!.id,
+                              nombreSesion: state.sesionActiva!.asignatura,
+                            ),
+                  );
+                } else if (res.resultado == 'PENDIENTE_SINCRONIZACION') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(res.mensaje),
+                      backgroundColor: Colors.amber.shade800,
+                      duration: const Duration(seconds: 4),
                     ),
-                    ColaOfflinePanel(
-                      rechazados: state.colaRechazados,
-                      fallidos: state.colaFallidos,
-                      onJustificar: _justificarOffline,
-                      onReintentar: (it) =>
-                          _bloc.add(ReintentarMarcajeOfflineEvent(it.localId)),
+                  );
+                } else if (res.esAceptado) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          '¡Marcaje registrado y verificado exitosamente!'),
+                      backgroundColor: Colors.green,
                     ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: TrafficLightBadge(
-                        semaforo: state.semaforo,
-                        precision: state.location?.precisionMetros,
+                  );
+                }
+              }
+            },
+            builder: (context, state) {
+              if (state.isLoading && state.sesionActiva == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  _bloc.add(const CargarSesionActivaEvent());
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SyncStatusBar(
+                        count: state.colaOfflineCount,
+                        onSyncPressed: () =>
+                            _bloc.add(const SincronizarOfflineEvent()),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (state.sesionActiva != null) ...[
-                      SesionCard(sesion: state.sesionActiva!),
-                      const SizedBox(height: 32),
-                      OneTouchButton(
-                        onPressed: state.puedeMarcar
-                            ? () => _onMarcarPressed(state)
-                            : null,
-                        isSubmitting: state.isSubmitting,
-                        isEnabled: state.puedeMarcar,
-                        label: state.sesionActiva!.tieneMarcajeEntrada
-                            ? 'MARCAR SALIDA'
-                            : 'MARCAR ENTRADA',
-                        icon: state.sesionActiva!.tieneMarcajeEntrada
-                            ? Icons.logout_rounded
-                            : Icons.touch_app_rounded,
+                      ColaOfflinePanel(
+                        rechazados: state.colaRechazados,
+                        fallidos: state.colaFallidos,
+                        onJustificar: _justificarOffline,
+                        onReintentar: (it) => _bloc
+                            .add(ReintentarMarcajeOfflineEvent(it.localId)),
                       ),
-                    ] else ...[
-                      const SizedBox(height: 48),
-                      _buildEmptyState(),
+                      if (state.consentimientoRequerido)
+                        const ConsentimientoBanner(),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TrafficLightBadge(
+                          semaforo: state.semaforo,
+                          precision: state.location?.precisionMetros,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (state.sesionActiva != null) ...[
+                        SesionCard(sesion: state.sesionActiva!),
+                        const SizedBox(height: 32),
+                        OneTouchButton(
+                          onPressed: state.puedeMarcar
+                              ? () => _onMarcarPressed(state)
+                              : null,
+                          isSubmitting: state.isSubmitting,
+                          isEnabled: state.puedeMarcar,
+                          label: state.sesionActiva!.tieneMarcajeEntrada
+                              ? 'MARCAR SALIDA'
+                              : 'MARCAR ENTRADA',
+                          icon: state.sesionActiva!.tieneMarcajeEntrada
+                              ? Icons.logout_rounded
+                              : Icons.touch_app_rounded,
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 48),
+                        _buildEmptyState(),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
