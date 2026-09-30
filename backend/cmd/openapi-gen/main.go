@@ -9,13 +9,10 @@ import (
 )
 
 func main() {
-	yamlBytes, err := os.ReadFile("../../contracts/openapi.yaml")
+	// Se ejecuta desde backend/ (go run ./cmd/openapi-gen) o desde cmd/openapi-gen.
+	yamlBytes, err := os.ReadFile("contracts/openapi.yaml")
 	if err != nil {
-		// Try alternative relative path
-		yamlBytes, err = os.ReadFile("../contracts/openapi.yaml")
-		if err != nil {
-			yamlBytes, err = os.ReadFile("contracts/openapi.yaml")
-		}
+		yamlBytes, err = os.ReadFile("../../contracts/openapi.yaml")
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error leyendo openapi.yaml: %v\n", err)
@@ -41,9 +38,8 @@ func main() {
 	}
 
 	outPaths := []string{
-		"../../contracts/openapi.json",
-		"../contracts/openapi.json",
 		"contracts/openapi.json",
+		"../../contracts/openapi.json",
 	}
 
 	written := false

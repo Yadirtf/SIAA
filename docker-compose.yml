@@ -2,8 +2,7 @@ services:
   # ─── API Principal ────────────────────────────────────────────
   siaa-api:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     container_name: siaa-api
     restart: unless-stopped
     ports:
@@ -41,11 +40,10 @@ services:
   # ─── Worker: ausencias, avisos y retención (ADR-09) ───────────
   siaa-worker:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     container_name: siaa-worker
     restart: unless-stopped
-    entrypoint: ["/siaa-worker"]
+    command: ["/siaa-worker"]
     environment:
       - APP_ENV=development
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017}

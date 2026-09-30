@@ -76,7 +76,7 @@ func main() {
 
 	openapiPath := os.Getenv("OPENAPI_SPEC_PATH")
 	if openapiPath == "" {
-		openapiPath = "../contracts/openapi.json"
+		openapiPath = "contracts/openapi.json"
 	}
 	aplicacion, err := app.Construir(cfg, log, mongoClient, openapiPath)
 	if err != nil {

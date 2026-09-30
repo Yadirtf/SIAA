@@ -9,11 +9,11 @@
 
 Antes de escribir una sola línea de código, el agente **debe consultar y comprender** los dos documentos rectores ubicados en la raíz del repositorio:
 
-1. **[`document_text.txt`](file:///c:/Users/pc/Desktop/SIAA/document_text.txt) (SIAA-SRS-001 v1.0 — Especificación de Requerimientos de Software):**
+1. **[`document_text.txt`](../requisitos/document_text.txt) (SIAA-SRS-001 v1.0 — Especificación de Requerimientos de Software):**
    - **Qué contiene:** La línea base funcional (módulos `AUT`, `ROL`, `GEO`, `ACA`, `PAR`, `MAR`, `JUS`, `REP`, `AUD`, `NOT`), los requerimientos no funcionales (rendimiento, seguridad, privacidad legal) y el diseño conceptual de la arquitectura.
    - **Evaluación técnica:** Está **completamente detallado** en cuanto a reglas de negocio (ej. validación geoespacial con buffer, holguras de tiempo, motor de estados de asistencia, índice `2dsphere`). No requiere suposiciones de alcance.
 
-2. **[`SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md`](file:///c:/Users/pc/Desktop/SIAA/SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md) (SIAA-BLG-001 v1.0 — Backlog y Plan Técnico):**
+2. **[`SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md`](../requisitos/SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md) (SIAA-BLG-001 v1.0 — Backlog y Plan Técnico):**
    - **Qué contiene:** La traducción ejecutable del SRS dividida en 12 Épicas (`EP-00` a `EP-11`), desglosada en Historias de Usuario (`US-XXX-nn`), Criterios de Aceptación (`AC-nn`), y lo más valioso: **Subtareas Técnicas (`T-XXX-nn.n`)** que detallan endpoints, DTOs, campos de MongoDB, BLoCs y pantallas.
    - **Evaluación técnica:** Las especificaciones son sumamente rigurosas y ejecutables. 
 
@@ -137,7 +137,7 @@ Cuando el usuario asigne un requerimiento, sprint o corrección, el agente debe 
 ```
 
 ### Paso 1: Localizar la Historia en los Documentos Base
-1. Buscar en [`SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md`](file:///c:/Users/pc/Desktop/SIAA/SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md) el código de la historia (ej: `US-GEO-07`, `US-MAR-01`, etc.).
+1. Buscar en [`SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md`](../requisitos/SIAA-Backlog-Historias-de-Usuario-y-Plan-Tecnico.md) el código de la historia (ej: `US-GEO-07`, `US-MAR-01`, etc.).
 2. Leer los **Criterios de Aceptación (`AC-nn`)** y las **Subtareas Técnicas (`T-XXX-nn.n`)**.
 3. Cruzar con el modelo de datos en `document_text.txt` §6 y reglas de negocio §7.
 

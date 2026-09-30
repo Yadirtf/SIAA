@@ -35,7 +35,7 @@ const (
 	claveCoord      = "Coord12345678*"
 	correoRaiz      = "raiz@siaa.edu.co"
 	claveRaiz       = "RaizInicial12345*"
-	contratoOpenAPI = "../../../contracts/openapi.json"
+	contratoOpenAPI = "../../contracts/openapi.json"
 )
 
 // entorno es una instancia completa del API sobre una base de datos propia de la prueba.

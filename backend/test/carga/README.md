@@ -10,12 +10,14 @@ Este módulo contiene el escenario de prueba de carga automatizado para simular 
 
 ## Ejecución con k6:
 ```bash
-k6 run infra/load-test/k6-pico-horario.js
+# Desde backend/
+k6 run test/carga/k6-pico-horario.js
 ```
 
 ## Ejecución con el Runner Nativo en Go:
 ```bash
-go run infra/load-test/load_test_runner.go -url http://localhost:8080/api/v1/health -rps 300 -duration 600
+# Desde backend/
+go run ./test/carga -url http://localhost:8080/api/v1/health -rps 300 -duration 600
 ```
 
 ## Verificación de Planes de Consulta MongoDB (AC-03):

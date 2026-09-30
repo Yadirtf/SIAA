@@ -5,13 +5,11 @@ on:
     branches: [main, develop]
     paths:
       - 'backend/**'
-      - 'contracts/**'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'backend/**'
-      - 'contracts/**'
       - '.github/workflows/backend.yml'
 
 env:
@@ -166,7 +164,7 @@ jobs:
       - name: Build y push imagen (T-PLT-02.5)
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: backend
           file: backend/Dockerfile
           push: true
           tags: |
