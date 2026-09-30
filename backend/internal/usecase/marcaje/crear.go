@@ -66,6 +66,12 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	// esta sesión y tipo, se devuelve tal cual. Un intento posterior (doble toque, reintento de
 	// red o un toque desde fuera del aula) no debe presentarse como rechazo ni crear registros.
 	if previo := contexto.MarcajePrevio; previo != nil && contexto.Sesion != nil && previo.ConsolidaSesion() {
+		// Un intento con señales de manipulación queda auditado aunque ya exista el marcaje (RF-AUD-004).
+		uc.auditarIntentoSobreExistente(ctx, req, previo, ahora)
+		// Un marcaje offline tardío puede reemplazar la ausencia automática (US-MAR-07 AC-05).
+		if esAusenciaReemplazable(previo, req) {
+			return uc.reemplazarAusencia(ctx, req, contexto, previo, ahora)
+		}
 		res := domainMarcaje.ResultadoEvaluacion{
 			Resultado:             previo.Resultado,
 			MotivoRechazo:         domainMarcaje.MotivoRechazo(previo.MotivoRechazo),

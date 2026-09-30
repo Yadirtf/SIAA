@@ -114,7 +114,7 @@ func (r *fakeMarcajeRepo) ListarConsolidados(ctx context.Context, sesionIDs []st
 	return nil, nil
 }
 
-func (r *fakeMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error) {
+func (r *fakeMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, desde, hasta time.Time) ([]*academico.Sesion, error) {
 	return nil, nil
 }
 
@@ -122,17 +122,8 @@ func (r *fakeMarcajeRepo) ObtenerUltimoMarcajeUsuario(ctx context.Context, usuar
 	return nil, nil
 }
 
-func (r *fakeMarcajeRepo) RevertirAusenciaPorOffline(ctx context.Context, sesionID, usuarioID string, nuevoMarcaje *domainMarcaje.Marcaje) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, m := range r.items {
-		if m.SesionID == sesionID && m.UsuarioID == usuarioID && m.Resultado == domainMarcaje.ResultadoAusente {
-			m.Anulado = true
-			m.MotivoAjuste = "Revertido por marcaje offline"
-		}
-	}
-	r.items[nuevoMarcaje.ID] = nuevoMarcaje
-	return nil
+func (r *fakeMarcajeRepo) RevertirAusenciaPorOffline(ctx context.Context, ausenciaID string, nuevoMarcaje *domainMarcaje.Marcaje) error {
+	return r.RegistrarAjuste(ctx, ausenciaID, nuevoMarcaje)
 }
 
 // Fake SesionRepo

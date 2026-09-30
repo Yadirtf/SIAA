@@ -84,14 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Worker periódico de ausencias automáticas (US-MAR-07, cada 15 min)
-	go func() {
-		ticker := time.NewTicker(15 * time.Minute)
-		defer ticker.Stop()
-		for range ticker.C {
-			_, _ = aplicacion.AusenciasWorker.EjecutarCiclo(context.Background(), time.Now().UTC())
-		}
-	}()
+	// Las ausencias automáticas las genera el proceso cmd/worker (ADR-09), no el API.
 
 	// ─── Servidor HTTP ────────────────────────────────────────
 	srv := &http.Server{

@@ -1,7 +1,8 @@
 // Package middleware — limitador de tasa de peticiones (rate limiting).
 // T-AUT-02.2, RNF-SEG-005, US-AUT-02 (AC-03, AC-04).
-// NOTA: Esta implementación en memoria es thread-safe con sync.RWMutex.
-// En producción se complementa/reemplaza por Redis/Cloudflare (T-AUT-02.4).
+// NOTA: Esta implementación en memoria es thread-safe con sync.RWMutex y descarta las ventanas
+// vencidas. Con varias instancias del API el límite es por instancia; para un límite global se
+// reemplaza el almacén por Redis o se aplica en el proxy (T-AUT-02.4).
 package middleware
 
 import (
@@ -23,7 +24,12 @@ type rateLimitEntry struct {
 type memoryRateLimitStore struct {
 	mu      sync.RWMutex
 	entries map[string]*rateLimitEntry
+	// ultimaLimpieza evita que el mapa crezca sin límite con IPs o usuarios que no vuelven.
+	ultimaLimpieza time.Time
 }
+
+// intervaloLimpieza es cada cuánto se eliminan las ventanas ya vencidas.
+const intervaloLimpieza = time.Minute
 
 func newMemoryRateLimitStore() *memoryRateLimitStore {
 	return &memoryRateLimitStore{
@@ -34,6 +40,7 @@ func newMemoryRateLimitStore() *memoryRateLimitStore {
 func (s *memoryRateLimitStore) allow(key string, maxPerMinute int, now time.Time) (bool, time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.limpiarVencidas(now)
 
 	e, exists := s.entries[key]
 	if !exists || now.After(e.resetAt) {
@@ -54,6 +61,26 @@ func (s *memoryRateLimitStore) allow(key string, maxPerMinute int, now time.Time
 	}
 
 	return true, 0
+}
+
+// limpiarVencidas elimina las ventanas terminadas; se ejecuta como máximo una vez por minuto.
+func (s *memoryRateLimitStore) limpiarVencidas(now time.Time) {
+	if now.Sub(s.ultimaLimpieza) < intervaloLimpieza {
+		return
+	}
+	for k, e := range s.entries {
+		if now.After(e.resetAt) {
+			delete(s.entries, k)
+		}
+	}
+	s.ultimaLimpieza = now
+}
+
+// tamano devuelve cuántas claves conserva el almacén (para pruebas).
+func (s *memoryRateLimitStore) tamano() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.entries)
 }
 
 // RateLimiterByIP limita la tasa por dirección IP.

@@ -15,7 +15,7 @@ type fakeWorkerMarcajeRepo struct {
 	sesionesExpiradas []*academico.Sesion
 }
 
-func (r *fakeWorkerMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error) {
+func (r *fakeWorkerMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, desde, hasta time.Time) ([]*academico.Sesion, error) {
 	return r.sesionesExpiradas, nil
 }
 

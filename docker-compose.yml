@@ -35,6 +35,26 @@ services:
     networks:
       - siaa-net
 
+  # ─── Worker de ausencias (ADR-09) ─────────────────────────────
+  siaa-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: siaa-worker
+    restart: unless-stopped
+    entrypoint: ["/siaa-worker"]
+    environment:
+      - APP_ENV=development
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017}
+      - MONGO_DB=${MONGO_DB:-siaa_dev}
+      - JWT_SECRET=${JWT_SECRET:-siaa-dev-secret-change-in-production-min-32chars}
+      - WORKER_INTERVALO_MIN=5
+    depends_on:
+      siaa-api:
+        condition: service_healthy
+    networks:
+      - siaa-net
+
   # ─── MongoDB ──────────────────────────────────────────────────
   mongo:
     image: mongo:7.0

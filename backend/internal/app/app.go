@@ -156,7 +156,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	syncUC := usecaseMarcaje.NewSyncOfflineUseCase(crearMarcajeUC, marcajeRepo)
 	ventanaEstudiantilUC := usecaseMarcaje.NewVentanaEstudiantilUseCase(sesionRepo, marcajeRepo)
 	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo)
-	ausenciasWorker := usecaseMarcaje.NewAusenciasWorker(marcajeRepo, sesionRepo)
+	ausenciasWorker := NuevoAusenciasWorker(mongoClient)
 
 	// ─── Justificaciones, reportes y bitácora (EP-07, EP-08, RF-AUD-003) ───
 	claveAdjuntos := cfg.AdjuntosClave
@@ -201,4 +201,13 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	}
 
 	return &App{Router: router, AusenciasWorker: ausenciasWorker}, nil
+}
+
+// NuevoAusenciasWorker arma el worker de ausencias con su marca de agua (ADR-09). Lo usa el
+// proceso cmd/worker, que corre aparte del API.
+func NuevoAusenciasWorker(mongoClient *mongoRepo.Client) *usecaseMarcaje.AusenciasWorker {
+	return usecaseMarcaje.NewAusenciasWorker(
+		impl.NewMarcajeMongoRepository(mongoClient.DB()),
+		impl.NewSesionRepository(mongoClient),
+	).WithMarcaDeAgua(impl.NewProcesoRepository(mongoClient))
 }
