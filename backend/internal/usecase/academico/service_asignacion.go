@@ -48,6 +48,10 @@ func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd 
 	if err := periodo.PuedeModificar(); err != nil {
 		return nil, err
 	}
+	// Asignatura, facultad y nombres se derivan en el servidor; el formulario solo elige.
+	if err := s.completarAsignacion(ctx, &cmd, periodo.SedeID()); err != nil {
+		return nil, err
+	}
 	// Alcance ABAC: el coordinador solo programa en su facultad o sede (US-ACA-03 AC-07).
 	if !actor.permiteFacultad(cmd.FacultadID, periodo.SedeID()) {
 		return nil, ErrFueraDeAmbitoFacultad

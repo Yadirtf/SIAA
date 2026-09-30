@@ -105,6 +105,11 @@ func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDo
 		})
 	}
 
+	if s.usuarioRepo != nil {
+		if _, err := s.nombreDocente(ctx, nuevoDocenteID); err != nil {
+			return nil, err
+		}
+	}
 	sesion, err := s.sesionEnAlcance(ctx, sesionID, actor)
 	if err != nil {
 		return nil, err

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 
 enum DispositivoFiltro { todos, pendientes, aprobados, revocados }
 
-class DispositivoBusquedaBar extends StatefulWidget {
+/// Barra para elegir el usuario (buscándolo por nombre, correo o documento)
+/// cuyos dispositivos se consultan, más los filtros por estado.
+class DispositivoBusquedaBar extends StatelessWidget {
   final String usuarioIdInicial;
   final ValueChanged<String> onBuscarUsuario;
   final VoidCallback onRecargar;
@@ -24,41 +27,6 @@ class DispositivoBusquedaBar extends StatefulWidget {
   });
 
   @override
-  State<DispositivoBusquedaBar> createState() => _DispositivoBusquedaBarState();
-}
-
-class _DispositivoBusquedaBarState extends State<DispositivoBusquedaBar> {
-  late final TextEditingController _usuarioCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _usuarioCtrl = TextEditingController(text: widget.usuarioIdInicial);
-  }
-
-  @override
-  void didUpdateWidget(covariant DispositivoBusquedaBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.usuarioIdInicial != oldWidget.usuarioIdInicial &&
-        _usuarioCtrl.text != widget.usuarioIdInicial) {
-      _usuarioCtrl.text = widget.usuarioIdInicial;
-    }
-  }
-
-  @override
-  void dispose() {
-    _usuarioCtrl.dispose();
-    super.dispose();
-  }
-
-  void _ejecutarBusqueda() {
-    final query = _usuarioCtrl.text.trim();
-    if (query.isNotEmpty) {
-      widget.onBuscarUsuario(query);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -73,54 +41,17 @@ class _DispositivoBusquedaBarState extends State<DispositivoBusquedaBar> {
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _usuarioCtrl,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.person_search_rounded,
-                      color: AppColors.textMuted,
-                    ),
-                    hintText: 'Ingresa el ID del usuario o docente (ej: usr-1, 6500...)',
-                    suffixIcon: _usuarioCtrl.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _usuarioCtrl.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  onSubmitted: (_) => _ejecutarBusqueda(),
-                  onChanged: (_) => setState(() {}),
+                child: SelectorUsuario(
+                  etiqueta: 'Usuario o docente',
+                  soloActivos: false,
+                  denso: true,
+                  idInicial: usuarioIdInicial.isEmpty ? null : usuarioIdInicial,
+                  onCambio: (u) {
+                    if (u != null) onBuscarUsuario(u.id);
+                  },
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(Icons.search_rounded, size: 18),
-                label: const Text('Consultar'),
-                onPressed: _ejecutarBusqueda,
-              ),
-              if (widget.onUsarMiUsuario != null) ...[
+              if (onUsarMiUsuario != null) ...[
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
@@ -136,7 +67,7 @@ class _DispositivoBusquedaBarState extends State<DispositivoBusquedaBar> {
                   ),
                   icon: const Icon(Icons.account_circle_outlined, size: 18),
                   label: const Text('Mi Usuario'),
-                  onPressed: widget.onUsarMiUsuario,
+                  onPressed: onUsarMiUsuario,
                 ),
               ],
               const SizedBox(width: 8),
@@ -146,7 +77,7 @@ class _DispositivoBusquedaBarState extends State<DispositivoBusquedaBar> {
                   color: AppColors.textSecondary,
                 ),
                 tooltip: 'Actualizar lista',
-                onPressed: widget.onRecargar,
+                onPressed: onRecargar,
               ),
             ],
           ),
@@ -185,11 +116,11 @@ class _DispositivoBusquedaBarState extends State<DispositivoBusquedaBar> {
   }
 
   Widget _filterChip(String label, DispositivoFiltro filtro, {Color? color}) {
-    final isSelected = widget.filtroActual == filtro;
+    final isSelected = filtroActual == filtro;
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (_) => widget.onCambiarFiltro(filtro),
+      onSelected: (_) => onCambiarFiltro(filtro),
       selectedColor: (color ?? AppColors.primaryAccent).withOpacity(0.18),
       labelStyle: AppTextStyles.bodySmall.copyWith(
         color: isSelected

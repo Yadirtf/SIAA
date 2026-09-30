@@ -55,5 +55,9 @@ func mapearErrorAcademico(err error) error {
 	if errors.Is(err, domainAca.ErrPeriodoCerradoModif) {
 		return echo.NewHTTPError(http.StatusConflict, err.Error())
 	}
+	var de *shared.DomainError
+	if errors.As(err, &de) {
+		return de
+	}
 	return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 }

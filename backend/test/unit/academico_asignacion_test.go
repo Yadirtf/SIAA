@@ -191,7 +191,7 @@ func TestUSACA03_EspacioSinGeometriaYModalidadVirtual(t *testing.T) {
 	)
 	_ = periodoRepo.Create(context.Background(), p)
 
-	espacioSinGeom := &geo.Espacio{ID: "aula-vacia", Nombre: "Aula Sin Poligono", Geometria: nil}
+	espacioSinGeom := &geo.Espacio{ID: "aula-vacia", SedeID: "sede-1", Codigo: "A-000", Nombre: "Aula Sin Poligono", Geometria: nil}
 	_ = espacioRepo.Create(context.Background(), espacioSinGeom)
 
 	svc := usecaseAca.NewService(periodoRepo, nil, asignacionRepo, nil, nil, espacioRepo, nil, clk, logger)

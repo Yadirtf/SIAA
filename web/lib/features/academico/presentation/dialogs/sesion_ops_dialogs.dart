@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../geo/presentation/widgets/selector_espacio.dart';
+import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 import '../bloc/sesiones_bloc.dart';
 
 class CancelarSesionDialog extends StatefulWidget {
@@ -26,13 +28,15 @@ class _CancelarSesionDialogState extends State<CancelarSesionDialog> {
     final motivo = _motivoCtrl.text.trim();
     if (motivo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El motivo de cancelación es obligatorio')),
+        const SnackBar(
+          content: Text('El motivo de cancelación es obligatorio'),
+        ),
       );
       return;
     }
     context.read<SesionesBloc>().add(
-          CancelarSesionEvent(sesionId: widget.sesionId, motivo: motivo),
-        );
+      CancelarSesionEvent(sesionId: widget.sesionId, motivo: motivo),
+    );
     Navigator.pop(context);
   }
 
@@ -61,7 +65,8 @@ class _CancelarSesionDialogState extends State<CancelarSesionDialog> {
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Motivo de la cancelación *',
-                hintText: 'Ej: Evento institucional, mantenimiento de bloque...',
+                hintText:
+                    'Ej: Evento institucional, mantenimiento de bloque...',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -74,7 +79,9 @@ class _CancelarSesionDialogState extends State<CancelarSesionDialog> {
           child: const Text('Volver'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentRose),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accentRose,
+          ),
           onPressed: _submit,
           child: const Text('Confirmar Cancelación'),
         ),
@@ -87,10 +94,14 @@ class ReasignarAulaDialog extends StatefulWidget {
   final String sesionId;
   final String aulaActual;
 
+  /// Aula actual de la sesión: se excluye y fija la sede de las opciones.
+  final String? espacioActualId;
+
   const ReasignarAulaDialog({
     super.key,
     required this.sesionId,
     required this.aulaActual,
+    this.espacioActualId,
   });
 
   @override
@@ -98,26 +109,27 @@ class ReasignarAulaDialog extends StatefulWidget {
 }
 
 class _ReasignarAulaDialogState extends State<ReasignarAulaDialog> {
-  final _nuevoEspacioCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final _motivoCtrl = TextEditingController();
+  String? _nuevoEspacioId;
 
   @override
   void dispose() {
-    _nuevoEspacioCtrl.dispose();
     _motivoCtrl.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final nuevo = _nuevoEspacioCtrl.text.trim();
-    if (nuevo.isEmpty) return;
+    if (!_formKey.currentState!.validate()) return;
+    final nuevo = _nuevoEspacioId;
+    if (nuevo == null) return;
     context.read<SesionesBloc>().add(
-          ReasignarAulaSesionEvent(
-            sesionId: widget.sesionId,
-            nuevoEspacioId: nuevo,
-            motivo: _motivoCtrl.text.trim(),
-          ),
-        );
+      ReasignarAulaSesionEvent(
+        sesionId: widget.sesionId,
+        nuevoEspacioId: nuevo,
+        motivo: _motivoCtrl.text.trim(),
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -126,37 +138,46 @@ class _ReasignarAulaDialogState extends State<ReasignarAulaDialog> {
     return AlertDialog(
       title: Row(
         children: [
-          const Icon(Icons.meeting_room_outlined, color: AppColors.primaryAccent),
+          const Icon(
+            Icons.meeting_room_outlined,
+            color: AppColors.primaryAccent,
+          ),
           const SizedBox(width: 8),
           Text('Reasignar Aula (US-ACA-06)', style: AppTextStyles.h3),
         ],
       ),
       content: SizedBox(
         width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Aula actual: ${widget.aulaActual}',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _nuevoEspacioCtrl,
-              decoration: const InputDecoration(
-                labelText: 'ID / Código de la Nueva Aula *',
-                prefixIcon: Icon(Icons.add_location_alt_outlined),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Aula actual: ${widget.aulaActual}',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _motivoCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Motivo del cambio (opcional)',
-                prefixIcon: Icon(Icons.info_outline),
+              const SizedBox(height: 12),
+              SelectorEspacio(
+                etiqueta: 'Nueva aula *',
+                requerido: true,
+                sedeDelEspacioId: widget.espacioActualId,
+                excluirId: widget.espacioActualId,
+                onCambio: (e) => setState(() => _nuevoEspacioId = e?.id),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _motivoCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Motivo del cambio (opcional)',
+                  prefixIcon: Icon(Icons.info_outline),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -164,10 +185,7 @@ class _ReasignarAulaDialogState extends State<ReasignarAulaDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Reasignar Aula'),
-        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Reasignar Aula')),
       ],
     );
   }
@@ -188,26 +206,27 @@ class DocenteReemplazoDialog extends StatefulWidget {
 }
 
 class _DocenteReemplazoDialogState extends State<DocenteReemplazoDialog> {
-  final _docenteCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final _motivoCtrl = TextEditingController();
+  String? _suplenteId;
 
   @override
   void dispose() {
-    _docenteCtrl.dispose();
     _motivoCtrl.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final doc = _docenteCtrl.text.trim();
-    if (doc.isEmpty) return;
+    if (!_formKey.currentState!.validate()) return;
+    final doc = _suplenteId;
+    if (doc == null) return;
     context.read<SesionesBloc>().add(
-          AsignarDocenteReemplazoEvent(
-            sesionId: widget.sesionId,
-            docenteId: doc,
-            motivo: _motivoCtrl.text.trim(),
-          ),
-        );
+      AsignarDocenteReemplazoEvent(
+        sesionId: widget.sesionId,
+        docenteId: doc,
+        motivo: _motivoCtrl.text.trim(),
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -223,30 +242,36 @@ class _DocenteReemplazoDialogState extends State<DocenteReemplazoDialog> {
       ),
       content: SizedBox(
         width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Titular actual: ${widget.docenteActual}',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _docenteCtrl,
-              decoration: const InputDecoration(
-                labelText: 'ID / Documento del Docente Suplente *',
-                prefixIcon: Icon(Icons.person_add_alt_1_outlined),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Titular actual: ${widget.docenteActual}',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _motivoCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Motivo de suplencia (ej: incapacidad, comisión)',
-                prefixIcon: Icon(Icons.description_outlined),
+              const SizedBox(height: 12),
+              SelectorUsuario(
+                etiqueta: 'Docente suplente *',
+                rol: 'DOCENTE',
+                requerido: true,
+                icono: Icons.person_add_alt_1_outlined,
+                onCambio: (u) => setState(() => _suplenteId = u?.id),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _motivoCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Motivo de suplencia (ej: incapacidad, comisión)',
+                  prefixIcon: Icon(Icons.description_outlined),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

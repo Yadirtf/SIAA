@@ -8,6 +8,9 @@ class PeriodoModel extends Equatable {
   final String fechaFin;
   final String estado;
 
+  /// Sede del periodo; limita las aulas asignables (null = sin sede fija).
+  final String? sedeId;
+
   const PeriodoModel({
     required this.id,
     required this.codigo,
@@ -15,6 +18,7 @@ class PeriodoModel extends Equatable {
     required this.fechaInicio,
     required this.fechaFin,
     required this.estado,
+    this.sedeId,
   });
 
   factory PeriodoModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,7 @@ class PeriodoModel extends Equatable {
       fechaInicio: json['fechaInicio']?.toString() ?? '',
       fechaFin: json['fechaFin']?.toString() ?? '',
       estado: json['estado']?.toString() ?? 'PLANEACION',
+      sedeId: _textoOpcional(json['sedeId']),
     );
   }
 
@@ -36,7 +41,13 @@ class PeriodoModel extends Equatable {
     fechaInicio,
     fechaFin,
     estado,
+    sedeId,
   ];
+}
+
+String? _textoOpcional(dynamic valor) {
+  final texto = valor?.toString() ?? '';
+  return texto.isEmpty ? null : texto;
 }
 
 class FacultadModel extends Equatable {
