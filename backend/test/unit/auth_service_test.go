@@ -54,6 +54,12 @@ func (m *mockUsuarioRepo) Create(_ context.Context, u *user.Usuario) error {
 func (m *mockUsuarioRepo) Update(_ context.Context, u *user.Usuario) error {
 	return nil
 }
+func (m *mockUsuarioRepo) Listar(_ context.Context, _ int) ([]*user.Usuario, error) {
+	if m.usuario != nil {
+		return []*user.Usuario{m.usuario}, nil
+	}
+	return []*user.Usuario{}, nil
+}
 
 type mockTokenRepo struct {
 	token   *repository.RefreshToken
@@ -392,4 +398,12 @@ func TestAuth_DesbloqueoUsuarioNoExiste(t *testing.T) {
 	if err == nil {
 		t.Fatal("se esperaba error de usuario no encontrado")
 	}
+}
+
+func (m *mockUsuarioRepo) FindByDocumento(_ context.Context, _ string) (*user.Usuario, error) {
+	return nil, nil
+}
+
+func (m *mockUsuarioRepo) Buscar(_ context.Context, _ repository.FiltroUsuarios) ([]*user.Usuario, int64, error) {
+	return nil, 0, nil
 }

@@ -19,30 +19,30 @@ const (
 	PermMarcajeAnular  Permission = "marcaje:anular"
 
 	// Aulas / Espacios
-	PermAulaLeer           Permission = "aula:leer"
-	PermAulaCrear          Permission = "aula:crear"
-	PermAulaEditar         Permission = "aula:editar"
+	PermAulaLeer            Permission = "aula:leer"
+	PermAulaCrear           Permission = "aula:crear"
+	PermAulaEditar          Permission = "aula:editar"
 	PermAulaEditarGeometria Permission = "aula:editar-geometria"
-	PermAulaEliminar       Permission = "aula:eliminar"
+	PermAulaEliminar        Permission = "aula:eliminar"
 
 	// Sede y Bloque
 	PermSedeAdministrar   Permission = "sede:administrar"
 	PermBloqueAdministrar Permission = "bloque:administrar"
 
 	// Horarios y asignaciones
-	PermHorarioCrear      Permission = "horario:crear"
-	PermHorarioLeer       Permission = "horario:leer"
-	PermAsignacionCrear   Permission = "asignacion:crear"
-	PermAsignacionEditar  Permission = "asignacion:editar"
+	PermHorarioCrear     Permission = "horario:crear"
+	PermHorarioLeer      Permission = "horario:leer"
+	PermAsignacionCrear  Permission = "asignacion:crear"
+	PermAsignacionEditar Permission = "asignacion:editar"
 
 	// Parámetros
 	PermParametroLeer   Permission = "parametro:leer"
 	PermParametroEditar Permission = "parametro:editar"
 
 	// Usuarios
-	PermUsuarioCrear  Permission = "usuario:crear"
-	PermUsuarioEditar Permission = "usuario:editar"
-	PermUsuarioLeer   Permission = "usuario:leer"
+	PermUsuarioCrear    Permission = "usuario:crear"
+	PermUsuarioEditar   Permission = "usuario:editar"
+	PermUsuarioLeer     Permission = "usuario:leer"
 	PermUsuarioEliminar Permission = "usuario:eliminar"
 
 	// Justificaciones
@@ -58,10 +58,25 @@ const (
 	PermAuditoriaLeer Permission = "auditoria:leer"
 
 	// Roles
-	PermRolCrear  Permission = "rol:crear"
-	PermRolEditar Permission = "rol:editar"
-	PermRolLeer   Permission = "rol:leer"
+	PermRolCrear    Permission = "rol:crear"
+	PermRolEditar   Permission = "rol:editar"
+	PermRolLeer     Permission = "rol:leer"
+	PermRolEliminar Permission = "rol:eliminar"
 )
+
+// AllPermissions contiene todos los permisos del catálogo oficial del sistema (SRS §3.2).
+var AllPermissions = []Permission{
+	PermMarcajeCrear, PermMarcajeLeer, PermMarcajeAjustar, PermMarcajeAnular,
+	PermAulaLeer, PermAulaCrear, PermAulaEditar, PermAulaEditarGeometria, PermAulaEliminar,
+	PermSedeAdministrar, PermBloqueAdministrar,
+	PermHorarioCrear, PermHorarioLeer, PermAsignacionCrear, PermAsignacionEditar,
+	PermParametroLeer, PermParametroEditar,
+	PermUsuarioCrear, PermUsuarioEditar, PermUsuarioLeer, PermUsuarioEliminar,
+	PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
+	PermReporteExportar, PermReporteLeer,
+	PermAuditoriaLeer,
+	PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
+}
 
 // ─────────────────────────────────────────────
 // Roles predefinidos del sistema — SRS §3.2
@@ -70,13 +85,13 @@ const (
 type RoleName string
 
 const (
-	RolSuperadmin    RoleName = "SUPERADMIN"
-	RolAdminInst     RoleName = "ADMIN_INSTITUCIONAL"
-	RolCoordinador   RoleName = "COORDINADOR"
-	RolDocente       RoleName = "DOCENTE"
-	RolEstudiante    RoleName = "ESTUDIANTE"
-	RolMonitor       RoleName = "MONITOR"
-	RolAuditor       RoleName = "AUDITOR"
+	RolSuperadmin  RoleName = "SUPERADMIN"
+	RolAdminInst   RoleName = "ADMIN_INSTITUCIONAL"
+	RolCoordinador RoleName = "COORDINADOR"
+	RolDocente     RoleName = "DOCENTE"
+	RolEstudiante  RoleName = "ESTUDIANTE"
+	RolMonitor     RoleName = "MONITOR"
+	RolAuditor     RoleName = "AUDITOR"
 )
 
 // DefaultPermissions define los permisos de cada rol predefinido según §3.2.
@@ -91,7 +106,7 @@ var DefaultPermissions = map[RoleName][]Permission{
 		PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
 		PermReporteExportar, PermReporteLeer,
 		PermAuditoriaLeer,
-		PermRolCrear, PermRolEditar, PermRolLeer,
+		PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
 	},
 	RolAdminInst: {
 		PermMarcajeLeer, PermMarcajeAjustar, PermMarcajeAnular,

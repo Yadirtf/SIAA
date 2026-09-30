@@ -10,44 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/user"
-	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 	"github.com/siaa/backend/internal/repository"
+	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 )
-
-// ─── Documento BSON ──────────────────────────────────────────
-
-type usuarioDoc struct {
-	ID                   primitive.ObjectID `bson:"_id,omitempty"`
-	Correo               string             `bson:"correo"`
-	PasswordHash         string             `bson:"passwordHash"`
-	Nombre               string             `bson:"nombre"`
-	Apellido             string             `bson:"apellido"`
-	Activo               bool               `bson:"activo"`
-	Eliminado            bool               `bson:"eliminado"`
-	Roles                []rolAsignadoDoc   `bson:"roles"`
-	Ambitos              []ambitoDoc        `bson:"ambitos"`
-	IntentosFallidos     int                `bson:"intentosFallidos"`
-	BloqueadoHasta       *time.Time         `bson:"bloqueadoHasta,omitempty"`
-	UltimoFalloEn        *time.Time         `bson:"ultimoFalloEn,omitempty"`
-	DispositivoVinculado *string            `bson:"dispositivoVinculado,omitempty"`
-	CreadoEn             time.Time          `bson:"creadoEn"`
-	ActualizadoEn        time.Time          `bson:"actualizadoEn"`
-}
-
-type rolAsignadoDoc struct {
-	RolID          string     `bson:"rolId"`
-	Nombre         string     `bson:"nombre"`
-	VigenciaInicio *time.Time `bson:"vigenciaInicio,omitempty"`
-	VigenciaFin    *time.Time `bson:"vigenciaFin,omitempty"`
-}
-
-type ambitoDoc struct {
-	Tipo string `bson:"tipo"`
-	ID   string `bson:"id"`
-}
 
 // ─── Repositorio ─────────────────────────────────────────────
 
@@ -143,74 +111,25 @@ func (r *usuarioRepository) Update(ctx context.Context, u *user.Usuario) error {
 	return err
 }
 
-// ─── Conversores BSON ↔ dominio ──────────────────────────────
+func (r *usuarioRepository) Listar(ctx context.Context, limite int) ([]*user.Usuario, error) {
+	findOpts := options.Find().SetSort(bson.D{{Key: "nombre", Value: 1}})
+	if limite > 0 {
+		findOpts.SetLimit(int64(limite))
+	}
+	cursor, err := r.col.Find(ctx, bson.D{{Key: "eliminado", Value: false}}, findOpts)
+	if err != nil {
+		return nil, fmt.Errorf("listar usuarios: %w", err)
+	}
+	defer cursor.Close(ctx)
 
-func docToUsuario(d *usuarioDoc) *user.Usuario {
-	u := &user.Usuario{
-		ID:                   d.ID.Hex(),
-		Correo:               d.Correo,
-		PasswordHash:         d.PasswordHash,
-		Nombre:               d.Nombre,
-		Apellido:             d.Apellido,
-		Activo:               d.Activo,
-		Eliminado:            d.Eliminado,
-		IntentosFallidos:     d.IntentosFallidos,
-		BloqueadoHasta:       d.BloqueadoHasta,
-		UltimoFalloEn:        d.UltimoFalloEn,
-		DispositivoVinculado: d.DispositivoVinculado,
-		CreadoEn:             d.CreadoEn,
-		ActualizadoEn:        d.ActualizadoEn,
+	var docs []usuarioDoc
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, fmt.Errorf("decodificar usuarios: %w", err)
 	}
-	for _, r := range d.Roles {
-		u.Roles = append(u.Roles, user.RolAsignado{
-			RolID:          r.RolID,
-			Nombre:         rbac.RoleName(r.Nombre),
-			VigenciaInicio: r.VigenciaInicio,
-			VigenciaFin:    r.VigenciaFin,
-		})
-	}
-	for _, a := range d.Ambitos {
-		u.Ambitos = append(u.Ambitos, rbac.Scope{
-			Tipo: rbac.ScopeType(a.Tipo),
-			ID:   a.ID,
-		})
-	}
-	return u
-}
 
-func usuarioToDoc(u *user.Usuario) *usuarioDoc {
-	d := &usuarioDoc{
-		Correo:               u.Correo,
-		PasswordHash:         u.PasswordHash,
-		Nombre:               u.Nombre,
-		Apellido:             u.Apellido,
-		Activo:               u.Activo,
-		Eliminado:            u.Eliminado,
-		IntentosFallidos:     u.IntentosFallidos,
-		BloqueadoHasta:       u.BloqueadoHasta,
-		UltimoFalloEn:        u.UltimoFalloEn,
-		DispositivoVinculado: u.DispositivoVinculado,
-		CreadoEn:             u.CreadoEn,
-		ActualizadoEn:        u.ActualizadoEn,
+	usuarios := make([]*user.Usuario, len(docs))
+	for i := range docs {
+		usuarios[i] = docToUsuario(&docs[i])
 	}
-	if u.ID != "" {
-		if oid, err := primitive.ObjectIDFromHex(u.ID); err == nil {
-			d.ID = oid
-		}
-	}
-	for _, r := range u.Roles {
-		d.Roles = append(d.Roles, rolAsignadoDoc{
-			RolID:          r.RolID,
-			Nombre:         string(r.Nombre),
-			VigenciaInicio: r.VigenciaInicio,
-			VigenciaFin:    r.VigenciaFin,
-		})
-	}
-	for _, a := range u.Ambitos {
-		d.Ambitos = append(d.Ambitos, ambitoDoc{
-			Tipo: string(a.Tipo),
-			ID:   a.ID,
-		})
-	}
-	return d
+	return usuarios, nil
 }

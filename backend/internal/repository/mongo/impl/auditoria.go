@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 	"github.com/siaa/backend/internal/repository"
+	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 )
 
 // ─── Documento BSON ──────────────────────────────────────────

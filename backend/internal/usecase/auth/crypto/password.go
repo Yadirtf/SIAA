@@ -87,6 +87,14 @@ func ValidatePassword(password string, minLength int) error {
 			shared.FieldError{Campo: "password", Error: "demasiado_corta"},
 		)
 	}
+	normalized := strings.ToLower(strings.TrimSpace(password))
+	if IsCommonPassword(normalized) {
+		return shared.NewValidationError(
+			"La contraseña ingresada es demasiado común o vulnerable; seleccione una contraseña diferente",
+			shared.FieldError{Campo: "password", Error: "password_comun"},
+		)
+	}
+
 	hasUpper, hasLower, hasDigit := false, false, false
 	for _, r := range password {
 		switch {
@@ -104,5 +112,38 @@ func ValidatePassword(password string, minLength int) error {
 			shared.FieldError{Campo: "password", Error: "complejidad_insuficiente"},
 		)
 	}
+
 	return nil
+}
+
+// commonPasswords contiene un diccionario de contraseñas vulnerables y predecibles.
+var commonPasswords = map[string]struct{}{
+	"password123456":  {},
+	"admin12345678":   {},
+	"administrator12": {},
+	"qwertyuiop12":    {},
+	"123456789012":    {},
+	"universidad1234": {},
+	"bienvenido1234":  {},
+	"contrasena1234":  {},
+	"colombia2024*":   {},
+	"seguridad12345":  {},
+	"cambiame123456":  {},
+	"docente123456*":  {},
+	"estudiante1234":  {},
+	"supersecret123":  {},
+}
+
+// IsCommonPassword verifica si la contraseña normalizada coincide con la lista negra de contraseñas comunes.
+func IsCommonPassword(normalizedPassword string) bool {
+	if _, exists := commonPasswords[normalizedPassword]; exists {
+		return true
+	}
+	// Detectar repeticiones triviales o secuencias comunes
+	for common := range commonPasswords {
+		if strings.Contains(normalizedPassword, common) {
+			return true
+		}
+	}
+	return false
 }

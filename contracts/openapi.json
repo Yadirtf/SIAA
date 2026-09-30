@@ -1,6 +1,203 @@
 {
   "components": {
     "schemas": {
+      "ActualizarEspacioRequest": {
+        "properties": {
+          "bloqueId": {
+            "type": "string"
+          },
+          "bufferMetros": {
+            "type": "number"
+          },
+          "capacidad": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "confirmarImpacto": {
+            "description": "Confirmación requerida si el espacio tiene sesiones futuras activas (AC-05).",
+            "type": "boolean"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "piso": {
+            "type": "integer"
+          },
+          "sedeId": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "type": "string"
+          },
+          "torre": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ActualizarGeometriaRequest": {
+        "properties": {
+          "coordenadas": {
+            "description": "Lista de coordenadas en orden estricto [longitud, latitud] (ADR-04). Mínimo 3 vértices distintos.",
+            "items": {
+              "example": [
+                -74.08175,
+                4.60971
+              ],
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "metodoCaptura": {
+            "enum": [
+              "RECORRIDO_PERIMETRAL",
+              "TOQUE_MAPA",
+              "MIXTO",
+              "IMPORTACION"
+            ],
+            "example": "RECORRIDO_PERIMETRAL",
+            "type": "string"
+          },
+          "precisionPromedioMetros": {
+            "example": 4.8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "coordenadas",
+          "metodoCaptura"
+        ],
+        "type": "object"
+      },
+      "ActualizarUsuarioRequest": {
+        "properties": {
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "format": "email",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "correo",
+          "nombre",
+          "apellido"
+        ],
+        "type": "object"
+      },
+      "Ambito": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "SEDE",
+              "FACULTAD",
+              "BLOQUE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id"
+        ],
+        "type": "object"
+      },
+      "BloqueDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "codigo": {
+            "example": "B-ING",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Bloque de Ingeniería",
+            "type": "string"
+          },
+          "pisos": {
+            "example": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sedeId",
+          "codigo",
+          "nombre",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
+        ],
+        "type": "object"
+      },
       "ConfirmarRecuperarRequest": {
         "properties": {
           "password": {
@@ -16,6 +213,217 @@
           "token",
           "password"
         ],
+        "type": "object"
+      },
+      "CrearBloqueRequest": {
+        "properties": {
+          "codigo": {
+            "example": "B-ING",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Bloque de Ingeniería",
+            "type": "string"
+          },
+          "pisos": {
+            "example": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sedeId",
+          "codigo",
+          "nombre"
+        ],
+        "type": "object"
+      },
+      "CrearEspacioRequest": {
+        "properties": {
+          "bloqueId": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "bufferMetros": {
+            "example": 10,
+            "type": "number"
+          },
+          "capacidad": {
+            "example": 40,
+            "type": "integer"
+          },
+          "codigo": {
+            "example": "A-301",
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "example": "ACTIVO",
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "example": "Facultad de Ingeniería",
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Aula 301",
+            "type": "string"
+          },
+          "piso": {
+            "example": 3,
+            "type": "integer"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "torre": {
+            "example": "Torre A",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sedeId",
+          "codigo",
+          "nombre",
+          "tipo"
+        ],
+        "type": "object"
+      },
+      "CrearSedeRequest": {
+        "properties": {
+          "codigo": {
+            "example": "SEDE-CENTRAL",
+            "type": "string"
+          },
+          "direccion": {
+            "example": "Calle 10",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Campus Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "nombre"
+        ],
+        "type": "object"
+      },
+      "CrearUsuarioRequest": {
+        "properties": {
+          "ambitos": {
+            "items": {
+              "$ref": "#/components/schemas/Ambito"
+            },
+            "type": "array"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "format": "email",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "password": {
+            "description": "Opcional. Sin contraseña se envía una invitación por correo para definirla.",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RolAsignado"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "correo",
+          "nombre",
+          "apellido",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "EntradaAuditoria": {
+        "properties": {
+          "accion": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorNombre": {
+            "type": "string"
+          },
+          "agenteUsuario": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "entidad": {
+            "type": "string"
+          },
+          "entidadId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ipOrigen": {
+            "type": "string"
+          },
+          "rolActivo": {
+            "type": "string"
+          },
+          "valorAnterior": {},
+          "valorNuevo": {}
+        },
         "type": "object"
       },
       "ErrorResponse": {
@@ -48,6 +456,201 @@
         ],
         "type": "object"
       },
+      "EspacioDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "areaMetrosCuadrados": {
+            "example": 54.2,
+            "type": "number"
+          },
+          "bloqueId": {
+            "example": "66f0a1b2c3d4e5f60718293b",
+            "type": "string"
+          },
+          "bufferMetros": {
+            "example": 10,
+            "type": "number"
+          },
+          "capacidad": {
+            "example": 40,
+            "type": "integer"
+          },
+          "centroide": {
+            "properties": {
+              "coordinates": {
+                "example": [
+                  -74.08175,
+                  4.60971
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": {
+                "example": "Point",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "codigo": {
+            "example": "A-301",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "MANTENIMIENTO"
+            ],
+            "example": "ACTIVO",
+            "type": "string"
+          },
+          "facultadResponsable": {
+            "example": "Facultad de Ingeniería",
+            "type": "string"
+          },
+          "geometria": {
+            "properties": {
+              "coordinates": {
+                "items": {
+                  "items": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              "type": {
+                "example": "Polygon",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293c",
+            "type": "string"
+          },
+          "metodoCaptura": {
+            "example": "RECORRIDO_PERIMETRAL",
+            "type": "string"
+          },
+          "nivelValidacion": {
+            "enum": [
+              "AULA",
+              "BLOQUE",
+              "ZONA"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Aula 301",
+            "type": "string"
+          },
+          "piso": {
+            "example": 3,
+            "type": "integer"
+          },
+          "precisionPromedioMetros": {
+            "example": 4.8,
+            "type": "number"
+          },
+          "sedeId": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "AULA",
+              "LABORATORIO",
+              "AUDITORIO",
+              "TALLER"
+            ],
+            "example": "AULA",
+            "type": "string"
+          },
+          "torre": {
+            "example": "Torre A",
+            "type": "string"
+          },
+          "verificacionComplementaria": {
+            "$ref": "#/components/schemas/VerificacionEspacio"
+          },
+          "versionGeometria": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "sedeId",
+          "codigo",
+          "nombre",
+          "capacidad",
+          "tipo",
+          "estado",
+          "nivelValidacion",
+          "bufferMetros",
+          "versionGeometria",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
+        ],
+        "type": "object"
+      },
+      "EstadoConsentimiento": {
+        "description": "Decisión del titular sobre la versión vigente del aviso. Sin aceptación no se puede marcar.",
+        "properties": {
+          "decididoEn": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "enum": [
+              "ACEPTADO",
+              "RECHAZADO",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requiereAceptacion": {
+            "type": "boolean"
+          },
+          "versionDecidida": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionVigente": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "FieldError": {
         "properties": {
           "campo": {
@@ -63,6 +666,50 @@
           "campo",
           "error"
         ],
+        "type": "object"
+      },
+      "FilaCumplimiento": {
+        "properties": {
+          "ajustadas": {
+            "type": "integer"
+          },
+          "ausenciasInjustificadas": {
+            "type": "integer"
+          },
+          "ausenciasJustificadas": {
+            "type": "integer"
+          },
+          "docenteId": {
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "horasDictadas": {
+            "type": "number"
+          },
+          "horasJustificadas": {
+            "type": "number"
+          },
+          "horasProgramadas": {
+            "type": "number"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "porcentajeCumplimiento": {
+            "type": "number"
+          },
+          "presentes": {
+            "type": "integer"
+          },
+          "sesiones": {
+            "type": "integer"
+          },
+          "tardanzas": {
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "HealthResponse": {
@@ -103,6 +750,165 @@
           "uptimeSegundos",
           "dependencias"
         ],
+        "type": "object"
+      },
+      "ImportacionUsuariosResponse": {
+        "properties": {
+          "confirmado": {
+            "type": "boolean"
+          },
+          "creados": {
+            "type": "integer"
+          },
+          "filas": {
+            "items": {
+              "properties": {
+                "correo": {
+                  "type": "string"
+                },
+                "creado": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "fila": {
+                  "type": "integer"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "usuarioId": {
+                  "type": "string"
+                },
+                "valida": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "validas": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Justificacion": {
+        "properties": {
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "adjuntos": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "mime": {
+                  "type": "string"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string"
+                },
+                "tamano": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "docenteId": {
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "RADICADA",
+              "EN_REVISION",
+              "APROBADA",
+              "RECHAZADA"
+            ],
+            "type": "string"
+          },
+          "facultadId": {
+            "type": "string"
+          },
+          "fechaSesion": {
+            "format": "date",
+            "type": "string"
+          },
+          "historial": {
+            "items": {
+              "properties": {
+                "actorId": {
+                  "type": "string"
+                },
+                "en": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "estado": {
+                  "enum": [
+                    "RADICADA",
+                    "EN_REVISION",
+                    "APROBADA",
+                    "RECHAZADA"
+                  ],
+                  "type": "string"
+                },
+                "observaciones": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombreSesion": {
+            "type": "string"
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "revisorId": {
+            "type": "string"
+          },
+          "sedeId": {
+            "type": "string"
+          },
+          "sesionId": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "INCAPACIDAD",
+              "COMISION",
+              "PERMISO",
+              "FALLA_TECNICA",
+              "CALAMIDAD"
+            ],
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "LoginRequest": {
@@ -152,6 +958,177 @@
         ],
         "type": "object"
       },
+      "Notificacion": {
+        "description": "Aviso de la bandeja de la app. El push de FCM lleva en data: tipo, ruta, notificacionId y, según el caso, sesionId o justificacionId.",
+        "properties": {
+          "creadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cuerpo": {
+            "type": "string"
+          },
+          "datos": {
+            "properties": {
+              "justificacionId": {
+                "type": "string"
+              },
+              "ruta": {
+                "enum": [
+                  "/marcaje",
+                  "/justificaciones",
+                  "/horario"
+                ],
+                "type": "string"
+              },
+              "sesionId": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "leida": {
+            "type": "boolean"
+          },
+          "tipo": {
+            "enum": [
+              "RECORDATORIO_SESION",
+              "CIERRE_VENTANA",
+              "RESULTADO_JUSTIFICACION",
+              "CAMBIO_HORARIO"
+            ],
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Perfil": {
+        "description": "Cuenta propia y dispositivos vinculados (§9.1 Perfil, RF-AUT-004).",
+        "properties": {
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "dispositivos": {
+            "items": {
+              "properties": {
+                "confiable": {
+                  "type": "boolean"
+                },
+                "instalacionId": {
+                  "type": "string"
+                },
+                "modelo": {
+                  "type": "string"
+                },
+                "pendienteAprobacion": {
+                  "type": "boolean"
+                },
+                "revocadoEn": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "so": {
+                  "type": "string"
+                },
+                "versionApp": {
+                  "type": "string"
+                },
+                "vinculadoEn": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totpActivado": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "PoliticaPrivacidad": {
+        "description": "Aviso de privacidad y tratamiento de datos (Ley 1581 de 2012, RNF-LEG-003).",
+        "properties": {
+          "actualizadaEn": {
+            "example": "2026-09-30",
+            "type": "string"
+          },
+          "contacto": {
+            "type": "string"
+          },
+          "contenido": {
+            "description": "Texto del aviso en Markdown",
+            "type": "string"
+          },
+          "institucion": {
+            "type": "string"
+          },
+          "version": {
+            "example": "1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "contenido",
+          "actualizadaEn"
+        ],
+        "type": "object"
+      },
+      "PreferenciasNotificacion": {
+        "description": "Tipos de aviso que el usuario quiere recibir (US-NOT-02). Los obligatorios siempre quedan activos.",
+        "properties": {
+          "cambioHorario": {
+            "type": "boolean"
+          },
+          "cierreVentana": {
+            "type": "boolean"
+          },
+          "obligatorias": {
+            "example": [
+              "cambioHorario"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "type": "array"
+          },
+          "recordatorioSesion": {
+            "type": "boolean"
+          },
+          "resultadoJustificacion": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "RecuperarRequest": {
         "properties": {
           "correo": {
@@ -178,6 +1155,53 @@
         ],
         "type": "object"
       },
+      "ReporteCumplimiento": {
+        "properties": {
+          "docentes": {
+            "items": {
+              "$ref": "#/components/schemas/FilaCumplimiento"
+            },
+            "type": "array"
+          },
+          "falsosRechazos": {
+            "description": "Justificaciones aprobadas por falla técnica",
+            "type": "integer"
+          },
+          "filtro": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "generadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "totales": {
+            "$ref": "#/components/schemas/FilaCumplimiento"
+          }
+        },
+        "type": "object"
+      },
+      "RolAsignado": {
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "vigenciaFin": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vigenciaInicio": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nombre"
+        ],
+        "type": "object"
+      },
       "RoleDTO": {
         "properties": {
           "nombre": {
@@ -199,6 +1223,47 @@
         "required": [
           "nombre",
           "permisos"
+        ],
+        "type": "object"
+      },
+      "SedeDTO": {
+        "properties": {
+          "activo": {
+            "example": true,
+            "type": "boolean"
+          },
+          "actualizadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "codigo": {
+            "example": "SEDE-CENTRAL",
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direccion": {
+            "example": "Calle 10",
+            "type": "string"
+          },
+          "id": {
+            "example": "66f0a1b2c3d4e5f60718293a",
+            "type": "string"
+          },
+          "nombre": {
+            "example": "Campus Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "activo",
+          "creadoEn",
+          "actualizadoEn"
         ],
         "type": "object"
       },
@@ -236,6 +1301,57 @@
           "tipoToken",
           "usuario"
         ],
+        "type": "object"
+      },
+      "UsuarioDTO": {
+        "properties": {
+          "activo": {
+            "type": "boolean"
+          },
+          "ambitos": {
+            "items": {
+              "$ref": "#/components/schemas/Ambito"
+            },
+            "type": "array"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "bloqueado": {
+            "type": "boolean"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "creadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rolesDetalle": {
+            "items": {
+              "$ref": "#/components/schemas/RolAsignado"
+            },
+            "type": "array"
+          },
+          "totpActivado": {
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "UsuarioInfo": {
@@ -283,6 +1399,28 @@
           "permisos"
         ],
         "type": "object"
+      },
+      "VerificacionEspacio": {
+        "description": "Métodos complementarios del aula para desambiguar pisos (RF-GEO-016). Solo visibles con aula:leer.",
+        "properties": {
+          "bleUuid": {
+            "type": "string"
+          },
+          "qrCodigo": {
+            "example": "SIAA-A301-7X2K",
+            "type": "string"
+          },
+          "wifiBssids": {
+            "example": [
+              "a4:2b:8c:11:02:9f"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -307,6 +1445,507 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/academico/importar": {
+      "post": {
+        "operationId": "confirmarImportarAcademico",
+        "responses": {
+          "201": {
+            "description": "Asignaciones creadas e importadas"
+          },
+          "400": {
+            "description": "Filas vacías o inválidas"
+          }
+        },
+        "summary": "Confirmar importación masiva de asignaciones académicas (US-ACA-07)",
+        "tags": [
+          "academico"
+        ]
+      }
+    },
+    "/academico/importar/preview": {
+      "post": {
+        "operationId": "previewImportarAcademicoCSV",
+        "responses": {
+          "200": {
+            "description": "Preview con errores por fila y resumen"
+          },
+          "400": {
+            "description": "Archivo CSV inválido o vacío"
+          }
+        },
+        "summary": "Validar y previsualizar archivo CSV de estructura académica (US-ACA-07)",
+        "tags": [
+          "academico"
+        ]
+      }
+    },
+    "/asignaciones": {
+      "get": {
+        "operationId": "listarAsignaciones",
+        "responses": {
+          "200": {
+            "description": "Lista de asignaciones"
+          }
+        },
+        "summary": "Listar asignaciones académicas",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "description": "El servidor deriva asignatura y facultad del grupo, el nombre de los docentes de sus cuentas y el nombre del aula del espacio. Los docentes deben existir, estar activos y tener el rol DOCENTE; el aula debe pertenecer a la sede del periodo.",
+        "operationId": "crearAsignacion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "asignaturaId": {
+                    "description": "Opcional: se toma del grupo; si se envía debe coincidir.",
+                    "type": "string"
+                  },
+                  "docenteIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "docenteNombre": {
+                    "deprecated": true,
+                    "description": "Obsoleto: se ignora, lo calcula el servidor.",
+                    "type": "string"
+                  },
+                  "espacioId": {
+                    "type": "string"
+                  },
+                  "espacioNombre": {
+                    "deprecated": true,
+                    "description": "Obsoleto: se ignora, lo calcula el servidor.",
+                    "type": "string"
+                  },
+                  "facultadId": {
+                    "description": "Opcional: se deriva del programa de la asignatura; si se envía debe coincidir.",
+                    "type": "string"
+                  },
+                  "franja": {
+                    "properties": {
+                      "diaSemana": {
+                        "type": "integer"
+                      },
+                      "horaFin": {
+                        "example": "10:00",
+                        "type": "string"
+                      },
+                      "horaInicio": {
+                        "example": "08:00",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "diaSemana",
+                      "horaInicio",
+                      "horaFin"
+                    ],
+                    "type": "object"
+                  },
+                  "grupoId": {
+                    "type": "string"
+                  },
+                  "modalidad": {
+                    "enum": [
+                      "PRESENCIAL",
+                      "VIRTUAL",
+                      "HIBRIDA"
+                    ],
+                    "type": "string"
+                  },
+                  "periodoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "periodoId",
+                  "grupoId",
+                  "docenteIds",
+                  "franja",
+                  "modalidad"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Asignación creada"
+          },
+          "409": {
+            "description": "Conflicto de colisión (docente, aula o grupo ocupados en la misma franja)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Docente inexistente, inactivo o sin rol DOCENTE; aula de otra sede o inactiva; grupo de otro periodo"
+          }
+        },
+        "summary": "Crear asignación docente-grupo-aula-franja (US-ACA-03)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/asignaciones/{id}": {
+      "delete": {
+        "operationId": "eliminarAsignacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar asignación académica",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/asignaturas": {
+      "get": {
+        "operationId": "listarAsignaturas",
+        "responses": {
+          "200": {
+            "description": "Lista de asignaturas"
+          }
+        },
+        "summary": "Listar asignaturas",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearAsignatura",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "creditos": {
+                    "type": "integer"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "programaId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre",
+                  "programaId",
+                  "creditos"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Asignatura creada"
+          }
+        },
+        "summary": "Crear asignatura",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/asignaturas/{id}": {
+      "delete": {
+        "operationId": "eliminarAsignatura",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar asignatura (lógico)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/auditoria": {
+      "get": {
+        "description": "Bitácora de solo lectura, de la más reciente a la más antigua (RF-AUD-003). El total va en X-Total-Count. Requiere auditoria:leer.",
+        "operationId": "consultarAuditoria",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "actorId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Prefijo de la acción, p. ej. JUSTIFICACION_",
+            "in": "query",
+            "name": "accion",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD o RFC 3339",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD (incluye el día) o RFC 3339",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntradaAuditoria"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Registros"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Fecha inválida"
+          }
+        },
+        "summary": "Consultar bitácora",
+        "tags": [
+          "auditoria"
+        ]
+      }
+    },
+    "/auditoria/exportar": {
+      "get": {
+        "description": "XLSX o PDF con los 10 000 registros más recientes del filtro; la exportación queda auditada. Requiere auditoria:leer.",
+        "operationId": "exportarAuditoria",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "entidadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "actorId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Prefijo de la acción, p. ej. JUSTIFICACION_",
+            "in": "query",
+            "name": "accion",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD o RFC 3339",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "AAAA-MM-DD (incluye el día) o RFC 3339",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Archivo de la bitácora"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Formato o fecha inválidos"
+          }
+        },
+        "summary": "Exportar bitácora",
+        "tags": [
+          "auditoria"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "description": "Autentica con correo y contraseña. Respuesta idéntica si las credenciales\nson incorrectas o el usuario no existe (AC-02).\nEl rate limiting es de 120 req/min por IP (RNF-SEG-005).\n",
@@ -546,6 +2185,959 @@
         ]
       }
     },
+    "/bloques": {
+      "get": {
+        "operationId": "listarBloques",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BloqueDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de bloques obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar bloques (opcionalmente filtrados por sedeId)",
+        "tags": [
+          "bloques"
+        ]
+      },
+      "post": {
+        "operationId": "crearBloque",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearBloqueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloqueDTO"
+                }
+              }
+            },
+            "description": "Bloque creado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere bloque:administrar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código"
+          }
+        },
+        "summary": "Registrar un nuevo bloque en una sede",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
+    "/bloques/{id}": {
+      "get": {
+        "operationId": "obtenerBloque",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloqueDTO"
+                }
+              }
+            },
+            "description": "Bloque obtenido correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bloque no encontrado"
+          }
+        },
+        "summary": "Obtener detalle de un bloque por ID",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
+    "/bloques/{id}/clonar-piso": {
+      "post": {
+        "operationId": "clonarPiso",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "pisoDestino": {
+                    "type": "integer"
+                  },
+                  "pisoOrigen": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "pisoOrigen",
+                  "pisoDestino"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Piso clonado exitosamente"
+          },
+          "400": {
+            "description": "Solapamiento o parámetros inválidos"
+          }
+        },
+        "summary": "Clonar estructura de piso y espacios dentro de un bloque (US-GEO-12)",
+        "tags": [
+          "bloques"
+        ]
+      }
+    },
+    "/calendario-excepciones": {
+      "get": {
+        "operationId": "listarExcepciones",
+        "responses": {
+          "200": {
+            "description": "Lista de excepciones"
+          }
+        },
+        "summary": "Listar excepciones de calendario",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearExcepcion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ambito": {
+                    "enum": [
+                      "GLOBAL",
+                      "SEDE",
+                      "FACULTAD"
+                    ],
+                    "type": "string"
+                  },
+                  "fechaFin": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "fechaInicio": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "FESTIVO",
+                      "RECESO",
+                      "PARO",
+                      "JORNADA_INSTITUCIONAL"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "tipo",
+                  "ambito",
+                  "fechaInicio",
+                  "fechaFin"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Excepción creada"
+          }
+        },
+        "summary": "Crear excepción de calendario (US-ACA-04)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/calendario-excepciones/{id}": {
+      "delete": {
+        "operationId": "eliminarExcepcion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar excepción de calendario",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/espacios": {
+      "get": {
+        "operationId": "listarEspacios",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bloqueId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "enum": [
+                "AULA",
+                "LABORATORIO",
+                "AUDITORIO",
+                "TALLER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVO",
+                "INACTIVO",
+                "MANTENIMIENTO"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EspacioDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de espacios obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar espacios con filtros jerárquicos (AC-01)",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "post": {
+        "operationId": "crearEspacio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearEspacioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio creado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:crear)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código (AC-03)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error de validación en los datos"
+          }
+        },
+        "summary": "Registrar un nuevo espacio (aula/laboratorio/auditorio/taller)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/exportar": {
+      "get": {
+        "operationId": "exportarEspaciosGeoJSON",
+        "responses": {
+          "200": {
+            "description": "FeatureCollection GeoJSON"
+          }
+        },
+        "summary": "Exportar espacios como GeoJSON FeatureCollection (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/importar": {
+      "post": {
+        "operationId": "confirmarImportarEspaciosGeoJSON",
+        "responses": {
+          "201": {
+            "description": "Espacios importados exitosamente"
+          }
+        },
+        "summary": "Confirmar importación masiva de espacios GeoJSON (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/importar/preview": {
+      "post": {
+        "operationId": "previewImportarEspaciosGeoJSON",
+        "responses": {
+          "200": {
+            "description": "Análisis y preview de Features GeoJSON"
+          }
+        },
+        "summary": "Previsualizar e inspeccionar GeoJSON de espacios (US-GEO-11)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}": {
+      "delete": {
+        "operationId": "eliminarEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Espacio eliminado lógicamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Permiso denegado"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Eliminar un espacio con borrado lógico (AC-06)",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "get": {
+        "operationId": "obtenerEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio obtenido correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Obtener detalle de un espacio por ID",
+        "tags": [
+          "espacios"
+        ]
+      },
+      "patch": {
+        "operationId": "actualizarEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarEspacioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio actualizado correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:editar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de código duplicado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Faltan confirmaciones de impacto ante sesiones futuras o datos inválidos (AC-05)"
+          }
+        },
+        "summary": "Actualizar datos de un espacio (AC-04, AC-05)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}/buffer": {
+      "patch": {
+        "operationId": "recalcularBufferEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buffer recalculado exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          }
+        },
+        "summary": "Recalcular buffer geodésico persistido del espacio (US-GEO-08)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}/geometria": {
+      "put": {
+        "operationId": "actualizarGeometriaEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarGeometriaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Geometría actualizada correctamente"
+          },
+          "400": {
+            "description": "Solicitud malformada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Permiso denegado"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          },
+          "422": {
+            "description": "Polígono inválido o coordenadas fuera de rango"
+          }
+        },
+        "summary": "Guardar geometría perimetral del espacio (US-GEO-02, T-GEO-02.7)",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/espacios/{id}/verificacion": {
+      "put": {
+        "operationId": "actualizarVerificacionEspacio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificacionEspacio"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioDTO"
+                }
+              }
+            },
+            "description": "Espacio actualizado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Sin permiso aula:editar"
+          },
+          "404": {
+            "description": "Espacio no encontrado"
+          },
+          "422": {
+            "description": "BSSID con formato inválido o QR de menos de 6 caracteres"
+          }
+        },
+        "summary": "Configurar BSSID WiFi, baliza BLE o QR fijo del espacio (RF-GEO-016). Valores vacíos la eliminan.",
+        "tags": [
+          "espacios"
+        ]
+      }
+    },
+    "/facultades": {
+      "get": {
+        "operationId": "listarFacultades",
+        "responses": {
+          "200": {
+            "description": "Lista de facultades"
+          }
+        },
+        "summary": "Listar facultades",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearFacultad",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "sedeId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Facultad creada"
+          }
+        },
+        "summary": "Crear facultad",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/facultades/{id}": {
+      "delete": {
+        "operationId": "eliminarFacultad",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar facultad (lógico)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/grupos": {
+      "get": {
+        "operationId": "listarGrupos",
+        "responses": {
+          "200": {
+            "description": "Lista de grupos"
+          }
+        },
+        "summary": "Listar grupos",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearGrupo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "asignaturaId": {
+                    "type": "string"
+                  },
+                  "cupo": {
+                    "type": "integer"
+                  },
+                  "numero": {
+                    "type": "string"
+                  },
+                  "periodoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "numero",
+                  "asignaturaId",
+                  "periodoId",
+                  "cupo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Grupo creado"
+          }
+        },
+        "summary": "Crear grupo de asignatura",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/grupos/{id}": {
+      "delete": {
+        "operationId": "eliminarGrupo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar grupo (lógico)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "description": "Siempre responde 200. No requiere autenticación.",
@@ -602,6 +3194,1815 @@
         ]
       }
     },
+    "/justificaciones": {
+      "get": {
+        "description": "El docente ve las propias; el coordinador, las de su ámbito (RF-ROL-003). El total va en X-Total-Count. Requiere justificacion:leer.",
+        "operationId": "listarJustificaciones",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "estado",
+            "schema": {
+              "enum": [
+                "RADICADA",
+                "EN_REVISION",
+                "APROBADA",
+                "RECHAZADA"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "enum": [
+                "INCAPACIDAD",
+                "COMISION",
+                "PERMISO",
+                "FALLA_TECNICA",
+                "CALAMIDAD"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha de sesión desde (AAAA-MM-DD)",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha de sesión hasta (AAAA-MM-DD)",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Justificacion"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Justificaciones"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Bandeja de justificaciones",
+        "tags": [
+          "justificaciones"
+        ]
+      },
+      "post": {
+        "description": "El docente justifica una sesión propia ya iniciada, sin asistencia válida y dentro del plazo en días hábiles (RF-JUS-001, RF-JUS-003). Soportes JPG, PNG o PDF de hasta 10 MB (máximo 3), guardados cifrados. Requiere justificacion:crear.",
+        "operationId": "radicarJustificacion",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "descripcion": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "sesionId": {
+                    "type": "string"
+                  },
+                  "soportes": {
+                    "items": {
+                      "format": "binary",
+                      "type": "string"
+                    },
+                    "maxItems": 3,
+                    "type": "array"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "INCAPACIDAD",
+                      "COMISION",
+                      "PERMISO",
+                      "FALLA_TECNICA",
+                      "CALAMIDAD"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sesionId",
+                  "tipo",
+                  "descripcion",
+                  "soportes"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación radicada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sesión no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Ya existe una justificación en curso o aprobada para la sesión"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos, soporte, plazo o sesión no elegibles"
+          }
+        },
+        "summary": "Radicar justificación",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
+    "/justificaciones/{id}": {
+      "get": {
+        "operationId": "obtenerJustificacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrada"
+          }
+        },
+        "summary": "Detalle de justificación",
+        "tags": [
+          "justificaciones"
+        ]
+      },
+      "patch": {
+        "description": "Flujo RADICADA → EN_REVISION → APROBADA / RECHAZADA con responsable y observaciones (RF-JUS-002); rechazar exige observaciones. Notifica al solicitante (RF-JUS-005). Requiere justificacion:aprobar.",
+        "operationId": "revisarJustificacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "estado": {
+                    "enum": [
+                      "EN_REVISION",
+                      "APROBADA",
+                      "RECHAZADA"
+                    ],
+                    "type": "string"
+                  },
+                  "observaciones": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "estado"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Justificacion"
+                }
+              }
+            },
+            "description": "Justificación actualizada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Otra persona ya la revisó"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Transición u observaciones inválidas"
+          }
+        },
+        "summary": "Aprobar o rechazar",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
+    "/justificaciones/{id}/soportes/{soporteId}": {
+      "get": {
+        "operationId": "descargarSoporte",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "soporteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Contenido del soporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrado"
+          }
+        },
+        "summary": "Descargar soporte",
+        "tags": [
+          "justificaciones"
+        ]
+      }
+    },
+    "/marcajes": {
+      "get": {
+        "description": "Cada elemento de items incluye además usuarioNombre, asignaturaNombre, grupoNumero y espacioCodigo para mostrar nombres en lugar de identificadores.",
+        "operationId": "listarMarcajesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sesionId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "usuarioId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resultado",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de marcajes"
+          }
+        },
+        "summary": "Consultar marcajes con filtros administrativos (US-MAR-09)",
+        "tags": [
+          "marcaje"
+        ]
+      },
+      "post": {
+        "operationId": "crearMarcaje",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "dispositivoId": {
+                    "type": "string"
+                  },
+                  "idempotencyKey": {
+                    "type": "string"
+                  },
+                  "latitud": {
+                    "type": "number"
+                  },
+                  "longitud": {
+                    "type": "number"
+                  },
+                  "precisionMetros": {
+                    "type": "number"
+                  },
+                  "sesionId": {
+                    "type": "string"
+                  },
+                  "timestampDispositivo": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "ENTRADA",
+                      "SALIDA"
+                    ],
+                    "type": "string"
+                  },
+                  "versionApp": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sesionId",
+                  "tipo",
+                  "timestampDispositivo",
+                  "dispositivoId",
+                  "versionApp"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Precisión GPS insuficiente, permite reintento inmediato"
+          },
+          "201": {
+            "description": "Marcaje evaluado y registrado exitosamente (aceptado o rechazado)"
+          },
+          "400": {
+            "description": "Petición inválida"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado o CONSENTIMIENTO_REQUERIDO: el usuario no ha aceptado el aviso de privacidad vigente"
+          }
+        },
+        "summary": "Registrar marcaje de asistencia (US-MAR-01..US-MAR-05, §9.4)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/marcajes/manual": {
+      "post": {
+        "operationId": "crearMarcajeManual",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "minLength": 20,
+                    "type": "string"
+                  },
+                  "resultado": {
+                    "type": "string"
+                  },
+                  "sesionId": {
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "ENTRADA",
+                      "SALIDA"
+                    ],
+                    "type": "string"
+                  },
+                  "usuarioId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sesionId",
+                  "usuarioId",
+                  "tipo",
+                  "resultado",
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Marcaje manual registrado exitosamente"
+          }
+        },
+        "summary": "Crear marcaje manual de contingencia (US-MAR-09 AC-04)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/marcajes/sync": {
+      "post": {
+        "operationId": "syncMarcajesOffline",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "items": {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "items"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Balance consolidado de sincronización"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado o CONSENTIMIENTO_REQUERIDO: el usuario no ha aceptado el aviso de privacidad vigente"
+          }
+        },
+        "summary": "Sincronizar lote de marcajes offline (US-MAR-11)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/marcajes/{id}": {
+      "patch": {
+        "description": "Registra un marcaje nuevo de origen AJUSTE que apunta al original (ajusteDe); el original conserva sus datos y queda con reemplazadoPor (RF-JUS-004, US-MAR-09).",
+        "operationId": "ajustarMarcaje",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "anulado": {
+                    "type": "boolean"
+                  },
+                  "motivo": {
+                    "minLength": 20,
+                    "type": "string"
+                  },
+                  "nuevoResultado": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Evento de ajuste creado"
+          },
+          "400": {
+            "description": "Motivo inválido o menor a 20 caracteres"
+          },
+          "409": {
+            "description": "El marcaje ya fue ajustado o la sesión tiene otro marcaje vigente"
+          }
+        },
+        "summary": "Ajustar o anular un marcaje administrativamente (US-MAR-09)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/me/consentimiento": {
+      "get": {
+        "operationId": "consultarConsentimiento",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoConsentimiento"
+                }
+              }
+            },
+            "description": "Estado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Estado del consentimiento informado del usuario (US-LEG-01)",
+        "tags": [
+          "privacidad"
+        ]
+      },
+      "post": {
+        "description": "Queda auditado con fecha, IP y dispositivo. Rechazar permite consultar pero no marcar.",
+        "operationId": "decidirConsentimiento",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "acepta": {
+                    "type": "boolean"
+                  },
+                  "dispositivoId": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "version",
+                  "acepta"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoConsentimiento"
+                }
+              }
+            },
+            "description": "Decisión registrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "La versión no es la vigente: recargar el aviso"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos inválidos"
+          }
+        },
+        "summary": "Aceptar o rechazar el aviso vigente",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/me/historial": {
+      "get": {
+        "description": "Cada elemento de items incluye además usuarioNombre, asignaturaNombre, grupoNumero y espacioCodigo para mostrar nombres en lugar de identificadores.",
+        "operationId": "consultarHistorialPropio",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mes",
+            "schema": {
+              "example": "2026-09",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial cronológico inverso de marcajes del usuario autenticado"
+          },
+          "403": {
+            "description": "Prohibido consultar historial de otro usuario (AC-04)"
+          }
+        },
+        "summary": "Consultar historial cronológico propio de marcajes (US-MAR-08)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/me/notificaciones": {
+      "get": {
+        "operationId": "listarNotificaciones",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Notificacion"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Avisos, del más reciente al más antiguo"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Bandeja de avisos del usuario (EP-10)",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/preferencias": {
+      "get": {
+        "operationId": "consultarPreferenciasNotificacion",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasNotificacion"
+                }
+              }
+            },
+            "description": "Preferencias"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Preferencias de avisos",
+        "tags": [
+          "notificaciones"
+        ]
+      },
+      "put": {
+        "operationId": "guardarPreferenciasNotificacion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenciasNotificacion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasNotificacion"
+                }
+              }
+            },
+            "description": "Preferencias guardadas"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Guardar preferencias de avisos",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/tokens": {
+      "delete": {
+        "operationId": "eliminarTokenPush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Dar de baja el token FCM (al cerrar sesión)",
+        "tags": [
+          "notificaciones"
+        ]
+      },
+      "post": {
+        "description": "Idempotente: reasigna el token al usuario y dispositivo actuales.",
+        "operationId": "registrarTokenPush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "dispositivoId": {
+                    "type": "string"
+                  },
+                  "plataforma": {
+                    "enum": [
+                      "ANDROID",
+                      "IOS",
+                      "WEB"
+                    ],
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Registrado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Token o plataforma inválidos"
+          }
+        },
+        "summary": "Registrar el token FCM del dispositivo",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/{id}/leida": {
+      "post": {
+        "operationId": "marcarNotificacionLeida",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marcado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No existe o no es del usuario"
+          }
+        },
+        "summary": "Marcar un aviso propio como leído",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/perfil": {
+      "get": {
+        "operationId": "consultarPerfilPropio",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Perfil"
+                }
+              }
+            },
+            "description": "Perfil"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Perfil del usuario autenticado",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/me/sesiones/activa": {
+      "get": {
+        "operationId": "obtenerSesionActiva",
+        "responses": {
+          "200": {
+            "description": "Detalle de sesión activa y parámetros de validación"
+          }
+        },
+        "summary": "Obtener sesión marcable en la ventana actual con parámetros y geometría (US-MAR-01, §9.5)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/me/sesiones/hoy": {
+      "get": {
+        "operationId": "listarSesionesHoy",
+        "responses": {
+          "200": {
+            "description": "Sesiones del día con estado de marcaje"
+          }
+        },
+        "summary": "Listar todas las sesiones programadas para el docente hoy (T-MAR-01.2)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "description": "Expone latencia p50/p95/p99 por ruta, tasa de error, saturación del pool de base de datos\ny contadores de resultados de marcaje por tipo (US-PLT-05 AC-01, RNF-PER-003).\n",
+        "operationId": "getMetrics",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "baseDatos": {
+                      "type": "object"
+                    },
+                    "erroresTotal": {
+                      "type": "integer"
+                    },
+                    "resultadosMarcaje": {
+                      "type": "object"
+                    },
+                    "rutas": {
+                      "type": "object"
+                    },
+                    "solicitudesTotal": {
+                      "type": "integer"
+                    },
+                    "tasaError": {
+                      "type": "number"
+                    },
+                    "timestamp": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "uptimeSegundos": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "solicitudesTotal",
+                    "erroresTotal",
+                    "tasaError",
+                    "rutas",
+                    "baseDatos"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Reporte consolidado de métricas"
+          }
+        },
+        "security": [],
+        "summary": "Obtener métricas y observabilidad del sistema",
+        "tags": [
+          "observabilidad"
+        ]
+      }
+    },
+    "/parametros/efectivos": {
+      "get": {
+        "operationId": "resolverParametrosEfectivos",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "espacioId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "asignacionId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parámetros efectivos resueltos con su nivel de origen"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Permiso denegado"
+          }
+        },
+        "summary": "Resolver parámetros efectivos en cascada jerárquica (US-PAR-03)",
+        "tags": [
+          "parametrización"
+        ]
+      }
+    },
+    "/periodos": {
+      "get": {
+        "operationId": "listarPeriodos",
+        "responses": {
+          "200": {
+            "description": "Lista de periodos académicos"
+          }
+        },
+        "summary": "Listar periodos académicos",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearPeriodo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "estado": {
+                    "default": "PLANEACION",
+                    "enum": [
+                      "PLANEACION",
+                      "ACTIVO",
+                      "CERRADO"
+                    ],
+                    "type": "string"
+                  },
+                  "fechaFin": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "fechaInicio": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre",
+                  "fechaInicio",
+                  "fechaFin"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Periodo creado"
+          }
+        },
+        "summary": "Crear periodo académico",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/periodos/{id}": {
+      "get": {
+        "operationId": "obtenerPeriodo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Periodo académico"
+          }
+        },
+        "summary": "Obtener periodo por ID",
+        "tags": [
+          "académico"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarPeriodo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Periodo actualizado"
+          }
+        },
+        "summary": "Actualizar periodo académico",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/periodos/{id}/generar-sesiones": {
+      "post": {
+        "operationId": "generarSesionesPeriodo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generación completada con informe de sesiones e idempotencia"
+          }
+        },
+        "summary": "Generar masivamente sesiones de clase para un periodo (US-ACA-05)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/privacidad/politica": {
+      "get": {
+        "operationId": "obtenerPoliticaPrivacidad",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoliticaPrivacidad"
+                }
+              }
+            },
+            "description": "Aviso vigente"
+          }
+        },
+        "security": [],
+        "summary": "Aviso de privacidad vigente (público)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/programas": {
+      "get": {
+        "operationId": "listarProgramas",
+        "responses": {
+          "200": {
+            "description": "Lista de programas"
+          }
+        },
+        "summary": "Listar programas",
+        "tags": [
+          "académico"
+        ]
+      },
+      "post": {
+        "operationId": "crearPrograma",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "facultadId": {
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre",
+                  "facultadId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Programa creado"
+          }
+        },
+        "summary": "Crear programa académico",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/programas/{id}": {
+      "delete": {
+        "operationId": "eliminarPrograma",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        },
+        "summary": "Eliminar programa (lógico)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/reportes/cumplimiento": {
+      "get": {
+        "description": "Horas programadas, dictadas y justificadas, tardanzas y ausencias por docente de las sesiones ya terminadas (RF-REP-001). Las justificaciones aprobadas se reflejan sin modificar los marcajes (RF-JUS-004). Requiere reporte:leer.",
+        "operationId": "reporteCumplimiento",
+        "parameters": [
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "programaId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteCumplimiento"
+                }
+              }
+            },
+            "description": "Reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Falta el periodo o el rango de fechas"
+          }
+        },
+        "summary": "Reporte de cumplimiento docente",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/cumplimiento/exportar": {
+      "get": {
+        "description": "XLSX o PDF con marca de agua institucional, sello de generación y huella SHA-256 de los datos (RF-REP-004). La exportación queda auditada. Requiere reporte:exportar.",
+        "operationId": "exportarCumplimiento",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "programaId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "docenteId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Archivo del reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Formato o filtros inválidos"
+          }
+        },
+        "summary": "Exportar reporte de cumplimiento",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
     "/roles": {
       "get": {
         "description": "Retorna la lista de roles predefinidos con sus permisos según la matriz del SRS §3.2 (AC-01 US-ROL-01).\nRequiere token de acceso con permiso rol:leer.\n",
@@ -644,6 +5045,1070 @@
         "summary": "Listar roles del sistema",
         "tags": [
           "roles"
+        ]
+      },
+      "post": {
+        "operationId": "crearRolPersonalizado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "permisos": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "permisos"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Rol creado exitosamente"
+          }
+        },
+        "summary": "Crear rol personalizado (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      }
+    },
+    "/roles/{id}": {
+      "delete": {
+        "operationId": "eliminarRol",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Rol eliminado"
+          }
+        },
+        "summary": "Eliminar rol personalizado (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      },
+      "get": {
+        "operationId": "obtenerRolPorId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle del rol"
+          }
+        },
+        "summary": "Obtener detalle de un rol (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarRol",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rol actualizado"
+          }
+        },
+        "summary": "Actualizar rol personalizado (US-ROL-02)",
+        "tags": [
+          "roles"
+        ]
+      }
+    },
+    "/sedes": {
+      "get": {
+        "operationId": "listarSedes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SedeDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lista de sedes obtenida correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere aula:leer)"
+          }
+        },
+        "summary": "Listar todas las sedes institucionales activas",
+        "tags": [
+          "sedes"
+        ]
+      },
+      "post": {
+        "operationId": "crearSede",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearSedeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SedeDTO"
+                }
+              }
+            },
+            "description": "Sede creada correctamente"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado (requiere sede:administrar)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicto de unicidad de código"
+          }
+        },
+        "summary": "Registrar una nueva sede",
+        "tags": [
+          "sedes"
+        ]
+      }
+    },
+    "/sedes/{id}": {
+      "get": {
+        "operationId": "obtenerSede",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SedeDTO"
+                }
+              }
+            },
+            "description": "Sede obtenida correctamente"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sede no encontrada"
+          }
+        },
+        "summary": "Obtener detalle de una sede por ID",
+        "tags": [
+          "sedes"
+        ]
+      }
+    },
+    "/sesiones": {
+      "get": {
+        "operationId": "listarSesiones",
+        "responses": {
+          "200": {
+            "description": "Lista de sesiones filtradas"
+          }
+        },
+        "summary": "Listar sesiones filtradas (US-ACA-05, US-ACA-08)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}": {
+      "get": {
+        "operationId": "obtenerSesionPorId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle de sesión"
+          },
+          "404": {
+            "description": "Sesión no encontrada"
+          }
+        },
+        "summary": "Obtener detalle de una sesión de clase (US-ACA-05)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/aula": {
+      "put": {
+        "operationId": "reasignarAulaSesion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "espacioId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "espacioId",
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Aula reasignada exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Sesión o aula no encontrada"
+          }
+        },
+        "summary": "Reasignar aula para una sesión puntual congelando su geometría (US-ACA-06)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/cancelar": {
+      "post": {
+        "operationId": "cancelarSesion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión cancelada exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Sesión no encontrada"
+          }
+        },
+        "summary": "Cancelar administrativamente una sesión de clase (US-ACA-08)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/docente-reemplazo": {
+      "patch": {
+        "operationId": "asignarDocenteReemplazo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "docenteId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "docenteId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Docente suplente asignado exitosamente"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Sesión no encontrada"
+          }
+        },
+        "summary": "Asignar suplente para una sesión puntual (US-ACA-09)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
+    "/sesiones/{id}/lista-manual": {
+      "post": {
+        "operationId": "registrarListaManual",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "estudiantes": {
+                    "items": {
+                      "properties": {
+                        "estudianteId": {
+                          "type": "string"
+                        },
+                        "presente": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "estudianteId",
+                        "presente"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "motivo",
+                  "estudiantes"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Lista manual registrada y auditada exitosamente"
+          }
+        },
+        "summary": "Registrar pase de lista manual de respaldo para estudiantes (US-MAR-14)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/sesiones/{id}/ventana-estudiantil": {
+      "post": {
+        "operationId": "abrirVentanaEstudiantil",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "duracionMinutos": {
+                    "default": 15,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ventana estudiantil habilitada"
+          }
+        },
+        "summary": "Abrir ventana de asistencia para estudiantes del grupo (US-MAR-13)",
+        "tags": [
+          "marcaje"
+        ]
+      }
+    },
+    "/usuarios": {
+      "get": {
+        "description": "Usuarios visibles según el alcance del actor (RF-ROL-003). El total va en la cabecera X-Total-Count. Requiere usuario:leer.",
+        "operationId": "listarUsuarios",
+        "parameters": [
+          {
+            "description": "Texto en nombre, apellido, correo o documento",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "rol",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "activo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Usuarios"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Listar usuarios",
+        "tags": [
+          "usuarios"
+        ]
+      },
+      "post": {
+        "description": "Alta con roles y ámbitos, auditada (RF-ROL-005). Requiere usuario:crear.",
+        "operationId": "crearUsuario",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Correo o documento ya registrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos inválidos"
+          }
+        },
+        "summary": "Crear usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/importar": {
+      "post": {
+        "description": "CSV con encabezados correo, nombre, apellido, documento y opcionales roles (separados por |, DOCENTE por defecto) y ambitos (TIPO:id|...). Sin confirmar=true solo valida. Requiere usuario:crear.",
+        "operationId": "importarUsuarios",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "confirmar",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportacionUsuariosResponse"
+                }
+              }
+            },
+            "description": "Resultado por fila"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Importar usuarios por CSV",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}": {
+      "get": {
+        "description": "Requiere usuario:leer.",
+        "operationId": "obtenerUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No encontrado"
+          }
+        },
+        "summary": "Obtener usuario",
+        "tags": [
+          "usuarios"
+        ]
+      },
+      "put": {
+        "description": "Requiere usuario:editar.",
+        "operationId": "actualizarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Actualizar datos del usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/activar": {
+      "post": {
+        "description": "Requiere usuario:editar.",
+        "operationId": "activarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Activar usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/ambitos": {
+      "put": {
+        "description": "Reemplaza sedes, facultades y bloques del usuario. Requiere usuario:editar.",
+        "operationId": "asignarAmbitos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ambitos": {
+                    "items": {
+                      "$ref": "#/components/schemas/Ambito"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Asignar ámbitos",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/desactivar": {
+      "post": {
+        "description": "Exige motivo y cierra las sesiones del usuario. Requiere usuario:editar.",
+        "operationId": "desactivarUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Desactivar usuario",
+        "tags": [
+          "usuarios"
         ]
       }
     },
@@ -705,6 +6170,76 @@
           }
         },
         "summary": "Desbloquear cuenta de usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/roles": {
+      "put": {
+        "description": "Reemplaza los roles. Solo un superadministrador otorga SUPERADMIN. Requiere usuario:editar.",
+        "operationId": "asignarRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "roles": {
+                    "items": {
+                      "$ref": "#/components/schemas/RolAsignado"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDTO"
+                }
+              }
+            },
+            "description": "Usuario"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso o ámbito denegado"
+          }
+        },
+        "summary": "Asignar roles",
         "tags": [
           "usuarios"
         ]

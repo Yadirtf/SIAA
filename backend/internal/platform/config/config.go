@@ -13,42 +13,68 @@ import (
 // Config contiene toda la configuración del servicio.
 type Config struct {
 	// Servidor
-	Port            string
-	Env             string // development | production | test
-	Version         string
-	Commit          string
+	Port    string
+	Env     string // development | production | test
+	Version string
+	Commit  string
 
 	// MongoDB
-	MongoURI        string
-	MongoDB         string
+	MongoURI string
+	MongoDB  string
 
 	// JWT
-	JWTSecret              string
-	JWTAccessMinutes       int
-	JWTRefreshDays         int
-	JWTIssuer              string
+	JWTSecret        string
+	JWTAccessMinutes int
+	JWTRefreshDays   int
+	JWTIssuer        string
 
 	// Seguridad
-	BcryptCost             int
-	RateLimitPerMinute     int
-	FailedLoginMax         int
-	FailedLoginWindowMin   int
-	LockoutDurationMin     int
-	AllowedEmailDomains    []string
+	BcryptCost           int
+	RateLimitPerMinute   int
+	FailedLoginMax       int
+	FailedLoginWindowMin int
+	LockoutDurationMin   int
+	AllowedEmailDomains  []string
+	CORSAllowedOrigins   []string
 
 	// Correo
-	SMTPHost               string
-	SMTPPort               int
-	SMTPUser               string
-	SMTPPass               string
-	SMTPFrom               string
+	SMTPHost string
+	SMTPPort int
+	SMTPUser string
+	SMTPPass string
+	SMTPFrom string
 
 	// Recuperación de contraseña
-	RecoveryTokenMinutes   int
-	PasswordMinLength      int
+	RecoveryTokenMinutes int
+	RecoveryURL          string
+
+	// Superadministrador de arranque (solo se crea si no existe)
+	AdminInicialCorreo   string
+	AdminInicialPassword string
+	PasswordMinLength    int
+
+	// Justificaciones (EP-07): plazo en días hábiles y secreto de cifrado de los soportes
+	// (si se omite se deriva de JWT_SECRET).
+	JustificacionPlazoDias int
+	AdjuntosClave          string
+
+	// Play Integrity: paquete de la app Android y JSON de la cuenta de servicio con permiso
+	// para descifrar tokens. Sin ambos, ningún marcaje tiene attestation válida.
+	PlayIntegrityPaquete      string
+	PlayIntegrityCredenciales string
+
+	// Notificaciones (EP-10) y privacidad (Ley 1581)
+	FCMProyecto          string
+	FCMCredenciales      string
+	NotifSilencioInicio  string
+	NotifSilencioFin     string
+	NotifRecordatorioMin int
+	NotifCierreMin       int
+	InstitucionNombre    string
+	PrivacidadContacto   string
 
 	// Parámetros GPS por defecto — SRS §3.5
-	DefaultHolguraEntradaAntesMin  int
+	DefaultHolguraEntradaAntesMin   int
 	DefaultHolguraEntradaDespuesMin int
 	DefaultUmbralTardanzaMin        int
 	DefaultPrecisionGPSMaxMetros    float64
@@ -89,6 +115,15 @@ func Load() (*Config, error) {
 		cfg.AllowedEmailDomains = strings.Split(domains, ",")
 	}
 
+	corsOrigins := getEnv("CORS_ALLOWED_ORIGINS", "")
+	if corsOrigins != "" {
+		cfg.CORSAllowedOrigins = strings.Split(corsOrigins, ",")
+	} else if cfg.Env != "production" {
+		cfg.CORSAllowedOrigins = []string{"*"}
+	} else {
+		cfg.CORSAllowedOrigins = []string{"https://*.siaa.edu.co"}
+	}
+
 	// Correo
 	cfg.SMTPHost = getEnv("SMTP_HOST", "")
 	cfg.SMTPPort = getEnvInt("SMTP_PORT", 587)
@@ -98,7 +133,22 @@ func Load() (*Config, error) {
 
 	// Recuperación
 	cfg.RecoveryTokenMinutes = getEnvInt("RECOVERY_TOKEN_MINUTES", 30)
+	cfg.RecoveryURL = getEnv("RECOVERY_URL", "")
+	cfg.AdminInicialCorreo = getEnv("ADMIN_INICIAL_CORREO", "")
+	cfg.AdminInicialPassword = getEnv("ADMIN_INICIAL_PASSWORD", "")
 	cfg.PasswordMinLength = getEnvInt("PASSWORD_MIN_LENGTH", 12)
+	cfg.JustificacionPlazoDias = getEnvInt("JUSTIFICACION_PLAZO_DIAS", 5)
+	cfg.AdjuntosClave = getEnv("ADJUNTOS_CLAVE", "")
+	cfg.PlayIntegrityPaquete = getEnv("PLAY_INTEGRITY_PACKAGE", "")
+	cfg.PlayIntegrityCredenciales = getEnv("PLAY_INTEGRITY_CREDENTIALS", "")
+	cfg.FCMProyecto = getEnv("FCM_PROJECT_ID", "")
+	cfg.FCMCredenciales = getEnv("FCM_CREDENTIALS", "")
+	cfg.NotifSilencioInicio = getEnv("NOTIF_SILENCIO_INICIO", "22:00")
+	cfg.NotifSilencioFin = getEnv("NOTIF_SILENCIO_FIN", "06:00")
+	cfg.NotifRecordatorioMin = getEnvInt("NOTIF_RECORDATORIO_MIN", 15)
+	cfg.NotifCierreMin = getEnvInt("NOTIF_CIERRE_MIN", 5)
+	cfg.InstitucionNombre = getEnv("INSTITUCION_NOMBRE", "")
+	cfg.PrivacidadContacto = getEnv("PRIVACIDAD_CONTACTO", "")
 
 	// Parámetros GPS por defecto
 	cfg.DefaultHolguraEntradaAntesMin = getEnvInt("DEFAULT_HOLGURA_ENTRADA_ANTES", 15)

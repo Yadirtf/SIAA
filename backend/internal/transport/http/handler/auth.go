@@ -45,8 +45,8 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 
 	pair, err := h.svc.Login(c.Request().Context(), auth.LoginInput{
-		Correo:       req.Correo,
-		Password:     req.Password,
+		Correo:        req.Correo,
+		Password:      req.Password,
 		DispositivoID: req.DispositivoID,
 	})
 	if err != nil {
@@ -206,4 +206,3 @@ func (h *AuthHandler) DesbloquearUsuario(c echo.Context) error {
 		Mensaje: "Cuenta desbloqueada correctamente",
 	})
 }
-

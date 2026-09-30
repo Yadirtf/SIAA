@@ -25,4 +25,27 @@ type UsuarioRepository interface {
 	Create(ctx context.Context, u *user.Usuario) error
 	// Update actualiza todos los campos del usuario.
 	Update(ctx context.Context, u *user.Usuario) error
+	// Listar retorna una lista de usuarios activos no eliminados.
+	Listar(ctx context.Context, limite int) ([]*user.Usuario, error)
+	// FindByDocumento busca un usuario no eliminado por documento de identidad.
+	FindByDocumento(ctx context.Context, documento string) (*user.Usuario, error)
+	// Buscar lista usuarios no eliminados con filtros y paginación; devuelve también el total.
+	Buscar(ctx context.Context, f FiltroUsuarios) ([]*user.Usuario, int64, error)
+}
+
+// FiltroUsuarios filtra la gestión de usuarios (US-ROL, RF-ROL-003).
+type FiltroUsuarios struct {
+	Texto  string // Coincidencia parcial en nombre, apellido, correo o documento.
+	Rol    string
+	Activo *bool
+	Pagina int
+	Limite int
+	// Visibilidad restringe el listado a quien opera por ámbito; nil = sin restricción.
+	Visibilidad *VisibilidadUsuarios
+}
+
+// VisibilidadUsuarios: un usuario es visible si comparte algún ámbito o tiene uno de los roles.
+type VisibilidadUsuarios struct {
+	AmbitoIDs     []string
+	RolesVisibles []string
 }

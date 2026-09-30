@@ -66,6 +66,22 @@ func CreateIndexes(ctx context.Context, db *mongo.Database) error {
 				Options: options.Index().SetExpireAfterSeconds(0).SetName("recovery_tokens_ttl"),
 			},
 		},
+		// ── sedes §10.3 ─────────────────────────────────────
+		{
+			collection: "sedes",
+			model: mongo.IndexModel{
+				Keys:    bson.D{{Key: "codigo", Value: 1}},
+				Options: options.Index().SetUnique(true).SetName("sedes_codigo_unique"),
+			},
+		},
+		// ── bloques §10.3 ────────────────────────────────────
+		{
+			collection: "bloques",
+			model: mongo.IndexModel{
+				Keys:    bson.D{{Key: "sedeId", Value: 1}, {Key: "codigo", Value: 1}},
+				Options: options.Index().SetUnique(true).SetName("bloques_sede_codigo_unique"),
+			},
+		},
 		// ── espacios — geoespaciales §10.3 ──────────────────
 		{
 			collection: "espacios",
@@ -132,8 +148,11 @@ func CreateIndexes(ctx context.Context, db *mongo.Database) error {
 				},
 				Options: options.Index().
 					SetUnique(true).
-					SetName("marcajes_sesion_usuario_tipo_unique").
-					SetPartialFilterExpression(bson.D{{Key: "anulado", Value: false}}),
+					SetName(indiceIdempotenciaMarcajes).
+					SetPartialFilterExpression(bson.D{
+						{Key: "anulado", Value: false},
+						{Key: "consolidado", Value: true},
+					}),
 			},
 		},
 		{

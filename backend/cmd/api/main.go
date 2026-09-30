@@ -14,19 +14,21 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/siaa/backend/internal/platform/clock"
+	"github.com/siaa/backend/internal/app"
 	"github.com/siaa/backend/internal/platform/config"
 	applog "github.com/siaa/backend/internal/platform/log"
-	"github.com/siaa/backend/internal/platform/mailer"
 	mongoRepo "github.com/siaa/backend/internal/repository/mongo"
-	"github.com/siaa/backend/internal/repository/mongo/impl"
 	"github.com/siaa/backend/internal/repository/mongo/migrations"
-	apphttp "github.com/siaa/backend/internal/transport/http"
-	"github.com/siaa/backend/internal/transport/http/handler"
-	"github.com/siaa/backend/internal/usecase/auth"
+	"github.com/siaa/backend/internal/repository/mongo/seed"
 )
 
 func main() {
+	// Sonda de salud para el HEALTHCHECK del contenedor (imagen scratch sin curl):
+	// consulta /health del proceso que ya está corriendo y sale con 0 o 1.
+	if len(os.Args) > 1 && os.Args[1] == "--health-check" {
+		os.Exit(sondaSalud())
+	}
+
 	// Cargar .env en entornos de desarrollo (ignorar error si no existe)
 	_ = godotenv.Load(".env", "../.env")
 
@@ -63,51 +65,31 @@ func main() {
 	log.Info("MongoDB conectado")
 
 	// Ejecutar migraciones (índices + semillas) — idempotente
-	if err := migrations.Run(ctx, mongoClient.DB()); err != nil {
+	if err := migrations.Run(ctx, mongoClient.DB(), cfg.Env != "production", seed.AdminInicial{
+		Correo:   cfg.AdminInicialCorreo,
+		Password: cfg.AdminInicialPassword,
+	}); err != nil {
 		log.Error("migraciones fallidas", applog.Err(err))
 		os.Exit(1)
 	}
 	log.Info("migraciones ejecutadas")
 
-	// ─── Repositorios ─────────────────────────────────────────
-	clk := clock.RealClock{}
-	usuarioRepo  := impl.NewUsuarioRepository(mongoClient)
-	refreshRepo  := impl.NewRefreshTokenRepository(mongoClient)
-	recoveryRepo := impl.NewRecoveryTokenRepository(mongoClient)
-	auditoriaRepo := impl.NewAuditoriaRepository(mongoClient)
-
-	// ─── Infraestructura ──────────────────────────────────────
-	// En producción se inyecta la implementación SMTP en lugar del noop.
-	appMailer := mailer.NewNoopMailer(log)
-
-	// ─── Casos de uso ─────────────────────────────────────────
-	authSvc := auth.NewService(
-		usuarioRepo,
-		refreshRepo,
-		recoveryRepo,
-		auditoriaRepo,
-		clk,
-		cfg,
-		appMailer,
-	)
-
-	// ─── Handlers ─────────────────────────────────────────────
-	healthH  := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
-	authH    := handler.NewAuthHandler(authSvc)
-	openapiH := handler.NewOpenAPIHandler("../contracts/openapi.json")
-	rolesH   := handler.NewRolesHandler()
-
-	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, auditoriaRepo, nil)
+	openapiPath := os.Getenv("OPENAPI_SPEC_PATH")
+	if openapiPath == "" {
+		openapiPath = "../contracts/openapi.json"
+	}
+	aplicacion, err := app.Construir(cfg, log, mongoClient, openapiPath)
 	if err != nil {
 		log.Error("fallo de seguridad al inicializar rutas del servidor", applog.Err(err))
 		os.Exit(1)
 	}
 
+	// Las ausencias automáticas las genera el proceso cmd/worker (ADR-09), no el API.
+
 	// ─── Servidor HTTP ────────────────────────────────────────
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      router,
+		Handler:      aplicacion.Router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -147,4 +129,22 @@ func main() {
 	}
 
 	log.Info("servidor detenido correctamente")
+}
+
+// sondaSalud consulta GET /api/v1/health en el puerto local del servicio.
+func sondaSalud() int {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:" + port + "/api/v1/health")
+	if err != nil {
+		return 1
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
 }

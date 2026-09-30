@@ -17,6 +17,7 @@ type RefreshToken struct {
 	ExpiraEn    time.Time
 	Revocado    bool
 	Dispositivo string
+	RolActivo   string // contexto de rol elegido, conservado al refrescar (RF-ROL-004)
 	CreadoEn    time.Time
 }
 

@@ -1,0 +1,182 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../geo_editor/data/espacio_repository.dart';
+import 'aulas_selection_list.dart';
+
+/// Panel principal de selección jerárquica Sede → Bloque → Aula (US-GEO-01).
+class JerarquiaSelectorPanel extends StatelessWidget {
+  final bool isDark;
+  final List<SedeModel> sedes;
+  final SedeModel? sedeSeleccionada;
+  final bool cargandoSedes;
+  final ValueChanged<SedeModel?> onSedeChanged;
+  final VoidCallback onNuevaSede;
+
+  final List<BloqueModel> bloques;
+  final BloqueModel? bloqueSeleccionado;
+  final bool cargandoBloques;
+  final ValueChanged<BloqueModel?> onBloqueChanged;
+  final VoidCallback? onNuevoBloque;
+
+  final List<EspacioModel> espacios;
+  final bool cargandoEspacios;
+  final VoidCallback? onCrearAula;
+  final void Function(EspacioModel) onEditarEspacio;
+
+  const JerarquiaSelectorPanel({
+    super.key,
+    required this.isDark,
+    required this.sedes,
+    required this.sedeSeleccionada,
+    required this.cargandoSedes,
+    required this.onSedeChanged,
+    required this.onNuevaSede,
+    required this.bloques,
+    required this.bloqueSeleccionado,
+    required this.cargandoBloques,
+    required this.onBloqueChanged,
+    required this.onNuevoBloque,
+    required this.espacios,
+    required this.cargandoEspacios,
+    required this.onCrearAula,
+    required this.onEditarEspacio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(SIAASpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: SIAAColors.primary200),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 16),
+          _buildSedeSelector(),
+          const SizedBox(height: 12),
+          _buildBloqueSelector(),
+          const SizedBox(height: 16),
+          AulasSelectionList(
+            bloqueSeleccionado: bloqueSeleccionado,
+            espacios: espacios,
+            cargandoEspacios: cargandoEspacios,
+            onCrearAula: onCrearAula,
+            onEditarEspacio: onEditarEspacio,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: SIAAColors.primary500,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.account_tree_rounded,
+              color: Colors.white, size: 24),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jerarquía Física y Cartografía',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Sede → Bloque → Aula → Polígono GPS (RF-GEO-001)',
+                style: TextStyle(fontSize: 12, color: SIAAColors.neutral500),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSedeSelector() {
+    final SedeModel? sedeValida = sedes.any((s) => s.id == sedeSeleccionada?.id)
+        ? sedes.firstWhere((s) => s.id == sedeSeleccionada?.id)
+        : null;
+
+    return Row(
+      children: [
+        Expanded(
+          child: cargandoSedes
+              ? const LinearProgressIndicator()
+              : DropdownButtonFormField<SedeModel>(
+                  value: sedeValida,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: '1. Sede Universitaria',
+                    prefixIcon: Icon(Icons.apartment_rounded),
+                    isDense: true,
+                  ),
+                  hint: const Text('Seleccionar o crear sede'),
+                  items: sedes.map((s) {
+                    return DropdownMenuItem(
+                        value: s, child: Text('${s.codigo} — ${s.nombre}'));
+                  }).toList(),
+                  onChanged: onSedeChanged,
+                ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(
+          icon: const Icon(Icons.add_business_rounded),
+          tooltip: 'Nueva Sede',
+          onPressed: onNuevaSede,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBloqueSelector() {
+    final BloqueModel? bloqueValido =
+        bloques.any((b) => b.id == bloqueSeleccionado?.id)
+            ? bloques.firstWhere((b) => b.id == bloqueSeleccionado?.id)
+            : null;
+
+    return Row(
+      children: [
+        Expanded(
+          child: cargandoBloques
+              ? const LinearProgressIndicator()
+              : DropdownButtonFormField<BloqueModel>(
+                  value: bloqueValido,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: '2. Bloque / Edificio',
+                    prefixIcon: Icon(Icons.domain_rounded),
+                    isDense: true,
+                  ),
+                  hint: const Text('Seleccionar o crear bloque'),
+                  items: bloques.map((b) {
+                    return DropdownMenuItem(
+                        value: b, child: Text('${b.codigo} — ${b.nombre}'));
+                  }).toList(),
+                  onChanged: onBloqueChanged,
+                ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(
+          icon: const Icon(Icons.add_home_work_rounded),
+          tooltip: 'Nuevo Bloque',
+          onPressed: onNuevoBloque,
+        ),
+      ],
+    );
+  }
+}

@@ -44,8 +44,8 @@ func ErrorHandler(log *applog.Logger) echo.HTTPErrorHandler {
 		// Error HTTP de Echo (404, 405, etc.)
 		if he, ok := err.(*echo.HTTPError); ok {
 			_ = c.JSON(he.Code, errorResponse{
-				Codigo:        "ERROR_HTTP",
-				Mensaje:       http.StatusText(he.Code),
+				Codigo:        codigoPorEstadoHTTP(he.Code),
+				Mensaje:       mensajeHTTPError(he),
 				CorrelationID: correlationID,
 			})
 			return
@@ -73,7 +73,7 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 		return 423 // Locked
 	case shared.ErrDosFactorRequerido:
 		return http.StatusUnauthorized
-	case shared.ErrPermisosDenegados, shared.ErrAmbitoDenegado:
+	case shared.ErrPermisosDenegados, shared.ErrAmbitoDenegado, shared.ErrUsuarioInactivo, shared.ErrConsentimientoRequerido:
 		return http.StatusForbidden
 	case shared.ErrValidacion, shared.ErrGeometriaInvalida:
 		return http.StatusUnprocessableEntity
@@ -85,5 +85,37 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 		return http.StatusTooManyRequests
 	default:
 		return http.StatusInternalServerError
+	}
+}
+
+// mensajeHTTPError conserva el mensaje explicativo de los errores 4xx (p. ej. el detalle de una
+// colisión de horario, RF-ACA-005) para que el cliente pueda mostrar qué pasó y qué hacer
+// (RNF-USA-005). Los 5xx nunca exponen detalles internos.
+func mensajeHTTPError(he *echo.HTTPError) string {
+	if he.Code < http.StatusInternalServerError {
+		if msg, ok := he.Message.(string); ok && msg != "" {
+			return msg
+		}
+	}
+	return http.StatusText(he.Code)
+}
+
+// codigoPorEstadoHTTP traduce el estado HTTP al código del catálogo §9.2 más cercano.
+func codigoPorEstadoHTTP(status int) string {
+	switch status {
+	case http.StatusBadRequest, http.StatusUnprocessableEntity:
+		return string(shared.ErrValidacion)
+	case http.StatusUnauthorized:
+		return string(shared.ErrTokenExpirado)
+	case http.StatusForbidden:
+		return string(shared.ErrPermisosDenegados)
+	case http.StatusNotFound:
+		return string(shared.ErrRecursoNoEncontrado)
+	case http.StatusConflict:
+		return string(shared.ErrConflictoUnicidad)
+	case http.StatusTooManyRequests:
+		return string(shared.ErrLimiteTasa)
+	default:
+		return "ERROR_HTTP"
 	}
 }

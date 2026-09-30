@@ -1,0 +1,228 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
+import 'features/academico/data/academico_remote_datasource.dart';
+import 'features/academico/domain/academico_repository.dart';
+import 'features/academico/presentation/bloc/academico_bloc.dart';
+import 'features/academico/presentation/bloc/sesiones_bloc.dart';
+import 'features/academico/presentation/bloc/importacion_bloc.dart';
+import 'features/auditoria/domain/auditoria_repository.dart';
+import 'features/auditoria/domain/auditoria_repository_impl.dart';
+import 'features/auditoria/presentation/bloc/auditoria_cubit.dart';
+import 'features/auth/data/auth_remote_datasource.dart';
+import 'features/auth/domain/auth_repository.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/dashboard/presentation/screens/dashboard_shell.dart';
+import 'features/dispositivos/data/dispositivos_remote_datasource.dart';
+import 'features/dispositivos/data/dispositivos_repository_impl.dart';
+import 'features/dispositivos/domain/dispositivos_repository.dart';
+import 'features/dispositivos/presentation/bloc/dispositivos_bloc.dart';
+import 'features/geo/data/buscador_espacios.dart';
+import 'features/geo/data/geo_remote_datasource.dart';
+import 'features/geo/domain/geo_repository.dart';
+import 'features/geo/presentation/bloc/geo_bloc.dart';
+import 'features/justificaciones/domain/justificaciones_repository.dart';
+import 'features/justificaciones/domain/justificaciones_repository_impl.dart';
+import 'features/justificaciones/presentation/bloc/justificaciones_cubit.dart';
+import 'features/parametros/data/opciones_ambito_datasource.dart';
+import 'features/parametros/data/parametros_data.dart';
+import 'features/parametros/domain/parametros_repository.dart';
+import 'features/parametros/presentation/bloc/parametros_bloc.dart';
+import 'features/marcajes/data/datasources/marcajes_admin_remote_datasource.dart';
+import 'features/marcajes/data/repositories/marcajes_admin_repository_impl.dart';
+import 'features/marcajes/domain/repositories/marcajes_admin_repository.dart';
+import 'features/marcajes/presentation/bloc/marcajes_admin_bloc.dart';
+import 'features/reportes/domain/reportes_repository.dart';
+import 'features/reportes/domain/reportes_repository_impl.dart';
+import 'features/reportes/presentation/bloc/catalogo_reporte_cubit.dart';
+import 'features/reportes/presentation/bloc/reporte_cumplimiento_cubit.dart';
+import 'features/usuarios/data/buscador_usuarios.dart';
+import 'features/usuarios/domain/usuarios_repository.dart';
+import 'features/usuarios/domain/usuarios_repository_impl.dart';
+import 'features/usuarios/presentation/bloc/catalogo_usuarios_cubit.dart';
+import 'features/usuarios/presentation/bloc/importacion_usuarios_bloc.dart';
+import 'features/usuarios/presentation/bloc/usuarios_bloc.dart';
+
+class SiaaApp extends StatelessWidget {
+  const SiaaApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthRepository>(
+          create: (_) =>
+              AuthRepositoryImpl(remoteDataSource: AuthRemoteDataSource()),
+        ),
+        RepositoryProvider<GeoRepository>(
+          create: (_) =>
+              GeoRepositoryImpl(remoteDataSource: GeoRemoteDataSource()),
+        ),
+        RepositoryProvider<AcademicoRepository>(
+          create: (_) => AcademicoRepositoryImpl(
+            remoteDataSource: AcademicoRemoteDataSource(),
+          ),
+        ),
+        RepositoryProvider<DispositivosRepository>(
+          create: (_) => DispositivosRepositoryImpl(
+            remoteDataSource: DispositivosRemoteDataSource(),
+          ),
+        ),
+        RepositoryProvider<ParametrosRepository>(
+          create: (_) =>
+              ParametrosRepositoryImpl(remote: ParametrosRemoteDataSource()),
+        ),
+        RepositoryProvider<MarcajesAdminRepository>(
+          create: (_) => MarcajesAdminRepositoryImpl(
+            remoteDataSource: MarcajesAdminRemoteDataSource(),
+          ),
+        ),
+        RepositoryProvider<UsuariosRepository>(
+          create: (_) => UsuariosRepositoryImpl(),
+        ),
+        RepositoryProvider<JustificacionesRepository>(
+          create: (_) => JustificacionesRepositoryImpl(),
+        ),
+        RepositoryProvider<ReportesRepository>(
+          create: (_) => ReportesRepositoryImpl(),
+        ),
+        RepositoryProvider<AuditoriaRepository>(
+          create: (_) => AuditoriaRepositoryImpl(),
+        ),
+        // Catálogos de los selectores con búsqueda (sin ids escritos a mano).
+        RepositoryProvider<BuscadorUsuarios>(
+          create: (_) => BuscadorUsuariosRemoto(),
+        ),
+        RepositoryProvider<BuscadorEspacios>(
+          create: (_) => BuscadorEspaciosRemoto(),
+        ),
+        RepositoryProvider<FuenteOpcionesAmbito>(
+          create: (_) => OpcionesAmbitoRemoto(),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (ctx) =>
+                AuthBloc(authRepository: ctx.read<AuthRepository>())
+                  ..add(const CheckAuthStatusEvent()),
+          ),
+          BlocProvider<GeoBloc>(
+            create: (ctx) => GeoBloc(repository: ctx.read<GeoRepository>()),
+          ),
+          BlocProvider<AcademicoBloc>(
+            create: (ctx) =>
+                AcademicoBloc(repository: ctx.read<AcademicoRepository>()),
+          ),
+          BlocProvider<SesionesBloc>(
+            create: (ctx) =>
+                SesionesBloc(repository: ctx.read<AcademicoRepository>()),
+          ),
+          BlocProvider<ImportacionBloc>(
+            create: (ctx) =>
+                ImportacionBloc(repository: ctx.read<AcademicoRepository>()),
+          ),
+          BlocProvider<DispositivosBloc>(
+            create: (ctx) => DispositivosBloc(
+              repository: ctx.read<DispositivosRepository>(),
+            ),
+          ),
+          BlocProvider<ParametrosBloc>(
+            create: (ctx) =>
+                ParametrosBloc(repository: ctx.read<ParametrosRepository>()),
+          ),
+          BlocProvider<MarcajesAdminBloc>(
+            create: (ctx) => MarcajesAdminBloc(
+              repository: ctx.read<MarcajesAdminRepository>(),
+            ),
+          ),
+          BlocProvider<UsuariosBloc>(
+            create: (ctx) =>
+                UsuariosBloc(repository: ctx.read<UsuariosRepository>()),
+          ),
+          BlocProvider<CatalogoUsuariosCubit>(
+            create: (ctx) => CatalogoUsuariosCubit(
+              repository: ctx.read<UsuariosRepository>(),
+            ),
+          ),
+          BlocProvider<ImportacionUsuariosBloc>(
+            create: (ctx) => ImportacionUsuariosBloc(
+              repository: ctx.read<UsuariosRepository>(),
+            ),
+          ),
+          BlocProvider<JustificacionesCubit>(
+            create: (ctx) => JustificacionesCubit(
+              repository: ctx.read<JustificacionesRepository>(),
+            ),
+          ),
+          BlocProvider<CatalogoReporteCubit>(
+            create: (ctx) => CatalogoReporteCubit(
+              repository: ctx.read<ReportesRepository>(),
+            ),
+          ),
+          BlocProvider<ReporteCumplimientoCubit>(
+            create: (ctx) => ReporteCumplimientoCubit(
+              repository: ctx.read<ReportesRepository>(),
+            ),
+          ),
+          BlocProvider<AuditoriaCubit>(
+            create: (ctx) =>
+                AuditoriaCubit(repository: ctx.read<AuditoriaRepository>()),
+          ),
+        ],
+        child: MaterialApp(
+          title: 'SIAA - Sistema Integral de Asignación Académica',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const _AuthGate(),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      buildWhen: (previous, current) =>
+          previous.runtimeType != current.runtimeType ||
+          current is Authenticated ||
+          current is Unauthenticated,
+      builder: (context, state) {
+        if (state is Authenticated) {
+          return const DashboardShell();
+        }
+        if (state is Unauthenticated || state is AuthFailure) {
+          return const LoginScreen();
+        }
+        return const Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppColors.primaryAccent),
+                SizedBox(height: 16),
+                Text(
+                  'Cargando SIAA...',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

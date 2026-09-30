@@ -17,16 +17,19 @@ const (
 	ErrTokenRevocado         ErrorCode = "AUTH_TOKEN_REVOCADO"
 	ErrCuentaBloqueada       ErrorCode = "AUTH_CUENTA_BLOQUEADA"
 	ErrDosFactorRequerido    ErrorCode = "AUTH_2FA_REQUERIDO"
+	ErrUsuarioInactivo       ErrorCode = "AUTH_USUARIO_INACTIVO"
 	ErrPermisosDenegados     ErrorCode = "PERM_DENEGADO"
 	ErrAmbitoDenegado        ErrorCode = "AMBITO_DENEGADO"
-	ErrValidacion            ErrorCode = "VALIDACION"
-	ErrRecursoNoEncontrado   ErrorCode = "RECURSO_NO_ENCONTRADO"
-	ErrConflictoHorario      ErrorCode = "CONFLICTO_HORARIO"
-	ErrConflictoUnicidad     ErrorCode = "CONFLICTO_UNICIDAD"
-	ErrGeometriaInvalida     ErrorCode = "GEOMETRIA_INVALIDA"
-	ErrGeometriaSolapada     ErrorCode = "GEOMETRIA_SOLAPADA"
-	ErrLimiteTasa            ErrorCode = "LIMITE_TASA"
-	ErrInterno               ErrorCode = "ERROR_INTERNO"
+	// ErrConsentimientoRequerido: el titular no ha aceptado la política vigente (US-LEG-01 AC-05).
+	ErrConsentimientoRequerido ErrorCode = "CONSENTIMIENTO_REQUERIDO"
+	ErrValidacion              ErrorCode = "VALIDACION"
+	ErrRecursoNoEncontrado     ErrorCode = "RECURSO_NO_ENCONTRADO"
+	ErrConflictoHorario        ErrorCode = "CONFLICTO_HORARIO"
+	ErrConflictoUnicidad       ErrorCode = "CONFLICTO_UNICIDAD"
+	ErrGeometriaInvalida       ErrorCode = "GEOMETRIA_INVALIDA"
+	ErrGeometriaSolapada       ErrorCode = "GEOMETRIA_SOLAPADA"
+	ErrLimiteTasa              ErrorCode = "LIMITE_TASA"
+	ErrInterno                 ErrorCode = "ERROR_INTERNO"
 )
 
 // DomainError es el error tipado que cruza las capas sin exponer detalles internos al cliente.
