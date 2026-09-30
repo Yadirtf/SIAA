@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Campo de solo lectura que abre el selector de hora en formato 24 h y
-/// entrega la hora elegida. Se valida dentro del [Form] con [validador].
+import '../utils/hora_12h.dart';
+
+/// Campo de solo lectura que abre el selector de hora en formato de 12 h con
+/// a. m./p. m. (como se lee en Colombia) y entrega la hora elegida. Al backend
+/// se envía en 24 h con [formatear]. Se valida dentro del [Form] con [validador].
 class CampoHora extends StatelessWidget {
   final String etiqueta;
   final TimeOfDay valor;
@@ -29,7 +32,7 @@ class CampoHora extends StatelessWidget {
       initialTime: valor,
       helpText: etiqueta,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
         child: child!,
       ),
     );
@@ -49,7 +52,7 @@ class CampoHora extends StatelessWidget {
             errorMaxLines: 2,
             suffixIcon: const Icon(Icons.schedule_rounded, size: 18),
           ),
-          child: Text(formatear(valor)),
+          child: Text(hora12h(valor.hour, valor.minute)),
         ),
       ),
     );

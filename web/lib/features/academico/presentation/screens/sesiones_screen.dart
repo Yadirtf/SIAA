@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../data/models/sesion_model.dart';
 import '../bloc/sesiones_bloc.dart';
 import '../dialogs/sesion_ops_dialogs.dart';
+import '../../../../core/utils/hora_12h.dart';
 
 class SesionesScreen extends StatefulWidget {
   const SesionesScreen({super.key});
@@ -171,7 +172,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
           child: Icon(Icons.event_available_rounded, color: badgeFg),
         ),
         title: Text(
-          'Fecha: ${s.fecha} • Horario: ${s.horaInicio} - ${s.horaFin}',
+          'Fecha: ${s.fecha} • Horario: ${hora12hDesdeTexto(s.horaInicio)} - ${hora12hDesdeTexto(s.horaFin)}',
           style: AppTextStyles.h3,
         ),
         subtitle: Text(

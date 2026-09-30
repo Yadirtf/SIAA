@@ -146,8 +146,9 @@ void main() {
   Future<void> elegirHora(
     WidgetTester tester,
     String campo,
-    String hora,
-  ) async {
+    String hora, {
+    bool pm = false,
+  }) async {
     await tester.tap(find.widgetWithText(InputDecorator, campo));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.keyboard_outlined));
@@ -158,6 +159,7 @@ void main() {
     );
     await tester.enterText(campos.at(0), hora.split(':')[0]);
     await tester.enterText(campos.at(1), hora.split(':')[1]);
+    if (pm) await tester.tap(find.text('PM'));
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
   }
@@ -251,7 +253,7 @@ void main() {
     await elegir(tester, 'Docente principal *', 'Ana Pérez');
     await elegir(tester, 'Aula *', 'A-101 · Aula 101');
     await elegirHora(tester, 'Fin', '07:30');
-    expect(find.text('07:30'), findsOneWidget);
+    expect(find.text('7:30 a. m.'), findsOneWidget);
 
     await tester.tap(find.text('Guardar Asignación'));
     await tester.pumpAndSettle();
@@ -265,6 +267,24 @@ void main() {
     await tester.tap(find.text('Guardar Asignación'));
     await tester.pumpAndSettle();
     expect((repo.cuerpos.single['franja'] as Map)['horaFin'], '11:15');
+  });
+
+  testWidgets('6:30 p. m. se envía como 18:30 (24 h, hora de Bogotá)', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'Docente principal *', 'Ana Pérez');
+    await elegir(tester, 'Aula *', 'A-101 · Aula 101');
+    await elegirHora(tester, 'Fin', '07:30', pm: true);
+    await elegirHora(tester, 'Inicio', '06:30', pm: true);
+    expect(find.text('6:30 p. m.'), findsOneWidget);
+    expect(find.text('7:30 p. m.'), findsOneWidget);
+
+    await tester.tap(find.text('Guardar Asignación'));
+    await tester.pumpAndSettle();
+    final franja = repo.cuerpos.single['franja'] as Map;
+    expect(franja['horaInicio'], '18:30');
+    expect(franja['horaFin'], '19:30');
   });
 
   testWidgets('cambiar de periodo filtra grupos y reinicia el aula', (

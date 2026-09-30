@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/hora_12h.dart';
 import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
@@ -176,7 +177,7 @@ class AsignacionesScreen extends StatelessWidget {
                 style: AppTextStyles.h3,
               ),
               subtitle: Text(
-                '$diaStr ${a.horaInicio} - ${a.horaFin} • Espacio: ${a.espacioNombre ?? "Sin asignar"} • Modalidad: ${a.modalidad}',
+                '$diaStr ${hora12hDesdeTexto(a.horaInicio)} - ${hora12hDesdeTexto(a.horaFin)} • Espacio: ${a.espacioNombre ?? "Sin asignar"} • Modalidad: ${a.modalidad}',
                 style: AppTextStyles.bodyMedium,
               ),
               trailing: Row(
