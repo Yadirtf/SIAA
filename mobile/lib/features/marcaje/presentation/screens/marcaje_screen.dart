@@ -1,6 +1,7 @@
 // marcaje_screen.dart — Pantalla principal de marcaje de un solo toque (US-MAR-01..US-MAR-15)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
 import '../bloc/marcaje_bloc.dart';
 import '../bloc/marcaje_event.dart';
 import '../bloc/marcaje_state.dart';
@@ -76,9 +77,13 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                   context,
                   resultado: res,
                   onReintentar: () => _bloc.add(const CapturarUbicacionEvent()),
-                  onJustificar: () {
-                    // Navegación hacia justificaciones (F3)
-                  },
+                  onJustificar: state.sesionActiva == null
+                      ? null
+                      : () => JustificacionFormScreen.abrir(
+                            context,
+                            sesionId: state.sesionActiva!.id,
+                            nombreSesion: state.sesionActiva!.asignatura,
+                          ),
                 );
               } else if (res.resultado == 'PENDIENTE_SINCRONIZACION') {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +96,8 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
               } else if (res.esAceptado) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('¡Marcaje registrado y verificado exitosamente!'),
+                    content:
+                        Text('¡Marcaje registrado y verificado exitosamente!'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -109,13 +115,15 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SyncStatusBar(
                       count: state.colaOfflineCount,
-                      onSyncPressed: () => _bloc.add(const SincronizarOfflineEvent()),
+                      onSyncPressed: () =>
+                          _bloc.add(const SincronizarOfflineEvent()),
                     ),
                     const SizedBox(height: 8),
                     Center(
@@ -129,7 +137,9 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                       SesionCard(sesion: state.sesionActiva!),
                       const SizedBox(height: 32),
                       OneTouchButton(
-                        onPressed: state.puedeMarcar ? () => _onMarcarPressed(state) : null,
+                        onPressed: state.puedeMarcar
+                            ? () => _onMarcarPressed(state)
+                            : null,
                         isSubmitting: state.isSubmitting,
                         isEnabled: state.puedeMarcar,
                         label: state.sesionActiva!.tieneMarcajeEntrada
@@ -157,7 +167,8 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
     return Center(
       child: Column(
         children: [
-          Icon(Icons.event_available_rounded, size: 72, color: Colors.grey.shade400),
+          Icon(Icons.event_available_rounded,
+              size: 72, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           const Text(
             'Sin Sesión Activa',

@@ -3,6 +3,7 @@
 // se edita unicamente este registro sin tocar el AppShell.
 import 'package:flutter/material.dart';
 import '../../../../features/home/presentation/screens/home_screen.dart';
+import '../../../../features/justificaciones/presentation/screens/mis_justificaciones_screen.dart';
 import '../../../../features/marcaje/presentation/screens/marcaje_grupal_screen.dart';
 import '../../../../features/marcaje/presentation/screens/marcaje_historial_screen.dart';
 import '../../../../features/marcaje/presentation/screens/marcaje_screen.dart';
@@ -29,12 +30,7 @@ class NavScreenRegistry {
         return const MarcajeHistorialScreen();
 
       case '/shell/justificaciones':
-        return const PlaceholderScreen(
-          titulo: 'Justificaciones',
-          descripcion:
-              'Radica y consulta tus justificaciones. Disponible en F3.',
-          icono: Icons.edit_note_rounded,
-        );
+        return const MisJustificacionesScreen();
 
       case '/shell/marcajes-admin':
         return const MarcajeHistorialScreen();

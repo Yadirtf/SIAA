@@ -79,6 +79,7 @@ void main() {
 
       expect(find.text('Marcaje de Asistencia'), findsOneWidget);
       expect(find.text('Historial de Asistencia'), findsOneWidget);
+      expect(find.text('Mis Justificaciones'), findsOneWidget);
       expect(find.text('Pronto'), findsNothing);
     });
   });
