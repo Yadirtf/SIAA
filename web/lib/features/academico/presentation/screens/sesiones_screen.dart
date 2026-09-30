@@ -129,7 +129,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Active un periodo y use "Generar Sesiones" para materializar el calendario.',
+                            'En "Periodos" use "Generar sesiones" para materializar el calendario.',
                             style: AppTextStyles.bodyMedium,
                           ),
                         ],

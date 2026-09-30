@@ -7,6 +7,7 @@ import '../../data/models/geo_models.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
 import '../dialogs/verificacion_espacio_dialog.dart';
+import '../editor/editor_geometria_dialog.dart';
 import 'verificacion_indicador.dart';
 
 /// Fila de la lista de espacios: datos básicos, indicador de verificación
@@ -44,12 +45,27 @@ class EspacioTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          'Tipo: ${espacio.tipo} • Capacidad: ${espacio.capacidad} est. • Piso: ${espacio.piso ?? 1}',
+          'Tipo: ${espacio.tipo} • Capacidad: ${espacio.capacidad} est. • Piso: ${espacio.piso ?? 1}'
+          '${espacio.tieneGeometria ? '' : ' • Sin polígono'}',
           style: AppTextStyles.bodyMedium,
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            IconButton(
+              icon: Icon(
+                espacio.tieneGeometria
+                    ? Icons.pentagon_rounded
+                    : Icons.pentagon_outlined,
+                color: espacio.tieneGeometria
+                    ? AppColors.accentEmerald
+                    : AppColors.textMuted,
+              ),
+              tooltip: espacio.tieneGeometria
+                  ? 'Editar polígono en el mapa'
+                  : 'Sin polígono: dibujarlo en el mapa',
+              onPressed: () => mostrarEditorGeometria(context, espacio),
+            ),
             IconButton(
               icon: const Icon(
                 Icons.wifi_tethering_rounded,

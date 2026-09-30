@@ -1,11 +1,11 @@
 {
-    "name": "siaa_web",
-    "short_name": "siaa_web",
+    "name": "SIAA · Consola administrativa",
+    "short_name": "SIAA",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Consola web administrativa de asistencia académica.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
