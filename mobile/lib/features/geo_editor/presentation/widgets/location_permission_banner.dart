@@ -44,8 +44,15 @@ class LocationPermissionBanner extends StatelessWidget {
         onAccion = onAbrirAjustesAplicacion;
         icono = Icons.settings;
         break;
+      case EstadoPermisoUbicacion.sinConsentimiento:
+        titulo =
+            'Acepte el aviso de privacidad (menú > Privacidad y datos) para usar el GPS.';
+        accionTexto = 'Reintentar';
+        onAccion = onSolicitarPermiso;
+        icono = Icons.privacy_tip_outlined;
+        break;
+      case EstadoPermisoUbicacion.concedido:
       case EstadoPermisoUbicacion.denegado:
-      default:
         titulo =
             'Se requiere permiso de ubicación para delimitar el espacio en sitio.';
         accionTexto = 'Conceder';

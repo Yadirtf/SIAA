@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
 import 'recuperar_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,7 +31,15 @@ class _LoginScreenState extends State<LoginScreen> {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _abrirRecuperacion(token),
       );
+    } else if (AvisoPrivacidadScreen.solicitadaEn(Uri.base)) {
+      // Enlace directo al aviso de privacidad (RNF-LEG-003), sin sesión.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _abrirPrivacidad());
     }
+  }
+
+  void _abrirPrivacidad() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AvisoPrivacidadScreen()));
   }
 
   void _abrirRecuperacion([String? token]) {
@@ -255,12 +264,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildFooter() {
-    return Center(
-      child: Text(
-        'Plataforma Universitaria de Infraestructura y Horarios',
-        textAlign: TextAlign.center,
-        style: AppTextStyles.bodySmall,
-      ),
+    return Column(
+      children: [
+        Text(
+          'Plataforma Universitaria de Infraestructura y Horarios',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodySmall,
+        ),
+        TextButton.icon(
+          onPressed: _abrirPrivacidad,
+          icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+          label: const Text('Aviso de privacidad'),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,6 @@
-package integridad
+// Package googleauth firma peticiones a las APIs de Google con una cuenta de servicio (flujo
+// JWT bearer), sin depender del SDK de Google Cloud. Lo usan Play Integrity y FCM.
+package googleauth
 
 import (
 	"context"
@@ -10,18 +12,18 @@ import (
 	"golang.org/x/oauth2/jwt"
 )
 
-// cuentaServicio son los campos del JSON de una cuenta de servicio de Google Cloud.
-type cuentaServicio struct {
+// CuentaServicio son los campos del JSON de una cuenta de servicio de Google Cloud.
+type CuentaServicio struct {
 	ClientEmail  string `json:"client_email"`
 	PrivateKey   string `json:"private_key"`
 	PrivateKeyID string `json:"private_key_id"`
 	TokenURI     string `json:"token_uri"`
 }
 
-// clienteOAuth devuelve un cliente HTTP que firma cada petición con un token de acceso de la
+// Cliente devuelve un cliente HTTP que firma cada petición con un token de acceso de la
 // cuenta de servicio (flujo JWT bearer), renovándolo cuando vence.
-func clienteOAuth(ctx context.Context, contenido []byte, base *http.Client) (*http.Client, error) {
-	var cs cuentaServicio
+func Cliente(ctx context.Context, contenido []byte, alcance string, base *http.Client) (*http.Client, error) {
+	var cs CuentaServicio
 	if err := json.Unmarshal(contenido, &cs); err != nil {
 		return nil, err
 	}
@@ -36,7 +38,7 @@ func clienteOAuth(ctx context.Context, contenido []byte, base *http.Client) (*ht
 		PrivateKey:   []byte(cs.PrivateKey),
 		PrivateKeyID: cs.PrivateKeyID,
 		TokenURL:     cs.TokenURI,
-		Scopes:       []string{alcancePlayIntegrity},
+		Scopes:       []string{alcance},
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, base)
 	cliente := &http.Client{

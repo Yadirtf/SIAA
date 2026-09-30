@@ -22,6 +22,8 @@ import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
 import '../../../justificaciones/presentation/screens/justificaciones_screen.dart';
 import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
+import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
+import '../../../privacidad/presentation/screens/politica_privacidad_view.dart';
 import '../../../reportes/presentation/screens/reporte_cumplimiento_screen.dart';
 import '../../../usuarios/presentation/screens/usuarios_screen.dart';
 import '../models/nav_item.dart';
@@ -38,7 +40,10 @@ class DashboardShell extends StatefulWidget {
 
 class _DashboardShellState extends State<DashboardShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  NavSection _currentSection = NavSection.inicio;
+  // `?vista=privacidad` abre directamente el aviso de privacidad.
+  NavSection _currentSection = AvisoPrivacidadScreen.solicitadaEn(Uri.base)
+      ? NavSection.privacidad
+      : NavSection.inicio;
 
   @override
   void initState() {
@@ -96,6 +101,8 @@ class _DashboardShellState extends State<DashboardShell> {
         return const UsuariosScreen();
       case NavSection.auditoria:
         return const AuditoriaScreen();
+      case NavSection.privacidad:
+        return const PoliticaPrivacidadView();
     }
   }
 

@@ -14,6 +14,9 @@ class NavState extends Equatable {
   /// Ruta activa cuando el destino proviene del drawer (null = usa tabIndex del bottom).
   final String? activeDrawerRoute;
 
+  /// Sesión indicada por una notificación para la pantalla de marcaje.
+  final String? sesionIdObjetivo;
+
   const NavState({
     this.rolesDisponibles = const [],
     this.permisosUsuario = const [],
@@ -22,6 +25,7 @@ class NavState extends Equatable {
     this.drawerExtraItems = const [],
     this.tabIndex = 0,
     this.activeDrawerRoute,
+    this.sesionIdObjetivo,
   });
 
   NavState copyWith({
@@ -33,6 +37,8 @@ class NavState extends Equatable {
     int? tabIndex,
     String? activeDrawerRoute,
     bool clearDrawerRoute = false,
+    String? sesionIdObjetivo,
+    bool clearSesionObjetivo = false,
   }) {
     return NavState(
       rolesDisponibles: rolesDisponibles ?? this.rolesDisponibles,
@@ -44,6 +50,9 @@ class NavState extends Equatable {
       activeDrawerRoute: clearDrawerRoute
           ? null
           : (activeDrawerRoute ?? this.activeDrawerRoute),
+      sesionIdObjetivo: clearSesionObjetivo
+          ? null
+          : (sesionIdObjetivo ?? this.sesionIdObjetivo),
     );
   }
 
@@ -56,5 +65,6 @@ class NavState extends Equatable {
         drawerExtraItems,
         tabIndex,
         activeDrawerRoute,
+        sesionIdObjetivo,
       ];
 }

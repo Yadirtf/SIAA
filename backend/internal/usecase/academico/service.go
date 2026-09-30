@@ -43,6 +43,7 @@ type Service struct {
 	clk            shared.Clock
 	log            *applog.Logger
 	resolutor      ResolutorParametros
+	notificador    NotificadorHorario
 }
 
 // AmbitoParametros identifica los niveles de la cascada que aplican a una asignación (RN-002).

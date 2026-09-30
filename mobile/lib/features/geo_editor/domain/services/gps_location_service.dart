@@ -2,6 +2,7 @@
 // Conecta geolocator con el modelo de dominio GpsReading (US-GEO-02, US-LEG-01)
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import '../../../privacidad/data/consentimiento_gate.dart';
 import '../models/gps_reading.dart';
 
 enum EstadoPermisoUbicacion {
@@ -9,6 +10,9 @@ enum EstadoPermisoUbicacion {
   servicioDesactivado,
   denegado,
   denegadoPermanentemente,
+
+  /// Sin aceptación del aviso de privacidad: no se solicita el permiso (US-LEG-01).
+  sinConsentimiento,
 }
 
 class GpsLocationService {
@@ -16,6 +20,9 @@ class GpsLocationService {
 
   /// Verifica y solicita permisos de ubicación en primer plano conforme a RN-005 (while in use only).
   Future<EstadoPermisoUbicacion> verificarYSolicitarPermiso() async {
+    if (!ConsentimientoGate.instance.permiteUbicacion) {
+      return EstadoPermisoUbicacion.sinConsentimiento;
+    }
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {

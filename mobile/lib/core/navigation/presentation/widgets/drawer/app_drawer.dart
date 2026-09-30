@@ -7,6 +7,7 @@ import '../../bloc/nav_bloc.dart';
 import '../../bloc/nav_event.dart';
 import '../../bloc/nav_state.dart';
 import 'drawer_logout_tile.dart';
+import 'drawer_notificaciones_tile.dart';
 import 'drawer_nav_item_tile.dart';
 import 'drawer_section_title.dart';
 import 'drawer_user_header.dart';
@@ -70,6 +71,10 @@ class AppDrawer extends StatelessWidget {
                             NavDrawerItemSelected(NavDestinations.perfil.route),
                           );
                     },
+                  ),
+                  DrawerNotificacionesTile(
+                    isSelected:
+                        currentRoute == NavDestinations.notificaciones.route,
                   ),
                   DrawerNavItemTile(
                     item: NavDestinations.privacidad,

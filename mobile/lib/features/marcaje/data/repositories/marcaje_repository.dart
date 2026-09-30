@@ -1,6 +1,7 @@
 // marcaje_repository.dart — Implementación del repositorio de marcaje
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
+import '../../../privacidad/data/consentimiento_requerido.dart';
 import '../../domain/models/marcaje_historial_model.dart';
 import '../../domain/models/marcaje_request_model.dart';
 import '../../domain/models/marcaje_result_model.dart';
@@ -117,6 +118,9 @@ class MarcajeRepository {
             ))
           : request;
       return await _remoteDataSource.enviarMarcaje(conToken);
+    } on ConsentimientoRequeridoException {
+      // No se encola: el servidor lo rechazaría hasta aceptar el aviso.
+      rethrow;
     } catch (e) {
       // Si falló por red durante la petición, encolar offline
       await _encolar(request, exigirAttestation);

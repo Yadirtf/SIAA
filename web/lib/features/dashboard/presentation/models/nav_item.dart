@@ -19,6 +19,7 @@ enum NavSection {
   reportes,
   usuarios,
   auditoria,
+  privacidad,
 }
 
 class NavItem {
@@ -150,6 +151,12 @@ class NavItem {
       icon: Icons.manage_search_rounded,
       category: 'ADMINISTRACIÓN',
       permiso: 'auditoria:leer',
+    ),
+    NavItem(
+      section: NavSection.privacidad,
+      title: 'Aviso de privacidad',
+      icon: Icons.privacy_tip_outlined,
+      category: 'LEGAL',
     ),
   ];
 }

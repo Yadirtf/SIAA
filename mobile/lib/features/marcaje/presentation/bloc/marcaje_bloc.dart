@@ -1,15 +1,22 @@
 // marcaje_bloc.dart — BLoC para flujo de marcaje puntual (US-MAR-01..US-MAR-15)
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../privacidad/data/consentimiento_gate.dart';
+import '../../../privacidad/data/consentimiento_requerido.dart';
 import '../../data/repositories/marcaje_repository.dart';
 import 'marcaje_event.dart';
 import 'marcaje_state.dart';
 
 class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
   final MarcajeRepository _repository;
+  final bool Function() _consentimientoOtorgado;
 
-  MarcajeBloc({MarcajeRepository? repository})
-      : _repository = repository ?? MarcajeRepository(),
+  MarcajeBloc({
+    MarcajeRepository? repository,
+    bool Function()? consentimientoOtorgado,
+  })  : _repository = repository ?? MarcajeRepository(),
+        _consentimientoOtorgado = consentimientoOtorgado ??
+            (() => ConsentimientoGate.instance.permiteUbicacion),
         super(const MarcajeState()) {
     on<CargarSesionActivaEvent>(_onCargarSesionActiva);
     on<CapturarUbicacionEvent>(_onCapturarUbicacion);
@@ -39,16 +46,20 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         }
       }
 
+      final consentido = _consentimientoOtorgado();
       emit(state.copyWith(
         isLoading: false,
         sesionActiva: sesion,
         clearSesion: sesion == null,
         colaOffline: cola,
         semaforo: semaforo,
+        consentimientoRequerido: !consentido,
       ));
 
       // Si la ventana está abierta y no tiene entrada, capturar GPS automáticamente
-      if (sesion != null &&
+      // (solo con consentimiento vigente: US-LEG-01).
+      if (consentido &&
+          sesion != null &&
           sesion.ventana.estaAbierta &&
           !sesion.tieneMarcajeEntrada) {
         add(const CapturarUbicacionEvent());
@@ -65,6 +76,10 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
     CapturarUbicacionEvent event,
     Emitter<MarcajeState> emit,
   ) async {
+    if (!_consentimientoOtorgado()) {
+      emit(state.copyWith(consentimientoRequerido: true));
+      return;
+    }
     emit(state.copyWith(
       isCapturingGps: true,
       semaforo: SemaforoMarcaje.buscandoGps,
@@ -113,6 +128,10 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
       emit(state.copyWith(error: 'No hay sesión activa para marcar'));
       return;
     }
+    if (!_consentimientoOtorgado()) {
+      emit(state.copyWith(consentimientoRequerido: true));
+      return;
+    }
 
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
@@ -156,6 +175,13 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         ultimoResultado: resultado,
         colaOffline: cola,
         semaforo: sem,
+      ));
+    } on ConsentimientoRequeridoException catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        consentimientoRequerido: true,
+        rechazosPorConsentimiento: state.rechazosPorConsentimiento + 1,
+        error: e.mensaje,
       ));
     } catch (e) {
       emit(state.copyWith(

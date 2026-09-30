@@ -52,6 +52,9 @@ const (
 	// Alertas de asistencia — US-PAR-04
 	ClavePorcentajeMinimoAsistencia      Clave = "porcentaje_minimo_asistencia"
 	ClaveInasistenciasConsecutivasAlerta Clave = "inasistencias_consecutivas_alerta"
+
+	// Privacidad (RNF-LEG-006): días que se conservan las coordenadas de un marcaje.
+	ClaveRetencionCoordenadasDias Clave = "retencion_coordenadas_dias"
 )
 
 // ValoresPorDefecto retorna la tabla de defaults del SRS §3.5 (US-PAR-01 AC-01, US-PAR-04).
@@ -74,6 +77,7 @@ func ValoresPorDefecto() map[Clave]interface{} {
 		ClaveExigirAttestation:               false,
 		ClavePorcentajeMinimoAsistencia:      80,
 		ClaveInasistenciasConsecutivasAlerta: 3,
+		ClaveRetencionCoordenadasDias:        365,
 	}
 }
 
@@ -89,6 +93,7 @@ var RangosValidos = map[Clave][2]int{
 	ClavePromedioLecturasVertice:         {1, 20},
 	ClavePorcentajeMinimoAsistencia:      {50, 100},
 	ClaveInasistenciasConsecutivasAlerta: {1, 10},
+	ClaveRetencionCoordenadasDias:        {30, 3650},
 }
 
 // ErrFueraDeRango indica que el valor no está en el rango permitido.
@@ -96,6 +101,12 @@ var ErrFueraDeRango = errors.New("valor fuera del rango permitido")
 
 // ErrClaveInvalida indica que la clave de parámetro no existe en el catálogo.
 var ErrClaveInvalida = errors.New("clave de parámetro no reconocida")
+
+// ErrSoloGlobal indica que la clave es institucional y solo se configura en ámbito GLOBAL.
+var ErrSoloGlobal = errors.New("este parámetro solo se configura en ámbito GLOBAL")
+
+// clavesSoloGlobales son políticas institucionales que no admiten excepciones por ámbito.
+var clavesSoloGlobales = map[Clave]bool{ClaveRetencionCoordenadasDias: true}
 
 // Parametro representa una entrada de configuración en un nivel jerárquico concreto.
 type Parametro struct {
@@ -115,6 +126,9 @@ func (p *Parametro) Validate() error {
 	defaults := ValoresPorDefecto()
 	if _, ok := defaults[p.Clave]; !ok {
 		return ErrClaveInvalida
+	}
+	if clavesSoloGlobales[p.Clave] && p.Ambito != AmbitoGlobal {
+		return ErrSoloGlobal
 	}
 	if rango, ok := RangosValidos[p.Clave]; ok {
 		v, ok := toInt(p.Valor)

@@ -79,4 +79,7 @@ class ApiConstants {
   // Auditoría (RF-AUD-003)
   static const String auditoria = '$baseUrl/auditoria';
   static const String exportarAuditoria = '$baseUrl/auditoria/exportar';
+
+  // Privacidad (RNF-LEG-003, US-LEG-01): endpoint público, sin token.
+  static const String politicaPrivacidad = '$baseUrl/privacidad/politica';
 }

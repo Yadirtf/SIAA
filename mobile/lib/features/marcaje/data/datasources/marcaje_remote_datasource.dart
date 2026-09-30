@@ -1,6 +1,7 @@
 // marcaje_remote_datasource.dart — Cliente HTTP para endpoints de marcaje
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../privacidad/data/consentimiento_requerido.dart';
 import '../../domain/models/item_sync_resultado_model.dart';
 import '../../domain/models/marcaje_historial_model.dart';
 import '../../domain/models/marcaje_request_model.dart';
@@ -47,6 +48,10 @@ class MarcajeRemoteDataSource {
       final data = response.data as Map<String, dynamic>;
       return MarcajeResultModel.fromJson(data);
     } on DioException catch (e) {
+      // Sin aceptación del aviso vigente (US-LEG-01): no es un resultado de marcaje.
+      if (ConsentimientoRequeridoException.esRespuesta(e)) {
+        throw ConsentimientoRequeridoException.desde(e);
+      }
       if (e.response != null && e.response!.data != null) {
         final data = e.response!.data;
         if (data is Map<String, dynamic>) {

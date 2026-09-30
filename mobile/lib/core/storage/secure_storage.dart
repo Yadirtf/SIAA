@@ -141,6 +141,14 @@ class SecureStorage {
     }
   }
 
+  /// Olvida la versión aceptada (cierre de sesión o consentimiento retirado).
+  static Future<void> clearConsentimiento() async {
+    _memoryCache.remove(_keyConsentimiento);
+    try {
+      await _storage.delete(key: _keyConsentimiento);
+    } catch (_) {}
+  }
+
   /// Elimina todos los datos del almacenamiento (útil para logout completo).
   static Future<void> clearAll() async {
     _memoryCache.clear();

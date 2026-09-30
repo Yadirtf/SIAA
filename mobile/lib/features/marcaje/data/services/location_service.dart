@@ -1,6 +1,7 @@
 // location_service.dart — Captura puntual de ubicación con validación de frescura y mock (US-MAR-02)
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import '../../../privacidad/data/consentimiento_gate.dart';
 
 class LocationResult {
   final double latitud;
@@ -23,10 +24,18 @@ class LocationResult {
 }
 
 class LocationService {
-  final GeolocatorPlatform _geolocator;
+  static const mensajeSinConsentimiento =
+      'Debe aceptar el aviso de privacidad antes de usar su ubicación.';
 
-  LocationService({GeolocatorPlatform? geolocator})
-      : _geolocator = geolocator ?? GeolocatorPlatform.instance;
+  final GeolocatorPlatform _geolocator;
+  final bool Function() _consentimientoOtorgado;
+
+  LocationService({
+    GeolocatorPlatform? geolocator,
+    bool Function()? consentimientoOtorgado,
+  })  : _geolocator = geolocator ?? GeolocatorPlatform.instance,
+        _consentimientoOtorgado = consentimientoOtorgado ??
+            (() => ConsentimientoGate.instance.permiteUbicacion);
 
   /// Obtiene una lectura puntual de GPS con proveedor fusionado y alta precisión.
   /// No mantiene rastreo continuo en segundo plano (RNF-SEG-004, US-MAR-02).
@@ -34,6 +43,17 @@ class LocationService {
     Duration timeout = const Duration(seconds: 15),
     Duration antiguedadMaxima = const Duration(seconds: 30),
   }) async {
+    // US-LEG-01 / CA-011: nunca se solicita el permiso sin consentimiento vigente.
+    if (!_consentimientoOtorgado()) {
+      return LocationResult(
+        latitud: 0,
+        longitud: 0,
+        precisionMetros: 0,
+        timestamp: DateTime.now(),
+        isMocked: false,
+        error: mensajeSinConsentimiento,
+      );
+    }
     final servicioHabilitado = await _geolocator.isLocationServiceEnabled();
     if (!servicioHabilitado) {
       return LocationResult(
@@ -42,7 +62,8 @@ class LocationService {
         precisionMetros: 0,
         timestamp: DateTime.now(),
         isMocked: false,
-        error: 'El servicio de ubicación GPS se encuentra apagado en el dispositivo.',
+        error:
+            'El servicio de ubicación GPS se encuentra apagado en el dispositivo.',
       );
     }
 
@@ -68,7 +89,8 @@ class LocationService {
         precisionMetros: 0,
         timestamp: DateTime.now(),
         isMocked: false,
-        error: 'Permiso de ubicación denegado permanentemente. Actívelo en Ajustes.',
+        error:
+            'Permiso de ubicación denegado permanentemente. Actívelo en Ajustes.',
       );
     }
 
@@ -92,7 +114,8 @@ class LocationService {
           precisionMetros: posicion.accuracy,
           timestamp: posicion.timestamp,
           isMocked: posicion.isMocked,
-          error: 'La lectura GPS es obsoleta (${edad.inSeconds}s de antigüedad). Reintente en un espacio abierto.',
+          error:
+              'La lectura GPS es obsoleta (${edad.inSeconds}s de antigüedad). Reintente en un espacio abierto.',
         );
       }
 
@@ -110,7 +133,8 @@ class LocationService {
         precisionMetros: 0,
         timestamp: DateTime.now(),
         isMocked: false,
-        error: 'Tiempo de espera agotado al conectar con satélites GPS. Acérquese a una ventana o puerta.',
+        error:
+            'Tiempo de espera agotado al conectar con satélites GPS. Acérquese a una ventana o puerta.',
       );
     } catch (e) {
       return LocationResult(

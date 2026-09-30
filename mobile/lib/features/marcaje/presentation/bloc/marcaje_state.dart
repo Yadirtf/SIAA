@@ -27,6 +27,13 @@ class MarcajeState extends Equatable {
   final String? error;
   final SemaforoMarcaje semaforo;
 
+  /// Sin aceptación del aviso de privacidad: marcaje deshabilitado (US-LEG-01 AC-05).
+  final bool consentimientoRequerido;
+
+  /// Se incrementa cuando el servidor respondió 403 CONSENTIMIENTO_REQUERIDO
+  /// para que la pantalla presente el aviso.
+  final int rechazosPorConsentimiento;
+
   const MarcajeState({
     this.isLoading = false,
     this.isCapturingGps = false,
@@ -37,10 +44,13 @@ class MarcajeState extends Equatable {
     this.colaOffline = const [],
     this.error,
     this.semaforo = SemaforoMarcaje.fueraDeVentana,
+    this.consentimientoRequerido = false,
+    this.rechazosPorConsentimiento = 0,
   });
 
   bool get puedeMarcar =>
       !isSubmitting &&
+      !consentimientoRequerido &&
       sesionActiva != null &&
       sesionActiva!.ventana.estaAbierta &&
       semaforo == SemaforoMarcaje.listo;
@@ -72,6 +82,8 @@ class MarcajeState extends Equatable {
     String? error,
     bool clearError = false,
     SemaforoMarcaje? semaforo,
+    bool? consentimientoRequerido,
+    int? rechazosPorConsentimiento,
   }) {
     return MarcajeState(
       isLoading: isLoading ?? this.isLoading,
@@ -84,6 +96,10 @@ class MarcajeState extends Equatable {
       colaOffline: colaOffline ?? this.colaOffline,
       error: clearError ? null : (error ?? this.error),
       semaforo: semaforo ?? this.semaforo,
+      consentimientoRequerido:
+          consentimientoRequerido ?? this.consentimientoRequerido,
+      rechazosPorConsentimiento:
+          rechazosPorConsentimiento ?? this.rechazosPorConsentimiento,
     );
   }
 
@@ -98,5 +114,7 @@ class MarcajeState extends Equatable {
         colaOffline,
         error,
         semaforo,
+        consentimientoRequerido,
+        rechazosPorConsentimiento,
       ];
 }

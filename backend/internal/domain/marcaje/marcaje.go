@@ -69,11 +69,13 @@ type Marcaje struct {
 	AjustadoEn             *time.Time           `json:"ajustadoEn,omitempty" bson:"ajustadoEn,omitempty"`
 	// AjusteDe apunta al marcaje que este evento corrige; ReemplazadoPor, al ajuste que dejó
 	// sin efecto a este. El evento original conserva sus datos (RF-JUS-004).
-	AjusteDe       string    `json:"ajusteDe,omitempty" bson:"ajusteDe,omitempty"`
-	ReemplazadoPor string    `json:"reemplazadoPor,omitempty" bson:"reemplazadoPor,omitempty"`
-	EsAnomalia     bool      `json:"esAnomalia" bson:"esAnomalia"`
-	IdempotencyKey string    `json:"idempotencyKey,omitempty" bson:"idempotencyKey,omitempty"`
-	CreadoEn       time.Time `json:"creadoEn" bson:"creadoEn"`
+	AjusteDe       string `json:"ajusteDe,omitempty" bson:"ajusteDe,omitempty"`
+	ReemplazadoPor string `json:"reemplazadoPor,omitempty" bson:"reemplazadoPor,omitempty"`
+	EsAnomalia     bool   `json:"esAnomalia" bson:"esAnomalia"`
+	IdempotencyKey string `json:"idempotencyKey,omitempty" bson:"idempotencyKey,omitempty"`
+	// AnonimizadoEn marca cuándo se eliminaron las coordenadas por retención (RNF-LEG-006).
+	AnonimizadoEn *time.Time `json:"anonimizadoEn,omitempty" bson:"anonimizadoEn,omitempty"`
+	CreadoEn      time.Time  `json:"creadoEn" bson:"creadoEn"`
 }
 
 // ValidarEstructura valida las invariantes de negocio de un intento o registro de marcaje.

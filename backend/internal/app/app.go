@@ -177,6 +177,10 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 		WithPlazoDias(cfg.JustificacionPlazoDias)
 	reportesSvc := usecaseRep.NewService(sesionRepo, marcajeRepo, justificacionRepo, estructuraRepo, usuarioRepo, auditoriaRepo, clk).
 		WithPeriodos(periodoRepo)
+	// ─── Privacidad y notificaciones (Ley 1581, EP-10) ───
+	personales, productor := construirPersonales(cfg, mongoClient, auditoriaRepo, estructuraRepo, espacioRepo)
+	acaSvc.WithNotificador(productor)
+	justificacionesSvc.WithNotificador(productor)
 	auditoriaSvc := usecaseAud.NewService(impl.NewAuditoriaConsultaRepository(mongoClient), auditoriaRepo, usuarioRepo, clk)
 
 	// ─── Handlers ─────────────────────────────────────────────
@@ -198,7 +202,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	}
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, usuariosH, seguimiento, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, usuariosH, seguimiento, personales, auditoriaRepo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("inicializar rutas: %w", err)
 	}

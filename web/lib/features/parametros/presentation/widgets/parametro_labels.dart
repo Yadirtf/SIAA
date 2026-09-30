@@ -17,6 +17,7 @@ const _etiquetas = {
   'exigir_attestation': 'Exigir attestation de Play Integrity',
   'porcentaje_minimo_asistencia': 'Porcentaje mínimo de asistencia',
   'inasistencias_consecutivas_alerta': 'Inasistencias consecutivas para alerta',
+  'retencion_coordenadas_dias': 'Retención de coordenadas (días)',
 };
 
 const _ayudas = {
@@ -27,6 +28,9 @@ const _ayudas = {
       'Exigir attestation de Play Integrity: requiere configurar '
       'PLAY_INTEGRITY_PACKAGE y PLAY_INTEGRITY_CREDENTIALS en el servidor; '
       'sin eso todos los marcajes se rechazan',
+  'retencion_coordenadas_dias':
+      'Solo aplica en ámbito GLOBAL. Pasado este plazo, las coordenadas de '
+      'los marcajes se anonimizan (se conservan resultado y distancia).',
 };
 
 /// Nombre legible del parámetro; la clave técnica si no hay etiqueta.

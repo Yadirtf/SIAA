@@ -35,8 +35,11 @@ func (s *Service) Revisar(ctx context.Context, actor Actor, id string, destino j
 	return j, nil
 }
 
-// notificar informa el resultado por correo; un fallo de envío no revierte la decisión.
+// notificar informa el resultado por push y por correo; un fallo de envío no revierte la decisión.
 func (s *Service) notificar(ctx context.Context, j *justificacion.Justificacion) {
+	if s.notificador != nil {
+		s.notificador.ResultadoJustificacion(ctx, j.DocenteID, j.ID, j.NombreSesion, j.Estado == justificacion.EstadoAprobada)
+	}
 	if s.correo == nil || s.usuarios == nil {
 		return
 	}

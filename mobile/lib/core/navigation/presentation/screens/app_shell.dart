@@ -11,6 +11,7 @@ import '../router/nav_screen_registry.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/app_shell_app_bar.dart';
 import '../widgets/drawer/app_drawer.dart';
+import '../widgets/sesion_bootstrap.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key});
@@ -30,37 +31,42 @@ class AppShell extends StatelessWidget {
           Navigator.of(context).pushReplacementNamed('/login');
         }
       },
-      child: BlocBuilder<NavBloc, NavState>(
-        builder: (context, navState) {
-          final bottomItems = navState.bottomItems;
+      child: SesionBootstrap(
+        child: BlocBuilder<NavBloc, NavState>(
+          builder: (context, navState) {
+            final bottomItems = navState.bottomItems;
 
-          // Determinar ruta activa
-          final currentRoute = _resolveCurrentRoute(navState);
+            // Determinar ruta activa
+            final currentRoute = _resolveCurrentRoute(navState);
 
-          final safeBottomIndex = bottomItems.isEmpty
-              ? 0
-              : navState.tabIndex.clamp(0, bottomItems.length - 1);
+            final safeBottomIndex = bottomItems.isEmpty
+                ? 0
+                : navState.tabIndex.clamp(0, bottomItems.length - 1);
 
-          final bottomNavIndex =
-              navState.activeDrawerRoute != null ? -1 : safeBottomIndex;
+            final bottomNavIndex =
+                navState.activeDrawerRoute != null ? -1 : safeBottomIndex;
 
-          return Scaffold(
-            appBar: AppShellAppBar(navState: navState),
-            drawer: AppDrawer(
-              navState: navState,
-              currentRoute: currentRoute,
-            ),
-            body: NavScreenRegistry.buildScreenForRoute(currentRoute),
-            bottomNavigationBar: bottomItems.isEmpty
-                ? null
-                : AppBottomNavBar(
-                    items: bottomItems,
-                    currentIndex: bottomNavIndex < 0 ? 0 : bottomNavIndex,
-                    onTap: (index) =>
-                        context.read<NavBloc>().add(NavTabCambiado(index)),
-                  ),
-          );
-        },
+            return Scaffold(
+              appBar: AppShellAppBar(navState: navState),
+              drawer: AppDrawer(
+                navState: navState,
+                currentRoute: currentRoute,
+              ),
+              body: NavScreenRegistry.buildScreenForRoute(
+                currentRoute,
+                sesionIdObjetivo: navState.sesionIdObjetivo,
+              ),
+              bottomNavigationBar: bottomItems.isEmpty
+                  ? null
+                  : AppBottomNavBar(
+                      items: bottomItems,
+                      currentIndex: bottomNavIndex < 0 ? 0 : bottomNavIndex,
+                      onTap: (index) =>
+                          context.read<NavBloc>().add(NavTabCambiado(index)),
+                    ),
+            );
+          },
+        ),
       ),
     );
   }

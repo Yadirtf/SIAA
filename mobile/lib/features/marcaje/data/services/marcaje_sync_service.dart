@@ -3,6 +3,8 @@
 // de ≤ 50, mapea resultados por orden y aplica backoff exponencial por item.
 import 'dart:async';
 import 'package:dio/dio.dart';
+import '../../../privacidad/data/consentimiento_gate.dart';
+import '../../../privacidad/data/consentimiento_requerido.dart';
 import '../../domain/models/item_sync_resultado_model.dart';
 import '../../domain/models/marcaje_request_model.dart';
 import '../../domain/models/offline_marcaje_item.dart';
@@ -25,6 +27,7 @@ class MarcajeSyncService {
   final AttestationService _attestation;
   final PoliticaReintentos _politica;
   final DateTime Function() _reloj;
+  final Future<void> Function() _onConsentimientoRequerido;
 
   MarcajeSyncService({
     required MarcajeRemoteDataSource remote,
@@ -32,11 +35,14 @@ class MarcajeSyncService {
     AttestationService? attestation,
     PoliticaReintentos politica = const PoliticaReintentos(),
     DateTime Function()? reloj,
+    Future<void> Function()? onConsentimientoRequerido,
   })  : _remote = remote,
         _local = local,
         _attestation = attestation ?? AttestationService(),
         _politica = politica,
-        _reloj = reloj ?? DateTime.now;
+        _reloj = reloj ?? DateTime.now,
+        _onConsentimientoRequerido = onConsentimientoRequerido ??
+            ConsentimientoGate.instance.marcarRequerido;
 
   /// Ejecuta una sincronización; si ya hay una en curso devuelve esa misma.
   Future<ResumenSincronizacion> sincronizar() {
@@ -140,6 +146,11 @@ class MarcajeSyncService {
     if (status == null) {
       // Sin respuesta (red caída, timeout): los lotes restantes también fallarían.
       return _reprogramarTodos(lote, 'Sin conexión con el servidor', false);
+    }
+    if (status == 403 && ConsentimientoRequeridoException.esRespuesta(e)) {
+      // US-LEG-01: la cola queda intacta (sin contar intento) hasta aceptar el aviso.
+      await _onConsentimientoRequerido();
+      return const _ResultadoLote(ResumenSincronizacion.vacio, false);
     }
     if (status == 401) {
       // Sesión expirada y no renovable: se deja la cola intacta hasta volver a autenticar.

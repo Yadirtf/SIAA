@@ -112,11 +112,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
   final DeviceInfoService _deviceInfoService;
 
+  /// Limpieza que requiere la sesión aún vigente (p. ej. DELETE del token push,
+  /// US-NOT-01); se ejecuta antes de borrar los tokens.
+  final Future<void> Function()? _antesDeCerrarSesion;
+
   AuthBloc({
     required AuthRepository repository,
     DeviceInfoService? deviceInfoService,
+    Future<void> Function()? antesDeCerrarSesion,
   })  : _repository = repository,
         _deviceInfoService = deviceInfoService ?? const DeviceInfoService(),
+        _antesDeCerrarSesion = antesDeCerrarSesion,
         super(AuthInitial()) {
     on<AuthSessionChecked>(_onSessionChecked);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -241,6 +247,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    try {
+      await _antesDeCerrarSesion?.call();
+    } catch (_) {
+      // Best-effort: el cierre de sesión local nunca se bloquea.
+    }
     final refreshToken = await SecureStorage.getRefreshToken();
     await SecureStorage.clearSession();
     if (refreshToken != null) {
