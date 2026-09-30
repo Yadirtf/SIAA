@@ -151,39 +151,6 @@ func (r *marcajeMongoRepo) ListarPorUsuario(ctx context.Context, usuarioID strin
 	return lista, total, nil
 }
 
-// ActualizarAjuste aplica un ajuste o anulación administrativa conservando trazabilidad (US-MAR-09).
-func (r *marcajeMongoRepo) ActualizarAjuste(ctx context.Context, id string, nuevoResultado marcaje.ResultadoMarcaje, anulado bool, motivo string, ajustadorID string, ajustadoEn time.Time) (*marcaje.Marcaje, error) {
-	update := bson.M{
-		"$set": bson.M{
-			"anulado":      anulado,
-			"motivoAjuste": motivo,
-			"ajustadoPor":  ajustadorID,
-			"ajustadoEn":   ajustadoEn,
-		},
-	}
-	if nuevoResultado != "" {
-		update["$set"].(bson.M)["resultado"] = nuevoResultado
-	}
-	// Recalcular si el registro ocupa la ranura de idempotencia tras el ajuste.
-	var original marcaje.Marcaje
-	if err := r.col.FindOne(ctx, bson.M{"_id": id}).Decode(&original); err != nil {
-		return nil, fmt.Errorf("actualizar ajuste marcaje: %w", err)
-	}
-	if nuevoResultado != "" {
-		original.Resultado = nuevoResultado
-	}
-	update["$set"].(bson.M)["consolidado"] = !anulado && original.ConsolidaSesion()
-
-	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-	var actualizado marcaje.Marcaje
-	err := r.col.FindOneAndUpdate(ctx, bson.M{"_id": id}, update, opts).Decode(&actualizado)
-	if err != nil {
-		return nil, fmt.Errorf("actualizar ajuste marcaje: %w", err)
-	}
-
-	return &actualizado, nil
-}
-
 // ObtenerUltimoMarcajeUsuario obtiene el marcaje más reciente para análisis de saltos imposibles (US-MAR-10 AC-04).
 func (r *marcajeMongoRepo) ObtenerUltimoMarcajeUsuario(ctx context.Context, usuarioID string) (*marcaje.Marcaje, error) {
 	filtro := bson.M{

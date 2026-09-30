@@ -74,9 +74,21 @@ func TestMarcaje_FlujoDocenteCompleto(t *testing.T) {
 	// Ajuste administrativo (US-MAR-09): motivo corto rechazado, válido aceptado.
 	id := texto(dentro["marcajeId"])
 	e.sinErrorInterno(http.MethodPatch, "/marcajes/"+id, map[string]interface{}{"accion": "AJUSTAR", "nuevoResultado": "TARDANZA", "motivo": "corto"}, s.admin)
-	e.sinErrorInterno(http.MethodPatch, "/marcajes/"+id, map[string]interface{}{
+	ajuste := e.exigir(http.MethodPatch, "/marcajes/"+id, map[string]interface{}{
 		"accion": "AJUSTAR", "nuevoResultado": "TARDANZA", "motivo": "Ajuste por verificación de cámaras del bloque",
-	}, s.admin)
+	}, s.admin, http.StatusOK)
+	// RF-JUS-004: el ajuste es un evento nuevo y el original conserva su resultado.
+	if ajuste["id"] == id || ajuste["ajusteDe"] != id || ajuste["origen"] != "AJUSTE" || ajuste["resultado"] != "TARDANZA" {
+		t.Fatalf("el ajuste debe ser un evento nuevo que apunte al original: %v", ajuste)
+	}
+	for _, m := range elementos(e.exigir(http.MethodGet, "/marcajes?sesionId="+sesionID, nil, s.admin, http.StatusOK)) {
+		if m["id"] == id && (m["resultado"] == "TARDANZA" || m["reemplazadoPor"] != ajuste["id"]) {
+			t.Fatalf("el marcaje original no debe modificarse: %v", m)
+		}
+	}
+	e.exigir(http.MethodPatch, "/marcajes/"+id, map[string]interface{}{
+		"accion": "AJUSTAR", "nuevoResultado": "PRESENTE", "motivo": "Segundo ajuste sobre el evento ya reemplazado",
+	}, s.admin, http.StatusConflict)
 	e.sinErrorInterno(http.MethodPatch, "/marcajes/000000000000000000000000", map[string]interface{}{
 		"accion": "ANULAR", "anulado": true, "motivo": "Anulación de un marcaje que no existe en la base",
 	}, s.admin)

@@ -3,6 +3,7 @@ package mailer
 import (
 	"context"
 	"fmt"
+	"mime"
 	"net"
 	"net/smtp"
 	"net/url"
@@ -48,10 +49,18 @@ func (m *SMTPMailer) SendRecovery(ctx context.Context, to, token string) error {
 			"Abre este enlace para crear una nueva contraseña (vence en %d minutos y solo puede usarse una vez):\r\n%s\r\n\r\n"+
 			"Si no solicitaste el cambio, ignora este mensaje; tu contraseña actual sigue siendo válida.\r\n",
 		m.cfg.Minutos, enlace)
+	if err := m.Enviar(ctx, to, "SIAA - Recuperación de contraseña", cuerpo); err != nil {
+		return fmt.Errorf("enviar correo de recuperación: %w", err)
+	}
+	return nil
+}
+
+// Enviar entrega un correo de texto plano (notificaciones de justificaciones, RF-JUS-005).
+func (m *SMTPMailer) Enviar(ctx context.Context, to, asunto, cuerpo string) error {
 	msg := strings.Join([]string{
 		"From: " + m.cfg.From,
 		"To: " + to,
-		"Subject: SIAA - Recuperación de contraseña",
+		"Subject: " + mime.QEncoding.Encode("utf-8", asunto),
 		"MIME-Version: 1.0",
 		"Content-Type: text/plain; charset=UTF-8",
 		"Date: " + time.Now().UTC().Format(time.RFC1123Z),
@@ -70,7 +79,7 @@ func (m *SMTPMailer) SendRecovery(ctx context.Context, to, token string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("enviar correo de recuperación: %w", err)
+			return fmt.Errorf("enviar correo: %w", err)
 		}
 		return nil
 	case <-ctx.Done():

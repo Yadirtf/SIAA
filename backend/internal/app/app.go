@@ -13,16 +13,20 @@ import (
 	"github.com/siaa/backend/internal/platform/config"
 	applog "github.com/siaa/backend/internal/platform/log"
 	"github.com/siaa/backend/internal/platform/mailer"
+	"github.com/siaa/backend/internal/platform/security"
 	mongoRepo "github.com/siaa/backend/internal/repository/mongo"
 	"github.com/siaa/backend/internal/repository/mongo/impl"
 	apphttp "github.com/siaa/backend/internal/transport/http"
 	"github.com/siaa/backend/internal/transport/http/handler"
 	usecaseAca "github.com/siaa/backend/internal/usecase/academico"
+	usecaseAud "github.com/siaa/backend/internal/usecase/auditoria"
 	"github.com/siaa/backend/internal/usecase/auth"
 	usecaseGeo "github.com/siaa/backend/internal/usecase/geo"
+	usecaseJus "github.com/siaa/backend/internal/usecase/justificaciones"
 	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
 	usecasePar "github.com/siaa/backend/internal/usecase/parametro"
 	usecaseRbac "github.com/siaa/backend/internal/usecase/rbac"
+	usecaseRep "github.com/siaa/backend/internal/usecase/reportes"
 	usecaseUsuarios "github.com/siaa/backend/internal/usecase/usuarios"
 )
 
@@ -61,9 +65,11 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 
 	// ─── Infraestructura ──────────────────────────────────────
 	// Con SMTP_HOST definido se envían correos reales (MailHog en desarrollo); si no, solo se registran.
-	var appMailer auth.Mailer = mailer.NewNoopMailer(log)
+	noop := mailer.NewNoopMailer(log)
+	var appMailer auth.Mailer = noop
+	var correo usecaseJus.Correo = noop
 	if cfg.SMTPHost != "" {
-		appMailer = mailer.NewSMTPMailer(mailer.SMTPConfig{
+		smtpMailer := mailer.NewSMTPMailer(mailer.SMTPConfig{
 			Host:     cfg.SMTPHost,
 			Port:     cfg.SMTPPort,
 			User:     cfg.SMTPUser,
@@ -72,6 +78,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 			LinkBase: cfg.RecoveryURL,
 			Minutos:  cfg.RecoveryTokenMinutes,
 		})
+		appMailer, correo = smtpMailer, smtpMailer
 	}
 
 	dispositivoRepo := impl.NewDispositivoRepository(mongoClient)
@@ -151,6 +158,24 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo)
 	ausenciasWorker := usecaseMarcaje.NewAusenciasWorker(marcajeRepo, sesionRepo)
 
+	// ─── Justificaciones, reportes y bitácora (EP-07, EP-08, RF-AUD-003) ───
+	claveAdjuntos := cfg.AdjuntosClave
+	if claveAdjuntos == "" {
+		claveAdjuntos = cfg.JWTSecret
+	}
+	cifrador, err := security.NuevoCifrador(claveAdjuntos)
+	if err != nil {
+		return nil, fmt.Errorf("cifrado de soportes: %w", err)
+	}
+	justificacionRepo := impl.NewJustificacionRepository(mongoClient)
+	justificacionesSvc := usecaseJus.NewService(justificacionRepo, impl.NewAdjuntoRepository(mongoClient, cifrador),
+		sesionRepo, marcajeRepo, usuarioRepo, auditoriaRepo, clk).
+		WithCorreo(correo).
+		WithPlazoDias(cfg.JustificacionPlazoDias)
+	reportesSvc := usecaseRep.NewService(sesionRepo, marcajeRepo, justificacionRepo, estructuraRepo, usuarioRepo, auditoriaRepo, clk).
+		WithPeriodos(periodoRepo)
+	auditoriaSvc := usecaseAud.NewService(impl.NewAuditoriaConsultaRepository(mongoClient), auditoriaRepo, usuarioRepo, clk)
+
 	// ─── Handlers ─────────────────────────────────────────────
 	healthH := handler.NewHealthHandler(mongoClient, cfg.Version, cfg.Commit)
 	authH := handler.NewAuthHandler(authSvc)
@@ -163,9 +188,14 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC)
 	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
 	usuariosH := handler.NewUsuariosHandler(usuariosSvc)
+	seguimiento := &apphttp.HandlersSeguimiento{
+		Justificaciones: handler.NewJustificacionesHandler(justificacionesSvc),
+		Reportes:        handler.NewReportesHandler(reportesSvc),
+		Auditoria:       handler.NewAuditoriaHandler(auditoriaSvc),
+	}
 
 	// ─── Router con verificación de seguridad al arranque (T-ROL-01.4) ───
-	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, usuariosH, auditoriaRepo, nil)
+	router, err := apphttp.NewRouter(cfg, log, healthH, authH, openapiH, rolesH, geoH, acaH, parametroH, marcajeH, marcajeAdminH, marcajeSyncH, usuariosH, seguimiento, auditoriaRepo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("inicializar rutas: %w", err)
 	}

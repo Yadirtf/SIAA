@@ -67,9 +67,13 @@ type Marcaje struct {
 	MotivoAjuste           string               `json:"motivoAjuste,omitempty" bson:"motivoAjuste,omitempty"`
 	AjustadoPor            string               `json:"ajustadoPor,omitempty" bson:"ajustadoPor,omitempty"`
 	AjustadoEn             *time.Time           `json:"ajustadoEn,omitempty" bson:"ajustadoEn,omitempty"`
-	EsAnomalia             bool                 `json:"esAnomalia" bson:"esAnomalia"`
-	IdempotencyKey         string               `json:"idempotencyKey,omitempty" bson:"idempotencyKey,omitempty"`
-	CreadoEn               time.Time            `json:"creadoEn" bson:"creadoEn"`
+	// AjusteDe apunta al marcaje que este evento corrige; ReemplazadoPor, al ajuste que dejó
+	// sin efecto a este. El evento original conserva sus datos (RF-JUS-004).
+	AjusteDe       string    `json:"ajusteDe,omitempty" bson:"ajusteDe,omitempty"`
+	ReemplazadoPor string    `json:"reemplazadoPor,omitempty" bson:"reemplazadoPor,omitempty"`
+	EsAnomalia     bool      `json:"esAnomalia" bson:"esAnomalia"`
+	IdempotencyKey string    `json:"idempotencyKey,omitempty" bson:"idempotencyKey,omitempty"`
+	CreadoEn       time.Time `json:"creadoEn" bson:"creadoEn"`
 }
 
 // ValidarEstructura valida las invariantes de negocio de un intento o registro de marcaje.
@@ -88,7 +92,7 @@ func (m *Marcaje) ValidarEstructura() error {
 		return ErrTipoInvalido
 	}
 	// Si no es modalidad virtual ni origen manual, se exigen coordenadas GeoJSON válidas [lon, lat]
-	if m.Origen != OrigenManual && m.Origen != OrigenManualDocente && m.Origen != OrigenSistemaAusencia {
+	if m.Origen != OrigenManual && m.Origen != OrigenManualDocente && m.Origen != OrigenSistemaAusencia && m.Origen != OrigenAjuste {
 		if len(m.Geolocalizacion.Coordenadas) != 2 {
 			return ErrCoordenadasNulas
 		}

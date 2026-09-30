@@ -9,16 +9,20 @@ import '../../../academico/presentation/screens/estructura_screen.dart';
 import '../../../academico/presentation/screens/excepciones_screen.dart';
 import '../../../academico/presentation/screens/periodos_screen.dart';
 import '../../../academico/presentation/screens/sesiones_screen.dart';
+import '../../../auditoria/presentation/screens/auditoria_screen.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../geo/presentation/bloc/geo_bloc.dart';
-
 import '../../../geo/presentation/bloc/geo_event.dart';
 import '../../../geo/presentation/screens/bloques_screen.dart';
 import '../../../geo/presentation/screens/espacios_screen.dart';
 import '../../../geo/presentation/screens/sedes_screen.dart';
 import '../../../geo/presentation/screens/solapamientos_screen.dart';
 import '../../../dispositivos/presentation/screens/dispositivos_screen.dart';
+import '../../../justificaciones/presentation/screens/justificaciones_screen.dart';
 import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
+import '../../../reportes/presentation/screens/reporte_cumplimiento_screen.dart';
 import '../../../usuarios/presentation/screens/usuarios_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
@@ -51,7 +55,8 @@ class _DashboardShellState extends State<DashboardShell> {
     }
   }
 
-  Widget _buildBody() {
+  /// Pantalla de la sección actual; [permisos] habilita acciones sensibles.
+  Widget _buildBody(List<String> permisos) {
     switch (_currentSection) {
       case NavSection.inicio:
         return DashboardHomeScreen(onNavigate: _onSectionSelected);
@@ -72,7 +77,6 @@ class _DashboardShellState extends State<DashboardShell> {
       case NavSection.sesiones:
         return const SesionesScreen();
       case NavSection.excepciones:
-
         return const ExcepcionesScreen();
       case NavSection.dispositivos:
         return const DispositivosScreen();
@@ -80,8 +84,18 @@ class _DashboardShellState extends State<DashboardShell> {
         return const ParametrosScreen();
       case NavSection.marcajes:
         return const MarcajesAdminScreen();
+      case NavSection.justificaciones:
+        return JustificacionesScreen(
+          puedeAprobar: permisos.contains('justificacion:aprobar'),
+        );
+      case NavSection.reportes:
+        return ReporteCumplimientoScreen(
+          puedeExportar: permisos.contains('reporte:exportar'),
+        );
       case NavSection.usuarios:
         return const UsuariosScreen();
+      case NavSection.auditoria:
+        return const AuditoriaScreen();
     }
   }
 
@@ -119,7 +133,16 @@ class _DashboardShellState extends State<DashboardShell> {
                         ? null
                         : () => _scaffoldKey.currentState?.openDrawer(),
                   ),
-                  Expanded(child: _buildBody()),
+                  Expanded(
+                    // Conserva los últimos permisos conocidos durante los
+                    // estados transitorios del AuthBloc.
+                    child: BlocBuilder<AuthBloc, AuthState>(
+                      buildWhen: (_, current) => current is Authenticated,
+                      builder: (context, state) => _buildBody(
+                        state is Authenticated ? state.user.permisos : const [],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

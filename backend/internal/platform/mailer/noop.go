@@ -36,3 +36,11 @@ func (m *NoopMailer) SendRecovery(_ context.Context, to, token string) error {
 	)
 	return nil
 }
+
+// Enviar registra la notificación sin enviarla.
+func (m *NoopMailer) Enviar(_ context.Context, to, asunto, _ string) error {
+	m.log.Info("NOOP: correo de notificación",
+		applog.Extra(map[string]string{"to": to, "asunto": asunto}),
+	)
+	return nil
+}

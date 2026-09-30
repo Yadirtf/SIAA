@@ -4,6 +4,7 @@ package marcaje
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -73,17 +74,9 @@ func (uc *AjustarMarcajeUseCase) Ajustar(ctx context.Context, req SolicitudAjust
 	}
 
 	ahora := time.Now().UTC()
-	actualizado, errAct := uc.marcajeRepo.ActualizarAjuste(
-		ctx,
-		req.MarcajeID,
-		req.NuevoResultado,
-		req.Anulado,
-		motivo,
-		ajustadorID,
-		ahora,
-	)
-	if errAct != nil {
-		return nil, fmt.Errorf("error aplicando ajuste: %w", errAct)
+	actualizado := nuevoEventoAjuste(original, req.NuevoResultado, req.Anulado, motivo, ajustadorID, ahora)
+	if err := uc.marcajeRepo.RegistrarAjuste(ctx, original.ID, actualizado); err != nil {
+		return nil, traducirErrorAjuste(err)
 	}
 
 	// AC-06: Generar entrada de auditoría con valores anterior y nuevo completos
@@ -100,6 +93,44 @@ func (uc *AjustarMarcajeUseCase) Ajustar(ctx context.Context, req SolicitudAjust
 	}
 
 	return actualizado, nil
+}
+
+// nuevoEventoAjuste construye el evento que reemplaza al original: copia su contexto
+// (sesión, usuario, ubicación) y conserva el resultado previo si no se pide uno nuevo.
+func nuevoEventoAjuste(original *domainMarcaje.Marcaje, resultado domainMarcaje.ResultadoMarcaje, anulado bool, motivo, ajustadorID string, ahora time.Time) *domainMarcaje.Marcaje {
+	if resultado == "" {
+		resultado = original.Resultado
+	}
+	return &domainMarcaje.Marcaje{
+		SesionID:             original.SesionID,
+		UsuarioID:            original.UsuarioID,
+		DocenteID:            original.DocenteID,
+		EspacioID:            original.EspacioID,
+		SedeID:               original.SedeID,
+		FacultadID:           original.FacultadID,
+		RolMarcaje:           original.RolMarcaje,
+		Tipo:                 original.Tipo,
+		Resultado:            resultado,
+		TimestampServidor:    ahora,
+		TimestampDispositivo: ahora,
+		Timestamp:            ahora,
+		Origen:               domainMarcaje.OrigenAjuste,
+		Anulado:              anulado,
+		MotivoAjuste:         motivo,
+		AjustadoPor:          ajustadorID,
+		AjustadoEn:           &ahora,
+		CreadoEn:             ahora,
+	}
+}
+
+func traducirErrorAjuste(err error) error {
+	switch {
+	case errors.Is(err, repository.ErrMarcajeYaAjustado):
+		return &shared.DomainError{Code: shared.ErrConflictoUnicidad, Message: "El marcaje ya fue ajustado; ajuste el evento vigente"}
+	case errors.Is(err, repository.ErrRanuraOcupada):
+		return &shared.DomainError{Code: shared.ErrConflictoUnicidad, Message: "La sesión ya tiene un marcaje vigente de ese tipo"}
+	}
+	return fmt.Errorf("error aplicando ajuste: %w", err)
 }
 
 // CrearManual registra un marcaje de origen MANUAL conservando la trazabilidad de autor y motivo (AC-04).

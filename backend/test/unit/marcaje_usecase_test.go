@@ -10,6 +10,7 @@ import (
 	"github.com/siaa/backend/internal/domain/academico"
 	"github.com/siaa/backend/internal/domain/geo"
 	domainMarcaje "github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/domain/user"
 	"github.com/siaa/backend/internal/repository"
 	usecaseMarcaje "github.com/siaa/backend/internal/usecase/marcaje"
@@ -89,21 +90,28 @@ func (r *fakeMarcajeRepo) ListarConFiltros(ctx context.Context, f repository.Fil
 	return res, int64(len(res)), nil
 }
 
-func (r *fakeMarcajeRepo) ActualizarAjuste(ctx context.Context, id string, nuevoResultado domainMarcaje.ResultadoMarcaje, anulado bool, motivo string, ajustadorID string, ajustadoEn time.Time) (*domainMarcaje.Marcaje, error) {
+func (r *fakeMarcajeRepo) RegistrarAjuste(ctx context.Context, originalID string, ajuste *domainMarcaje.Marcaje) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	m, exists := r.items[id]
+	m, exists := r.items[originalID]
 	if !exists {
-		return nil, fmt.Errorf("no encontrado")
+		return fmt.Errorf("no encontrado")
 	}
-	m.Anulado = anulado
-	m.MotivoAjuste = motivo
-	m.AjustadoPor = ajustadorID
-	m.AjustadoEn = &ajustadoEn
-	if nuevoResultado != "" {
-		m.Resultado = nuevoResultado
+	if m.ReemplazadoPor != "" {
+		return repository.ErrMarcajeYaAjustado
 	}
-	return m, nil
+	if ajuste.ID == "" {
+		ajuste.ID = fmt.Sprintf("ajuste-%d", len(r.items)+1)
+	}
+	ajuste.AjusteDe = originalID
+	m.ReemplazadoPor = ajuste.ID
+	m.Consolidado = false
+	r.items[ajuste.ID] = ajuste
+	return nil
+}
+
+func (r *fakeMarcajeRepo) ListarConsolidados(ctx context.Context, sesionIDs []string, tipo domainMarcaje.TipoMarcaje) ([]*domainMarcaje.Marcaje, error) {
+	return nil, nil
 }
 
 func (r *fakeMarcajeRepo) ObtenerSesionesExpiradasSinMarcaje(ctx context.Context, ahora time.Time) ([]*academico.Sesion, error) {
@@ -255,6 +263,27 @@ func TestAjustarMarcaje_MotivoObligatorio(t *testing.T) {
 		}
 		if len(audRepo.entries) == 0 {
 			t.Errorf("se esperaba registro en auditoria")
+		}
+		// RF-JUS-004: el ajuste es un evento nuevo; el original conserva su resultado.
+		original := mRepo.items["m-1"]
+		if act.ID == "m-1" || act.AjusteDe != "m-1" || act.Origen != domainMarcaje.OrigenAjuste {
+			t.Errorf("se esperaba un evento de ajuste que apunte al original, obtuvo: %+v", act)
+		}
+		if original.Resultado != domainMarcaje.ResultadoRechazadoFueraDeArea || original.ReemplazadoPor != act.ID {
+			t.Errorf("el original no debe cambiar su resultado y debe apuntar al ajuste: %+v", original)
+		}
+	})
+
+	t.Run("Un marcaje ya reemplazado no se ajusta de nuevo", func(t *testing.T) {
+		req := usecaseMarcaje.SolicitudAjuste{
+			MarcajeID: "m-1",
+			Anulado:   true,
+			Motivo:    "Segundo intento de ajuste sobre el mismo evento original",
+		}
+		_, err := uc.Ajustar(ctx, req, "admin-1")
+		de, ok := shared.AsDomainError(err)
+		if !ok || de.Code != shared.ErrConflictoUnicidad {
+			t.Errorf("se esperaba conflicto, obtuvo: %v", err)
 		}
 	})
 }

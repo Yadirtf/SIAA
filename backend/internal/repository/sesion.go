@@ -18,6 +18,11 @@ type SesionFilter struct {
 	Fecha        string
 	Estado       *academico.EstadoSesion
 	Alcance      *FiltroAlcance
+	// Rango de fechas AAAA-MM-DD, inclusive (reportes, EP-08).
+	FechaDesde    string
+	FechaHasta    string
+	FacultadID    string
+	AsignaturaIDs []string // nil = sin filtro; vacío = ninguna sesión
 }
 
 // SesionRepository define las operaciones de persistencia sobre sesiones.

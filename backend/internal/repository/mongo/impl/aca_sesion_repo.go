@@ -154,6 +154,7 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	if filter.Estado != nil {
 		criteria = append(criteria, bson.E{Key: "estado", Value: string(*filter.Estado)})
 	}
+	criteria = append(criteria, criteriosReporte(filter)...)
 	if cond := condicionAlcance(filter.Alcance, "docenteIds"); cond != nil {
 		criteria = append(criteria, bson.E{Key: "$and", Value: []bson.M{cond}})
 	}

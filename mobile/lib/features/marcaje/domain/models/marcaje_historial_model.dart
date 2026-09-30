@@ -7,7 +7,8 @@ class MarcajeHistorialItem extends Equatable {
   final String tipo; // ENTRADA | SALIDA
   final String resultado; // ACEPTADO | RECHAZADO | AUSENCIA_AUTOMATICA
   final String? motivoRechazo;
-  final String origen; // MOVIL_ONLINE, MOVIL_OFFLINE, MANUAL_DOCENTE, SISTEMA_AUTOMATICO
+  final String
+      origen; // MOVIL_ONLINE, MOVIL_OFFLINE, MANUAL_DOCENTE, SISTEMA_AUTOMATICO
   final String asignatura;
   final String grupo;
   final String espacioCodigo;
@@ -40,7 +41,25 @@ class MarcajeHistorialItem extends Equatable {
 
   bool get esAceptado => resultado == 'ACEPTADO';
   bool get esRechazado => resultado == 'RECHAZADO';
-  bool get esAusencia => resultado == 'AUSENCIA_AUTOMATICA';
+  bool get esAusencia =>
+      resultado == 'AUSENCIA_AUTOMATICA' || resultado == 'AUSENTE';
+
+  /// Resultados que habilitan radicar una justificación (EP-07).
+  static const resultadosJustificables = {
+    'AUSENTE',
+    'AUSENCIA_AUTOMATICA',
+    'RECHAZADO',
+    'FUERA_DE_AREA',
+    'FUERA_DE_TIEMPO',
+    'FUERA_DE_HORARIO',
+  };
+
+  /// El backend decide la elegibilidad final (ventana hábil, duplicados).
+  bool get puedeJustificarse =>
+      !anulado &&
+      sesionId.isNotEmpty &&
+      (resultadosJustificables.contains(resultado) ||
+          resultado.startsWith('RECHAZADO_'));
 
   factory MarcajeHistorialItem.fromJson(Map<String, dynamic> json) {
     final evidencia = json['evidencia'] as Map<String, dynamic>? ?? {};
@@ -57,8 +76,12 @@ class MarcajeHistorialItem extends Equatable {
       asignatura: json['asignatura'] as String? ?? 'Clase',
       grupo: json['grupo'] as String? ?? 'G1',
       espacioCodigo: json['espacioCodigo'] as String? ?? 'Aula',
-      timestampServidor: DateTime.tryParse(json['timestampServidor'] as String? ?? '') ?? DateTime.now(),
-      timestampDispositivo: DateTime.tryParse(evidencia['timestampDispositivo'] as String? ?? '') ?? DateTime.now(),
+      timestampServidor:
+          DateTime.tryParse(json['timestampServidor'] as String? ?? '') ??
+              DateTime.now(),
+      timestampDispositivo: DateTime.tryParse(
+              evidencia['timestampDispositivo'] as String? ?? '') ??
+          DateTime.now(),
       longitud: coords.isNotEmpty ? (coords[0] as num).toDouble() : 0.0,
       latitud: coords.length > 1 ? (coords[1] as num).toDouble() : 0.0,
       precisionMetros: (evidencia['precision'] as num?)?.toDouble() ?? 0.0,

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
+import 'archivo_binario.dart';
 import 'api_response.dart';
 
 class ApiClient {
@@ -113,6 +114,35 @@ class ApiClient {
       return ApiResponse(
         body: _processResponse(response),
         headers: response.headers,
+      );
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  /// GET de un archivo binario (PDF, XLSX, imagen) con el token Bearer.
+  /// Los errores JSON del backend se convierten en [ApiException].
+  Future<ArchivoBinario> getBytes(
+    String url, {
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      headers['Accept'] = '*/*';
+      final response = await _client.get(Uri.parse(url), headers: headers);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _processResponse(response);
+      }
+      final mime = (response.headers['content-type'] ?? '')
+          .split(';')
+          .first
+          .trim();
+      return ArchivoBinario(
+        bytes: response.bodyBytes,
+        mime: mime.isEmpty ? 'application/octet-stream' : mime,
+        nombre: ArchivoBinario.nombreDesdeDisposition(
+          response.headers['content-disposition'],
+        ),
       );
     } catch (e) {
       _handleError(e);

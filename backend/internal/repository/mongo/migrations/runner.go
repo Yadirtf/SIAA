@@ -25,6 +25,9 @@ func Run(ctx context.Context, db *mongo.Database, usuariosDemo bool, admin seed.
 	if err := CreateIndexes(ctx, db); err != nil {
 		return fmt.Errorf("create indexes: %w", err)
 	}
+	if err := CrearIndicesJustificacionesYAuditoria(ctx, db); err != nil {
+		return fmt.Errorf("índices de justificaciones y auditoría: %w", err)
+	}
 	if err := seed.Run(ctx, db, usuariosDemo, admin); err != nil {
 		return fmt.Errorf("seed data: %w", err)
 	}

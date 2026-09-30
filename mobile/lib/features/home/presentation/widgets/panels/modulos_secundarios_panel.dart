@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../justificaciones/presentation/screens/mis_justificaciones_screen.dart';
 
 /// Panel inferior con accesos a módulos operativos complementarios de SIAA.
 class ModulosSecundariosPanel extends StatelessWidget {
@@ -31,6 +32,17 @@ class ModulosSecundariosPanel extends StatelessWidget {
           enabled: true,
           onTap: () => Navigator.pushNamed(context, '/shell/historial'),
         ),
+        const SizedBox(height: 10),
+        _buildFeatureTile(
+          context,
+          icon: Icons.edit_note_rounded,
+          title: 'Mis Justificaciones',
+          subtitle: 'Estado de tus solicitudes y observaciones',
+          enabled: true,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const MisJustificacionesScreen(),
+          )),
+        ),
       ],
     );
   }
@@ -54,47 +66,47 @@ class ModulosSecundariosPanel extends StatelessWidget {
           border: Border.all(color: SIAAColors.neutral200),
         ),
         child: Row(
-        children: [
-          Icon(
-            icon,
-            color: enabled ? SIAAColors.primary500 : SIAAColors.neutral400,
-            size: 28,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: enabled ? null : SIAAColors.neutral500,
+          children: [
+            Icon(
+              icon,
+              color: enabled ? SIAAColors.primary500 : SIAAColors.neutral400,
+              size: 28,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: enabled ? null : SIAAColors.neutral500,
+                    ),
                   ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                      fontSize: 11, color: SIAAColors.neutral400),
-                ),
-              ],
-            ),
-          ),
-          if (!enabled)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: SIAAColors.neutral100,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                'Pronto',
-                style: TextStyle(fontSize: 10, color: SIAAColors.neutral600),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                        fontSize: 11, color: SIAAColors.neutral400),
+                  ),
+                ],
               ),
             ),
-        ],
+            if (!enabled)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: SIAAColors.neutral100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Pronto',
+                  style: TextStyle(fontSize: 10, color: SIAAColors.neutral600),
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

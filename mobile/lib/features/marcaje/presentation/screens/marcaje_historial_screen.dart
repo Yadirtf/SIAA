@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/repositories/marcaje_repository.dart';
 import '../../domain/models/marcaje_historial_model.dart';
+import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
+import '../widgets/historial_item_card.dart';
 
 class MarcajeHistorialScreen extends StatefulWidget {
   final MarcajeRepository? repository;
@@ -50,7 +52,8 @@ class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
 
   void _cambiarMes(int offset) {
     setState(() {
-      _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month + offset, 1);
+      _mesSeleccionado =
+          DateTime(_mesSeleccionado.year, _mesSeleccionado.month + offset, 1);
     });
     _cargarHistorial();
   }
@@ -79,7 +82,8 @@ class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
                 ),
                 Text(
                   mesFormat.format(_mesSeleccionado).toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
@@ -127,7 +131,8 @@ class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history_toggle_off_rounded, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.history_toggle_off_rounded,
+                size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 12),
             Text(
               'No hay registros de marcaje en este mes',
@@ -146,103 +151,26 @@ class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final item = _items[index];
-          return _buildItemCard(item);
+          return HistorialItemCard(
+            item: item,
+            onJustificar: () => _justificar(item),
+          );
         },
       ),
     );
   }
 
-  Widget _buildItemCard(MarcajeHistorialItem item) {
-    Color badgeBg;
-    Color badgeFg;
-    String badgeText;
-
-    if (item.anulado) {
-      badgeBg = Colors.grey.shade200;
-      badgeFg = Colors.grey.shade800;
-      badgeText = 'ANULADO';
-    } else if (item.esAceptado) {
-      badgeBg = Colors.green.shade50;
-      badgeFg = Colors.green.shade800;
-      badgeText = 'ACEPTADO';
-    } else if (item.esAusencia) {
-      badgeBg = Colors.orange.shade50;
-      badgeFg = Colors.orange.shade800;
-      badgeText = 'AUSENCIA';
-    } else {
-      badgeBg = Colors.red.shade50;
-      badgeFg = Colors.red.shade800;
-      badgeText = 'RECHAZADO';
+  Future<void> _justificar(MarcajeHistorialItem item) async {
+    final radicada = await JustificacionFormScreen.abrir(
+      context,
+      sesionId: item.sesionId,
+      nombreSesion: item.asignatura,
+      fechaSesion: DateFormat('dd/MM/yyyy').format(item.timestampServidor),
+    );
+    if (radicada == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Justificación radicada correctamente')),
+      );
     }
-
-    final dateFormat = DateFormat('dd/MM/yyyy hh:mm a');
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        title: Text(
-          item.asignatura,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-        subtitle: Text(
-          '${item.tipo} • ${dateFormat.format(item.timestampServidor)}',
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: badgeBg,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            badgeText,
-            style: TextStyle(color: badgeFg, fontWeight: FontWeight.bold, fontSize: 11),
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDetailRow('Aula / Espacio:', item.espacioCodigo),
-                _buildDetailRow('Origen:', item.origen),
-                if (item.motivoRechazo != null)
-                  _buildDetailRow('Motivo:', item.motivoRechazo!, isAlert: true),
-                if (item.precisionMetros > 0)
-                  _buildDetailRow('Precisión GPS:', '±${item.precisionMetros.toStringAsFixed(1)}m'),
-                if (item.distanciaMetros != null)
-                  _buildDetailRow('Distancia al aula:', '${item.distanciaMetros!.toStringAsFixed(1)}m'),
-                _buildDetailRow(
-                  'Coordenadas:',
-                  '[${item.longitud.toStringAsFixed(5)}, ${item.latitud.toStringAsFixed(5)}]',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, {bool isAlert = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isAlert ? Colors.red.shade700 : Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
