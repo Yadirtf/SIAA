@@ -1,77 +1,75 @@
-// dias_selector.dart - Selector de días de la semana para el horario (US-ACA-01..09)
+// dias_selector.dart - Chips de lunes a sábado con número de clases (US-ACA-01..09, §9.1)
 import 'package:flutter/material.dart';
 
 class DiasSelector extends StatelessWidget {
+  final DateTime lunes;
   final DateTime fechaSeleccionada;
   final ValueChanged<DateTime> onDiaSeleccionado;
 
+  /// Número de sesiones por día (null mientras carga).
+  final int Function(DateTime dia)? conteo;
+  final DateTime? hoy;
+
   const DiasSelector({
     super.key,
+    required this.lunes,
     required this.fechaSeleccionada,
     required this.onDiaSeleccionado,
+    this.conteo,
+    this.hoy,
   });
 
-  static const _nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  static const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-  DateTime _obtenerLunesSemana(DateTime date) {
-    return date.subtract(Duration(days: date.weekday - 1));
-  }
+  static bool _mismoDia(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   Widget build(BuildContext context) {
-    final lunes = _obtenerLunesSemana(fechaSeleccionada);
-    final hoy = DateTime.now();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      color: Theme.of(context).cardColor,
+    final primario = Theme.of(context).colorScheme.primary;
+    final ahora = hoy ?? DateTime.now();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(6, (index) {
-          final dia = lunes.add(Duration(days: index));
-          final esSeleccionado = dia.year == fechaSeleccionada.year &&
-              dia.month == fechaSeleccionada.month &&
-              dia.day == fechaSeleccionada.day;
-          final esHoy = dia.year == hoy.year &&
-              dia.month == hoy.month &&
-              dia.day == hoy.day;
-
-          return InkWell(
-            onTap: () => onDiaSeleccionado(dia),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: esSeleccionado
-                    ? Theme.of(context).primaryColor
-                    : (esHoy ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : null),
+        children: List.generate(nombresDias.length, (i) {
+          final dia = DateTime(lunes.year, lunes.month, lunes.day + i);
+          final seleccionado = _mismoDia(dia, fechaSeleccionada);
+          final esHoy = _mismoDia(dia, ahora);
+          final n = conteo?.call(dia);
+          final colorTexto =
+              seleccionado ? Colors.white : (esHoy ? primario : null);
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _nombresDias[index],
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: esSeleccionado ? FontWeight.bold : FontWeight.normal,
-                      color: esSeleccionado
-                          ? Colors.white
-                          : (esHoy ? Theme.of(context).primaryColor : Colors.grey.shade700),
-                    ),
+                onTap: () => onDiaSeleccionado(dia),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: seleccionado
+                        ? primario
+                        : (esHoy ? primario.withValues(alpha: 0.1) : null),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${dia.day}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: esSeleccionado
-                          ? Colors.white
-                          : (esHoy ? Theme.of(context).primaryColor : Colors.black87),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(nombresDias[i],
+                          style: TextStyle(fontSize: 12, color: colorTexto)),
+                      Text('${dia.day}',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: colorTexto)),
+                      Text(
+                        n == null ? ' ' : (n == 0 ? '—' : '$n'),
+                        key: Key('conteo-dia-$i'),
+                        style: TextStyle(fontSize: 10, color: colorTexto),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

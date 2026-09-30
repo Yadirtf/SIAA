@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:siaa_mobile/core/theme/app_theme.dart';
-import '../../config/role_navigation_matrix.dart';
+import '../../config/rol_slug.dart';
 import '../bloc/nav_state.dart';
 
 class AppShellAppBar extends StatelessWidget implements PreferredSizeWidget {
   final NavState navState;
 
+  /// Nombre de la sección visible; sin él se muestra "SIAA".
+  final String? titulo;
+
   const AppShellAppBar({
     super.key,
     required this.navState,
+    this.titulo,
   });
 
   @override
@@ -17,8 +21,7 @@ class AppShellAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final rolConfig = kRoleNavigationMatrix[navState.rolActivo.toLowerCase()];
-    final labelRol = rolConfig?.rolLabel ?? navState.rolActivo;
+    final labelRol = etiquetaRol(navState.rolActivo);
 
     return AppBar(
       title: Row(
@@ -37,9 +40,10 @@ class AppShellAppBar extends StatelessWidget implements PreferredSizeWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'SIAA',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              Text(
+                titulo ?? 'SIAA',
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               if (navState.rolActivo.isNotEmpty)
                 Text(

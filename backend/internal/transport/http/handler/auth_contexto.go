@@ -25,7 +25,11 @@ func (h *AuthHandler) CambiarContexto(c echo.Context) error {
 		return err
 	}
 
-	pair, err := h.svc.CambiarContextoRol(c.Request().Context(), usuarioID, req.Rol)
+	dispositivoID := ""
+	if claims, ok := middleware.GetClaims(c); ok {
+		dispositivoID = claims.DispositivoID
+	}
+	pair, err := h.svc.CambiarContextoRol(c.Request().Context(), usuarioID, req.Rol, dispositivoID)
 	if err != nil {
 		return err
 	}

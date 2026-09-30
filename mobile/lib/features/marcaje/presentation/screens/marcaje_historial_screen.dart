@@ -1,9 +1,14 @@
-// marcaje_historial_screen.dart — Pantalla de historial cronológico de marcajes propios (US-MAR-08)
+// marcaje_historial_screen.dart — Historial propio: cronología por mes con estado por
+// color (US-MAR-08, §9.1). Muestra asignatura, grupo y aula por nombre.
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
+import '../../../../core/network/api_error.dart';
+import '../../../../core/utils/fechas_es.dart';
+import '../../../../shared/widgets/estado_vista.dart';
+import '../../../auth/presentation/permisos_sesion.dart';
+import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
 import '../../data/repositories/marcaje_repository.dart';
 import '../../domain/models/marcaje_historial_model.dart';
-import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
 import '../widgets/historial_item_card.dart';
 
 class MarcajeHistorialScreen extends StatefulWidget {
@@ -17,143 +22,147 @@ class MarcajeHistorialScreen extends StatefulWidget {
 
 class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
   late final MarcajeRepository _repository;
-  bool _isLoading = true;
+  bool _cargando = true;
+  bool _cargandoMas = false;
   String? _error;
   List<MarcajeHistorialItem> _items = [];
-  DateTime _mesSeleccionado = DateTime.now();
+  int _pagina = 1;
+  bool _hayMas = false;
+  DateTime _mes = DateTime(DateTime.now().year, DateTime.now().month);
 
   @override
   void initState() {
     super.initState();
     _repository = widget.repository ?? MarcajeRepository();
-    _cargarHistorial();
+    _cargar();
   }
 
-  Future<void> _cargarHistorial() async {
+  String get _mesIso => fechaIso(_mes).substring(0, 7);
+
+  Future<void> _cargar() async {
     setState(() {
-      _isLoading = true;
+      _cargando = true;
       _error = null;
     });
-
-    final mesStr = DateFormat('yyyy-MM').format(_mesSeleccionado);
     try {
-      final res = await _repository.consultarHistorial(mes: mesStr);
+      final res = await _repository.consultarHistorial(mes: _mesIso);
+      if (!mounted) return;
       setState(() {
         _items = res.items;
-        _isLoading = false;
+        _pagina = res.pagina;
+        _hayMas = res.hayMas;
+        _cargando = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Error al cargar historial: ${e.toString()}';
-        _isLoading = false;
+        _error = mensajeDeError(e,
+            porDefecto: 'No se pudo cargar el historial. Inténtalo de nuevo.');
+        _cargando = false;
       });
+    }
+  }
+
+  Future<void> _cargarMas() async {
+    setState(() => _cargandoMas = true);
+    try {
+      final res = await _repository.consultarHistorial(
+          mes: _mesIso, pagina: _pagina + 1);
+      if (!mounted) return;
+      setState(() {
+        _items = [..._items, ...res.items];
+        _pagina = res.pagina;
+        _hayMas = res.hayMas;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(mensajeDeError(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _cargandoMas = false);
     }
   }
 
   void _cambiarMes(int offset) {
-    setState(() {
-      _mesSeleccionado =
-          DateTime(_mesSeleccionado.year, _mesSeleccionado.month + offset, 1);
-    });
-    _cargarHistorial();
+    setState(() => _mes = DateTime(_mes.year, _mes.month + offset));
+    _cargar();
   }
 
   @override
   Widget build(BuildContext context) {
-    final mesFormat = DateFormat('MMMM yyyy');
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Historial de Marcajes'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Selector de mes
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.grey.shade100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => _cambiarMes(-1),
-                ),
-                Text(
-                  mesFormat.format(_mesSeleccionado).toUpperCase(),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                tooltip: 'Mes anterior',
+                onPressed: () => _cambiarMes(-1),
+              ),
+              Expanded(
+                child: Text(
+                  mesAnio(_mes),
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => _cambiarMes(1),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _buildBody(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 12),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _cargarHistorial,
-                child: const Text('Reintentar'),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                tooltip: 'Mes siguiente',
+                onPressed: () => _cambiarMes(1),
               ),
             ],
           ),
         ),
-      );
-    }
+        const Divider(height: 1),
+        Expanded(child: _cuerpo()),
+      ],
+    );
+  }
 
+  Widget _cuerpo() {
+    if (_cargando) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return EstadoError(mensaje: _error!, onReintentar: _cargar);
+    }
     if (_items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history_toggle_off_rounded,
-                size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text(
-              'No hay registros de marcaje en este mes',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
-            ),
-          ],
-        ),
+      return RefreshIndicator(
+        onRefresh: _cargar,
+        child: ListView(children: const [
+          SizedBox(height: 80),
+          EstadoVacio(
+            icono: Icons.history_toggle_off_rounded,
+            mensaje: 'No hay registros de marcaje en este mes',
+          ),
+        ]),
       );
     }
-
     return RefreshIndicator(
-      onRefresh: _cargarHistorial,
+      onRefresh: _cargar,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: _items.length,
+        itemCount: _items.length + (_hayMas ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
+          if (index == _items.length) {
+            return Center(
+              child: _cargandoMas
+                  ? const CircularProgressIndicator()
+                  : OutlinedButton(
+                      onPressed: _cargarMas, child: const Text('Cargar más')),
+            );
+          }
           final item = _items[index];
           return HistorialItemCard(
             item: item,
-            onJustificar: () => _justificar(item),
+            // Solo quien puede radicar (docente) ve la acción "Justificar".
+            onJustificar: tienePermiso(context, 'justificacion:crear')
+                ? () => _justificar(item)
+                : null,
           );
         },
       ),
@@ -164,8 +173,8 @@ class _MarcajeHistorialScreenState extends State<MarcajeHistorialScreen> {
     final radicada = await JustificacionFormScreen.abrir(
       context,
       sesionId: item.sesionId,
-      nombreSesion: item.asignatura,
-      fechaSesion: DateFormat('dd/MM/yyyy').format(item.timestampServidor),
+      nombreSesion: item.tituloSesion,
+      fechaSesion: fechaCorta(item.timestampServidor.toLocal()),
     );
     if (radicada == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

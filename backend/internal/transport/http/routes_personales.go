@@ -16,6 +16,7 @@ import (
 type HandlersPersonales struct {
 	Privacidad     *handler.PrivacidadHandler
 	Notificaciones *handler.NotificacionesHandler
+	Perfil         *handler.PerfilHandler
 }
 
 // exigirConsentimiento devuelve el middleware que bloquea el marcaje sin consentimiento.
@@ -42,6 +43,10 @@ func registerPersonalesRoutes(api *echo.Group, cfg *config.Config, registry *Rou
 		me := api.Group("/me/consentimiento", mw.JWTAuth(cfg), mw.RateLimiterByUser(60))
 		propia(me, http.MethodGet, "/me/consentimiento", "", p.Estado)
 		propia(me, http.MethodPost, "/me/consentimiento", "", p.Decidir)
+	}
+	if p := h.Perfil; p != nil {
+		g := api.Group("/me/perfil", mw.JWTAuth(cfg), mw.RateLimiterByUser(60))
+		propia(g, http.MethodGet, "/me/perfil", "", p.Obtener)
 	}
 	if n := h.Notificaciones; n != nil {
 		g := api.Group("/me/notificaciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

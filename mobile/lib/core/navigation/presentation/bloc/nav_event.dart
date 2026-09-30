@@ -14,13 +14,17 @@ class NavInicializado extends NavEvent {
   final List<String> rolesUsuario;
   final List<String> permisosUsuario;
 
+  /// Rol cuyos permisos lleva el token; si se omite se usa el primer rol configurado.
+  final String? rolActivo;
+
   const NavInicializado({
     required this.rolesUsuario,
     required this.permisosUsuario,
+    this.rolActivo,
   });
 
   @override
-  List<Object?> get props => [rolesUsuario, permisosUsuario];
+  List<Object?> get props => [rolesUsuario, permisosUsuario, rolActivo];
 }
 
 /// Cambia el contexto activo a otro rol del usuario sin cerrar sesion (RF-ROL-004).

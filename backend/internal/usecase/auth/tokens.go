@@ -22,26 +22,16 @@ import (
 // Se llama en el login inicial.
 func (s *Service) emitTokens(ctx context.Context, u *user.Usuario, dispositivoID string) (*TokenPair, error) {
 	familiaID := uuid.New().String()
-	return s.emitTokensInFamily(ctx, u, dispositivoID, familiaID)
+	return s.emitTokensInFamily(ctx, u, dispositivoID, familiaID, "")
 }
 
 // emitTokensInFamily emite un par de tokens dentro de una familia existente.
-// Se usa en refresh para mantener la cadena de rotación — AC-05 US-AUT-01.
-func (s *Service) emitTokensInFamily(ctx context.Context, u *user.Usuario, dispositivoID, familiaID string) (*TokenPair, error) {
+// Se usa en refresh para mantener la cadena de rotación — AC-05 US-AUT-01. rolPreferido
+// conserva el contexto elegido por el usuario (RF-ROL-004) mientras siga asignado y vigente.
+func (s *Service) emitTokensInFamily(ctx context.Context, u *user.Usuario, dispositivoID, familiaID, rolPreferido string) (*TokenPair, error) {
 	now := s.clock.Now()
 
-	// Determinar rol activo y permisos (primer rol vigente que cumpla ventana temporal — US-ROL-05 AC-01)
-	rolActivo := ""
-	var permisos []string
-	for _, ra := range u.Roles {
-		if ra.IsVigente(now) {
-			rolActivo = string(ra.Nombre)
-			for _, p := range rbac.DefaultPermissions[ra.Nombre] {
-				permisos = append(permisos, string(p))
-			}
-			break
-		}
-	}
+	rolActivo, permisos := rolYPermisos(u, rolPreferido, now)
 
 	// Firmar token de acceso JWT
 	accessExpiry := now.Add(time.Duration(s.cfg.JWTAccessMinutes) * time.Minute)
@@ -77,6 +67,7 @@ func (s *Service) emitTokensInFamily(ctx context.Context, u *user.Usuario, dispo
 		ExpiraEn:    refreshExpiry,
 		Revocado:    false,
 		Dispositivo: dispositivoID,
+		RolActivo:   rolActivo,
 		CreadoEn:    now,
 	}
 	if err := s.tokens.Create(ctx, rt); err != nil {
@@ -121,4 +112,31 @@ func (s *Service) validateEmailDomain(correo string) error {
 	}
 	return shared.NewAuthError(shared.ErrCredencialesInvalidas,
 		"El dominio del correo no está autorizado para este sistema")
+}
+
+// rolYPermisos elige el rol activo: el preferido si sigue asignado y vigente; si no, el
+// primer rol vigente (US-ROL-05 AC-01).
+func rolYPermisos(u *user.Usuario, rolPreferido string, now time.Time) (string, []string) {
+	elegido := -1
+	for i, ra := range u.Roles {
+		if !ra.IsVigente(now) {
+			continue
+		}
+		if elegido < 0 {
+			elegido = i
+		}
+		if rolPreferido != "" && string(ra.Nombre) == rolPreferido {
+			elegido = i
+			break
+		}
+	}
+	if elegido < 0 {
+		return "", nil
+	}
+	nombre := u.Roles[elegido].Nombre
+	permisos := make([]string, 0, len(rbac.DefaultPermissions[nombre]))
+	for _, p := range rbac.DefaultPermissions[nombre] {
+		permisos = append(permisos, string(p))
+	}
+	return string(nombre), permisos
 }

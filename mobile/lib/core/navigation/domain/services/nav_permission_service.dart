@@ -1,6 +1,7 @@
 // nav_permission_service.dart - Servicio de filtrado RBAC para navegacion (SIAA Movil)
 // RF-ROL-001, RF-ROL-003, RF-ROL-004
 // El cliente NO calcula permisos; solo filtra destinos contra la lista autorizada por backend.
+import '../../config/rol_slug.dart';
 import '../../config/role_navigation_matrix.dart';
 import '../models/nav_item.dart';
 import '../models/rol_nav_config.dart';
@@ -22,19 +23,19 @@ class NavPermissionService {
     }).toList();
   }
 
-  /// Retorna la [RolNavConfig] configurada para [rolSlug] (case-insensitive).
-  RolNavConfig? configParaRol(String rolSlug) {
-    return kRoleNavigationMatrix[rolSlug.toLowerCase()];
+  /// Retorna la [RolNavConfig] para un slug o un rol del backend
+  /// ("admin" o "ADMIN_INSTITUCIONAL").
+  RolNavConfig? configParaRol(String rol) {
+    return kRoleNavigationMatrix[rolSlugDe(rol)];
   }
 
-  /// Encuentra el primer rol valido dentro de la lista de roles del usuario.
+  /// Slug del primer rol del usuario que tiene configuracion de navegacion.
   String primerRolConConfig(List<String> roles) {
     for (final r in roles) {
-      if (kRoleNavigationMatrix.containsKey(r.toLowerCase())) {
-        return r.toLowerCase();
-      }
+      final slug = rolSlugDe(r);
+      if (kRoleNavigationMatrix.containsKey(slug)) return slug;
     }
-    return roles.isNotEmpty ? roles.first.toLowerCase() : 'docente';
+    return roles.isNotEmpty ? rolSlugDe(roles.first) : 'docente';
   }
 
   /// Resuelve la tupla (bottomItems, drawerExtraItems) para un rol y permisos dados.

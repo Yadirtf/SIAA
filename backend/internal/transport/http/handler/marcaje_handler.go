@@ -22,6 +22,13 @@ type MarcajeHandler struct {
 	crearUC     *usecaseMarcaje.CrearMarcajeUseCase
 	activaUC    *usecaseMarcaje.SesionActivaUseCase
 	historialUC *usecaseMarcaje.HistorialUseCase
+	nombrador   *usecaseMarcaje.NombradorMarcajes
+}
+
+// WithNombrador hace que el historial muestre asignatura, grupo y aula por nombre.
+func (h *MarcajeHandler) WithNombrador(n *usecaseMarcaje.NombradorMarcajes) *MarcajeHandler {
+	h.nombrador = n
+	return h
 }
 
 func NewMarcajeHandler(
@@ -159,5 +166,5 @@ func (h *MarcajeHandler) Historial(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, h.nombrador.Nombrar(c.Request().Context(), resp))
 }

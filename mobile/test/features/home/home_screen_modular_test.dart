@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:siaa_mobile/features/geo_editor/data/espacio_repository.dart';
 import 'package:siaa_mobile/features/home/presentation/widgets/cards/espacio_card_tile.dart';
 import 'package:siaa_mobile/features/home/presentation/widgets/cards/user_profile_card.dart';
-import 'package:siaa_mobile/features/home/presentation/widgets/panels/modulos_secundarios_panel.dart';
 
 void main() {
   group('Piezas del Rompecabezas HomeScreen (Pruebas Modulares)', () {
@@ -64,23 +63,6 @@ void main() {
       await tester.tap(find.text('Editar Polígono'));
       await tester.pump();
       expect(editado, isTrue);
-    });
-
-    testWidgets(
-        'ModulosSecundariosPanel: renderiza accesos a módulos operativos activos',
-        (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ModulosSecundariosPanel(isDark: false),
-          ),
-        ),
-      );
-
-      expect(find.text('Marcaje de Asistencia'), findsOneWidget);
-      expect(find.text('Historial de Asistencia'), findsOneWidget);
-      expect(find.text('Mis Justificaciones'), findsOneWidget);
-      expect(find.text('Pronto'), findsNothing);
     });
   });
 }

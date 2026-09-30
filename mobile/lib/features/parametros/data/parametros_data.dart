@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_client.dart';
 import '../domain/models/parametro_model.dart';
 import '../domain/parametros_repository.dart';
 
@@ -8,8 +9,8 @@ import '../domain/parametros_repository.dart';
 class ParametrosRemoteDataSource {
   final Dio _dio;
 
-  ParametrosRemoteDataSource({Dio? dio})
-    : _dio = dio ?? Dio(BaseOptions(baseUrl: 'http://localhost:8080/api/v1'));
+  // Cliente compartido: incluye el token (parametro:leer) y la URL del entorno.
+  ParametrosRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<ParametrosSnapshot> getEfectivos({
     String? sedeId,
@@ -46,7 +47,7 @@ class ParametrosRepositoryImpl implements ParametrosRepository {
   final ParametrosRemoteDataSource _remote;
 
   ParametrosRepositoryImpl({ParametrosRemoteDataSource? remote})
-    : _remote = remote ?? ParametrosRemoteDataSource();
+      : _remote = remote ?? ParametrosRemoteDataSource();
 
   @override
   Future<ParametrosSnapshot> obtenerEfectivos({

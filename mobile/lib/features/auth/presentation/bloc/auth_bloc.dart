@@ -1,110 +1,16 @@
-// BLoC de autenticacion - US-AUT-01, US-AUT-04
-// Gestiona el estado de login, recuperacion de contrasena y sesion.
+// BLoC de autenticacion - US-AUT-01, US-AUT-04, RF-ROL-004
+// Gestiona el estado de login, recuperacion de contrasena, sesion y contexto de rol.
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
-import '../../data/auth_repository.dart';
-import '../../../../core/storage/secure_storage.dart';
+import '../../../../core/auth/jwt_claims.dart';
 import '../../../../core/device/device_info_service.dart';
+import '../../../../core/storage/secure_storage.dart';
+import '../../data/auth_repository.dart';
+import '../../data/sesion_restaurador.dart';
+import 'auth_event.dart';
+import 'auth_state.dart';
 
-// ─── EVENTOS ──────────────────────────────────────────────────────────────────
-
-abstract class AuthEvent extends Equatable {
-  const AuthEvent();
-  @override
-  List<Object?> get props => [];
-}
-
-class AuthLoginRequested extends AuthEvent {
-  final String correo;
-  final String password;
-  const AuthLoginRequested({required this.correo, required this.password});
-  @override
-  List<Object?> get props => [correo];
-}
-
-class AuthRecuperarSolicitado extends AuthEvent {
-  final String correo;
-  const AuthRecuperarSolicitado({required this.correo});
-  @override
-  List<Object?> get props => [correo];
-}
-
-class AuthNuevoPasswordConfirmado extends AuthEvent {
-  final String token;
-  final String password;
-  const AuthNuevoPasswordConfirmado(
-      {required this.token, required this.password});
-}
-
-class AuthLogoutRequested extends AuthEvent {}
-
-class AuthSessionChecked extends AuthEvent {}
-
-// ─── ESTADOS ──────────────────────────────────────────────────────────────────
-
-abstract class AuthState extends Equatable {
-  const AuthState();
-  @override
-  List<Object?> get props => [];
-}
-
-/// Estado inicial: verificando si hay sesion guardada.
-class AuthInitial extends AuthState {}
-
-/// Verificando sesion existente al arrancar la app.
-class AuthCheckingSession extends AuthState {}
-
-/// Usuario autenticado con sesion valida.
-class AuthAuthenticated extends AuthState {
-  final String usuarioId;
-  final String nombre;
-  final List<String> roles;
-
-  /// Permisos resueltos por el backend en formato recurso:accion.
-  /// El cliente los consume para filtrar la navegacion; NO los recalcula.
-  final List<String> permisos;
-  const AuthAuthenticated({
-    required this.usuarioId,
-    required this.nombre,
-    required this.roles,
-    this.permisos = const [],
-  });
-  @override
-  List<Object?> get props => [usuarioId, roles, permisos];
-}
-
-/// No hay sesion activa: mostrar pantalla de login.
-class AuthUnauthenticated extends AuthState {}
-
-/// Cargando (login en proceso).
-class AuthLoading extends AuthState {}
-
-/// Error de autenticacion con mensaje para el usuario.
-class AuthError extends AuthState {
-  final String message;
-  final String? code;
-  const AuthError({required this.message, this.code});
-  @override
-  List<Object?> get props => [message, code];
-}
-
-/// Correo de recuperacion enviado correctamente.
-class AuthRecuperarEnviado extends AuthState {}
-
-/// Contrasena cambiada correctamente.
-class AuthPasswordCambiado extends AuthState {}
-
-/// Dispositivo móvil pendiente de aprobación por el administrador (US-AUT-03 AC-03).
-class AuthDispositivoPendiente extends AuthState {
-  final String mensaje;
-  final String dispositivoId;
-  const AuthDispositivoPendiente({
-    required this.mensaje,
-    required this.dispositivoId,
-  });
-  @override
-  List<Object?> get props => [mensaje, dispositivoId];
-}
+export 'auth_event.dart';
+export 'auth_state.dart';
 
 // ─── BLOC ─────────────────────────────────────────────────────────────────────
 
@@ -115,40 +21,73 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// Limpieza que requiere la sesión aún vigente (p. ej. DELETE del token push,
   /// US-NOT-01); se ejecuta antes de borrar los tokens.
   final Future<void> Function()? _antesDeCerrarSesion;
+  final SesionRestaurador _restaurador;
 
   AuthBloc({
     required AuthRepository repository,
     DeviceInfoService? deviceInfoService,
     Future<void> Function()? antesDeCerrarSesion,
+    SesionRestaurador? restaurador,
   })  : _repository = repository,
         _deviceInfoService = deviceInfoService ?? const DeviceInfoService(),
         _antesDeCerrarSesion = antesDeCerrarSesion,
+        _restaurador = restaurador ?? SesionRestaurador(),
         super(AuthInitial()) {
     on<AuthSessionChecked>(_onSessionChecked);
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthRecuperarSolicitado>(_onRecuperarSolicitado);
     on<AuthNuevoPasswordConfirmado>(_onNuevoPasswordConfirmado);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthContextoSolicitado>(_onContextoSolicitado);
   }
 
-  /// Verifica si existe una sesion guardada al abrir la app.
+  /// Restaura la sesión guardada al abrir la app con nombre, roles y permisos reales.
   Future<void> _onSessionChecked(
     AuthSessionChecked event,
     Emitter<AuthState> emit,
   ) async {
     emit(AuthCheckingSession());
-    final token = await SecureStorage.getAccessToken();
-    if (token != null) {
-      // TODO: Decodificar el JWT y verificar expiracion.
-      // Si esta expirado, intentar renovar con el refresh token.
-      emit(const AuthAuthenticated(
-        usuarioId: '',
-        nombre: '',
-        roles: [],
-        permisos: [],
-      ));
-    } else {
+    final sesion = await _restaurador.restaurar();
+    if (sesion == null) {
       emit(AuthUnauthenticated());
+      return;
+    }
+    emit(AuthAuthenticated(
+      usuarioId: sesion.usuarioId,
+      nombre: sesion.nombre,
+      correo: sesion.correo,
+      roles: sesion.roles,
+      permisos: sesion.permisos,
+      rolActivo: sesion.rolActivo,
+    ));
+  }
+
+  /// Cambia el rol activo en el backend y adopta los permisos del nuevo token.
+  Future<void> _onContextoSolicitado(
+    AuthContextoSolicitado event,
+    Emitter<AuthState> emit,
+  ) async {
+    final actual = state;
+    if (actual is! AuthAuthenticated) return;
+    try {
+      final par = await _repository.cambiarContexto(rol: event.rol);
+      await SecureStorage.saveSession(
+        accessToken: par.accessToken,
+        refreshToken: par.refreshToken,
+      );
+      emit(AuthAuthenticated(
+        usuarioId:
+            par.usuario.id.isNotEmpty ? par.usuario.id : actual.usuarioId,
+        nombre: actual.nombre,
+        correo: actual.correo,
+        roles: actual.roles,
+        permisos: par.usuario.permisos,
+        rolActivo: event.rol,
+      ));
+    } on AuthException catch (e) {
+      emit(actual.conAviso(e.message));
+    } catch (_) {
+      emit(actual.conAviso('No se pudo cambiar de rol. Verifica tu conexión.'));
     }
   }
 
@@ -195,9 +134,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       emit(AuthAuthenticated(
         usuarioId: result.usuario.id,
-        nombre: '${result.usuario.nombre} ${result.usuario.apellido}',
+        nombre: '${result.usuario.nombre} ${result.usuario.apellido}'.trim(),
+        correo: result.usuario.correo,
         roles: result.usuario.roles,
         permisos: result.usuario.permisos,
+        rolActivo: JwtClaims.decodificar(result.accessToken)?.rolActivo ?? '',
       ));
     } on AuthException catch (e) {
       emit(AuthError(message: e.message, code: e.code));

@@ -138,7 +138,7 @@ func TestAuth_CambiarContextoRol(t *testing.T) {
 	svc := auth.NewService(uRepo, tRepo, nil, nil, clk, cfg, nil)
 
 	// Cambiar exitosamente a COORDINADOR
-	pair, err := svc.CambiarContextoRol(context.Background(), "usr-multi", "COORDINADOR")
+	pair, err := svc.CambiarContextoRol(context.Background(), "usr-multi", "COORDINADOR", "")
 	if err != nil {
 		t.Fatalf("CambiarContextoRol falló: %v", err)
 	}
@@ -148,7 +148,7 @@ func TestAuth_CambiarContextoRol(t *testing.T) {
 	}
 
 	// Intentar cambiar a un rol no asignado (SUPERADMIN)
-	_, errNoAsignado := svc.CambiarContextoRol(context.Background(), "usr-multi", "SUPERADMIN")
+	_, errNoAsignado := svc.CambiarContextoRol(context.Background(), "usr-multi", "SUPERADMIN", "")
 	if errNoAsignado == nil {
 		t.Fatalf("se esperaba error al solicitar rol no asignado")
 	}

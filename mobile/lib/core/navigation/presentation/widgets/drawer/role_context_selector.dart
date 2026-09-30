@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siaa_mobile/core/theme/app_theme.dart';
-import '../../../config/role_navigation_matrix.dart';
-import '../../bloc/nav_bloc.dart';
-import '../../bloc/nav_event.dart';
+import 'package:siaa_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../config/rol_slug.dart';
 import '../../bloc/nav_state.dart';
 
 class RoleContextSelector extends StatelessWidget {
@@ -54,24 +53,32 @@ class RoleContextSelector extends StatelessWidget {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: navState.rolActivo,
+                // Los valores son slugs ("admin"); rolActivo también lo es.
+                value: rolSlugDe(navState.rolActivo),
                 isExpanded: true,
                 isDense: true,
                 icon: const Icon(Icons.unfold_more_rounded, size: 18),
-                items: navState.rolesDisponibles.map((rol) {
-                  final config = kRoleNavigationMatrix[rol.toLowerCase()];
+                items: {
+                  for (final rol in navState.rolesDisponibles)
+                    rolSlugDe(rol): rol,
+                }.entries.map((e) {
                   return DropdownMenuItem<String>(
-                    value: rol,
+                    value: e.key,
                     child: Text(
-                      config?.rolLabel ?? rol,
+                      etiquetaRol(e.value),
                       style: const TextStyle(fontSize: 14),
                     ),
                   );
                 }).toList(),
-                onChanged: (nuevoRol) {
-                  if (nuevoRol != null && nuevoRol != navState.rolActivo) {
+                onChanged: (nuevoSlug) {
+                  if (nuevoSlug != null && nuevoSlug != navState.rolActivo) {
                     Navigator.of(context).pop();
-                    context.read<NavBloc>().add(NavContextoCambiado(nuevoRol));
+                    // El backend emite un token con los permisos del nuevo rol
+                    // (POST /auth/contexto); al llegar, el shell reconstruye la navegación.
+                    context.read<AuthBloc>().add(AuthContextoSolicitado(
+                          rolBackendDe(nuevoSlug,
+                              disponibles: navState.rolesDisponibles),
+                        ));
                   }
                 },
               ),
