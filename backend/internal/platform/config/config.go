@@ -63,6 +63,16 @@ type Config struct {
 	PlayIntegrityPaquete      string
 	PlayIntegrityCredenciales string
 
+	// Notificaciones (EP-10) y privacidad (Ley 1581)
+	FCMProyecto          string
+	FCMCredenciales      string
+	NotifSilencioInicio  string
+	NotifSilencioFin     string
+	NotifRecordatorioMin int
+	NotifCierreMin       int
+	InstitucionNombre    string
+	PrivacidadContacto   string
+
 	// Parámetros GPS por defecto — SRS §3.5
 	DefaultHolguraEntradaAntesMin   int
 	DefaultHolguraEntradaDespuesMin int
@@ -131,6 +141,14 @@ func Load() (*Config, error) {
 	cfg.AdjuntosClave = getEnv("ADJUNTOS_CLAVE", "")
 	cfg.PlayIntegrityPaquete = getEnv("PLAY_INTEGRITY_PACKAGE", "")
 	cfg.PlayIntegrityCredenciales = getEnv("PLAY_INTEGRITY_CREDENTIALS", "")
+	cfg.FCMProyecto = getEnv("FCM_PROJECT_ID", "")
+	cfg.FCMCredenciales = getEnv("FCM_CREDENTIALS", "")
+	cfg.NotifSilencioInicio = getEnv("NOTIF_SILENCIO_INICIO", "22:00")
+	cfg.NotifSilencioFin = getEnv("NOTIF_SILENCIO_FIN", "06:00")
+	cfg.NotifRecordatorioMin = getEnvInt("NOTIF_RECORDATORIO_MIN", 15)
+	cfg.NotifCierreMin = getEnvInt("NOTIF_CIERRE_MIN", 5)
+	cfg.InstitucionNombre = getEnv("INSTITUCION_NOMBRE", "")
+	cfg.PrivacidadContacto = getEnv("PRIVACIDAD_CONTACTO", "")
 
 	// Parámetros GPS por defecto
 	cfg.DefaultHolguraEntradaAntesMin = getEnvInt("DEFAULT_HOLGURA_ENTRADA_ANTES", 15)

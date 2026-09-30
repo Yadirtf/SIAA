@@ -41,8 +41,26 @@ func construirEscenario(e *entorno) *escenario {
 }
 
 // construirEscenarioCon fija además parámetros de la sede antes de generar las sesiones,
-// que los congelan (RN-002).
+// que los congelan (RN-002). El docente acepta el aviso de privacidad vigente, requisito
+// para marcar (Ley 1581).
 func construirEscenarioCon(e *entorno, parametros map[string]interface{}) *escenario {
+	e.t.Helper()
+	s := construirEscenarioSinConsentimiento(e, parametros)
+	s.aceptarPrivacidad(e)
+	return s
+}
+
+// aceptarPrivacidad registra la aceptación del docente sobre la versión vigente del aviso.
+func (s *escenario) aceptarPrivacidad(e *entorno) {
+	e.t.Helper()
+	version := e.exigir(http.MethodGet, "/me/consentimiento", nil, s.docente, http.StatusOK)["versionVigente"]
+	e.exigir(http.MethodPost, "/me/consentimiento", map[string]interface{}{
+		"version": version, "acepta": true, "dispositivoId": s.dispositivo,
+	}, s.docente, http.StatusOK)
+}
+
+// construirEscenarioSinConsentimiento arma el escenario sin que el docente decida sobre el aviso.
+func construirEscenarioSinConsentimiento(e *entorno, parametros map[string]interface{}) *escenario {
 	e.t.Helper()
 	ahora := time.Now().In(bogota)
 	inicio := ahora.Truncate(time.Minute).Add(-3 * time.Minute)

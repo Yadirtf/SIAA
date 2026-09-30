@@ -22,6 +22,7 @@ func registerMarcajeRoutes(
 	marcajeH *handler.MarcajeHandler,
 	marcajeAdminH *handler.MarcajeAdminHandler,
 	marcajeSyncH *handler.MarcajeSyncHandler,
+	consentimiento echo.MiddlewareFunc,
 ) {
 	if marcajeH == nil {
 		return
@@ -29,12 +30,12 @@ func registerMarcajeRoutes(
 
 	marcajes := api.Group("/marcajes", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 	// POST /marcajes (US-MAR-01, US-MAR-03, US-MAR-04, US-MAR-05)
-	marcajes.POST("", marcajeH.Crear, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
+	marcajes.POST("", marcajeH.Crear, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria), consentimiento)
 	registry.RegisterPermission(http.MethodPost, "/api/v1/marcajes", rbac.PermMarcajeCrear)
 
 	// POST /marcajes/sync (US-MAR-11)
 	if marcajeSyncH != nil {
-		marcajes.POST("/sync", marcajeSyncH.SyncOffline, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
+		marcajes.POST("/sync", marcajeSyncH.SyncOffline, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria), consentimiento)
 		registry.RegisterPermission(http.MethodPost, "/api/v1/marcajes/sync", rbac.PermMarcajeCrear)
 	}
 

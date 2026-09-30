@@ -40,7 +40,19 @@ type Service struct {
 	auditoria       repository.AuditoriaRepository
 	clock           shared.Clock
 	correo          Correo
+	notificador     NotificadorResultado
 	plazoDias       int
+}
+
+// NotificadorResultado encola el aviso push del resultado de la revisión (RF-NOT-002).
+type NotificadorResultado interface {
+	ResultadoJustificacion(ctx context.Context, docenteID, justificacionID, nombreSesion string, aprobada bool)
+}
+
+// WithNotificador habilita el aviso push además del correo.
+func (s *Service) WithNotificador(n NotificadorResultado) *Service {
+	s.notificador = n
+	return s
 }
 
 // NewService crea el servicio con el plazo por defecto de días hábiles.

@@ -615,6 +615,42 @@
         ],
         "type": "object"
       },
+      "EstadoConsentimiento": {
+        "description": "Decisión del titular sobre la versión vigente del aviso. Sin aceptación no se puede marcar.",
+        "properties": {
+          "decididoEn": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "enum": [
+              "ACEPTADO",
+              "RECHAZADO",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requiereAceptacion": {
+            "type": "boolean"
+          },
+          "versionDecidida": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionVigente": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "FieldError": {
         "properties": {
           "campo": {
@@ -920,6 +956,113 @@
         "required": [
           "mensaje"
         ],
+        "type": "object"
+      },
+      "Notificacion": {
+        "description": "Aviso de la bandeja de la app. El push de FCM lleva en data: tipo, ruta, notificacionId y, según el caso, sesionId o justificacionId.",
+        "properties": {
+          "creadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cuerpo": {
+            "type": "string"
+          },
+          "datos": {
+            "properties": {
+              "justificacionId": {
+                "type": "string"
+              },
+              "ruta": {
+                "enum": [
+                  "/marcaje",
+                  "/justificaciones",
+                  "/horario"
+                ],
+                "type": "string"
+              },
+              "sesionId": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "leida": {
+            "type": "boolean"
+          },
+          "tipo": {
+            "enum": [
+              "RECORDATORIO_SESION",
+              "CIERRE_VENTANA",
+              "RESULTADO_JUSTIFICACION",
+              "CAMBIO_HORARIO"
+            ],
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PoliticaPrivacidad": {
+        "description": "Aviso de privacidad y tratamiento de datos (Ley 1581 de 2012, RNF-LEG-003).",
+        "properties": {
+          "actualizadaEn": {
+            "example": "2026-09-30",
+            "type": "string"
+          },
+          "contacto": {
+            "type": "string"
+          },
+          "contenido": {
+            "description": "Texto del aviso en Markdown",
+            "type": "string"
+          },
+          "institucion": {
+            "type": "string"
+          },
+          "version": {
+            "example": "1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "contenido",
+          "actualizadaEn"
+        ],
+        "type": "object"
+      },
+      "PreferenciasNotificacion": {
+        "description": "Tipos de aviso que el usuario quiere recibir (US-NOT-02). Los obligatorios siempre quedan activos.",
+        "properties": {
+          "cambioHorario": {
+            "type": "boolean"
+          },
+          "cierreVentana": {
+            "type": "boolean"
+          },
+          "obligatorias": {
+            "example": [
+              "cambioHorario"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "type": "array"
+          },
+          "recordatorioSesion": {
+            "type": "boolean"
+          },
+          "resultadoJustificacion": {
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "RecuperarRequest": {
@@ -3568,7 +3711,14 @@
             "description": "No autenticado"
           },
           "403": {
-            "description": "Permiso denegado"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado o CONSENTIMIENTO_REQUERIDO: el usuario no ha aceptado el aviso de privacidad vigente"
           }
         },
         "summary": "Registrar marcaje de asistencia (US-MAR-01..US-MAR-05, §9.4)",
@@ -3657,6 +3807,16 @@
         "responses": {
           "200": {
             "description": "Balance consolidado de sincronización"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado o CONSENTIMIENTO_REQUERIDO: el usuario no ha aceptado el aviso de privacidad vigente"
           }
         },
         "summary": "Sincronizar lote de marcajes offline (US-MAR-11)",
@@ -3721,6 +3881,112 @@
         ]
       }
     },
+    "/me/consentimiento": {
+      "get": {
+        "operationId": "consultarConsentimiento",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoConsentimiento"
+                }
+              }
+            },
+            "description": "Estado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Estado del consentimiento informado del usuario (US-LEG-01)",
+        "tags": [
+          "privacidad"
+        ]
+      },
+      "post": {
+        "description": "Queda auditado con fecha, IP y dispositivo. Rechazar permite consultar pero no marcar.",
+        "operationId": "decidirConsentimiento",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "acepta": {
+                    "type": "boolean"
+                  },
+                  "dispositivoId": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "version",
+                  "acepta"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoConsentimiento"
+                }
+              }
+            },
+            "description": "Decisión registrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "La versión no es la vigente: recargar el aviso"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos inválidos"
+          }
+        },
+        "summary": "Aceptar o rechazar el aviso vigente",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
     "/me/historial": {
       "get": {
         "operationId": "consultarHistorialPropio",
@@ -3761,6 +4027,269 @@
         "summary": "Consultar historial cronológico propio de marcajes (US-MAR-08)",
         "tags": [
           "marcaje"
+        ]
+      }
+    },
+    "/me/notificaciones": {
+      "get": {
+        "operationId": "listarNotificaciones",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limite",
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Notificacion"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Avisos, del más reciente al más antiguo"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Bandeja de avisos del usuario (EP-10)",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/preferencias": {
+      "get": {
+        "operationId": "consultarPreferenciasNotificacion",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasNotificacion"
+                }
+              }
+            },
+            "description": "Preferencias"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Preferencias de avisos",
+        "tags": [
+          "notificaciones"
+        ]
+      },
+      "put": {
+        "operationId": "guardarPreferenciasNotificacion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenciasNotificacion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasNotificacion"
+                }
+              }
+            },
+            "description": "Preferencias guardadas"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Guardar preferencias de avisos",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/tokens": {
+      "delete": {
+        "operationId": "eliminarTokenPush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Dar de baja el token FCM (al cerrar sesión)",
+        "tags": [
+          "notificaciones"
+        ]
+      },
+      "post": {
+        "description": "Idempotente: reasigna el token al usuario y dispositivo actuales.",
+        "operationId": "registrarTokenPush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "dispositivoId": {
+                    "type": "string"
+                  },
+                  "plataforma": {
+                    "enum": [
+                      "ANDROID",
+                      "IOS",
+                      "WEB"
+                    ],
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Registrado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Token o plataforma inválidos"
+          }
+        },
+        "summary": "Registrar el token FCM del dispositivo",
+        "tags": [
+          "notificaciones"
+        ]
+      }
+    },
+    "/me/notificaciones/{id}/leida": {
+      "post": {
+        "operationId": "marcarNotificacionLeida",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marcado"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No existe o no es del usuario"
+          }
+        },
+        "summary": "Marcar un aviso propio como leído",
+        "tags": [
+          "notificaciones"
         ]
       }
     },
@@ -4033,6 +4562,28 @@
         "summary": "Generar masivamente sesiones de clase para un periodo (US-ACA-05)",
         "tags": [
           "sesiones"
+        ]
+      }
+    },
+    "/privacidad/politica": {
+      "get": {
+        "operationId": "obtenerPoliticaPrivacidad",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoliticaPrivacidad"
+                }
+              }
+            },
+            "description": "Aviso vigente"
+          }
+        },
+        "security": [],
+        "summary": "Aviso de privacidad vigente (público)",
+        "tags": [
+          "privacidad"
         ]
       }
     },

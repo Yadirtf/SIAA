@@ -54,6 +54,7 @@ func (s *Service) CancelarSesion(ctx context.Context, id, motivo string, actor C
 		"estado": sesion.Estado(),
 		"motivo": motivo,
 	})
+	s.avisarCambio(ctx, sesion, sesion.DocenteIDs(), "Clase cancelada", "Motivo: "+motivo)
 	return nil
 }
 
@@ -91,6 +92,7 @@ func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspaci
 		"versionGeometria": espacio.VersionGeometria,
 		"motivo":           motivo,
 	})
+	s.avisarCambio(ctx, sesion, sesion.DocenteIDs(), "Cambio de aula", "La clase se dicta ahora en "+espacio.Codigo+".")
 
 	return sesion, nil
 }
@@ -108,8 +110,9 @@ func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDo
 		return nil, err
 	}
 
+	anteriores := append([]string(nil), sesion.DocenteIDs()...)
 	valAnt := map[string]interface{}{
-		"docenteIds": sesion.DocenteIDs(),
+		"docenteIds": anteriores,
 	}
 
 	if err := sesion.AsignarDocenteReemplazo(nuevoDocenteID, s.clk.Now()); err != nil {
@@ -124,6 +127,8 @@ func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDo
 		"nuevoDocenteId": nuevoDocenteID,
 		"motivo":         motivo,
 	})
+	s.avisarCambio(ctx, sesion, []string{nuevoDocenteID}, "Te asignaron una clase de reemplazo", "Motivo: "+motivo)
+	s.avisarCambio(ctx, sesion, retirados(anteriores, sesion.DocenteIDs()), "Tu clase tendrá docente de reemplazo", "Motivo: "+motivo)
 
 	return sesion, nil
 }

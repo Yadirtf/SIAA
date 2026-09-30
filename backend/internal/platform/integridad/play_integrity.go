@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/siaa/backend/internal/platform/googleauth"
 )
 
 const (
@@ -37,7 +39,7 @@ func NuevoPlayIntegrity(ctx context.Context, paquete, rutaCredenciales string) (
 	if err != nil {
 		return nil, fmt.Errorf("leer credenciales de Play Integrity: %w", err)
 	}
-	cliente, err := clienteOAuth(context.WithoutCancel(ctx), contenido, &http.Client{Timeout: 10 * time.Second})
+	cliente, err := googleauth.Cliente(context.WithoutCancel(ctx), contenido, alcancePlayIntegrity, &http.Client{Timeout: 10 * time.Second})
 	if err != nil {
 		return nil, fmt.Errorf("credenciales de Play Integrity inválidas: %w", err)
 	}
