@@ -25,10 +25,9 @@ func (h *OpenAPIHandler) Spec(c echo.Context) error {
 	if err != nil {
 		// Rutas relativas alternativas según el contexto de ejecución
 		backups := []string{
+			"contracts/openapi.json",
 			"../contracts/openapi.json",
 			"../../contracts/openapi.json",
-			"../../../contracts/openapi.json",
-			"contracts/openapi.json",
 		}
 		for _, b := range backups {
 			if d, e := os.ReadFile(b); e == nil {

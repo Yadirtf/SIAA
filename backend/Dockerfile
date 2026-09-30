@@ -1,5 +1,5 @@
-# Contexto de construcción: raíz del repositorio (necesita contracts/openapi.json).
-#   docker build -f backend/Dockerfile .
+# Contexto de construcción: la carpeta backend/ (incluye contracts/openapi.json).
+#   docker build -t siaa-api backend
 
 # ─── Stage 1: Build ────────────────────────────────────────────────────────
 FROM golang:1.26-alpine AS builder
@@ -10,11 +10,11 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /build
 
 # Copiar módulos primero para aprovechar el caché de Docker
-COPY backend/go.mod backend/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Copiar el código fuente
-COPY backend/ .
+COPY . .
 
 # Construir binario estático único (ADR-01, US-PLT-01 AC-01)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /dist/siaa-api ./cmd/api
@@ -35,11 +35,13 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /dist/siaa-api /siaa-api
 COPY --from=builder /dist/siaa-worker /siaa-worker
-COPY contracts/openapi.json /contracts/openapi.json
+COPY --from=builder /build/contracts/openapi.json /contracts/openapi.json
 
 EXPOSE 8080
 
 # Usuario no-root por seguridad
 USER 65534:65534
 
-ENTRYPOINT ["/siaa-api"]
+# CMD (no ENTRYPOINT) para que el worker use la misma imagen cambiando solo el comando:
+#   docker run … /siaa-worker   ·   Render: dockerCommand: /siaa-worker
+CMD ["/siaa-api"]

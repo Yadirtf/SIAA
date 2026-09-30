@@ -17,25 +17,33 @@
 
 ```
 siaa/
-├── backend/              # API Go (hexagonal)
+├── backend/              # API Go (hexagonal) — se despliega sola desde esta carpeta
 │   ├── cmd/api/          # Binario principal
-│   ├── internal/
-│   │   ├── domain/       # Dominio puro (sin dependencias externas)
-│   │   ├── usecase/      # Casos de uso
-│   │   ├── repository/   # Puertos + implementaciones Mongo
-│   │   ├── transport/    # HTTP handlers, DTOs, middlewares
-│   │   └── platform/     # Config, log, clock
-│   ├── test/             # Pruebas unitarias e integración
+│   ├── cmd/worker/       # Ausencias, avisos y retención (ADR-09)
+│   ├── cmd/openapi-gen/  # Genera contracts/openapi.json desde el YAML
+│   ├── contracts/        # Contrato OpenAPI (openapi.yaml es la fuente de verdad)
+│   ├── internal/         # domain, usecase, repository, transport, platform
+│   ├── test/             # unit, integration y carga (k6 + runner Go)
 │   ├── .env.example      # Variables de entorno de referencia
-│   └── Dockerfile        # Imagen multietapa scratch
+│   └── Dockerfile        # Imagen multietapa scratch (contexto: backend/)
 ├── mobile/               # Flutter app (Android + iOS)
 ├── web/                  # Flutter Web consola administrativa
-├── contracts/
-│   └── openapi.yaml      # Contrato de API (fuente de verdad)
-├── infra/docker/         # Traefik + producción
+├── docs/
+│   ├── requisitos/       # SRS (document_text.txt) y backlog
+│   ├── despliegue/       # Guías de despliegue de pruebas y APK
+│   ├── auditoria/        # Auditoría e informe de cierre
+│   ├── guias-desarrollo/ # Protocolo para agentes y refactorización
+│   └── spikes/           # Informes técnicos (precisión GPS)
+├── render.yaml           # Blueprint de Render (entorno de pruebas)
 ├── docker-compose.yml    # Entorno de desarrollo local
+├── AGENTS.md             # Reglas para agentes de desarrollo
 └── .github/workflows/    # CI/CD pipelines
 ```
+
+## Despliegue de pruebas
+
+- Backend en Render + MongoDB Atlas: [docs/despliegue/backend-render.md](docs/despliegue/backend-render.md)
+- App Android en tu celular: [docs/despliegue/apk-android.md](docs/despliegue/apk-android.md)
 
 ## Inicio rápido (desarrollo local)
 

@@ -1,0 +1,73 @@
+# Blueprint de Render para el entorno de PRUEBAS del backend SIAA.
+# Guía paso a paso: docs/despliegue/backend-render.md
+#
+# Despliega la carpeta backend/ de este mismo repositorio como dos servicios que
+# comparten la imagen Docker de backend/Dockerfile:
+#   - siaa-api:    API HTTP (Echo). Plan gratuito: se duerme tras 15 min sin tráfico.
+#   - siaa-worker: ausencias automáticas, avisos y retención (cmd/worker). Render no
+#                  ofrece workers gratuitos; el API funciona sin él, pero entonces no
+#                  se generan ausencias ni se envían avisos.
+# La base de datos es MongoDB Atlas (capa gratuita M0), fuera de Render.
+
+envVarGroups:
+  - name: siaa-pruebas
+    envVars:
+      # production desactiva los usuarios demo con contraseñas públicas.
+      - key: APP_ENV
+        value: production
+      - key: APP_VERSION
+        value: 0.1.0-pruebas
+      - key: MONGO_DB
+        value: siaa_pruebas
+      # Render genera un valor aleatorio y lo comparten API y worker.
+      - key: JWT_SECRET
+        generateValue: true
+
+services:
+  - type: web
+    name: siaa-api
+    runtime: docker
+    plan: free
+    region: virginia
+    branch: develop
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/v1/health
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - fromGroup: siaa-pruebas
+      # Cadena mongodb+srv://… de Atlas. Render la pide al crear el Blueprint.
+      - key: MONGO_URI
+        sync: false
+      # Superadministrador inicial: solo se crea si todavía no existe.
+      - key: ADMIN_INICIAL_CORREO
+        sync: false
+      - key: ADMIN_INICIAL_PASSWORD
+        sync: false
+      # La app móvil no usa CORS; "*" permite probar también la consola web local.
+      - key: CORS_ALLOWED_ORIGINS
+        value: "*"
+
+  - type: worker
+    name: siaa-worker
+    runtime: docker
+    plan: starter
+    region: virginia
+    branch: develop
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: /siaa-worker
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - fromGroup: siaa-pruebas
+      - key: MONGO_URI
+        fromService:
+          type: web
+          name: siaa-api
+          envVarKey: MONGO_URI
+      - key: WORKER_INTERVALO_MIN
+        value: "1"
