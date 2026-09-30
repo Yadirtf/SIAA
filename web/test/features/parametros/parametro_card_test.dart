@@ -26,6 +26,18 @@ class _FakeParametrosRepository implements ParametrosRepository {
 }
 
 void main() {
+  test('retencion_coordenadas_dias tiene etiqueta y ayuda', () {
+    expect(
+      etiquetaParametro('retencion_coordenadas_dias'),
+      'Retención de coordenadas (días)',
+    );
+    expect(
+      ayudaParametro('retencion_coordenadas_dias'),
+      'Solo aplica en ámbito GLOBAL. Pasado este plazo, las coordenadas de '
+      'los marcajes se anonimizan (se conservan resultado y distancia).',
+    );
+  });
+
   test(
     'exigir_attestation y verificacion_complementaria tienen etiqueta y ayuda',
     () {

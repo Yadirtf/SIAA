@@ -31,4 +31,8 @@ void main() {
     expect(s, isNot(contains(NavSection.justificaciones)));
     expect(s, isNot(contains(NavSection.reportes)));
   });
+
+  test('el aviso de privacidad es visible sin permisos', () {
+    expect(visibles(const []), contains(NavSection.privacidad));
+  });
 }
