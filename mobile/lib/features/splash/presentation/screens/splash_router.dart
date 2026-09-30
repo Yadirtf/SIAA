@@ -20,6 +20,7 @@ class SplashRouter extends StatelessWidget {
           context.read<NavBloc>().add(NavInicializado(
                 rolesUsuario: state.roles,
                 permisosUsuario: state.permisos,
+                rolActivo: state.rolActivo,
               ));
           Navigator.of(context).pushReplacementNamed('/shell');
         } else if (state is AuthUnauthenticated) {

@@ -48,7 +48,12 @@ void main() {
   group('NavRutaSolicitada', () {
     const docente = NavInicializado(
       rolesUsuario: ['docente'],
-      permisosUsuario: ['marcaje:crear', 'marcaje:leer', 'justificacion:crear'],
+      permisosUsuario: [
+        'marcaje:crear',
+        'marcaje:leer',
+        'justificacion:crear',
+        'horario:leer'
+      ],
     );
 
     blocTest<NavBloc, NavState>(

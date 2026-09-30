@@ -57,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen>
             context.read<NavBloc>().add(NavInicializado(
                   rolesUsuario: state.roles,
                   permisosUsuario: state.permisos,
+                  rolActivo: state.rolActivo,
                 ));
             Navigator.of(context).pushReplacementNamed('/shell');
           }

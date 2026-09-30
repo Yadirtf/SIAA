@@ -18,11 +18,12 @@ void main() {
         () {
       final items = [
         NavDestinations.inicio, // requiere 'marcaje:crear'
-        NavDestinations.miHorario, // permiso null (publico)
-        NavDestinations.reportes, // requiere 'reporte:exportar'
+        NavDestinations.miHorario, // requiere 'horario:leer'
+        NavDestinations.reportes, // requiere 'reporte:leer'
       ];
 
-      final resultado = service.filtrarPorPermisos(items, ['marcaje:crear']);
+      final resultado =
+          service.filtrarPorPermisos(items, ['marcaje:crear', 'horario:leer']);
 
       expect(resultado.length, 2);
       expect(resultado, contains(NavDestinations.inicio));
@@ -41,7 +42,8 @@ void main() {
       expect(configAdmin, isNotNull);
       expect(configAdmin!.rolLabel, 'Administrador');
       expect(configAdmin.bottomItems.length, 3);
-      expect(configAdmin.drawerExtraItems.length, 3);
+      expect(configAdmin.drawerExtraItems.length, 4);
+      expect(service.configParaRol('ADMIN_INSTITUCIONAL'), configAdmin);
     });
 
     test('primerRolConConfig selecciona el primer rol que posee configuracion',
@@ -57,11 +59,11 @@ void main() {
       final (bottom, drawer) =
           service.resolverNavegacion('admin', ['aula:leer']);
 
-      // Admin tiene en bottom: espacios (aula:leer), editorGps (aula:editar-geometria), marcajesAdmin (marcaje:anular)
+      // Admin tiene en bottom: espacios (aula:leer), editorGps (aula:editar-geometria), marcajesAdmin (marcaje:leer)
       expect(bottom.length, 1);
       expect(bottom.first, NavDestinations.espacios);
 
-      // Admin tiene en drawer: solapamientos (aula:leer), reportes (reporte:exportar), justificacionesAprobar (justificacion:aprobar)
+      // Admin tiene en drawer: solapamientos (aula:leer), reportes (reporte:leer), justificacionesAprobar (justificacion:aprobar), parametros (parametro:leer)
       expect(drawer.length, 1);
       expect(drawer.first, NavDestinations.solapamientos);
     });
@@ -83,7 +85,7 @@ void main() {
         () async {
       bloc.add(const NavInicializado(
         rolesUsuario: ['docente'],
-        permisosUsuario: ['marcaje:crear', 'marcaje:leer'],
+        permisosUsuario: ['marcaje:crear', 'marcaje:leer', 'horario:leer'],
       ));
 
       await expectLater(

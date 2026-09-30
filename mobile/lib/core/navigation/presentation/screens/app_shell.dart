@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../config/nav_destinations.dart';
 import '../bloc/nav_bloc.dart';
 import '../bloc/nav_event.dart';
 import '../bloc/nav_state.dart';
@@ -22,10 +23,16 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, authState) {
-        if (authState is AuthAuthenticated) {
+        if (authState is AuthAuthenticated && authState.avisoContexto != null) {
+          // Falló el cambio de rol: la sesión y la navegación siguen igual.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(authState.avisoContexto!)),
+          );
+        } else if (authState is AuthAuthenticated) {
           context.read<NavBloc>().add(NavInicializado(
                 rolesUsuario: authState.roles,
                 permisosUsuario: authState.permisos,
+                rolActivo: authState.rolActivo,
               ));
         } else if (authState is AuthUnauthenticated) {
           Navigator.of(context).pushReplacementNamed('/login');
@@ -47,7 +54,10 @@ class AppShell extends StatelessWidget {
                 navState.activeDrawerRoute != null ? -1 : safeBottomIndex;
 
             return Scaffold(
-              appBar: AppShellAppBar(navState: navState),
+              appBar: AppShellAppBar(
+                navState: navState,
+                titulo: _tituloDe(navState, currentRoute),
+              ),
               drawer: AppDrawer(
                 navState: navState,
                 currentRoute: currentRoute,
@@ -69,6 +79,19 @@ class AppShell extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Etiqueta del destino visible (bottom, drawer o cuenta) para la barra superior.
+  String? _tituloDe(NavState navState, String route) {
+    final items = [
+      ...navState.bottomItems,
+      ...navState.drawerExtraItems,
+      ...NavDestinations.comunes,
+    ];
+    for (final item in items) {
+      if (item.route == route) return item.label;
+    }
+    return null;
   }
 
   String _resolveCurrentRoute(NavState navState) {

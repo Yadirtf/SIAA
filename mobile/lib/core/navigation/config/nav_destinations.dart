@@ -29,7 +29,7 @@ class NavDestinations {
     icon: Icons.calendar_today_outlined,
     iconSelected: Icons.calendar_today_rounded,
     route: '/shell/horario',
-    permiso: null,
+    permiso: 'horario:leer',
   );
 
   static const justificaciones = NavItem(
@@ -61,7 +61,8 @@ class NavDestinations {
     icon: Icons.manage_search_outlined,
     iconSelected: Icons.manage_search_rounded,
     route: '/shell/marcajes-admin',
-    permiso: 'marcaje:anular',
+    // Consulta administrativa (GET /marcajes); anular/corregir exige marcaje:ajustar.
+    permiso: 'marcaje:leer',
   );
 
   static const reportes = NavItem(
@@ -69,7 +70,8 @@ class NavDestinations {
     icon: Icons.bar_chart_outlined,
     iconSelected: Icons.bar_chart_rounded,
     route: '/shell/reportes',
-    permiso: 'reporte:exportar',
+    // GET /reportes/cumplimiento; la exportación (reporte:exportar) queda en la web.
+    permiso: 'reporte:leer',
   );
 
   static const justificacionesAprobar = NavItem(
@@ -86,6 +88,14 @@ class NavDestinations {
     iconSelected: Icons.layers_rounded,
     route: '/shell/solapamientos',
     permiso: 'aula:leer',
+  );
+
+  static const parametros = NavItem(
+    label: 'Parametros',
+    icon: Icons.tune_outlined,
+    iconSelected: Icons.tune_rounded,
+    route: '/shell/parametros',
+    permiso: 'parametro:leer',
   );
 
   static const marcajeGrupal = NavItem(

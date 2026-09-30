@@ -26,6 +26,7 @@ class AppRoutes {
   static const aprobarJustificaciones = '/shell/aprobar-justificaciones';
   static const solapamientos = '/shell/solapamientos';
   static const marcajeGrupal = '/shell/marcaje-grupal';
+  static const parametros = '/shell/parametros';
   static const perfil = '/shell/perfil';
   static const privacidad = '/shell/privacidad';
   static const notificaciones = '/shell/notificaciones';
@@ -48,6 +49,7 @@ class AppRoutes {
         aprobarJustificaciones: (_) => const AppShell(),
         solapamientos: (_) => const AppShell(),
         marcajeGrupal: (_) => const AppShell(),
+        parametros: (_) => const AppShell(),
         perfil: (_) => const AppShell(),
         privacidad: (_) => const AppShell(),
         notificaciones: (_) => const AppShell(),

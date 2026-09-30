@@ -21,7 +21,7 @@ class TokenPair {
   factory TokenPair.fromJson(Map<String, dynamic> json) => TokenPair(
         accessToken: json['accessToken'] as String,
         refreshToken: json['refreshToken'] as String,
-        expiraEn: json['expiraEn'] as String,
+        expiraEn: json['expiraEn'] as String? ?? '',
         usuario: UsuarioInfo.fromJson(json['usuario'] as Map<String, dynamic>),
       );
 }
@@ -146,6 +146,16 @@ class AuthRepository {
     }
   }
 
+  /// Cambia el rol activo (RF-ROL-004): el nuevo token lleva los permisos de [rol].
+  Future<TokenPair> cambiarContexto({required String rol}) async {
+    try {
+      final response = await _client.post('/auth/contexto', data: {'rol': rol});
+      return TokenPair.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
   /// Solicita el envío del enlace de recuperación. US-AUT-04 AC-01.
   Future<void> solicitarRecuperacion({required String correo}) async {
     try {
@@ -191,7 +201,8 @@ class AuthRepository {
   }
 
   AuthException _mapDioError(DioException e) {
-    final data = e.response?.data as Map<String, dynamic>?;
+    final raw = e.response?.data;
+    final data = raw is Map<String, dynamic> ? raw : null;
     final code = data?['codigo'] as String? ?? 'ERROR_DESCONOCIDO';
     final message = data?['mensaje'] as String? ?? _defaultMessage(e);
     return AuthException(message: message, code: code);

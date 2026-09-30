@@ -2,6 +2,7 @@
 // RF-ROL-001, RF-ROL-004
 import 'package:bloc/bloc.dart';
 import '../../config/nav_destinations.dart';
+import '../../config/rol_slug.dart';
 import '../../domain/services/nav_permission_service.dart';
 import 'nav_event.dart';
 import 'nav_state.dart';
@@ -20,8 +21,10 @@ class NavBloc extends Bloc<NavEvent, NavState> {
   }
 
   void _onInicializado(NavInicializado event, Emitter<NavState> emit) {
-    final rolInicial =
-        _permissionService.primerRolConConfig(event.rolesUsuario);
+    final activo = event.rolActivo;
+    final rolInicial = activo != null && activo.isNotEmpty
+        ? rolSlugDe(activo)
+        : _permissionService.primerRolConConfig(event.rolesUsuario);
     final nav = _permissionService.resolverNavegacion(
       rolInicial,
       event.permisosUsuario,
@@ -39,13 +42,14 @@ class NavBloc extends Bloc<NavEvent, NavState> {
   }
 
   void _onContextoCambiado(NavContextoCambiado event, Emitter<NavState> emit) {
+    final slug = rolSlugDe(event.nuevoRolSlug);
     final nav = _permissionService.resolverNavegacion(
-      event.nuevoRolSlug,
+      slug,
       state.permisosUsuario,
     );
 
     emit(state.copyWith(
-      rolActivo: event.nuevoRolSlug,
+      rolActivo: slug,
       bottomItems: nav.$1,
       drawerExtraItems: nav.$2,
       tabIndex: 0,

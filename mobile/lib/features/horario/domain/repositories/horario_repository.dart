@@ -2,9 +2,10 @@
 import '../../data/models/sesion_horario_model.dart';
 
 abstract class HorarioRepository {
-  /// Obtiene las sesiones del usuario para una fecha dada (o semana).
-  Future<List<SesionHorarioModel>> obtenerHorario({
+  /// Sesiones de lunes a sábado de la semana que inicia en [lunes], agrupadas por día
+  /// (clave = fecha a medianoche) y ordenadas por hora de inicio.
+  Future<Map<DateTime, List<SesionHorarioModel>>> obtenerSemana({
+    required DateTime lunes,
     String? docenteId,
-    DateTime? fecha,
   });
 }

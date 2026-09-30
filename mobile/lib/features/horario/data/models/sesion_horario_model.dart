@@ -1,28 +1,33 @@
-// sesion_horario_model.dart - Modelo de sesión para visualización de horario en mobile (US-ACA-01..09)
+// sesion_horario_model.dart - Sesión de clase para "Mi horario" (US-ACA-01..09, §9.1)
+// Solo expone datos legibles (asignatura, grupo, aula, docentes); nunca identificadores.
 import 'package:equatable/equatable.dart';
 
 class SesionHorarioModel extends Equatable {
   final String id;
-  final String asignatura;
-  final String grupo;
-  final String espacio;
+  final String asignaturaCodigo;
+  final String asignaturaNombre;
+  final String grupoNumero;
+  final String espacioCodigo;
+  final String espacioNombre;
   final DateTime fecha;
   final String horaInicio;
   final String horaFin;
   final String estado;
-  final List<String> docentes;
+  final List<String> docentesNombres;
   final String? motivoCancelacion;
 
   const SesionHorarioModel({
     required this.id,
-    required this.asignatura,
-    required this.grupo,
-    required this.espacio,
+    required this.asignaturaNombre,
+    this.asignaturaCodigo = '',
+    this.grupoNumero = '',
+    this.espacioCodigo = '',
+    this.espacioNombre = '',
     required this.fecha,
     required this.horaInicio,
     required this.horaFin,
     required this.estado,
-    this.docentes = const [],
+    this.docentesNombres = const [],
     this.motivoCancelacion,
   });
 
@@ -30,84 +35,103 @@ class SesionHorarioModel extends Equatable {
   bool get enCurso => estado.toUpperCase() == 'EN_CURSO';
   bool get esProgramada => estado.toUpperCase() == 'PROGRAMADA';
 
+  /// "Cálculo I" (o el código si el backend no envió el nombre).
+  String get titulo {
+    if (asignaturaNombre.isNotEmpty) return asignaturaNombre;
+    if (asignaturaCodigo.isNotEmpty) return asignaturaCodigo;
+    return 'Asignatura sin nombre';
+  }
+
+  /// "Grupo 01" o cadena vacía si se desconoce.
+  String get grupoEtiqueta => grupoNumero.isEmpty ? '' : 'Grupo $grupoNumero';
+
+  /// "Cálculo I · Grupo 01".
+  String get tituloConGrupo =>
+      grupoEtiqueta.isEmpty ? titulo : '$titulo · $grupoEtiqueta';
+
+  /// "A-301 · Aula 301", solo el código o solo el nombre.
+  String get aulaEtiqueta {
+    if (espacioCodigo.isNotEmpty && espacioNombre.isNotEmpty) {
+      return espacioCodigo == espacioNombre
+          ? espacioCodigo
+          : '$espacioCodigo · $espacioNombre';
+    }
+    if (espacioCodigo.isNotEmpty) return espacioCodigo;
+    if (espacioNombre.isNotEmpty) return espacioNombre;
+    return 'Aula por confirmar';
+  }
+
+  /// Etiqueta legible del estado de la sesión.
+  String get estadoEtiqueta {
+    switch (estado.toUpperCase()) {
+      case 'PROGRAMADA':
+        return 'Programada';
+      case 'EN_CURSO':
+        return 'En curso';
+      case 'REALIZADA':
+        return 'Realizada';
+      case 'CANCELADA':
+        return 'Cancelada';
+      case 'SIN_DOCENTE':
+        return 'Sin docente';
+      case 'EXCLUIDA':
+        return 'No lectiva';
+      default:
+        return estado;
+    }
+  }
+
+  /// Soporta el DTO de GET /sesiones y el resumen de GET /me/sesiones/hoy.
   factory SesionHorarioModel.fromJson(Map<String, dynamic> json) {
-    // Soporta formato DTO de /sesiones y /me/sesiones/hoy
-    final id = (json['id'] ?? json['sesionId'] ?? '').toString();
-    final asignatura = (json['asignatura'] ?? json['asignaturaId'] ?? 'Clase').toString();
-    final grupo = (json['grupo'] ?? json['grupoId'] ?? 'G1').toString();
-    
-    String espacio = 'Aula';
-    if (json['espacioCodigo'] != null) {
-      espacio = json['espacioCodigo'].toString();
-    } else if (json['espacioId'] != null) {
-      espacio = json['espacioId'].toString();
-    }
+    String texto(String clave) => (json[clave] ?? '').toString().trim();
 
-    DateTime fecha = DateTime.now();
-    if (json['fecha'] != null) {
-      fecha = DateTime.tryParse(json['fecha'].toString()) ?? fecha;
-    } else if (json['inicioProgramado'] != null) {
-      fecha = DateTime.tryParse(json['inicioProgramado'].toString()) ?? fecha;
-    }
+    final inicio = DateTime.tryParse(texto('inicioProgramado'))?.toLocal();
+    final fin = DateTime.tryParse(texto('finProgramado'))?.toLocal();
+    final fecha = DateTime.tryParse(texto('fecha')) ?? inicio ?? DateTime.now();
 
-    String hInicio = '00:00';
-    String hFin = '00:00';
-    if (json['horaInicio'] != null && json['horaFin'] != null) {
-      hInicio = json['horaInicio'].toString();
-      hFin = json['horaFin'].toString();
-    } else if (json['inicioProgramado'] != null && json['finProgramado'] != null) {
-      final inicio = DateTime.tryParse(json['inicioProgramado'].toString());
-      final fin = DateTime.tryParse(json['finProgramado'].toString());
-      if (inicio != null && fin != null) {
-        hInicio = '${inicio.toLocal().hour.toString().padLeft(2, '0')}:${inicio.toLocal().minute.toString().padLeft(2, '0')}';
-        hFin = '${fin.toLocal().hour.toString().padLeft(2, '0')}:${fin.toLocal().minute.toString().padLeft(2, '0')}';
-      }
-    }
-
-    final estado = (json['estado'] ?? 'PROGRAMADA').toString();
-    final docentesList = (json['docenteIds'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
-
+    final motivo = texto('motivoCancelacion');
     return SesionHorarioModel(
-      id: id,
-      asignatura: asignatura,
-      grupo: grupo,
-      espacio: espacio,
-      fecha: fecha,
-      horaInicio: hInicio,
-      horaFin: hFin,
-      estado: estado,
-      docentes: docentesList,
-      motivoCancelacion: json['motivoCancelacion'] as String?,
+      id: texto('id').isNotEmpty ? texto('id') : texto('sesionId'),
+      asignaturaCodigo: texto('asignaturaCodigo'),
+      // /me/sesiones/hoy envía el nombre ya resuelto en "asignatura".
+      asignaturaNombre: texto('asignaturaNombre').isNotEmpty
+          ? texto('asignaturaNombre')
+          : texto('asignatura'),
+      grupoNumero: texto('grupoNumero').isNotEmpty
+          ? texto('grupoNumero')
+          : texto('grupo'),
+      espacioCodigo: texto('espacioCodigo'),
+      espacioNombre: texto('espacioNombre'),
+      fecha: DateTime(fecha.year, fecha.month, fecha.day),
+      horaInicio:
+          texto('horaInicio').isNotEmpty ? texto('horaInicio') : _hora(inicio),
+      horaFin: texto('horaFin').isNotEmpty ? texto('horaFin') : _hora(fin),
+      estado: texto('estado').isNotEmpty ? texto('estado') : 'PROGRAMADA',
+      docentesNombres: (json['docentesNombres'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList(),
+      motivoCancelacion: motivo.isEmpty ? null : motivo,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'asignatura': asignatura,
-        'grupo': grupo,
-        'espacio': espacio,
-        'fecha': fecha.toIso8601String(),
-        'horaInicio': horaInicio,
-        'horaFin': horaFin,
-        'estado': estado,
-        'docenteIds': docentes,
-        'motivoCancelacion': motivoCancelacion,
-      };
+  static String _hora(DateTime? t) => t == null
+      ? '--:--'
+      : '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
   @override
   List<Object?> get props => [
         id,
-        asignatura,
-        grupo,
-        espacio,
+        asignaturaCodigo,
+        asignaturaNombre,
+        grupoNumero,
+        espacioCodigo,
+        espacioNombre,
         fecha,
         horaInicio,
         horaFin,
         estado,
-        docentes,
+        docentesNombres,
         motivoCancelacion,
       ];
 }
