@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'geometria_parser.dart';
 import 'verificacion_espacio_model.dart';
 
 export 'verificacion_espacio_model.dart';
@@ -88,6 +89,9 @@ class EspacioModel extends Equatable {
   /// Nulo cuando el espacio no tiene verificación complementaria (RF-GEO-016).
   final VerificacionEspacioModel? verificacionComplementaria;
 
+  /// Vértices del polígono `[longitud, latitud]`; vacío si aún no se dibujó.
+  final List<List<double>> vertices;
+
   const EspacioModel({
     required this.id,
     required this.sedeId,
@@ -104,7 +108,10 @@ class EspacioModel extends Equatable {
     required this.areaMetrosCuadrados,
     required this.activo,
     this.verificacionComplementaria,
+    this.vertices = const [],
   });
+
+  bool get tieneGeometria => vertices.length >= 3;
 
   bool get tieneVerificacion =>
       verificacionComplementaria?.configurada ?? false;
@@ -131,6 +138,7 @@ class EspacioModel extends Equatable {
               json['verificacionComplementaria'] as Map<String, dynamic>,
             )
           : null,
+      vertices: verticesDesdeGeometria(json['geometria']),
     );
   }
 
@@ -151,6 +159,7 @@ class EspacioModel extends Equatable {
     areaMetrosCuadrados,
     activo,
     verificacionComplementaria,
+    vertices,
   ];
 }
 

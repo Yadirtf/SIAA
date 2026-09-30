@@ -21,6 +21,8 @@ class ApiConstants {
 
   // Academico
   static const String periodos = '$baseUrl/periodos';
+  static String generarSesiones(String periodoId) =>
+      '$baseUrl/periodos/$periodoId/generar-sesiones';
   static const String facultades = '$baseUrl/facultades';
   static const String programas = '$baseUrl/programas';
   static const String asignaturas = '$baseUrl/asignaturas';

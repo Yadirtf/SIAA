@@ -85,8 +85,9 @@ worker cada minuto.
 
 ## 5. Actualizaciones
 
-Cada push a `develop` que toque `backend/` vuelve a desplegar ambos servicios.
-Cambios en `web/`, `mobile/` o `docs/` no disparan despliegues.
+Cada push a `develop` que toque `backend/` vuelve a desplegar el API y el worker;
+uno que toque `web/` vuelve a desplegar la consola web ([guía](web-render.md)).
+Cambios en `mobile/` o `docs/` no disparan despliegues.
 
 ## Probar la misma imagen en local
 

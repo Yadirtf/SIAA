@@ -6,6 +6,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
+import '../widgets/estado_periodo_chip.dart';
+import '../widgets/generar_sesiones_boton.dart';
 
 class PeriodosScreen extends StatelessWidget {
   const PeriodosScreen({super.key});
@@ -215,26 +217,13 @@ class PeriodosScreen extends StatelessWidget {
                             'Del ${p.fechaInicio} al ${p.fechaFin}',
                             style: AppTextStyles.bodyMedium,
                           ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: p.estado == 'ACTIVO'
-                                  ? AppColors.statusSuccessBg
-                                  : AppColors.statusInfoBg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              p.estado,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: p.estado == 'ACTIVO'
-                                    ? AppColors.statusSuccessText
-                                    : AppColors.statusInfoText,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GenerarSesionesBoton(periodo: p),
+                              const SizedBox(width: 12),
+                              EstadoPeriodoChip(estado: p.estado),
+                            ],
                           ),
                         ),
                       );

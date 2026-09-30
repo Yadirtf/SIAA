@@ -1,5 +1,5 @@
-# Blueprint de Render para el entorno de PRUEBAS del backend SIAA.
-# Guía paso a paso: docs/despliegue/backend-render.md
+# Blueprint de Render para el entorno de PRUEBAS de SIAA.
+# Guías paso a paso: docs/despliegue/backend-render.md y docs/despliegue/web-render.md
 #
 # Despliega la carpeta backend/ de este mismo repositorio como dos servicios que
 # comparten la imagen Docker de backend/Dockerfile:
@@ -7,6 +7,7 @@
 #   - siaa-worker: ausencias automáticas, avisos y retención (cmd/worker). Render no
 #                  ofrece workers gratuitos; el API funciona sin él, pero entonces no
 #                  se generan ausencias ni se envían avisos.
+# y la carpeta web/ como sitio estático (siaa-web, gratis, no se duerme).
 # La base de datos es MongoDB Atlas (capa gratuita M0), fuera de Render.
 
 envVarGroups:
@@ -46,9 +47,14 @@ services:
         sync: false
       - key: ADMIN_INICIAL_PASSWORD
         sync: false
-      # La app móvil no usa CORS; "*" permite probar también la consola web local.
+      # La app móvil no usa CORS; "*" deja entrar a siaa-web y a la consola web local.
+      # En producción se reemplaza por la URL exacta de la consola web.
       - key: CORS_ALLOWED_ORIGINS
         value: "*"
+      # Enlace de los correos de recuperación: la consola web abre ?token=… en su login.
+      # Si Render le asigna otro nombre a siaa-web, cámbialo aquí.
+      - key: RECOVERY_URL
+        value: https://siaa-web.onrender.com
 
   - type: worker
     name: siaa-worker
@@ -71,3 +77,49 @@ services:
           envVarKey: MONGO_URI
       - key: WORKER_INTERVALO_MIN
         value: "1"
+
+  # Consola web administrativa: Flutter Web compilado a WebAssembly (SRS §5.2).
+  # Render no trae Flutter, así que el build descarga la versión fijada abajo.
+  - type: web
+    name: siaa-web
+    runtime: static
+    branch: develop
+    buildCommand: >-
+      FLUTTER_DIR="$HOME/flutter-3.47.5" &&
+      ( [ -x "$FLUTTER_DIR/bin/flutter" ] ||
+        git clone --depth 1 --branch 3.47.5 https://github.com/flutter/flutter.git "$FLUTTER_DIR" ) &&
+      export PATH="$FLUTTER_DIR/bin:$PATH" &&
+      flutter config --no-analytics &&
+      cd web && flutter pub get &&
+      flutter build web --wasm --release --no-web-resources-cdn
+      --dart-define=API_BASE_URL="$API_BASE_URL"
+    staticPublishPath: ./web/build/web
+    buildFilter:
+      paths:
+        - web/**
+    envVars:
+      # URL del API con /api/v1. Si cambia, hay que volver a desplegar la web.
+      - key: API_BASE_URL
+        value: https://siaa-api.onrender.com/api/v1
+    headers:
+      # Aislamiento de origen: activa el renderizado multihilo de WebAssembly.
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+      - path: /*
+        name: Cross-Origin-Embedder-Policy
+        value: credentialless
+      # Siempre pedir la versión nueva de los archivos de arranque.
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /flutter_bootstrap.js
+        name: Cache-Control
+        value: no-cache
+      - path: /flutter_service_worker.js
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
