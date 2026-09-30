@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+import 'verificacion_espacio_model.dart';
+
+export 'verificacion_espacio_model.dart';
+
 class SedeModel extends Equatable {
   final String id;
   final String codigo;
@@ -81,6 +85,9 @@ class EspacioModel extends Equatable {
   final double areaMetrosCuadrados;
   final bool activo;
 
+  /// Nulo cuando el espacio no tiene verificación complementaria (RF-GEO-016).
+  final VerificacionEspacioModel? verificacionComplementaria;
+
   const EspacioModel({
     required this.id,
     required this.sedeId,
@@ -96,7 +103,11 @@ class EspacioModel extends Equatable {
     required this.bufferMetros,
     required this.areaMetrosCuadrados,
     required this.activo,
+    this.verificacionComplementaria,
   });
+
+  bool get tieneVerificacion =>
+      verificacionComplementaria?.configurada ?? false;
 
   factory EspacioModel.fromJson(Map<String, dynamic> json) {
     return EspacioModel(
@@ -115,6 +126,11 @@ class EspacioModel extends Equatable {
       areaMetrosCuadrados:
           (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
       activo: json['activo'] == true,
+      verificacionComplementaria: json['verificacionComplementaria'] is Map
+          ? VerificacionEspacioModel.fromJson(
+              json['verificacionComplementaria'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -134,6 +150,7 @@ class EspacioModel extends Equatable {
     bufferMetros,
     areaMetrosCuadrados,
     activo,
+    verificacionComplementaria,
   ];
 }
 
