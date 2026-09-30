@@ -27,7 +27,7 @@ func (uc *CrearMarcajeUseCase) reemplazarAusencia(
 	ahora time.Time,
 ) (*domainMarcaje.ResultadoEvaluacion, *domainMarcaje.Marcaje, error) {
 	contexto.MarcajePrevio = nil
-	res := domainMarcaje.EvaluarMarcaje(req, *contexto, ahora)
+	res := domainMarcaje.EvaluarMarcaje(solicitudParaEvaluar(req), *contexto, ahora)
 	if res.Resultado == domainMarcaje.ResultadoPrecisionInsuficiente {
 		return &res, nil, nil
 	}

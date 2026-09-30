@@ -20,6 +20,7 @@ type DetalleSesionActiva struct {
 	Parametros                        map[string]interface{} `json:"parametros"`
 	GeometriaBuffer                   *geo.GeoJSONPolygon    `json:"geometriaBuffer,omitempty"`
 	VerificacionComplementariaExigida bool                   `json:"verificacionComplementariaExigida"`
+	MetodosVerificacion               []string               `json:"metodosVerificacion,omitempty"`
 	MarcajeExistente                  *domainMarcaje.Marcaje `json:"marcajeExistente"`
 	HoraServidor                      time.Time              `json:"horaServidor"`
 }
@@ -170,6 +171,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 	codigoEspacio := "Aula"
 	nombreEspacio := "Aula Asignada"
 	var geoBuffer *geo.GeoJSONPolygon
+	var metodosVerificacion []string
 
 	if s.GeometriaBufferSnapshot() != nil {
 		polyJSON := s.GeometriaBufferSnapshot().ToGeoJSON()
@@ -181,6 +183,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 		if errEsp == nil && esp != nil {
 			codigoEspacio = esp.Codigo
 			nombreEspacio = esp.Nombre
+			metodosVerificacion = esp.VerificacionComplementaria.Metodos()
 			if geoBuffer == nil && esp.GeometriaBuffer != nil {
 				polyJSON := esp.GeometriaBuffer.ToGeoJSON()
 				geoBuffer = &polyJSON
@@ -191,7 +194,14 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 	// Consultar si ya existe marcaje de entrada para esta sesión y docente
 	previo, _ := uc.marcajeRepo.ObtenerPrevio(ctx, s.ID(), docenteID, domainMarcaje.TipoEntrada)
 
-	params := ParametrosPublicos(ParametrosDesdeSesion(s.ParametrosCongelados()))
+	modalidad := modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID())
+	efectivos := ParametrosDesdeSesion(s.ParametrosCongelados())
+	params := ParametrosPublicos(efectivos)
+	// Solo se exige si el parámetro está activo y el aula tiene valores configurados (RF-GEO-016).
+	exigida := efectivos.VerificacionComplementaria && len(metodosVerificacion) > 0 && !esModalidadVirtual(modalidad)
+	if !exigida {
+		metodosVerificacion = nil
+	}
 
 	return &DetalleSesionActiva{
 		Sesion: &SesionItemDTO{
@@ -205,13 +215,15 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 			},
 			InicioProgramado: s.InicioProgramado(),
 			FinProgramado:    s.FinProgramado(),
-			Modalidad:        modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID()),
+			Modalidad:        modalidad,
 		},
-		Ventana:          ventana,
-		Parametros:       params,
-		GeometriaBuffer:  geoBuffer,
-		MarcajeExistente: previo,
-		HoraServidor:     ahora,
+		Ventana:                           ventana,
+		Parametros:                        params,
+		GeometriaBuffer:                   geoBuffer,
+		VerificacionComplementariaExigida: exigida,
+		MetodosVerificacion:               metodosVerificacion,
+		MarcajeExistente:                  previo,
+		HoraServidor:                      ahora,
 	}, nil
 }
 

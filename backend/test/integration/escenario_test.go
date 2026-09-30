@@ -37,6 +37,13 @@ var bogota = func() *time.Location {
 // que empezó hace 3 minutos, y genera las sesiones del periodo.
 func construirEscenario(e *entorno) *escenario {
 	e.t.Helper()
+	return construirEscenarioCon(e, nil)
+}
+
+// construirEscenarioCon fija además parámetros de la sede antes de generar las sesiones,
+// que los congelan (RN-002).
+func construirEscenarioCon(e *entorno, parametros map[string]interface{}) *escenario {
+	e.t.Helper()
 	ahora := time.Now().In(bogota)
 	inicio := ahora.Truncate(time.Minute).Add(-3 * time.Minute)
 	if inicio.Day() != ahora.Day() || ahora.Hour() >= 23 && ahora.Minute() >= 50 {
@@ -97,6 +104,11 @@ func construirEscenario(e *entorno) *escenario {
 	e.exigir(http.MethodPut, "/parametros", map[string]interface{}{
 		"ambito": "SEDE", "ambito_id": s.sede, "clave": "holgura_entrada_despues_min", "valor": 20,
 	}, s.admin, http.StatusOK)
+	for clave, valor := range parametros {
+		e.exigir(http.MethodPut, "/parametros", map[string]interface{}{
+			"ambito": "SEDE", "ambito_id": s.sede, "clave": clave, "valor": valor,
+		}, s.admin, http.StatusOK)
+	}
 	gen := e.exigir(http.MethodPost, "/periodos/"+s.periodo+"/generar-sesiones", map[string]interface{}{}, s.admin, http.StatusOK)
 	if gen["sesionesGeneradas"].(float64) < 1 {
 		e.t.Fatalf("no se generaron sesiones: %v", gen)

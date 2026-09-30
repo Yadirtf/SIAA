@@ -239,6 +239,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id", rbac.PermAulaEditar)
 		espaciosProtected.PATCH("/:id/buffer", geoH.ActualizarBuffer, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
 		registry.RegisterPermission(http.MethodPatch, "/api/v1/espacios/:id/buffer", rbac.PermAulaEditar)
+		espaciosProtected.PUT("/:id/verificacion", geoH.ActualizarVerificacion, mw.RequirePermission(rbac.PermAulaEditar, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/espacios/:id/verificacion", rbac.PermAulaEditar)
 		espaciosProtected.PUT("/:id/geometria", geoH.ActualizarGeometria, mw.RequirePermission(rbac.PermAulaEditarGeometria, auditoria))
 		registry.RegisterPermission(http.MethodPut, "/api/v1/espacios/:id/geometria", rbac.PermAulaEditarGeometria)
 		espaciosProtected.GET("/:id/geometria/versiones", geoH.ListarVersionesGeometria, mw.RequirePermission(rbac.PermAulaLeer, auditoria))

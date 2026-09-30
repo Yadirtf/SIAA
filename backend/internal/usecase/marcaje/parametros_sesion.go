@@ -82,6 +82,8 @@ func ParametrosDesdeSesion(congelados map[string]interface{}) domainMarcaje.Para
 	}
 	leerBool(&p.BloquearMockLocation, string(dompar.ClaveBloqueoMockLocation), "bloquearMockLocation")
 	leerBool(&p.BloquearRooteado, string(dompar.ClaveBloqueoDispositivoRooteado), "bloquearDispositivoRooteado")
+	leerBool(&p.ExigirAttestation, string(dompar.ClaveExigirAttestation))
+	leerBool(&p.VerificacionComplementaria, string(dompar.ClaveVerificacionComplementaria))
 	if v, ok := buscar(string(dompar.ClaveSalidaObligatoria)); ok {
 		if modo, ok := v.(string); ok && modo != "" {
 			p.MarcajeSalidaModo = modo
@@ -104,6 +106,7 @@ func ParametrosPublicos(p domainMarcaje.ParametrosMarcaje) map[string]interface{
 		"precisionGpsMaxMetros":    p.PrecisionGpsMaxMetros,
 		"bloquearMockLocation":     p.BloquearMockLocation,
 		"marcajeSalida":            p.MarcajeSalidaModo,
+		"exigirAttestation":        p.ExigirAttestation,
 	}
 }
 

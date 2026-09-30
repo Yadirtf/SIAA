@@ -148,6 +148,9 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
 	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
 		WithAsignaciones(asignacionRepo)
+	if v := verificadorAttestation(cfg, log); v != nil {
+		crearMarcajeUC.WithAttestation(v)
+	}
 	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo).
 		WithAsignaciones(asignacionRepo).
 		WithEstructura(estructuraRepo)

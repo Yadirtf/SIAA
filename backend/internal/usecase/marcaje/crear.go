@@ -21,6 +21,7 @@ type CrearMarcajeUseCase struct {
 	dispositivoRepo repository.DispositivoRepository
 	auditoriaRepo   repository.AuditoriaRepository
 	asignacionRepo  repository.AsignacionRepository
+	attestation     VerificadorAttestation
 	metrics         *metrics.Collector
 }
 
@@ -55,6 +56,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	if ahora.IsZero() {
 		ahora = time.Now().UTC()
 	}
+	uc.resolverAttestation(ctx, &req)
 
 	// 1. Armar contexto en una sola ronda de consultas (T-MAR-03.4)
 	contexto, err := uc.armarContexto(ctx, req, ahora)
@@ -88,7 +90,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	uc.verificarSaltoImposible(ctx, req, contexto, ahora)
 
 	// 3. Evaluar deterministamente con la función pura de dominio
-	res := domainMarcaje.EvaluarMarcaje(req, *contexto, ahora)
+	res := domainMarcaje.EvaluarMarcaje(solicitudParaEvaluar(req), *contexto, ahora)
 
 	// 4. Si el resultado es PRECISION_INSUFICIENTE, no persiste ni consume idempotencia (Paso 6, AC-07)
 	if res.Resultado == domainMarcaje.ResultadoPrecisionInsuficiente {
@@ -167,6 +169,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 					contexto.Sesion.EspacioCodigo = esp.Codigo
 				}
 			}
+			uc.cargarVerificacion(ctx, contexto, s.EspacioID())
 		}
 	}
 

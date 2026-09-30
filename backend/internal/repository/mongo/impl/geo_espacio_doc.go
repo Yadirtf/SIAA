@@ -19,6 +19,20 @@ type geoJSONPointDoc struct {
 	Coordinates [2]float64 `bson:"coordinates"`
 }
 
+// verificacionDoc persiste los métodos complementarios del aula (RF-GEO-016).
+type verificacionDoc struct {
+	WifiBssids []string `bson:"wifiBssids"`
+	BleUUID    string   `bson:"bleUuid,omitempty"`
+	QrCodigo   string   `bson:"qrCodigo,omitempty"`
+}
+
+func verificacionADoc(v *geo.VerificacionEspacio) *verificacionDoc {
+	if v == nil {
+		return nil
+	}
+	return &verificacionDoc{WifiBssids: v.WifiBssids, BleUUID: v.BleUUID, QrCodigo: v.QrCodigo}
+}
+
 type espacioDoc struct {
 	ID                      primitive.ObjectID `bson:"_id,omitempty"`
 	SedeID                  string             `bson:"sedeId"`
@@ -41,6 +55,7 @@ type espacioDoc struct {
 	PrecisionPromedioMetros *float64           `bson:"precisionPromedioMetros,omitempty"`
 	MetodoCaptura           *string            `bson:"metodoCaptura,omitempty"`
 	VersionGeometria        int                `bson:"versionGeometria"`
+	VerificacionComplement  *verificacionDoc   `bson:"verificacionComplementaria,omitempty"`
 	Activo                  bool               `bson:"activo"`
 	Eliminado               bool               `bson:"eliminado"`
 	CreadoEn                time.Time          `bson:"creadoEn"`
@@ -104,5 +119,8 @@ func docToEspacio(doc *espacioDoc) *geo.Espacio {
 		}
 	}
 	esp.RadioMetros = doc.RadioMetros
+	if v := doc.VerificacionComplement; v != nil {
+		esp.VerificacionComplementaria = &geo.VerificacionEspacio{WifiBssids: v.WifiBssids, BleUUID: v.BleUUID, QrCodigo: v.QrCodigo}
+	}
 	return esp
 }

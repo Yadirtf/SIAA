@@ -152,10 +152,12 @@ type ParametrosMarcaje struct {
 	PrecisionGpsMaxMetros    float64
 	UmbralTardanzaMin        int
 	ExigirAttestation        bool
-	BloquearMockLocation     bool
-	BloquearRooteado         bool
-	DesfaseRelojMaxSegundos  int
-	MarcajeSalidaModo        string // OBLIGATORIO, OPCIONAL, DESACTIVADO
+	// VerificacionComplementaria exige BSSID/BLE/QR cuando el espacio los tiene configurados.
+	VerificacionComplementaria bool
+	BloquearMockLocation       bool
+	BloquearRooteado           bool
+	DesfaseRelojMaxSegundos    int
+	MarcajeSalidaModo          string // OBLIGATORIO, OPCIONAL, DESACTIVADO
 }
 
 // ContextoSesion agrupa todo el contexto pre-resuelto por el caso de uso antes de invocar el motor puro.

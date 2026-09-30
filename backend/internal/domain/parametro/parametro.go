@@ -47,6 +47,7 @@ const (
 	ClaveBloqueoMockLocation        Clave = "bloqueo_mock_location"
 	ClaveBloqueoDispositivoRooteado Clave = "bloqueo_dispositivo_rooteado"
 	ClaveVerificacionComplementaria Clave = "verificacion_complementaria"
+	ClaveExigirAttestation          Clave = "exigir_attestation" // Play Integrity verificado en el servidor
 
 	// Alertas de asistencia — US-PAR-04
 	ClavePorcentajeMinimoAsistencia      Clave = "porcentaje_minimo_asistencia"
@@ -70,6 +71,7 @@ func ValoresPorDefecto() map[Clave]interface{} {
 		ClaveBloqueoMockLocation:             true,
 		ClaveBloqueoDispositivoRooteado:      false,
 		ClaveVerificacionComplementaria:      false,
+		ClaveExigirAttestation:               false,
 		ClavePorcentajeMinimoAsistencia:      80,
 		ClaveInasistenciasConsecutivasAlerta: 3,
 	}

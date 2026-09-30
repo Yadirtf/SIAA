@@ -41,6 +41,7 @@ func (r *espacioRepository) Create(ctx context.Context, e *geo.Espacio) error {
 		AreaMetrosCuadrados:     e.AreaMetrosCuadrados,
 		PrecisionPromedioMetros: e.PrecisionPromedioMetros,
 		VersionGeometria:        e.VersionGeometria,
+		VerificacionComplement:  verificacionADoc(e.VerificacionComplementaria),
 		Activo:                  e.Activo,
 		Eliminado:               false,
 		CreadoEn:                e.CreadoEn,
@@ -208,6 +209,7 @@ func (r *espacioRepository) Update(ctx context.Context, e *geo.Espacio) error {
 		{Key: "precisionPromedioMetros", Value: e.PrecisionPromedioMetros},
 		{Key: "metodoCaptura", Value: metodoStr},
 		{Key: "versionGeometria", Value: e.VersionGeometria},
+		{Key: "verificacionComplementaria", Value: verificacionADoc(e.VerificacionComplementaria)},
 		{Key: "activo", Value: e.Activo},
 		{Key: "actualizadoEn", Value: time.Now().UTC()},
 	}}}

@@ -87,10 +87,12 @@ type Espacio struct {
 	PrecisionPromedioMetros *float64
 	MetodoCaptura           *MetodoCaptura
 	VersionGeometria        int
-	Activo                  bool
-	Eliminado               bool
-	CreadoEn                time.Time
-	ActualizadoEn           time.Time
+	// VerificacionComplementaria: BSSID, baliza BLE o QR fijo del aula (RF-GEO-016).
+	VerificacionComplementaria *VerificacionEspacio
+	Activo                     bool
+	Eliminado                  bool
+	CreadoEn                   time.Time
+	ActualizadoEn              time.Time
 }
 
 // AsignarGeometria asigna la geometría de polígono validada al espacio, calculando
