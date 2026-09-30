@@ -23,6 +23,13 @@ type MarcajeAdminHandler struct {
 	ajustarUC     *usecaseMarcaje.AjustarMarcajeUseCase
 	estudianteUC  *usecaseMarcaje.VentanaEstudiantilUseCase
 	listaManualUC *usecaseMarcaje.ListaManualUseCase
+	nombrador     *usecaseMarcaje.NombradorMarcajes
+}
+
+// WithNombrador hace que el listado muestre persona, asignatura, grupo y aula por nombre.
+func (h *MarcajeAdminHandler) WithNombrador(n *usecaseMarcaje.NombradorMarcajes) *MarcajeAdminHandler {
+	h.nombrador = n
+	return h
 }
 
 func NewMarcajeAdminHandler(
@@ -76,7 +83,7 @@ func (h *MarcajeAdminHandler) ListarMarcajes(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, h.nombrador.Nombrar(c.Request().Context(), resp))
 }
 
 // AjustarMarcaje aplica anulación o corrección técnica con motivo obligatorio (US-MAR-09).

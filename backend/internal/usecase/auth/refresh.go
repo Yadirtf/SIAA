@@ -53,5 +53,6 @@ func (s *Service) Refresh(ctx context.Context, refreshToken, dispositivoID strin
 	}
 
 	// Emitir nuevo par conservando la misma familia
-	return s.emitTokensInFamily(ctx, usuario, dispositivoID, stored.FamiliaID)
+	// El rol elegido con POST /auth/contexto se conserva al refrescar (RF-ROL-004).
+	return s.emitTokensInFamily(ctx, usuario, dispositivoID, stored.FamiliaID, stored.RolActivo)
 }

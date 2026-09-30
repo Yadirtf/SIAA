@@ -191,8 +191,9 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	geoH := handler.NewGeoHandler(geoSvc)
 	acaH := handler.NewAcademicoHandler(acaSvc)
 	parametroH := handler.NewParametroHandler(parametroSvc)
-	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC)
-	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC)
+	nombrador := usecaseMarcaje.NewNombradorMarcajes(sesionRepo, estructuraRepo, espacioRepo, usuarioRepo)
+	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC).WithNombrador(nombrador)
+	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC).WithNombrador(nombrador)
 	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
 	usuariosH := handler.NewUsuariosHandler(usuariosSvc)
 	seguimiento := &apphttp.HandlersSeguimiento{

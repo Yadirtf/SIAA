@@ -10,6 +10,7 @@ import (
 	"github.com/siaa/backend/internal/transport/http/handler"
 	usecaseNot "github.com/siaa/backend/internal/usecase/notificaciones"
 	usecasePriv "github.com/siaa/backend/internal/usecase/privacidad"
+	usecaseUsuarios "github.com/siaa/backend/internal/usecase/usuarios"
 )
 
 // construirPersonales arma el aviso de privacidad con su consentimiento (Ley 1581) y la
@@ -32,6 +33,8 @@ func construirPersonales(cfg *config.Config, mongoClient *mongoRepo.Client, audi
 	handlers := &apphttp.HandlersPersonales{
 		Privacidad:     handler.NewPrivacidadHandler(privSvc),
 		Notificaciones: handler.NewNotificacionesHandler(notSvc),
+		Perfil: handler.NewPerfilHandler(usecaseUsuarios.NewServicioPerfil(
+			impl.NewUsuarioRepository(mongoClient), impl.NewDispositivoRepository(mongoClient))),
 	}
 	return handlers, usecaseNot.NewProductor(cola, estructura, espacios)
 }

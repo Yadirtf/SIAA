@@ -25,6 +25,7 @@ type refreshTokenDoc struct {
 	ExpiraEn    time.Time          `bson:"expiraEn"`
 	Revocado    bool               `bson:"revocado"`
 	Dispositivo string             `bson:"dispositivo"`
+	RolActivo   string             `bson:"rolActivo,omitempty"`
 	CreadoEn    time.Time          `bson:"creadoEn"`
 }
 
@@ -47,6 +48,7 @@ func (r *refreshTokenRepository) Create(ctx context.Context, t *repository.Refre
 		ExpiraEn:    t.ExpiraEn,
 		Revocado:    false,
 		Dispositivo: t.Dispositivo,
+		RolActivo:   t.RolActivo,
 		CreadoEn:    t.CreadoEn,
 	}
 	result, err := r.col.InsertOne(ctx, doc)
@@ -74,6 +76,7 @@ func (r *refreshTokenRepository) FindByHash(ctx context.Context, hash string) (*
 		ExpiraEn:    doc.ExpiraEn,
 		Revocado:    doc.Revocado,
 		Dispositivo: doc.Dispositivo,
+		RolActivo:   doc.RolActivo,
 		CreadoEn:    doc.CreadoEn,
 	}, nil
 }

@@ -8,18 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
 	"github.com/siaa/backend/internal/domain/user"
 	"github.com/siaa/backend/internal/repository"
-	"github.com/siaa/backend/internal/usecase/auth/crypto"
 )
 
 // CambiarContextoRol valida que el usuario posea el rol solicitado, que esté vigente
 // temporalmente y emite un nuevo par de tokens con el rol y permisos activados.
-func (s *Service) CambiarContextoRol(ctx context.Context, usuarioID, rolSolicitado string) (*TokenPair, error) {
+func (s *Service) CambiarContextoRol(ctx context.Context, usuarioID, rolSolicitado, dispositivoID string) (*TokenPair, error) {
 	usuarioID = strings.TrimSpace(usuarioID)
 	rolSolicitado = strings.TrimSpace(rolSolicitado)
 
@@ -57,54 +53,14 @@ func (s *Service) CambiarContextoRol(ctx context.Context, usuarioID, rolSolicita
 			fmt.Sprintf("El rol %s se encuentra fuera de su vigencia temporal", rolSolicitado))
 	}
 
-	// 2. Extraer los permisos del nuevo rol activo
-	permisosRole := rbac.DefaultPermissions[rolAsignado.Nombre]
-	permisosStrings := make([]string, 0, len(permisosRole))
-	for _, p := range permisosRole {
-		permisosStrings = append(permisosStrings, string(p))
-	}
-
-	// 3. Emitir nuevo JWT con rol activo actualizado — US-ROL-04 AC-04
-	accessExpiry := now.Add(time.Duration(s.cfg.JWTAccessMinutes) * time.Minute)
-	claims := JWTClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    s.cfg.JWTIssuer,
-			Subject:   u.ID,
-			ExpiresAt: jwt.NewNumericDate(accessExpiry),
-			IssuedAt:  jwt.NewNumericDate(now),
-			ID:        shared.NewID(),
-		},
-		UsuarioID: u.ID,
-		RolActivo: rolSolicitado,
-		Permisos:  permisosStrings,
-		Ambitos:   u.Ambitos,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	accessToken, err := token.SignedString([]byte(s.cfg.JWTSecret))
+	// 2. Emitir un nuevo par con el rol activo; el dispositivo del token actual se conserva y
+	// el refresco mantiene este contexto — US-ROL-04 AC-04.
+	pair, err := s.emitTokensInFamily(ctx, u, dispositivoID, shared.NewID(), rolSolicitado)
 	if err != nil {
-		return nil, fmt.Errorf("firmar token nuevo: %w", err)
+		return nil, err
 	}
 
-	// 4. Generar nuevo refresh token
-	rawRefresh := crypto.GenerateSecureToken(64)
-	refreshExpiry := now.Add(time.Duration(s.cfg.JWTRefreshDays) * 24 * time.Hour)
-	familiaID := shared.NewID()
-
-	rt := &repository.RefreshToken{
-		ID:        shared.NewID(),
-		TokenHash: crypto.HashToken(rawRefresh),
-		UsuarioID: u.ID,
-		FamiliaID: familiaID,
-		ExpiraEn:  refreshExpiry,
-		CreadoEn:  now,
-		Revocado:  false,
-	}
-	if err := s.tokens.Create(ctx, rt); err != nil {
-		return nil, fmt.Errorf("guardar refresh token: %w", err)
-	}
-
-	// 5. Registrar evento en auditoría — US-ROL-04 AC-02, RF-AUD-002
+	// 3. Registrar evento en auditoría — US-ROL-04 AC-02, RF-AUD-002
 	if s.auditoria != nil {
 		_ = s.auditoria.Create(ctx, &repository.AuditEntry{
 			Entidad:   "Usuario",
@@ -121,22 +77,5 @@ func (s *Service) CambiarContextoRol(ctx context.Context, usuarioID, rolSolicita
 		})
 	}
 
-	rolesList := make([]string, 0, len(u.Roles))
-	for _, r := range u.Roles {
-		rolesList = append(rolesList, string(r.Nombre))
-	}
-
-	return &TokenPair{
-		AccessToken:  accessToken,
-		RefreshToken: rawRefresh,
-		ExpiraEn:     refreshExpiry,
-		Usuario: &UsuarioInfo{
-			ID:       u.ID,
-			Correo:   u.Correo,
-			Nombre:   u.Nombre,
-			Apellido: u.Apellido,
-			Roles:    rolesList,
-			Permisos: permisosStrings,
-		},
-	}, nil
+	return pair, nil
 }

@@ -1008,6 +1008,70 @@
         },
         "type": "object"
       },
+      "Perfil": {
+        "description": "Cuenta propia y dispositivos vinculados (§9.1 Perfil, RF-AUT-004).",
+        "properties": {
+          "apellido": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "dispositivos": {
+            "items": {
+              "properties": {
+                "confiable": {
+                  "type": "boolean"
+                },
+                "instalacionId": {
+                  "type": "string"
+                },
+                "modelo": {
+                  "type": "string"
+                },
+                "pendienteAprobacion": {
+                  "type": "boolean"
+                },
+                "revocadoEn": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "so": {
+                  "type": "string"
+                },
+                "versionApp": {
+                  "type": "string"
+                },
+                "vinculadoEn": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totpActivado": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "PoliticaPrivacidad": {
         "description": "Aviso de privacidad y tratamiento de datos (Ley 1581 de 2012, RNF-LEG-003).",
         "properties": {
@@ -3604,6 +3668,7 @@
     },
     "/marcajes": {
       "get": {
+        "description": "Cada elemento de items incluye además usuarioNombre, asignaturaNombre, grupoNumero y espacioCodigo para mostrar nombres en lugar de identificadores.",
         "operationId": "listarMarcajesAdmin",
         "parameters": [
           {
@@ -4009,6 +4074,7 @@
     },
     "/me/historial": {
       "get": {
+        "description": "Cada elemento de items incluye además usuarioNombre, asignaturaNombre, grupoNumero y espacioCodigo para mostrar nombres en lugar de identificadores.",
         "operationId": "consultarHistorialPropio",
         "parameters": [
           {
@@ -4310,6 +4376,37 @@
         "summary": "Marcar un aviso propio como leído",
         "tags": [
           "notificaciones"
+        ]
+      }
+    },
+    "/me/perfil": {
+      "get": {
+        "operationId": "consultarPerfilPropio",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Perfil"
+                }
+              }
+            },
+            "description": "Perfil"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          }
+        },
+        "summary": "Perfil del usuario autenticado",
+        "tags": [
+          "usuarios"
         ]
       }
     },
