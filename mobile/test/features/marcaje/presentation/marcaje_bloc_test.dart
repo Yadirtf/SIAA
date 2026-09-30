@@ -35,7 +35,8 @@ void main() {
     id: 'ses-1',
     asignatura: 'Bases de Datos',
     grupo: 'G1',
-    espacio: const EspacioInfo(id: 'esp-1', codigo: 'LAB-201', nombre: 'Lab 201'),
+    espacio:
+        const EspacioInfo(id: 'esp-1', codigo: 'LAB-201', nombre: 'Lab 201'),
     inicioProgramado: DateTime(2026, 9, 25, 8, 0),
     finProgramado: DateTime(2026, 9, 25, 10, 0),
     modalidad: 'PRESENCIAL',
@@ -50,9 +51,11 @@ void main() {
   blocTest<MarcajeBloc, MarcajeState>(
     'CargarSesionActivaEvent emite loading y luego sesionActiva con semáforo listo',
     build: () {
-      when(() => mockRepo.obtenerSesionActiva()).thenAnswer((_) async => dummySesion);
+      when(() => mockRepo.obtenerSesionActiva())
+          .thenAnswer((_) async => dummySesion);
       when(() => mockRepo.obtenerColaOffline()).thenAnswer((_) async => []);
-      when(() => mockRepo.capturarUbicacion()).thenAnswer((_) async => dummyLocationOptima);
+      when(() => mockRepo.capturarUbicacion())
+          .thenAnswer((_) async => dummyLocationOptima);
       return MarcajeBloc(repository: mockRepo);
     },
     act: (bloc) => bloc.add(const CargarSesionActivaEvent()),
@@ -73,11 +76,14 @@ void main() {
   blocTest<MarcajeBloc, MarcajeState>(
     'RealizarMarcajeEvent procesa envío y actualiza semáforo a registrado ante respuesta ACEPTADO',
     build: () {
-      when(() => mockRepo.capturarUbicacion()).thenAnswer((_) async => dummyLocationOptima);
+      when(() => mockRepo.capturarUbicacion())
+          .thenAnswer((_) async => dummyLocationOptima);
       when(() => mockRepo.realizarMarcaje(
             sesionId: any(named: 'sesionId'),
             tipo: any(named: 'tipo'),
             location: any(named: 'location'),
+            verificacion: any(named: 'verificacion'),
+            exigirAttestation: any(named: 'exigirAttestation'),
           )).thenAnswer((_) async => const MarcajeResultModel(
             marcajeId: 'mar-success',
             resultado: 'ACEPTADO',
@@ -104,11 +110,14 @@ void main() {
   blocTest<MarcajeBloc, MarcajeState>(
     'RealizarMarcajeEvent actualiza a fueraDeAula ante rechazo por polígono',
     build: () {
-      when(() => mockRepo.capturarUbicacion()).thenAnswer((_) async => dummyLocationOptima);
+      when(() => mockRepo.capturarUbicacion())
+          .thenAnswer((_) async => dummyLocationOptima);
       when(() => mockRepo.realizarMarcaje(
             sesionId: any(named: 'sesionId'),
             tipo: any(named: 'tipo'),
             location: any(named: 'location'),
+            verificacion: any(named: 'verificacion'),
+            exigirAttestation: any(named: 'exigirAttestation'),
           )).thenAnswer((_) async => const MarcajeResultModel(
             marcajeId: 'mar-rej',
             resultado: 'RECHAZADO',

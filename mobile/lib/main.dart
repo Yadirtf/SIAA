@@ -8,9 +8,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/navigation/config/app_routes.dart';
 import 'core/navigation/presentation/bloc/nav_bloc.dart';
+import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/marcaje/data/repositories/marcaje_repository.dart';
+import 'features/marcaje/data/services/marcaje_sync_trigger.dart';
 import 'shared/widgets/error_fallback.dart';
 
 void main() async {
@@ -33,6 +36,13 @@ void main() async {
       );
 
   runApp(const SIAAApp());
+
+  // Cola offline de marcajes: sincroniza al volver la red o la app (US-MAR-11).
+  final marcajeRepository = MarcajeRepository();
+  MarcajeSyncTrigger(
+    sincronizar: marcajeRepository.sincronizarMarcajesOffline,
+    haySesion: () async => await SecureStorage.getAccessToken() != null,
+  ).iniciar();
 }
 
 class SIAAApp extends StatelessWidget {

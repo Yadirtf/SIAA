@@ -2,6 +2,8 @@
     <!-- Permisos de Red e Internet para descarga de tiles de mapas (OSM) y comunicación backend -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Lectura del BSSID para verificación complementaria WIFI (RF-GEO-016); requiere además ubicación -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <!-- Permisos de Ubicación en Primer Plano conforme a RN-005 (while in use only) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>

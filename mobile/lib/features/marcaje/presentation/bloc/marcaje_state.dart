@@ -2,6 +2,7 @@
 import 'package:equatable/equatable.dart';
 import '../../data/services/location_service.dart';
 import '../../domain/models/marcaje_result_model.dart';
+import '../../domain/models/offline_marcaje_item.dart';
 import '../../domain/models/sesion_activa_model.dart';
 
 enum SemaforoMarcaje {
@@ -20,7 +21,9 @@ class MarcajeState extends Equatable {
   final SesionActivaModel? sesionActiva;
   final LocationResult? location;
   final MarcajeResultModel? ultimoResultado;
-  final int colaOfflineCount;
+
+  /// Snapshot de la cola offline local (US-MAR-11).
+  final List<OfflineMarcajeItem> colaOffline;
   final String? error;
   final SemaforoMarcaje semaforo;
 
@@ -31,7 +34,7 @@ class MarcajeState extends Equatable {
     this.sesionActiva,
     this.location,
     this.ultimoResultado,
-    this.colaOfflineCount = 0,
+    this.colaOffline = const [],
     this.error,
     this.semaforo = SemaforoMarcaje.fueraDeVentana,
   });
@@ -42,6 +45,20 @@ class MarcajeState extends Equatable {
       sesionActiva!.ventana.estaAbierta &&
       semaforo == SemaforoMarcaje.listo;
 
+  List<OfflineMarcajeItem> _enEstado(EstadoSincronizacion e) =>
+      colaOffline.where((it) => it.estado == e).toList();
+
+  /// Marcajes aún por enviar (incluye los que esperan su próximo reintento).
+  int get colaOfflineCount => _enEstado(EstadoSincronizacion.pendiente).length;
+
+  /// Evaluados por el servidor y no aceptados: el docente puede justificar.
+  List<OfflineMarcajeItem> get colaRechazados =>
+      _enEstado(EstadoSincronizacion.rechazado);
+
+  /// Agotaron los reintentos automáticos: admiten reintento manual.
+  List<OfflineMarcajeItem> get colaFallidos =>
+      _enEstado(EstadoSincronizacion.fallido);
+
   MarcajeState copyWith({
     bool? isLoading,
     bool? isCapturingGps,
@@ -51,7 +68,7 @@ class MarcajeState extends Equatable {
     LocationResult? location,
     MarcajeResultModel? ultimoResultado,
     bool clearResultado = false,
-    int? colaOfflineCount,
+    List<OfflineMarcajeItem>? colaOffline,
     String? error,
     bool clearError = false,
     SemaforoMarcaje? semaforo,
@@ -62,8 +79,9 @@ class MarcajeState extends Equatable {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       sesionActiva: clearSesion ? null : (sesionActiva ?? this.sesionActiva),
       location: location ?? this.location,
-      ultimoResultado: clearResultado ? null : (ultimoResultado ?? this.ultimoResultado),
-      colaOfflineCount: colaOfflineCount ?? this.colaOfflineCount,
+      ultimoResultado:
+          clearResultado ? null : (ultimoResultado ?? this.ultimoResultado),
+      colaOffline: colaOffline ?? this.colaOffline,
       error: clearError ? null : (error ?? this.error),
       semaforo: semaforo ?? this.semaforo,
     );
@@ -77,7 +95,7 @@ class MarcajeState extends Equatable {
         sesionActiva,
         location,
         ultimoResultado,
-        colaOfflineCount,
+        colaOffline,
         error,
         semaforo,
       ];

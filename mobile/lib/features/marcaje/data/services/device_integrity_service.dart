@@ -2,7 +2,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../../../core/device/device_info_service.dart';
-import '../../../../core/device/device_metadata.dart';
 import '../../domain/models/marcaje_request_model.dart';
 
 class DeviceIntegridadService {
@@ -47,7 +46,9 @@ class DeviceIntegridadService {
       mockLocation: mockLocation,
       rooteado: esRooteado,
       emulador: esEmulador,
-      attestationOk: true,
+      // El cliente no puede afirmar su propia integridad: el servidor la decide
+      // verificando el token de Play Integrity (ver AttestationService).
+      attestationOk: false,
     );
 
     return {
