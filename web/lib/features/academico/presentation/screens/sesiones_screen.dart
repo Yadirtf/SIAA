@@ -25,9 +25,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
 
   void _onFilterChanged(String? estado) {
     setState(() => _selectedEstado = estado);
-    context.read<SesionesBloc>().add(
-          LoadSesionesEvent(estado: estado),
-        );
+    context.read<SesionesBloc>().add(LoadSesionesEvent(estado: estado));
   }
 
   @override
@@ -43,7 +41,10 @@ class _SesionesScreenState extends State<SesionesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sesiones de Clase Materializadas', style: AppTextStyles.h2),
+                    Text(
+                      'Sesiones de Clase Materializadas',
+                      style: AppTextStyles.h2,
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Supervisión y control puntual de clases generadas (US-ACA-05, US-ACA-06, US-ACA-09)',
@@ -57,11 +58,23 @@ class _SesionesScreenState extends State<SesionesScreen> {
                 hint: const Text('Todos los estados'),
                 underline: const SizedBox.shrink(),
                 items: const [
-                  DropdownMenuItem(value: null, child: Text('Todos los estados')),
-                  DropdownMenuItem(value: 'PROGRAMADA', child: Text('PROGRAMADA')),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text('Todos los estados'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'PROGRAMADA',
+                    child: Text('PROGRAMADA'),
+                  ),
                   DropdownMenuItem(value: 'EN_CURSO', child: Text('EN CURSO')),
-                  DropdownMenuItem(value: 'REALIZADA', child: Text('REALIZADA')),
-                  DropdownMenuItem(value: 'CANCELADA', child: Text('CANCELADA')),
+                  DropdownMenuItem(
+                    value: 'REALIZADA',
+                    child: Text('REALIZADA'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'CANCELADA',
+                    child: Text('CANCELADA'),
+                  ),
                 ],
                 onChanged: _onFilterChanged,
               ),
@@ -70,8 +83,8 @@ class _SesionesScreenState extends State<SesionesScreen> {
                 icon: const Icon(Icons.refresh_rounded),
                 tooltip: 'Refrescar sesiones',
                 onPressed: () => context.read<SesionesBloc>().add(
-                      LoadSesionesEvent(estado: _selectedEstado),
-                    ),
+                  LoadSesionesEvent(estado: _selectedEstado),
+                ),
               ),
             ],
           ),
@@ -87,8 +100,11 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline,
-                            color: AppColors.accentRose, size: 36),
+                        const Icon(
+                          Icons.error_outline,
+                          color: AppColors.accentRose,
+                          size: 36,
+                        ),
                         const SizedBox(height: 8),
                         Text(state.message, style: AppTextStyles.bodyMedium),
                       ],
@@ -101,12 +117,16 @@ class _SesionesScreenState extends State<SesionesScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.event_busy_rounded,
-                              size: 48,
-                              color: AppColors.textMuted.withOpacity(0.5)),
+                          Icon(
+                            Icons.event_busy_rounded,
+                            size: 48,
+                            color: AppColors.textMuted.withOpacity(0.5),
+                          ),
                           const SizedBox(height: 12),
-                          Text('No se encontraron sesiones generadas',
-                              style: AppTextStyles.h3),
+                          Text(
+                            'No se encontraron sesiones generadas',
+                            style: AppTextStyles.h3,
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             'Active un periodo y use "Generar Sesiones" para materializar el calendario.',
@@ -155,7 +175,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
           style: AppTextStyles.h3,
         ),
         subtitle: Text(
-          'Aula: ${s.espacioId.isNotEmpty ? s.espacioId : "Virtual"} • Grupo: ${s.grupoId} • Docente(s): ${s.docenteIds.join(", ")}'
+          'Aula: ${s.aulaTexto} • Grupo: ${s.grupoTexto} • Docente(s): ${s.docentesTexto}'
           '${s.motivoCancelacion.isNotEmpty ? "\nMotivo cancelación: ${s.motivoCancelacion}" : ""}',
           style: AppTextStyles.bodyMedium,
         ),
@@ -168,11 +188,14 @@ class _SesionesScreenState extends State<SesionesScreen> {
                 color: badgeBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(s.estado,
-                  style: TextStyle(
-                      color: badgeFg,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12)),
+              child: Text(
+                s.estado,
+                style: TextStyle(
+                  color: badgeFg,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             PopupMenuButton<String>(
@@ -184,7 +207,8 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     context: context,
                     builder: (_) => ReasignarAulaDialog(
                       sesionId: s.id,
-                      aulaActual: s.espacioId,
+                      aulaActual: s.aulaTexto,
+                      espacioActualId: s.espacioId.isEmpty ? null : s.espacioId,
                     ),
                   );
                 } else if (val == 'suplente') {
@@ -192,7 +216,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     context: context,
                     builder: (_) => DocenteReemplazoDialog(
                       sesionId: s.id,
-                      docenteActual: s.docenteIds.join(', '),
+                      docenteActual: s.docentesTexto,
                     ),
                   );
                 } else if (val == 'cancelar') {
@@ -209,7 +233,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     children: [
                       Icon(Icons.meeting_room_outlined, size: 18),
                       SizedBox(width: 8),
-                      Text('Reasignar Aula (US-ACA-06)'),
+                      Flexible(child: Text('Reasignar Aula (US-ACA-06)')),
                     ],
                   ),
                 ),
@@ -219,7 +243,7 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     children: [
                       Icon(Icons.person_add_alt_outlined, size: 18),
                       SizedBox(width: 8),
-                      Text('Asignar Suplente (US-ACA-09)'),
+                      Flexible(child: Text('Asignar Suplente (US-ACA-09)')),
                     ],
                   ),
                 ),
@@ -228,11 +252,18 @@ class _SesionesScreenState extends State<SesionesScreen> {
                     value: 'cancelar',
                     child: Row(
                       children: [
-                        Icon(Icons.cancel_outlined,
-                            size: 18, color: AppColors.accentRose),
+                        Icon(
+                          Icons.cancel_outlined,
+                          size: 18,
+                          color: AppColors.accentRose,
+                        ),
                         SizedBox(width: 8),
-                        Text('Cancelar Sesión (US-ACA-06)',
-                            style: TextStyle(color: AppColors.accentRose)),
+                        Flexible(
+                          child: Text(
+                            'Cancelar Sesión (US-ACA-06)',
+                            style: TextStyle(color: AppColors.accentRose),
+                          ),
+                        ),
                       ],
                     ),
                   ),

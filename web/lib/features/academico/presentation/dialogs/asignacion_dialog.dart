@@ -3,10 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../geo/presentation/widgets/selector_espacio.dart';
+import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 import '../../data/models/academico_models.dart';
+import '../../data/models/nueva_asignacion.dart';
 import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
+import '../widgets/franja_horaria_campos.dart';
 
+/// Nueva asignación horaria (US-ACA-03, US-ACA-08). Docentes y aula se eligen
+/// buscándolos por nombre o código; el backend completa los datos derivados.
 class AsignacionDialog extends StatefulWidget {
   final List<PeriodoModel> periodos;
   final List<GrupoModel> grupos;
@@ -26,90 +32,67 @@ class AsignacionDialog extends StatefulWidget {
 class _AsignacionDialogState extends State<AsignacionDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  String? _selectedPeriodoId;
-  String? _selectedGrupoId;
+  String? _periodoId;
+  String? _grupoId;
   String _modalidad = 'PRESENCIAL';
-  int _diaSemana = 1; // 1 = Lunes
-
-  final _docenteIdCtrl = TextEditingController();
-  final _docenteNombreCtrl = TextEditingController();
-  final _docenteCodocenteIdCtrl = TextEditingController();
-  final _espacioIdCtrl = TextEditingController();
-  final _espacioNombreCtrl = TextEditingController();
-  final _horaInicioCtrl = TextEditingController(text: '08:00');
-  final _horaFinCtrl = TextEditingController(text: '10:00');
-
-  static const List<Map<String, dynamic>> _dias = [
-    {'id': 1, 'nombre': 'Lunes'},
-    {'id': 2, 'nombre': 'Martes'},
-    {'id': 3, 'nombre': 'Miércoles'},
-    {'id': 4, 'nombre': 'Jueves'},
-    {'id': 5, 'nombre': 'Viernes'},
-    {'id': 6, 'nombre': 'Sábado'},
-  ];
+  String? _docenteId;
+  String? _codocenteId;
+  String? _espacioId;
+  FranjaHoraria _franja = FranjaHoraria.porDefecto;
 
   @override
   void initState() {
     super.initState();
-    if (widget.periodos.isNotEmpty) {
-      _selectedPeriodoId = widget.periodos.first.id;
-    }
-    if (widget.grupos.isNotEmpty) {
-      _selectedGrupoId = widget.grupos.first.id;
-    }
+    // Primer periodo con grupos (si ninguno tiene, el primero).
+    final conGrupos = widget.periodos.where(
+      (p) => widget.grupos.any((g) => g.periodoId == p.id),
+    );
+    final periodo = conGrupos.isNotEmpty
+        ? conGrupos.first
+        : (widget.periodos.isEmpty ? null : widget.periodos.first);
+    _elegirPeriodo(periodo?.id);
   }
 
-  @override
-  void dispose() {
-    _docenteIdCtrl.dispose();
-    _docenteNombreCtrl.dispose();
-    _docenteCodocenteIdCtrl.dispose();
-    _espacioIdCtrl.dispose();
-    _espacioNombreCtrl.dispose();
-    _horaInicioCtrl.dispose();
-    _horaFinCtrl.dispose();
-    super.dispose();
+  List<GrupoModel> get _gruposDelPeriodo =>
+      widget.grupos.where((g) => g.periodoId == _periodoId).toList();
+
+  PeriodoModel? get _periodo {
+    final hallado = widget.periodos.where((p) => p.id == _periodoId);
+    return hallado.isEmpty ? null : hallado.first;
+  }
+
+  void _elegirPeriodo(String? id) {
+    _periodoId = id;
+    final grupos = _gruposDelPeriodo;
+    _grupoId = grupos.isEmpty ? null : grupos.first.id;
+    _espacioId = null; // las aulas dependen de la sede del periodo
+  }
+
+  String _etiquetaGrupo(GrupoModel g) {
+    final asig = widget.asignaturas.where((a) => a.id == g.asignaturaId);
+    final nombre = asig.isEmpty ? 'Asignatura' : asig.first.nombre;
+    return '$nombre · Grupo ${g.numero}';
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    final grupo = _gruposDelPeriodo.where((g) => g.id == _grupoId);
+    if (_periodoId == null || grupo.isEmpty || _docenteId == null) return;
 
-    if (_selectedPeriodoId == null || _selectedGrupoId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione periodo y grupo')),
-      );
-      return;
-    }
-
-    final selectedGrupo = widget.grupos.firstWhere(
-      (g) => g.id == _selectedGrupoId,
-      orElse: () => widget.grupos.first,
+    final asignacion = NuevaAsignacion(
+      periodoId: _periodoId!,
+      grupo: grupo.first,
+      docenteId: _docenteId!,
+      codocenteId: _codocenteId,
+      espacioId: _espacioId,
+      modalidad: _modalidad,
+      diaSemana: _franja.diaSemana,
+      horaInicio: _franja.inicioTexto,
+      horaFin: _franja.finTexto,
     );
-
-    final docenteIds = <String>[_docenteIdCtrl.text.trim()];
-    if (_docenteCodocenteIdCtrl.text.trim().isNotEmpty) {
-      docenteIds.add(_docenteCodocenteIdCtrl.text.trim());
-    }
-
-    final payload = {
-      'periodoId': _selectedPeriodoId,
-      'grupoId': _selectedGrupoId,
-      'asignaturaId': selectedGrupo.asignaturaId,
-      'docenteIds': docenteIds,
-      'docenteNombre': _docenteNombreCtrl.text.trim(),
-      'espacioId': _modalidad == 'VIRTUAL' ? null : _espacioIdCtrl.text.trim(),
-      'espacioNombre':
-          _modalidad == 'VIRTUAL' ? 'Virtual' : _espacioNombreCtrl.text.trim(),
-      'modalidad': _modalidad,
-      'franja': {
-        'diaSemana': _diaSemana,
-        'horaInicio': _horaInicioCtrl.text.trim(),
-        'horaFin': _horaFinCtrl.text.trim(),
-        'zonaHoraria': 'America/Bogota',
-      },
-    };
-
-    context.read<AcademicoBloc>().add(CreateAsignacionEvent(payload));
+    context.read<AcademicoBloc>().add(
+      CreateAsignacionEvent(asignacion.toJson()),
+    );
     Navigator.pop(context);
   }
 
@@ -147,171 +130,38 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<String>(
-                  value: _selectedPeriodoId,
-                  decoration: const InputDecoration(
-                    labelText: 'Periodo Académico *',
-                    prefixIcon: Icon(Icons.calendar_month_outlined),
-                  ),
-                  items: widget.periodos
-                      .map((p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text('${p.codigo} - ${p.nombre}'),
-                          ))
-                      .toList(),
-                  onChanged: (val) => setState(() => _selectedPeriodoId = val),
+                _periodoYGrupo(),
+                const SizedBox(height: 12),
+                SelectorUsuario(
+                  etiqueta: 'Docente principal *',
+                  rol: 'DOCENTE',
+                  requerido: true,
+                  icono: Icons.badge_outlined,
+                  onCambio: (u) => setState(() => _docenteId = u?.id),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _selectedGrupoId,
-                  decoration: const InputDecoration(
-                    labelText: 'Grupo / Curso *',
-                    prefixIcon: Icon(Icons.groups_outlined),
-                  ),
-                  items: widget.grupos.map((g) {
-                    final asig = widget.asignaturas.firstWhere(
-                      (a) => a.id == g.asignaturaId,
-                      orElse: () => const AsignaturaModel(
-                        id: '',
-                        codigo: '',
-                        nombre: 'Asignatura',
-                        programaId: '',
-                        creditos: 0,
-                      ),
-                    );
-                    return DropdownMenuItem(
-                      value: g.id,
-                      child: Text('Grupo ${g.numero} (${asig.nombre})'),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedGrupoId = val),
+                SelectorUsuario(
+                  etiqueta: 'Co-docente (opcional, US-ACA-08)',
+                  rol: 'DOCENTE',
+                  icono: Icons.group_add_outlined,
+                  validador: (u) => u != null && u.id == _docenteId
+                      ? 'Debe ser distinto del docente principal'
+                      : null,
+                  onCambio: (u) => setState(() => _codocenteId = u?.id),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _docenteIdCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'ID / Doc. Docente *',
-                          prefixIcon: Icon(Icons.badge_outlined),
-                        ),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _docenteNombreCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre del Docente *',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _docenteCodocenteIdCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'ID Co-docente Adicional (Opcional, US-ACA-08)',
-                    prefixIcon: Icon(Icons.group_add_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _modalidad,
-                        decoration: const InputDecoration(
-                          labelText: 'Modalidad *',
-                          prefixIcon: Icon(Icons.settings_ethernet_rounded),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'PRESENCIAL', child: Text('Presencial')),
-                          DropdownMenuItem(
-                              value: 'VIRTUAL', child: Text('Virtual')),
-                          DropdownMenuItem(
-                              value: 'HIBRIDA', child: Text('Híbrida')),
-                        ],
-                        onChanged: (val) =>
-                            setState(() => _modalidad = val ?? 'PRESENCIAL'),
-                      ),
-                    ),
-                    if (_modalidad != 'VIRTUAL') ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _espacioIdCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'ID / Código Aula *',
-                            prefixIcon: Icon(Icons.meeting_room_outlined),
-                          ),
-                          validator: (v) => _modalidad == 'PRESENCIAL' &&
-                                  (v == null || v.trim().isEmpty)
-                              ? 'Requerido'
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                _modalidadYAula(),
                 const SizedBox(height: 16),
-                Text('Franja Horaria Recurrente (US-ACA-02)',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Franja Horaria Recurrente (US-ACA-02)',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: DropdownButtonFormField<int>(
-                        value: _diaSemana,
-                        decoration: const InputDecoration(
-                          labelText: 'Día Semana *',
-                          prefixIcon: Icon(Icons.view_week_outlined),
-                        ),
-                        items: _dias
-                            .map((d) => DropdownMenuItem<int>(
-                                  value: d['id'] as int,
-                                  child: Text(d['nombre'] as String),
-                                ))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _diaSemana = val ?? 1),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _horaInicioCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Inicio (HH:mm)',
-                          hintText: '08:00',
-                        ),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _horaFinCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Fin (HH:mm)',
-                          hintText: '10:00',
-                        ),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                  ],
+                FranjaHorariaCampos(
+                  franja: _franja,
+                  onCambio: (f) => setState(() => _franja = f),
                 ),
               ],
             ),
@@ -328,6 +178,89 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
           icon: const Icon(Icons.save_rounded, size: 18),
           label: const Text('Guardar Asignación'),
         ),
+      ],
+    );
+  }
+
+  Widget _periodoYGrupo() {
+    final grupos = _gruposDelPeriodo;
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: _periodoId,
+          decoration: const InputDecoration(
+            labelText: 'Periodo Académico *',
+            prefixIcon: Icon(Icons.calendar_month_outlined),
+          ),
+          items: widget.periodos
+              .map(
+                (p) => DropdownMenuItem(
+                  value: p.id,
+                  child: Text('${p.codigo} - ${p.nombre}'),
+                ),
+              )
+              .toList(),
+          onChanged: (val) => setState(() => _elegirPeriodo(val)),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          key: ValueKey('grupos-$_periodoId'),
+          value: _grupoId,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'Grupo / Curso *',
+            prefixIcon: const Icon(Icons.groups_outlined),
+            helperText: grupos.isEmpty ? 'Este periodo no tiene grupos' : null,
+          ),
+          items: grupos
+              .map(
+                (g) => DropdownMenuItem(
+                  value: g.id,
+                  child: Text(
+                    _etiquetaGrupo(g),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+          validator: (v) => v == null ? 'Requerido' : null,
+          onChanged: (val) => setState(() => _grupoId = val),
+        ),
+      ],
+    );
+  }
+
+  Widget _modalidadYAula() {
+    final virtual = _modalidad == 'VIRTUAL';
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: _modalidad,
+          decoration: const InputDecoration(
+            labelText: 'Modalidad *',
+            prefixIcon: Icon(Icons.settings_ethernet_rounded),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'PRESENCIAL', child: Text('Presencial')),
+            DropdownMenuItem(value: 'VIRTUAL', child: Text('Virtual')),
+            DropdownMenuItem(value: 'HIBRIDA', child: Text('Híbrida')),
+          ],
+          onChanged: (val) => setState(() {
+            _modalidad = val ?? 'PRESENCIAL';
+            if (_modalidad == 'VIRTUAL') _espacioId = null;
+          }),
+        ),
+        if (!virtual) ...[
+          const SizedBox(height: 12),
+          SelectorEspacio(
+            // Nueva instancia al cambiar de periodo: la sede puede cambiar.
+            key: ValueKey('aula-$_periodoId'),
+            etiqueta: 'Aula *',
+            sedeId: _periodo?.sedeId,
+            requerido: true,
+            onCambio: (e) => setState(() => _espacioId = e?.id),
+          ),
+        ],
       ],
     );
   }

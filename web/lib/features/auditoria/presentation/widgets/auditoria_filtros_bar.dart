@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/campo_fecha.dart';
+import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 import '../../data/models/filtro_auditoria_model.dart';
 
-/// Filtros de la bitácora: entidad, id, actor, prefijo de acción y fechas.
+/// Filtros de la bitácora: entidad, actor (buscado por nombre), prefijo de
+/// acción, fechas y, como opción avanzada, el id exacto de la entidad.
 class AuditoriaFiltrosBar extends StatefulWidget {
   final FiltroAuditoriaModel filtro;
   final ValueChanged<FiltroAuditoriaModel> onFiltrar;
@@ -24,12 +26,14 @@ class AuditoriaFiltrosBar extends StatefulWidget {
 class _AuditoriaFiltrosBarState extends State<AuditoriaFiltrosBar> {
   late final _entidad = TextEditingController(text: widget.filtro.entidad);
   late final _entidadId = TextEditingController(text: widget.filtro.entidadId);
-  late final _actorId = TextEditingController(text: widget.filtro.actorId);
   late final _accion = TextEditingController(text: widget.filtro.accion);
+
+  /// Actor elegido en el selector de usuarios (id, nunca escrito a mano).
+  late String? _actorId = widget.filtro.actorId;
 
   @override
   void dispose() {
-    for (final c in [_entidad, _entidadId, _actorId, _accion]) {
+    for (final c in [_entidad, _entidadId, _accion]) {
       c.dispose();
     }
     super.dispose();
@@ -46,7 +50,7 @@ class _AuditoriaFiltrosBarState extends State<AuditoriaFiltrosBar> {
       (base ?? widget.filtro).copyWith(
         entidad: () => _valor(_entidad),
         entidadId: () => _valor(_entidadId),
-        actorId: () => _valor(_actorId),
+        actorId: () => _actorId,
         accion: () => _valor(_accion),
         pagina: 1,
       ),
@@ -89,8 +93,20 @@ class _AuditoriaFiltrosBarState extends State<AuditoriaFiltrosBar> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _campo(_entidad, 'Entidad'),
-          _campo(_entidadId, 'Id de entidad', ancho: 220),
-          _campo(_actorId, 'Id del actor', ancho: 220),
+          SizedBox(
+            width: 260,
+            child: SelectorUsuario(
+              etiqueta: 'Actor (usuario)',
+              soloActivos: false,
+              denso: true,
+              idInicial: _actorId,
+              onCambio: (u) {
+                setState(() => _actorId = u?.id);
+                _buscar();
+              },
+            ),
+          ),
+          _campo(_entidadId, 'ID de la entidad (avanzado)', ancho: 220),
           _campo(_accion, 'Acción (prefijo)'),
           CampoFecha(
             etiqueta: 'Desde',

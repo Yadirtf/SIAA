@@ -22,12 +22,14 @@ import 'features/dispositivos/data/dispositivos_remote_datasource.dart';
 import 'features/dispositivos/data/dispositivos_repository_impl.dart';
 import 'features/dispositivos/domain/dispositivos_repository.dart';
 import 'features/dispositivos/presentation/bloc/dispositivos_bloc.dart';
+import 'features/geo/data/buscador_espacios.dart';
 import 'features/geo/data/geo_remote_datasource.dart';
 import 'features/geo/domain/geo_repository.dart';
 import 'features/geo/presentation/bloc/geo_bloc.dart';
 import 'features/justificaciones/domain/justificaciones_repository.dart';
 import 'features/justificaciones/domain/justificaciones_repository_impl.dart';
 import 'features/justificaciones/presentation/bloc/justificaciones_cubit.dart';
+import 'features/parametros/data/opciones_ambito_datasource.dart';
 import 'features/parametros/data/parametros_data.dart';
 import 'features/parametros/domain/parametros_repository.dart';
 import 'features/parametros/presentation/bloc/parametros_bloc.dart';
@@ -39,6 +41,7 @@ import 'features/reportes/domain/reportes_repository.dart';
 import 'features/reportes/domain/reportes_repository_impl.dart';
 import 'features/reportes/presentation/bloc/catalogo_reporte_cubit.dart';
 import 'features/reportes/presentation/bloc/reporte_cumplimiento_cubit.dart';
+import 'features/usuarios/data/buscador_usuarios.dart';
 import 'features/usuarios/domain/usuarios_repository.dart';
 import 'features/usuarios/domain/usuarios_repository_impl.dart';
 import 'features/usuarios/presentation/bloc/catalogo_usuarios_cubit.dart';
@@ -90,6 +93,16 @@ class SiaaApp extends StatelessWidget {
         ),
         RepositoryProvider<AuditoriaRepository>(
           create: (_) => AuditoriaRepositoryImpl(),
+        ),
+        // Catálogos de los selectores con búsqueda (sin ids escritos a mano).
+        RepositoryProvider<BuscadorUsuarios>(
+          create: (_) => BuscadorUsuariosRemoto(),
+        ),
+        RepositoryProvider<BuscadorEspacios>(
+          create: (_) => BuscadorEspaciosRemoto(),
+        ),
+        RepositoryProvider<FuenteOpcionesAmbito>(
+          create: (_) => OpcionesAmbitoRemoto(),
         ),
       ],
       child: MultiBlocProvider(

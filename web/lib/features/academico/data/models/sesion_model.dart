@@ -16,6 +16,14 @@ class SesionModel extends Equatable {
   final String estado;
   final String motivoCancelacion;
 
+  // Nombres legibles que el backend adjunta a cada sesión (GET /sesiones).
+  final String asignaturaCodigo;
+  final String asignaturaNombre;
+  final String grupoNumero;
+  final String espacioCodigo;
+  final String espacioNombre;
+  final List<String> docentesNombres;
+
   const SesionModel({
     required this.id,
     required this.periodoId,
@@ -31,12 +39,57 @@ class SesionModel extends Equatable {
     required this.finProgramado,
     required this.estado,
     this.motivoCancelacion = '',
+    this.asignaturaCodigo = '',
+    this.asignaturaNombre = '',
+    this.grupoNumero = '',
+    this.espacioCodigo = '',
+    this.espacioNombre = '',
+    this.docentesNombres = const [],
   });
+
+  static String _unir(List<String> partes) =>
+      partes.where((p) => p.isNotEmpty).join(' · ');
+
+  /// "A-101 · Aula 101"; "Virtual" sin aula; el id solo si no hay nombre.
+  String get aulaTexto {
+    if (espacioId.isEmpty) return 'Virtual';
+    final nombre = _unir([espacioCodigo, espacioNombre]);
+    return nombre.isEmpty ? espacioId : nombre;
+  }
+
+  /// "Cálculo I · Grupo 01" (o el id del grupo si no hay nombres).
+  String get grupoTexto {
+    final asignatura = asignaturaNombre.isNotEmpty
+        ? asignaturaNombre
+        : asignaturaCodigo;
+    final grupo = grupoNumero.isEmpty ? '' : 'Grupo $grupoNumero';
+    final texto = _unir([asignatura, grupo]);
+    return texto.isEmpty ? grupoId : texto;
+  }
+
+  /// Nombres de los docentes en el orden de [docenteIds]; el id solo cuando
+  /// falta el nombre de esa posición.
+  String get docentesTexto {
+    final textos = <String>[
+      for (var i = 0; i < docenteIds.length; i++)
+        i < docentesNombres.length && docentesNombres[i].trim().isNotEmpty
+            ? docentesNombres[i]
+            : docenteIds[i],
+    ];
+    return textos.join(', ');
+  }
 
   bool get esCancelada => estado.toUpperCase() == 'CANCELADA';
 
   factory SesionModel.fromJson(Map<String, dynamic> json) {
-    final docs = (json['docenteIds'] as List<dynamic>?)
+    String texto(String clave) => json[clave]?.toString() ?? '';
+    final nombres =
+        (json['docentesNombres'] as List<dynamic>?)
+            ?.map((e) => e?.toString() ?? '')
+            .toList() ??
+        const <String>[];
+    final docs =
+        (json['docenteIds'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [];
@@ -56,22 +109,34 @@ class SesionModel extends Equatable {
       finProgramado: json['finProgramado']?.toString() ?? '',
       estado: json['estado']?.toString() ?? 'PROGRAMADA',
       motivoCancelacion: json['motivoCancelacion']?.toString() ?? '',
+      asignaturaCodigo: texto('asignaturaCodigo'),
+      asignaturaNombre: texto('asignaturaNombre'),
+      grupoNumero: texto('grupoNumero'),
+      espacioCodigo: texto('espacioCodigo'),
+      espacioNombre: texto('espacioNombre'),
+      docentesNombres: nombres,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        periodoId,
-        asignacionId,
-        asignaturaId,
-        grupoId,
-        docenteIds,
-        espacioId,
-        fecha,
-        horaInicio,
-        horaFin,
-        estado,
-        motivoCancelacion,
-      ];
+    id,
+    periodoId,
+    asignacionId,
+    asignaturaId,
+    grupoId,
+    docenteIds,
+    espacioId,
+    fecha,
+    horaInicio,
+    horaFin,
+    estado,
+    motivoCancelacion,
+    asignaturaCodigo,
+    asignaturaNombre,
+    grupoNumero,
+    espacioCodigo,
+    espacioNombre,
+    docentesNombres,
+  ];
 }
