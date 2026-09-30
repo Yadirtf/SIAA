@@ -8,6 +8,9 @@ import 'features/academico/domain/academico_repository.dart';
 import 'features/academico/presentation/bloc/academico_bloc.dart';
 import 'features/academico/presentation/bloc/sesiones_bloc.dart';
 import 'features/academico/presentation/bloc/importacion_bloc.dart';
+import 'features/auditoria/domain/auditoria_repository.dart';
+import 'features/auditoria/domain/auditoria_repository_impl.dart';
+import 'features/auditoria/presentation/bloc/auditoria_cubit.dart';
 import 'features/auth/data/auth_remote_datasource.dart';
 import 'features/auth/domain/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -22,6 +25,9 @@ import 'features/dispositivos/presentation/bloc/dispositivos_bloc.dart';
 import 'features/geo/data/geo_remote_datasource.dart';
 import 'features/geo/domain/geo_repository.dart';
 import 'features/geo/presentation/bloc/geo_bloc.dart';
+import 'features/justificaciones/domain/justificaciones_repository.dart';
+import 'features/justificaciones/domain/justificaciones_repository_impl.dart';
+import 'features/justificaciones/presentation/bloc/justificaciones_cubit.dart';
 import 'features/parametros/data/parametros_data.dart';
 import 'features/parametros/domain/parametros_repository.dart';
 import 'features/parametros/presentation/bloc/parametros_bloc.dart';
@@ -29,6 +35,10 @@ import 'features/marcajes/data/datasources/marcajes_admin_remote_datasource.dart
 import 'features/marcajes/data/repositories/marcajes_admin_repository_impl.dart';
 import 'features/marcajes/domain/repositories/marcajes_admin_repository.dart';
 import 'features/marcajes/presentation/bloc/marcajes_admin_bloc.dart';
+import 'features/reportes/domain/reportes_repository.dart';
+import 'features/reportes/domain/reportes_repository_impl.dart';
+import 'features/reportes/presentation/bloc/catalogo_reporte_cubit.dart';
+import 'features/reportes/presentation/bloc/reporte_cumplimiento_cubit.dart';
 import 'features/usuarios/domain/usuarios_repository.dart';
 import 'features/usuarios/domain/usuarios_repository_impl.dart';
 import 'features/usuarios/presentation/bloc/catalogo_usuarios_cubit.dart';
@@ -61,9 +71,8 @@ class SiaaApp extends StatelessWidget {
           ),
         ),
         RepositoryProvider<ParametrosRepository>(
-          create: (_) => ParametrosRepositoryImpl(
-            remote: ParametrosRemoteDataSource(),
-          ),
+          create: (_) =>
+              ParametrosRepositoryImpl(remote: ParametrosRemoteDataSource()),
         ),
         RepositoryProvider<MarcajesAdminRepository>(
           create: (_) => MarcajesAdminRepositoryImpl(
@@ -72,6 +81,15 @@ class SiaaApp extends StatelessWidget {
         ),
         RepositoryProvider<UsuariosRepository>(
           create: (_) => UsuariosRepositoryImpl(),
+        ),
+        RepositoryProvider<JustificacionesRepository>(
+          create: (_) => JustificacionesRepositoryImpl(),
+        ),
+        RepositoryProvider<ReportesRepository>(
+          create: (_) => ReportesRepositoryImpl(),
+        ),
+        RepositoryProvider<AuditoriaRepository>(
+          create: (_) => AuditoriaRepositoryImpl(),
         ),
       ],
       child: MultiBlocProvider(
@@ -102,9 +120,8 @@ class SiaaApp extends StatelessWidget {
             ),
           ),
           BlocProvider<ParametrosBloc>(
-            create: (ctx) => ParametrosBloc(
-              repository: ctx.read<ParametrosRepository>(),
-            ),
+            create: (ctx) =>
+                ParametrosBloc(repository: ctx.read<ParametrosRepository>()),
           ),
           BlocProvider<MarcajesAdminBloc>(
             create: (ctx) => MarcajesAdminBloc(
@@ -124,6 +141,25 @@ class SiaaApp extends StatelessWidget {
             create: (ctx) => ImportacionUsuariosBloc(
               repository: ctx.read<UsuariosRepository>(),
             ),
+          ),
+          BlocProvider<JustificacionesCubit>(
+            create: (ctx) => JustificacionesCubit(
+              repository: ctx.read<JustificacionesRepository>(),
+            ),
+          ),
+          BlocProvider<CatalogoReporteCubit>(
+            create: (ctx) => CatalogoReporteCubit(
+              repository: ctx.read<ReportesRepository>(),
+            ),
+          ),
+          BlocProvider<ReporteCumplimientoCubit>(
+            create: (ctx) => ReporteCumplimientoCubit(
+              repository: ctx.read<ReportesRepository>(),
+            ),
+          ),
+          BlocProvider<AuditoriaCubit>(
+            create: (ctx) =>
+                AuditoriaCubit(repository: ctx.read<AuditoriaRepository>()),
           ),
         ],
         child: MaterialApp(

@@ -64,4 +64,19 @@ class ApiConstants {
       '$baseUrl/usuarios/$id/desbloquear';
   static String revocarSesionesUsuario(String id) =>
       '$baseUrl/usuarios/$id/revocar-sesiones';
+
+  // Justificaciones (EP-07, US-JUS-02/03)
+  static const String justificaciones = '$baseUrl/justificaciones';
+  static String justificacion(String id) => '$baseUrl/justificaciones/$id';
+  static String soporteJustificacion(String id, String soporteId) =>
+      '$baseUrl/justificaciones/$id/soportes/$soporteId';
+
+  // Reportes (EP-08)
+  static const String reporteCumplimiento = '$baseUrl/reportes/cumplimiento';
+  static const String exportarCumplimiento =
+      '$baseUrl/reportes/cumplimiento/exportar';
+
+  // Auditoría (RF-AUD-003)
+  static const String auditoria = '$baseUrl/auditoria';
+  static const String exportarAuditoria = '$baseUrl/auditoria/exportar';
 }

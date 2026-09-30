@@ -15,7 +15,10 @@ enum NavSection {
 
   parametros,
   marcajes,
+  justificaciones,
+  reportes,
   usuarios,
+  auditoria,
 }
 
 class NavItem {
@@ -121,11 +124,32 @@ class NavItem {
       category: 'CONTROL Y ASISTENCIA',
     ),
     NavItem(
+      section: NavSection.justificaciones,
+      title: 'Justificaciones',
+      icon: Icons.fact_check_outlined,
+      category: 'CONTROL Y ASISTENCIA',
+      permiso: 'justificacion:leer',
+    ),
+    NavItem(
+      section: NavSection.reportes,
+      title: 'Reportes de Cumplimiento',
+      icon: Icons.insights_rounded,
+      category: 'REPORTES',
+      permiso: 'reporte:leer',
+    ),
+    NavItem(
       section: NavSection.usuarios,
       title: 'Usuarios',
       icon: Icons.people_alt_outlined,
       category: 'ADMINISTRACIÓN',
       permiso: 'usuario:leer',
+    ),
+    NavItem(
+      section: NavSection.auditoria,
+      title: 'Auditoría',
+      icon: Icons.manage_search_rounded,
+      category: 'ADMINISTRACIÓN',
+      permiso: 'auditoria:leer',
     ),
   ];
 }
