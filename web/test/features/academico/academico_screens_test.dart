@@ -186,6 +186,8 @@ class StubAcademicoRepository implements AcademicoRepository {
     String? espacioId,
     String? fecha,
     String? estado,
+    String? desde,
+    String? hasta,
   }) async =>
       [
         const SesionModel(
@@ -334,8 +336,9 @@ void main() {
       await tester.pumpWidget(wrapScreen(const SesionesScreen()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sesiones de Clase Materializadas'), findsOneWidget);
-      expect(find.text('Todos los estados'), findsWidgets);
+      expect(find.text('Sesiones de Clase'), findsOneWidget);
+      expect(find.text('Estado'), findsWidgets);
+      expect(find.text('Mostrando 1-1 de 1 sesiones'), findsOneWidget);
     });
   });
 }

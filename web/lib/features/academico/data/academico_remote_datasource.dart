@@ -228,6 +228,8 @@ class AcademicoRemoteDataSource {
     String? espacioId,
     String? fecha,
     String? estado,
+    String? desde,
+    String? hasta,
   }) async {
     final params = <String, String>{};
     if (periodoId != null && periodoId.isNotEmpty) params['periodoId'] = periodoId;
@@ -235,6 +237,8 @@ class AcademicoRemoteDataSource {
     if (espacioId != null && espacioId.isNotEmpty) params['espacioId'] = espacioId;
     if (fecha != null && fecha.isNotEmpty) params['fecha'] = fecha;
     if (estado != null && estado.isNotEmpty) params['estado'] = estado;
+    if (desde != null && desde.isNotEmpty) params['desde'] = desde;
+    if (hasta != null && hasta.isNotEmpty) params['hasta'] = hasta;
 
     final uri = Uri.parse(ApiConstants.sesiones).replace(queryParameters: params.isNotEmpty ? params : null);
     final response = await _client.get(uri.toString());

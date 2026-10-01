@@ -122,7 +122,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 		auditoriaRepo,
 		clk,
 		log,
-	).WithSesiones(sesionRepo)
+	).WithSesiones(sesionRepo).WithUbicaciones(sedeRepo, bloqueRepo)
 
 	parametroSvc := usecasePar.New(parametroRepo)
 	// RN-002: las sesiones se generan con los parámetros efectivos de la cascada jerárquica.

@@ -38,6 +38,8 @@ type Service struct {
 	excepcionRepo  repository.CalendarioExcepcionRepository
 	usuarioRepo    repository.UsuarioRepository
 	espacioRepo    repository.EspacioRepository
+	sedeRepo       repository.SedeRepository
+	bloqueRepo     repository.BloqueRepository
 	sesionRepo     repository.SesionRepository
 	auditoriaRepo  repository.AuditoriaRepository
 	clk            shared.Clock

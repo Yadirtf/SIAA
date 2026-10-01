@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../data/models/sesion_model.dart';
 import '../../domain/academico_repository.dart';
 
@@ -18,16 +19,30 @@ class LoadSesionesEvent extends SesionesEvent {
   final String? fecha;
   final String? estado;
 
+  /// Rango de fechas AAAA-MM-DD, inclusivo (la tabla consulta una semana).
+  final String? desde;
+  final String? hasta;
+
   const LoadSesionesEvent({
     this.periodoId,
     this.docenteId,
     this.espacioId,
     this.fecha,
     this.estado,
+    this.desde,
+    this.hasta,
   });
 
   @override
-  List<Object?> get props => [periodoId, docenteId, espacioId, fecha, estado];
+  List<Object?> get props => [
+    periodoId,
+    docenteId,
+    espacioId,
+    fecha,
+    estado,
+    desde,
+    hasta,
+  ];
 }
 
 class CancelarSesionEvent extends SesionesEvent {
@@ -89,10 +104,13 @@ class SesionesLoaded extends SesionesState {
   final List<SesionModel> sesiones;
   final String? successMessage;
 
-  const SesionesLoaded(this.sesiones, {this.successMessage});
+  /// Error de una acción (cancelar, reasignar); la tabla se conserva.
+  final String? errorMessage;
+
+  const SesionesLoaded(this.sesiones, {this.successMessage, this.errorMessage});
 
   @override
-  List<Object?> get props => [sesiones, successMessage];
+  List<Object?> get props => [sesiones, successMessage, errorMessage];
 }
 
 class SesionesError extends SesionesState {
@@ -107,82 +125,91 @@ class SesionesError extends SesionesState {
 class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
   final AcademicoRepository _repository;
 
+  /// Última consulta, para recargar con los mismos filtros tras una acción.
+  LoadSesionesEvent _ultima = const LoadSesionesEvent();
+
   SesionesBloc({required AcademicoRepository repository})
-      : _repository = repository,
-        super(const SesionesInitial()) {
+    : _repository = repository,
+      super(const SesionesInitial()) {
     on<LoadSesionesEvent>(_onLoadSesiones);
-    on<CancelarSesionEvent>(_onCancelarSesion);
-    on<ReasignarAulaSesionEvent>(_onReasignarAulaSesion);
-    on<AsignarDocenteReemplazoEvent>(_onAsignarDocenteReemplazo);
+    on<CancelarSesionEvent>(
+      (e, emit) => _accion(
+        emit,
+        () =>
+            _repository.cancelarSesion(sesionId: e.sesionId, motivo: e.motivo),
+        'Sesión cancelada.',
+      ),
+    );
+    on<ReasignarAulaSesionEvent>(
+      (e, emit) => _accion(
+        emit,
+        () => _repository.reasignarAulaSesion(
+          sesionId: e.sesionId,
+          nuevoEspacioId: e.nuevoEspacioId,
+          motivo: e.motivo,
+        ),
+        'Aula reasignada.',
+      ),
+    );
+    on<AsignarDocenteReemplazoEvent>(
+      (e, emit) => _accion(
+        emit,
+        () => _repository.asignarDocenteReemplazo(
+          sesionId: e.sesionId,
+          docenteId: e.docenteId,
+          motivo: e.motivo,
+        ),
+        'Docente suplente asignado.',
+      ),
+    );
   }
+
+  Future<List<SesionModel>> _consultar(LoadSesionesEvent e) =>
+      _repository.getSesiones(
+        periodoId: e.periodoId,
+        docenteId: e.docenteId,
+        espacioId: e.espacioId,
+        fecha: e.fecha,
+        estado: e.estado,
+        desde: e.desde,
+        hasta: e.hasta,
+      );
 
   Future<void> _onLoadSesiones(
     LoadSesionesEvent event,
     Emitter<SesionesState> emit,
   ) async {
+    _ultima = event;
     emit(const SesionesLoading());
     try {
-      final list = await _repository.getSesiones(
-        periodoId: event.periodoId,
-        docenteId: event.docenteId,
-        espacioId: event.espacioId,
-        fecha: event.fecha,
-        estado: event.estado,
-      );
-      emit(SesionesLoaded(list));
+      emit(SesionesLoaded(await _consultar(event)));
     } catch (e) {
       emit(SesionesError(_cleanError(e)));
     }
   }
 
-  Future<void> _onCancelarSesion(
-    CancelarSesionEvent event,
+  /// Ejecuta una acción sobre una sesión y recarga con los filtros vigentes.
+  /// Si falla, la tabla sigue visible y el error se informa aparte.
+  Future<void> _accion(
     Emitter<SesionesState> emit,
+    Future<void> Function() accion,
+    String exito,
   ) async {
     try {
-      await _repository.cancelarSesion(
-        sesionId: event.sesionId,
-        motivo: event.motivo,
-      );
-      add(const LoadSesionesEvent());
+      await accion();
+      emit(SesionesLoaded(await _consultar(_ultima), successMessage: exito));
     } catch (e) {
-      emit(SesionesError(_cleanError(e)));
-    }
-  }
-
-  Future<void> _onReasignarAulaSesion(
-    ReasignarAulaSesionEvent event,
-    Emitter<SesionesState> emit,
-  ) async {
-    try {
-      await _repository.reasignarAulaSesion(
-        sesionId: event.sesionId,
-        nuevoEspacioId: event.nuevoEspacioId,
-        motivo: event.motivo,
+      final previo = state;
+      emit(
+        previo is SesionesLoaded
+            ? SesionesLoaded(previo.sesiones, errorMessage: _cleanError(e))
+            : SesionesError(_cleanError(e)),
       );
-      add(const LoadSesionesEvent());
-    } catch (e) {
-      emit(SesionesError(_cleanError(e)));
-    }
-  }
-
-  Future<void> _onAsignarDocenteReemplazo(
-    AsignarDocenteReemplazoEvent event,
-    Emitter<SesionesState> emit,
-  ) async {
-    try {
-      await _repository.asignarDocenteReemplazo(
-        sesionId: event.sesionId,
-        docenteId: event.docenteId,
-        motivo: event.motivo,
-      );
-      add(const LoadSesionesEvent());
-    } catch (e) {
-      emit(SesionesError(_cleanError(e)));
     }
   }
 
   String _cleanError(dynamic e) {
+    if (e is ApiException) return e.message;
     return e
         .toString()
         .replaceAll('ApiException: ', '')

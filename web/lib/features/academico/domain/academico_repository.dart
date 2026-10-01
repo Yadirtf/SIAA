@@ -67,8 +67,13 @@ abstract class AcademicoRepository {
     String? espacioId,
     String? fecha,
     String? estado,
+    String? desde,
+    String? hasta,
   });
-  Future<void> cancelarSesion({required String sesionId, required String motivo});
+  Future<void> cancelarSesion({
+    required String sesionId,
+    required String motivo,
+  });
   Future<SesionModel> reasignarAulaSesion({
     required String sesionId,
     required String nuevoEspacioId,
@@ -84,9 +89,10 @@ abstract class AcademicoRepository {
     required List<int> bytes,
     required String filename,
   });
-  Future<void> confirmarImportarCsv({required List<Map<String, dynamic>> filas});
+  Future<void> confirmarImportarCsv({
+    required List<Map<String, dynamic>> filas,
+  });
 }
-
 
 class AcademicoRepositoryImpl implements AcademicoRepository {
   final AcademicoRemoteDataSource _remoteDataSource;
@@ -232,17 +238,23 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     String? espacioId,
     String? fecha,
     String? estado,
+    String? desde,
+    String? hasta,
   }) => _remoteDataSource.getSesiones(
     periodoId: periodoId,
     docenteId: docenteId,
     espacioId: espacioId,
     fecha: fecha,
     estado: estado,
+    desde: desde,
+    hasta: hasta,
   );
 
   @override
-  Future<void> cancelarSesion({required String sesionId, required String motivo}) =>
-      _remoteDataSource.cancelarSesion(sesionId: sesionId, motivo: motivo);
+  Future<void> cancelarSesion({
+    required String sesionId,
+    required String motivo,
+  }) => _remoteDataSource.cancelarSesion(sesionId: sesionId, motivo: motivo);
 
   @override
   Future<SesionModel> reasignarAulaSesion({
@@ -273,7 +285,7 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
   }) => _remoteDataSource.previewImportarCsv(bytes: bytes, filename: filename);
 
   @override
-  Future<void> confirmarImportarCsv({required List<Map<String, dynamic>> filas}) =>
-      _remoteDataSource.confirmarImportarCsv(filas: filas);
+  Future<void> confirmarImportarCsv({
+    required List<Map<String, dynamic>> filas,
+  }) => _remoteDataSource.confirmarImportarCsv(filas: filas);
 }
-

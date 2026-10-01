@@ -24,6 +24,12 @@ class SesionModel extends Equatable {
   final String espacioNombre;
   final List<String> docentesNombres;
 
+  // Ubicación del aula (bloque y sede) para ubicar la clase rápidamente.
+  final String sedeId;
+  final String sedeNombre;
+  final String bloqueId;
+  final String bloqueNombre;
+
   const SesionModel({
     required this.id,
     required this.periodoId,
@@ -45,6 +51,10 @@ class SesionModel extends Equatable {
     this.espacioCodigo = '',
     this.espacioNombre = '',
     this.docentesNombres = const [],
+    this.sedeId = '',
+    this.sedeNombre = '',
+    this.bloqueId = '',
+    this.bloqueNombre = '',
   });
 
   static String _unir(List<String> partes) =>
@@ -78,6 +88,15 @@ class SesionModel extends Equatable {
     ];
     return textos.join(', ');
   }
+
+  /// "Bloque 1 · Sede Central"; vacío para clases virtuales o sin datos.
+  String get ubicacionTexto =>
+      espacioId.isEmpty ? '' : _unir([bloqueNombre, sedeNombre]);
+
+  /// Nombre de la asignatura, o su código si no hay nombre.
+  String get asignaturaTexto => asignaturaNombre.isNotEmpty
+      ? asignaturaNombre
+      : (asignaturaCodigo.isNotEmpty ? asignaturaCodigo : asignaturaId);
 
   bool get esCancelada => estado.toUpperCase() == 'CANCELADA';
 
@@ -115,6 +134,10 @@ class SesionModel extends Equatable {
       espacioCodigo: texto('espacioCodigo'),
       espacioNombre: texto('espacioNombre'),
       docentesNombres: nombres,
+      sedeId: texto('sedeId'),
+      sedeNombre: texto('sedeNombre'),
+      bloqueId: texto('bloqueId'),
+      bloqueNombre: texto('bloqueNombre'),
     );
   }
 
@@ -138,5 +161,9 @@ class SesionModel extends Equatable {
     espacioCodigo,
     espacioNombre,
     docentesNombres,
+    sedeId,
+    sedeNombre,
+    bloqueId,
+    bloqueNombre,
   ];
 }
