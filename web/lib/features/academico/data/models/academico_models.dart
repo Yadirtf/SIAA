@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+export 'asignacion_model.dart';
+
 class PeriodoModel extends Equatable {
   final String id;
   final String codigo;
@@ -158,70 +160,6 @@ class GrupoModel extends Equatable {
 
   @override
   List<Object?> get props => [id, numero, asignaturaId, periodoId, cupo];
-}
-
-class AsignacionModel extends Equatable {
-  final String id;
-  final String periodoId;
-  final String docenteNombre;
-  final String grupoId;
-  final String asignaturaId;
-  final String? espacioId;
-  final String? espacioNombre;
-  final int diaSemana;
-  final String horaInicio;
-  final String horaFin;
-  final String modalidad;
-  final String estado;
-
-  const AsignacionModel({
-    required this.id,
-    required this.periodoId,
-    required this.docenteNombre,
-    required this.grupoId,
-    required this.asignaturaId,
-    this.espacioId,
-    this.espacioNombre,
-    required this.diaSemana,
-    required this.horaInicio,
-    required this.horaFin,
-    required this.modalidad,
-    required this.estado,
-  });
-
-  factory AsignacionModel.fromJson(Map<String, dynamic> json) {
-    final franja = json['franja'] as Map<String, dynamic>? ?? {};
-    return AsignacionModel(
-      id: json['id']?.toString() ?? '',
-      periodoId: json['periodoId']?.toString() ?? '',
-      docenteNombre: json['docenteNombre']?.toString() ?? '',
-      grupoId: json['grupoId']?.toString() ?? '',
-      asignaturaId: json['asignaturaId']?.toString() ?? '',
-      espacioId: json['espacioId']?.toString(),
-      espacioNombre: json['espacioNombre']?.toString(),
-      diaSemana: (franja['diaSemana'] as num?)?.toInt() ?? 1,
-      horaInicio: franja['horaInicio']?.toString() ?? '',
-      horaFin: franja['horaFin']?.toString() ?? '',
-      modalidad: json['modalidad']?.toString() ?? 'PRESENCIAL',
-      estado: json['estado']?.toString() ?? 'PROPUESTA',
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    id,
-    periodoId,
-    docenteNombre,
-    grupoId,
-    asignaturaId,
-    espacioId,
-    espacioNombre,
-    diaSemana,
-    horaInicio,
-    horaFin,
-    modalidad,
-    estado,
-  ];
 }
 
 class ExcepcionModel extends Equatable {

@@ -60,6 +60,10 @@ type SesionResponseDTO struct {
 	EspacioCodigo    string   `json:"espacioCodigo,omitempty"`
 	EspacioNombre    string   `json:"espacioNombre,omitempty"`
 	DocentesNombres  []string `json:"docentesNombres,omitempty"`
+	SedeID           string   `json:"sedeId,omitempty"`
+	SedeNombre       string   `json:"sedeNombre,omitempty"`
+	BloqueID         string   `json:"bloqueId,omitempty"`
+	BloqueNombre     string   `json:"bloqueNombre,omitempty"`
 }
 
 // GenerarSesiones maneja POST /api/v1/periodos/:id/generar-sesiones (US-ACA-05).
@@ -90,6 +94,10 @@ func (h *AcademicoHandler) ListarSesiones(c echo.Context) error {
 		EspacioID:    c.QueryParam("espacioId"),
 		Fecha:        c.QueryParam("fecha"),
 		Alcance:      middleware.FiltroAlcanceDe(c),
+	}
+	var err error
+	if filter.FechaDesde, filter.FechaHasta, err = rangoFechas(c.QueryParam("desde"), c.QueryParam("hasta")); err != nil {
+		return err
 	}
 	if estStr := c.QueryParam("estado"); estStr != "" {
 		st := domainAca.EstadoSesion(estStr)
@@ -188,6 +196,7 @@ func sesionToDTO(s *domainAca.Sesion) SesionResponseDTO {
 		GrupoID:                 s.GrupoID(),
 		DocenteIDs:              s.DocenteIDs(),
 		EspacioID:               s.EspacioID(),
+		SedeID:                  s.SedeID(),
 		Fecha:                   s.Fecha(),
 		HoraInicio:              s.HoraInicio(),
 		HoraFin:                 s.HoraFin(),
@@ -214,5 +223,6 @@ func sesionToDTO(s *domainAca.Sesion) SesionResponseDTO {
 func conNombres(d SesionResponseDTO, n usecaseAca.NombresSesion) SesionResponseDTO {
 	d.AsignaturaCodigo, d.AsignaturaNombre, d.GrupoNumero = n.AsignaturaCodigo, n.AsignaturaNombre, n.GrupoNumero
 	d.EspacioCodigo, d.EspacioNombre, d.DocentesNombres = n.EspacioCodigo, n.EspacioNombre, n.Docentes
+	d.BloqueID, d.BloqueNombre, d.SedeNombre = n.BloqueID, n.BloqueNombre, n.SedeNombre
 	return d
 }

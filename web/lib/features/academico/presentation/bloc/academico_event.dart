@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 
 abstract class AcademicoEvent extends Equatable {
@@ -127,9 +129,12 @@ class DeleteGrupoEvent extends AcademicoEvent {
 }
 
 class CreateAsignacionEvent extends AcademicoEvent {
-
   final Map<String, dynamic> body;
-  const CreateAsignacionEvent(this.body);
+
+  /// Si viene, el formulario espera aquí el resultado y muestra él mismo el
+  /// error, sin reemplazar la pantalla por el estado de error.
+  final Completer<void>? resultado;
+  const CreateAsignacionEvent(this.body, {this.resultado});
 
   @override
   List<Object?> get props => [body];

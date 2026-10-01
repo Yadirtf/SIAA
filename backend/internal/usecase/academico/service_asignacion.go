@@ -103,7 +103,7 @@ func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd 
 
 	if colision := domainAca.DetectarColisiones(existentes, *asig); colision != nil {
 		s.log.Warn("colisión horaria rechazada", applog.Extra(map[string]interface{}{"tipo": colision.Tipo, "mensaje": colision.Mensaje}))
-		return nil, fmt.Errorf("%w: %s", ErrColisionDetectada, colision.Mensaje)
+		return nil, s.errorColisionLegible(ctx, colision, existentes)
 	}
 
 	var advertencias []string
@@ -144,5 +144,9 @@ func (s *Service) EliminarAsignacion(ctx context.Context, actor ContextoActor, i
 			return ErrFueraDeAmbitoFacultad
 		}
 	}
-	return s.asignacionRepo.DeleteLogico(ctx, id)
+	if err := s.asignacionRepo.DeleteLogico(ctx, id); err != nil {
+		return err
+	}
+	s.cancelarSesionesFuturas(ctx, actor, id)
+	return nil
 }

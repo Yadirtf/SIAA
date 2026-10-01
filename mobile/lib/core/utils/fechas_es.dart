@@ -44,10 +44,42 @@ String mesAnio(DateTime f) {
 /// "25/09/2026".
 String fechaCorta(DateTime f) => '${_dos(f.day)}/${_dos(f.month)}/${f.year}';
 
-/// "25/09/2026 07:05" en hora local.
+/// "6:30 p. m." a partir de hora y minuto en 24 h.
+String hora12hDe(int hora, int minuto) {
+  final h = hora % 12 == 0 ? 12 : hora % 12;
+  final sufijo = hora < 12 ? 'a. m.' : 'p. m.';
+  return '$h:${_dos(minuto)} $sufijo';
+}
+
+/// "6:30 p. m." en la hora local del dispositivo.
+String hora12h(DateTime f) {
+  final l = f.toLocal();
+  return hora12hDe(l.hour, l.minute);
+}
+
+/// Convierte "18:30" (24 h, como lo envía el backend) a "6:30 p. m.".
+/// Si el texto no es una hora válida lo devuelve igual.
+String hora12hDesdeTexto(String hhmm) {
+  final partes = hhmm.trim().split(':');
+  if (partes.length < 2) return hhmm;
+  final h = int.tryParse(partes[0]);
+  final m = int.tryParse(partes[1]);
+  if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+    return hhmm;
+  }
+  return hora12hDe(h, m);
+}
+
+/// "25/09/2026 7:05 a. m." en hora local.
 String fechaHora(DateTime f) {
   final l = f.toLocal();
-  return '${fechaCorta(l)} ${_dos(l.hour)}:${_dos(l.minute)}';
+  return '${fechaCorta(l)} ${hora12h(l)}';
+}
+
+/// "25/09 7:05 a. m." en hora local.
+String diaMesHora(DateTime f) {
+  final l = f.toLocal();
+  return '${_dos(l.day)}/${_dos(l.month)} ${hora12h(l)}';
 }
 
 /// "2026-09-25".

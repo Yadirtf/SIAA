@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/error_operacion_dialog.dart';
+import '../../data/models/academico_models.dart';
 import '../../data/models/sesion_model.dart';
+import '../bloc/academico_bloc.dart';
+import '../bloc/academico_state.dart';
 import '../bloc/sesiones_bloc.dart';
-import '../dialogs/sesion_ops_dialogs.dart';
-import '../../../../core/utils/hora_12h.dart';
+import '../helpers/filtro_sesiones.dart';
+import '../widgets/filtros_sesiones_bar.dart';
+import '../widgets/rango_semana_selector.dart';
+import '../widgets/tabla_sesiones.dart';
 
+/// Sesiones de clase en una tabla: por defecto la semana actual, con filtros
+/// para ubicar rápido un aula, un docente o un grupo.
 class SesionesScreen extends StatefulWidget {
   const SesionesScreen({super.key});
 
@@ -16,263 +25,205 @@ class SesionesScreen extends StatefulWidget {
 }
 
 class _SesionesScreenState extends State<SesionesScreen> {
-  String? _selectedEstado;
+  String? _periodoId;
+  DateTimeRange _rango = semanaDe(DateTime.now());
+  FiltroSesiones _filtro = const FiltroSesiones();
+  ColumnaSesion _columna = ColumnaSesion.fecha;
+  bool _ascendente = true;
+  int _pagina = 0;
+  // Cambia al limpiar filtros para que la barra se vuelva a dibujar vacía.
+  int _versionFiltros = 0;
+  List<PeriodoModel> _periodos = const [];
 
   @override
   void initState() {
     super.initState();
-    context.read<SesionesBloc>().add(const LoadSesionesEvent());
+    final academico = context.read<AcademicoBloc>().state;
+    if (academico is AcademicoLoaded) _periodos = academico.periodos;
+    _cargar();
   }
 
-  void _onFilterChanged(String? estado) {
-    setState(() => _selectedEstado = estado);
-    context.read<SesionesBloc>().add(LoadSesionesEvent(estado: estado));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sesiones de Clase Materializadas',
-                      style: AppTextStyles.h2,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Supervisión y control puntual de clases generadas (US-ACA-05, US-ACA-06, US-ACA-09)',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              DropdownButton<String>(
-                value: _selectedEstado,
-                hint: const Text('Todos los estados'),
-                underline: const SizedBox.shrink(),
-                items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('Todos los estados'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'PROGRAMADA',
-                    child: Text('PROGRAMADA'),
-                  ),
-                  DropdownMenuItem(value: 'EN_CURSO', child: Text('EN CURSO')),
-                  DropdownMenuItem(
-                    value: 'REALIZADA',
-                    child: Text('REALIZADA'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'CANCELADA',
-                    child: Text('CANCELADA'),
-                  ),
-                ],
-                onChanged: _onFilterChanged,
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Refrescar sesiones',
-                onPressed: () => context.read<SesionesBloc>().add(
-                  LoadSesionesEvent(estado: _selectedEstado),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: BlocBuilder<SesionesBloc, SesionesState>(
-              builder: (context, state) {
-                if (state is SesionesLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state is SesionesError) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: AppColors.accentRose,
-                          size: 36,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(state.message, style: AppTextStyles.bodyMedium),
-                      ],
-                    ),
-                  );
-                }
-                if (state is SesionesLoaded) {
-                  if (state.sesiones.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.event_busy_rounded,
-                            size: 48,
-                            color: AppColors.textMuted.withOpacity(0.5),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No se encontraron sesiones generadas',
-                            style: AppTextStyles.h3,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'En "Periodos" use "Generar sesiones" para materializar el calendario.',
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    itemCount: state.sesiones.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) =>
-                        _buildSesionCard(context, state.sesiones[i]),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-        ],
+  void _cargar() {
+    _pagina = 0;
+    context.read<SesionesBloc>().add(
+      LoadSesionesEvent(
+        periodoId: _periodoId,
+        desde: fechaIso(_rango.start),
+        hasta: fechaIso(_rango.end),
       ),
     );
   }
 
-  Widget _buildSesionCard(BuildContext context, SesionModel s) {
-    Color badgeBg = AppColors.statusInfoBg;
-    Color badgeFg = AppColors.statusInfoText;
-    if (s.estado == 'REALIZADA') {
-      badgeBg = AppColors.statusSuccessBg;
-      badgeFg = AppColors.statusSuccessText;
-    } else if (s.estado == 'CANCELADA') {
-      badgeBg = AppColors.accentRose.withOpacity(0.12);
-      badgeFg = AppColors.accentRose;
-    }
+  void _cambiarFiltro(FiltroSesiones f) => setState(() {
+    if (!f.activo && _filtro.activo) _versionFiltros++;
+    _filtro = f;
+    _pagina = 0;
+  });
 
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: badgeBg,
-          child: Icon(Icons.event_available_rounded, color: badgeFg),
+  void _avisar(BuildContext context, SesionesState state) {
+    if (state is! SesionesLoaded) return;
+    if (state.errorMessage != null) {
+      mostrarErrorOperacion(
+        context,
+        ApiException(message: state.errorMessage!),
+      );
+    } else if (state.successMessage != null) {
+      ScaffoldMessenger.maybeOf(context)
+          ?.showSnackBar(SnackBar(content: Text(state.successMessage!)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AcademicoBloc, AcademicoState>(
+          listener: (_, s) {
+            if (s is AcademicoLoaded) setState(() => _periodos = s.periodos);
+          },
         ),
-        title: Text(
-          'Fecha: ${s.fecha} • Horario: ${hora12hDesdeTexto(s.horaInicio)} - ${hora12hDesdeTexto(s.horaFin)}',
-          style: AppTextStyles.h3,
-        ),
-        subtitle: Text(
-          'Aula: ${s.aulaTexto} • Grupo: ${s.grupoTexto} • Docente(s): ${s.docentesTexto}'
-          '${s.motivoCancelacion.isNotEmpty ? "\nMotivo cancelación: ${s.motivoCancelacion}" : ""}',
-          style: AppTextStyles.bodyMedium,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+        BlocListener<SesionesBloc, SesionesState>(listener: _avisar),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(12),
+            _encabezado(),
+            const SizedBox(height: 16),
+            Expanded(
+              child: BlocBuilder<SesionesBloc, SesionesState>(
+                builder: (context, state) => switch (state) {
+                  SesionesLoaded(:final sesiones) => _contenido(sesiones),
+                  SesionesError(:final message) => _aviso(
+                    Icons.error_outline,
+                    message,
+                    '',
+                    AppColors.accentRose,
+                  ),
+                  _ => const Center(child: CircularProgressIndicator()),
+                },
               ),
-              child: Text(
-                s.estado,
-                style: TextStyle(
-                  color: badgeFg,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded),
-              tooltip: 'Acciones de sesión',
-              onSelected: (val) {
-                if (val == 'aula') {
-                  showDialog(
-                    context: context,
-                    builder: (_) => ReasignarAulaDialog(
-                      sesionId: s.id,
-                      aulaActual: s.aulaTexto,
-                      espacioActualId: s.espacioId.isEmpty ? null : s.espacioId,
-                    ),
-                  );
-                } else if (val == 'suplente') {
-                  showDialog(
-                    context: context,
-                    builder: (_) => DocenteReemplazoDialog(
-                      sesionId: s.id,
-                      docenteActual: s.docentesTexto,
-                    ),
-                  );
-                } else if (val == 'cancelar') {
-                  showDialog(
-                    context: context,
-                    builder: (_) => CancelarSesionDialog(sesionId: s.id),
-                  );
-                }
-              },
-              itemBuilder: (ctx) => [
-                const PopupMenuItem(
-                  value: 'aula',
-                  child: Row(
-                    children: [
-                      Icon(Icons.meeting_room_outlined, size: 18),
-                      SizedBox(width: 8),
-                      Flexible(child: Text('Reasignar Aula (US-ACA-06)')),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'suplente',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_add_alt_outlined, size: 18),
-                      SizedBox(width: 8),
-                      Flexible(child: Text('Asignar Suplente (US-ACA-09)')),
-                    ],
-                  ),
-                ),
-                if (s.estado != 'CANCELADA')
-                  const PopupMenuItem(
-                    value: 'cancelar',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.cancel_outlined,
-                          size: 18,
-                          color: AppColors.accentRose,
-                        ),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'Cancelar Sesión (US-ACA-06)',
-                            style: TextStyle(color: AppColors.accentRose),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _encabezado() => Wrap(
+    spacing: 16,
+    runSpacing: 12,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    alignment: WrapAlignment.spaceBetween,
+    children: [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Sesiones de Clase', style: AppTextStyles.h2),
+          const SizedBox(height: 4),
+          Text(
+            'Ubique cada clase por fecha, aula, docente o grupo '
+            '(US-ACA-05, US-ACA-06, US-ACA-09)',
+            style: AppTextStyles.bodyMedium,
+          ),
+        ],
+      ),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RangoSemanaSelector(
+            rango: _rango,
+            onCambio: (r) {
+              setState(() => _rango = r);
+              _cargar();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refrescar sesiones',
+            onPressed: _cargar,
+          ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _contenido(List<SesionModel> sesiones) {
+    final filtradas = ordenarSesiones(
+      _filtro.aplicar(sesiones),
+      _columna,
+      _ascendente,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FiltrosSesionesBar(
+          key: ValueKey(_versionFiltros),
+          periodos: _periodos,
+          periodoId: _periodoId,
+          onPeriodo: (p) {
+            setState(() => _periodoId = p);
+            _cargar();
+          },
+          filtro: _filtro,
+          opciones: OpcionesSesiones.desde(sesiones, _filtro),
+          onCambio: _cambiarFiltro,
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: sesiones.isEmpty
+              ? _aviso(
+                  Icons.event_busy_rounded,
+                  'No hay sesiones en este rango de fechas',
+                  'Cambie de semana, o en "Periodos" use "Generar sesiones" '
+                      'para materializar el calendario.',
+                  AppColors.textMuted,
+                )
+              : filtradas.isEmpty
+              ? _aviso(
+                  Icons.filter_alt_off_outlined,
+                  'Ninguna sesión coincide con los filtros',
+                  'Ajuste o limpie los filtros para ver más resultados.',
+                  AppColors.textMuted,
+                )
+              : TablaSesiones(
+                  sesiones: filtradas,
+                  columna: _columna,
+                  ascendente: _ascendente,
+                  pagina: _pagina.clamp(
+                    0,
+                    (filtradas.length - 1) ~/ TablaSesiones.porPagina,
+                  ),
+                  onOrdenar: (c, asc) => setState(() {
+                    _columna = c;
+                    _ascendente = asc;
+                    _pagina = 0;
+                  }),
+                  onPagina: (p) => setState(() => _pagina = p),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _aviso(IconData icono, String titulo, String detalle, Color color) =>
+      Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icono, size: 44, color: color),
+            const SizedBox(height: 12),
+            Text(titulo, style: AppTextStyles.h3, textAlign: TextAlign.center),
+            if (detalle.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                detalle,
+                style: AppTextStyles.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      );
 }

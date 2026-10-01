@@ -16,6 +16,10 @@ type NombresSesion struct {
 	EspacioCodigo    string
 	EspacioNombre    string
 	Docentes         []string
+	// Ubicación del aula, para ubicar la clase por bloque y sede.
+	BloqueID     string
+	BloqueNombre string
+	SedeNombre   string
 }
 
 // NombresDeSesiones resuelve los nombres de un lote de sesiones consultando cada entidad una sola
@@ -23,7 +27,8 @@ type NombresSesion struct {
 func (s *Service) NombresDeSesiones(ctx context.Context, sesiones []*domainAca.Sesion) map[string]NombresSesion {
 	asignaturas := map[string][2]string{}
 	grupos := map[string]string{}
-	espacios := map[string][2]string{}
+	espacios := map[string][3]string{}
+	ubic := s.nuevoCacheUbicaciones()
 	docentes := map[string]string{}
 	res := make(map[string]NombresSesion, len(sesiones))
 	for _, ses := range sesiones {
@@ -40,14 +45,19 @@ func (s *Service) NombresDeSesiones(ctx context.Context, sesiones []*domainAca.S
 			n.GrupoNumero = g.Numero()
 			grupos[ses.GrupoID()] = g.Numero()
 		}
-		if v, ok := espacios[ses.EspacioID()]; ok {
-			n.EspacioCodigo, n.EspacioNombre = v[0], v[1]
-		} else if s.espacioRepo != nil && ses.EspacioID() != "" {
+		aula, ok := espacios[ses.EspacioID()]
+		if !ok && s.espacioRepo != nil && ses.EspacioID() != "" {
 			if e, err := s.espacioRepo.FindByID(ctx, ses.EspacioID()); err == nil && e != nil {
-				n.EspacioCodigo, n.EspacioNombre = e.Codigo, e.Nombre
-				espacios[ses.EspacioID()] = [2]string{e.Codigo, e.Nombre}
+				aula = [3]string{e.Codigo, e.Nombre, ""}
+				if e.BloqueID != nil {
+					aula[2] = *e.BloqueID
+				}
+				espacios[ses.EspacioID()] = aula
 			}
 		}
+		n.EspacioCodigo, n.EspacioNombre, n.BloqueID = aula[0], aula[1], aula[2]
+		n.BloqueNombre = ubic.bloque(ctx, n.BloqueID)
+		n.SedeNombre = ubic.sede(ctx, ses.SedeID())
 		for _, id := range ses.DocenteIDs() {
 			nombre, ok := docentes[id]
 			if !ok && s.usuarioRepo != nil {

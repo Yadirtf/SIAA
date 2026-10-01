@@ -1,6 +1,6 @@
 // decision_consentimiento_panel.dart — Botones explícitos Acepto / No acepto (US-LEG-01 AC-01)
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/fechas_es.dart';
 import '../cubit/consentimiento_state.dart';
 
 class DecisionConsentimientoPanel extends StatelessWidget {
@@ -21,7 +21,7 @@ class DecisionConsentimientoPanel extends StatelessWidget {
     final colores = Theme.of(context).colorScheme;
     final fecha = c?.decididoEn == null
         ? ''
-        : ' el ${DateFormat('dd/MM/yyyy HH:mm').format(c!.decididoEn!.toLocal())}';
+        : ' el ${fechaHora(c!.decididoEn!)}';
 
     String? resumen;
     if (state.otorgado) {

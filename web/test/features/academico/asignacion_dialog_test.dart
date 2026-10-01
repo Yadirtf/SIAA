@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:siaa_web/core/network/api_exception.dart';
+import 'package:siaa_web/core/network/edicion_remote_datasource.dart';
 import 'package:siaa_web/core/widgets/selector_busqueda.dart';
 import 'package:siaa_web/features/academico/data/models/academico_models.dart';
 import 'package:siaa_web/features/academico/presentation/bloc/academico_bloc.dart';
@@ -8,18 +10,43 @@ import 'package:siaa_web/features/academico/presentation/dialogs/asignacion_dial
 import 'package:siaa_web/features/geo/data/buscador_espacios.dart';
 import 'package:siaa_web/features/usuarios/data/buscador_usuarios.dart';
 
+import '../../helpers/fake_edicion.dart';
 import 'academico_dialogs_test.dart' show FakeAcademicoRepository;
 import 'fake_catalogos.dart';
 
 class _RepoQueCaptura extends FakeAcademicoRepository {
   final cuerpos = <Map<String, dynamic>>[];
 
+  /// Si se define, el "servidor" rechaza el guardado con este error.
+  Object? rechazo;
+
   @override
   Future<AsignacionModel> createAsignacion(Map<String, dynamic> body) {
     cuerpos.add(body);
+    if (rechazo != null) return Future.error(rechazo!);
     return super.createAsignacion(body);
   }
 }
+
+const _choqueDocente = ApiException(
+  statusCode: 409,
+  message:
+      'Ana Pérez ya tiene clase el miércoles de 6:30 p. m. a 7:30 p. m. '
+      '(Cálculo I, grupo 01, aula A-101 · Aula 101).',
+  details: {
+    'codigo': 'CONFLICTO_HORARIO',
+    'contexto': {
+      'tipo': 'COLISION_DOCENTE',
+      'docente': 'Ana Pérez',
+      'asignatura': 'Cálculo I',
+      'grupo': '01',
+      'aula': 'A-101 · Aula 101',
+      'dia': 'miércoles',
+      'horaInicio': '6:30 p. m.',
+      'horaFin': '7:30 p. m.',
+    },
+  },
+);
 
 const _periodos = [
   PeriodoModel(
@@ -83,8 +110,10 @@ void main() {
   late _RepoQueCaptura repo;
   late FakeBuscadorUsuarios usuarios;
   late FakeBuscadorEspacios espacios;
+  late FakeEdicion edicion;
 
   setUp(() {
+    edicion = FakeEdicion();
     repo = _RepoQueCaptura();
     usuarios = FakeBuscadorUsuarios([
       docente('doc-1', 'Ana', 'Pérez'),
@@ -96,7 +125,7 @@ void main() {
     ]);
   });
 
-  Future<void> abrir(WidgetTester tester) async {
+  Future<void> abrir(WidgetTester tester, {AsignacionModel? inicial}) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
@@ -104,24 +133,28 @@ void main() {
         providers: [
           RepositoryProvider<BuscadorUsuarios>.value(value: usuarios),
           RepositoryProvider<BuscadorEspacios>.value(value: espacios),
+          RepositoryProvider<EdicionRemoteDataSource>.value(value: edicion),
         ],
         child: BlocProvider(
           create: (_) => AcademicoBloc(repository: repo),
           child: MaterialApp(
-            home: Builder(
-              builder: (ctx) => ElevatedButton(
-                onPressed: () => showDialog(
-                  context: ctx,
-                  builder: (_) => BlocProvider.value(
-                    value: ctx.read<AcademicoBloc>(),
-                    child: const AsignacionDialog(
-                      periodos: _periodos,
-                      grupos: _grupos,
-                      asignaturas: _asignaturas,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => showDialog(
+                    context: ctx,
+                    builder: (_) => BlocProvider.value(
+                      value: ctx.read<AcademicoBloc>(),
+                      child: AsignacionDialog(
+                        periodos: _periodos,
+                        grupos: _grupos,
+                        asignaturas: _asignaturas,
+                        inicial: inicial,
+                      ),
                     ),
                   ),
+                  child: const Text('Abrir'),
                 ),
-                child: const Text('Abrir'),
               ),
             ),
           ),
@@ -305,5 +338,73 @@ void main() {
     await tester.pumpAndSettle();
     expect(espacios.sedesPedidas.last, isNull);
     expect(find.text('S-900 · Aula Sur'), findsOneWidget);
+  });
+
+  testWidgets(
+    'un cruce de horario se explica en un modal y no cierra el formulario',
+    (tester) async {
+      repo.rechazo = _choqueDocente;
+      await abrir(tester);
+      await elegir(tester, 'Docente principal *', 'Ana Pérez');
+      await elegir(tester, 'Aula *', 'A-101 · Aula 101');
+      await tester.tap(find.text('Guardar Asignación'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('El docente ya tiene clase a esa hora'), findsOneWidget);
+      expect(find.text('Clase que ya ocupa ese horario'), findsOneWidget);
+      expect(find.text('Miércoles, 6:30 p. m. a 7:30 p. m.'), findsOneWidget);
+      expect(find.textContaining('doc-1'), findsNothing);
+
+      await tester.tap(find.text('Revisar el formulario'));
+      await tester.pumpAndSettle();
+
+      // El formulario sigue abierto con lo elegido, listo para corregir.
+      expect(find.text('Guardar Asignación'), findsOneWidget);
+      expect(find.text('Ana Pérez'), findsOneWidget);
+      expect(find.text('El docente ya tiene clase a esa hora'), findsNothing);
+    },
+  );
+
+  testWidgets('edita una asignación con sus datos cargados y envía PUT', (
+    tester,
+  ) async {
+    edicion.respuesta = {'id': 'asg-7', 'sesionesGeneradas': 9};
+    await abrir(
+      tester,
+      inicial: const AsignacionModel(
+        id: 'asg-7',
+        periodoId: 'per-1',
+        docenteIds: ['doc-1'],
+        docenteNombre: 'Ana Pérez',
+        grupoId: 'g-1',
+        asignaturaId: 'as-1',
+        espacioId: 'esp-1',
+        espacioNombre: 'A-101 · Aula 101',
+        diaSemana: 3,
+        horaInicio: '18:30',
+        horaFin: '19:30',
+        modalidad: 'PRESENCIAL',
+        estado: 'ACTIVA',
+      ),
+    );
+
+    expect(find.text('Editar Asignación Horaria'), findsOneWidget);
+    expect(find.text('Ana Pérez'), findsOneWidget);
+    expect(find.text('A-101 · Aula 101'), findsOneWidget);
+    expect(find.text('6:30 p. m.'), findsOneWidget);
+
+    await elegir(tester, 'Docente principal *', 'Bruno Díaz');
+    await tester.tap(find.text('Guardar cambios'));
+    await tester.pumpAndSettle();
+
+    final (url, cuerpo, parcial) = edicion.llamadas.single;
+    expect(url, endsWith('/asignaciones/asg-7'));
+    expect(parcial, isFalse);
+    expect(cuerpo['docenteIds'], ['doc-2']);
+    expect(cuerpo['espacioId'], 'esp-1');
+    expect((cuerpo['franja'] as Map)['horaInicio'], '18:30');
+    expect(repo.cuerpos, isEmpty);
+    expect(find.text('Editar Asignación Horaria'), findsNothing);
+    expect(find.textContaining('9 sesiones futuras'), findsOneWidget);
   });
 }

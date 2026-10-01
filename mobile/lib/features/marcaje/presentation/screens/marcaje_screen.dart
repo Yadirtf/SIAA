@@ -225,7 +225,10 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (state.sesionActiva != null) ...[
-                        SesionCard(sesion: state.sesionActiva!),
+                        SesionCard(
+                          sesion: state.sesionActiva!,
+                          onVentanaCambia: _recargar,
+                        ),
                         const SizedBox(height: 32),
                         OneTouchButton(
                           onPressed: state.puedeMarcar

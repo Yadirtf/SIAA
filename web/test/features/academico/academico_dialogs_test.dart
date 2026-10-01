@@ -132,6 +132,8 @@ class FakeAcademicoRepository implements AcademicoRepository {
     String? espacioId,
     String? fecha,
     String? estado,
+    String? desde,
+    String? hasta,
   }) async =>
       [];
 

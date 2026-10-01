@@ -140,7 +140,12 @@ func (r *asignacionRepository) GetByID(ctx context.Context, id string) (*domainA
 }
 
 func (r *asignacionRepository) ListByPeriodoID(ctx context.Context, periodoID string) ([]domainAca.Asignacion, error) {
-	cur, err := r.col.Find(ctx, bson.M{"periodoId": periodoID, "borrado": false})
+	// Sin periodo se listan las asignaciones de todos los periodos (la consola filtra después).
+	filtro := bson.M{"borrado": false}
+	if periodoID != "" {
+		filtro["periodoId"] = periodoID
+	}
+	cur, err := r.col.Find(ctx, filtro)
 	if err != nil {
 		return nil, err
 	}

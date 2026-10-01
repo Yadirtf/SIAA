@@ -10,6 +10,9 @@ import '../dialogs/asignatura_dialog.dart';
 import '../dialogs/facultad_dialog.dart';
 import '../dialogs/grupo_dialog.dart';
 import '../dialogs/programa_dialog.dart';
+import '../edicion/editores_academicos.dart';
+import '../widgets/item_registro_tile.dart';
+import '../../data/models/academico_models.dart';
 
 class EstructuraScreen extends StatefulWidget {
   const EstructuraScreen({super.key});
@@ -37,10 +40,7 @@ class _EstructuraScreenState extends State<EstructuraScreen>
   void _onRegistrarNuevo(BuildContext context, AcademicoLoaded state) {
     switch (_tabController.index) {
       case 0:
-        showDialog(
-          context: context,
-          builder: (_) => const FacultadDialog(),
-        );
+        showDialog(context: context, builder: (_) => const FacultadDialog());
         break;
       case 1:
         showDialog(
@@ -94,7 +94,10 @@ class _EstructuraScreenState extends State<EstructuraScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Estructura Curricular', style: AppTextStyles.h2),
+                          Text(
+                            'Estructura Curricular',
+                            style: AppTextStyles.h2,
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             'Jerarquía académica: Facultades → Programas → Asignaturas → Grupos (US-ACA-01)',
@@ -144,114 +147,84 @@ class _EstructuraScreenState extends State<EstructuraScreen>
     );
   }
 
-  Widget _buildFacultadesList(AcademicoLoaded state) {
-    if (state.facultades.isEmpty) {
-      return const Center(child: Text('No hay facultades registradas.'));
-    }
+  Widget _lista<T>(
+    List<T> items,
+    String vacio,
+    Widget Function(BuildContext, T) item,
+  ) {
+    if (items.isEmpty) return Center(child: Text(vacio));
     return ListView.separated(
-      itemCount: state.facultades.length,
+      itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final f = state.facultades[i];
-        return Card(
-          child: ListTile(
-            leading: const Icon(
-              Icons.account_balance_outlined,
-              color: AppColors.primaryAccent,
-            ),
-            title: Text('${f.nombre} (${f.codigo})', style: AppTextStyles.h3),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-              tooltip: 'Eliminar facultad',
-              onPressed: () =>
-                  context.read<AcademicoBloc>().add(DeleteFacultadEvent(f.id)),
-            ),
-          ),
-        );
-      },
+      itemBuilder: (context, i) => item(context, items[i]),
     );
   }
 
-  Widget _buildProgramasList(AcademicoLoaded state) {
-    if (state.programas.isEmpty) {
-      return const Center(child: Text('No hay programas registrados.'));
-    }
-    return ListView.separated(
-      itemCount: state.programas.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final p = state.programas[i];
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.school_outlined, color: AppColors.accentCyan),
-            title: Text('${p.nombre} (${p.codigo})', style: AppTextStyles.h3),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-              tooltip: 'Eliminar programa',
-              onPressed: () =>
-                  context.read<AcademicoBloc>().add(DeleteProgramaEvent(p.id)),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  Widget _buildFacultadesList(AcademicoLoaded state) => _lista(
+    state.facultades,
+    'No hay facultades registradas.',
+    (context, f) => ItemRegistroTile(
+      icono: Icons.account_balance_outlined,
+      color: AppColors.primaryAccent,
+      titulo: '${f.nombre} (${f.codigo})',
+      nombreTipo: 'facultad',
+      onEditar: () => editarFacultad(context, f),
+      onEliminar: () =>
+          context.read<AcademicoBloc>().add(DeleteFacultadEvent(f.id)),
+    ),
+  );
 
-  Widget _buildAsignaturasList(AcademicoLoaded state) {
-    if (state.asignaturas.isEmpty) {
-      return const Center(child: Text('No hay asignaturas registradas.'));
-    }
-    return ListView.separated(
-      itemCount: state.asignaturas.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final a = state.asignaturas[i];
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.menu_book_rounded, color: AppColors.accentEmerald),
-            title: Text('${a.nombre} (${a.codigo})', style: AppTextStyles.h3),
-            subtitle: Text(
-              'Créditos: ${a.creditos}',
-              style: AppTextStyles.bodyMedium,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-              tooltip: 'Eliminar asignatura',
-              onPressed: () =>
-                  context.read<AcademicoBloc>().add(DeleteAsignaturaEvent(a.id)),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  Widget _buildProgramasList(AcademicoLoaded state) => _lista(
+    state.programas,
+    'No hay programas registrados.',
+    (context, p) => ItemRegistroTile(
+      icono: Icons.school_outlined,
+      color: AppColors.accentCyan,
+      titulo: '${p.nombre} (${p.codigo})',
+      nombreTipo: 'programa',
+      onEditar: () => editarPrograma(context, p),
+      onEliminar: () =>
+          context.read<AcademicoBloc>().add(DeleteProgramaEvent(p.id)),
+    ),
+  );
 
-  Widget _buildGruposList(AcademicoLoaded state) {
-    if (state.grupos.isEmpty) {
-      return const Center(child: Text('No hay grupos creados.'));
-    }
-    return ListView.separated(
-      itemCount: state.grupos.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final g = state.grupos[i];
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.groups_rounded, color: AppColors.accentAmber),
-            title: Text('Grupo ${g.numero}', style: AppTextStyles.h3),
-            subtitle: Text(
-              'Cupo: ${g.cupo} estudiantes',
-              style: AppTextStyles.bodyMedium,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-              tooltip: 'Eliminar grupo',
-              onPressed: () =>
-                  context.read<AcademicoBloc>().add(DeleteGrupoEvent(g.id)),
-            ),
-          ),
-        );
-      },
-    );
+  Widget _buildAsignaturasList(AcademicoLoaded state) => _lista(
+    state.asignaturas,
+    'No hay asignaturas registradas.',
+    (context, a) => ItemRegistroTile(
+      icono: Icons.menu_book_rounded,
+      color: AppColors.accentEmerald,
+      titulo: '${a.nombre} (${a.codigo})',
+      subtitulo: 'Créditos: ${a.creditos}',
+      nombreTipo: 'asignatura',
+      onEditar: () => editarAsignatura(context, a),
+      onEliminar: () =>
+          context.read<AcademicoBloc>().add(DeleteAsignaturaEvent(a.id)),
+    ),
+  );
+
+  Widget _buildGruposList(AcademicoLoaded state) => _lista(
+    state.grupos,
+    'No hay grupos creados.',
+    (context, g) => ItemRegistroTile(
+      icono: Icons.groups_rounded,
+      color: AppColors.accentAmber,
+      titulo: 'Grupo ${g.numero}',
+      subtitulo: _detalleGrupo(state, g),
+      nombreTipo: 'grupo',
+      onEditar: () => editarGrupo(context, g),
+      onEliminar: () =>
+          context.read<AcademicoBloc>().add(DeleteGrupoEvent(g.id)),
+    ),
+  );
+
+  String _detalleGrupo(AcademicoLoaded state, GrupoModel g) {
+    final asig = state.asignaturas.where((a) => a.id == g.asignaturaId);
+    final per = state.periodos.where((p) => p.id == g.periodoId);
+    return [
+      if (asig.isNotEmpty) asig.first.nombre,
+      if (per.isNotEmpty) 'Periodo ${per.first.codigo}',
+      'Cupo: ${g.cupo} estudiantes',
+    ].join(' · ');
   }
 }

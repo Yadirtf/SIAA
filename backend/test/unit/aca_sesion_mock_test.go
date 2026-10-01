@@ -108,3 +108,7 @@ func (m *mockSesionRepo) CountSesionesFuturasPorEspacio(ctx context.Context, esp
 	}
 	return count, nil
 }
+
+func (m *mockSesionRepo) EliminarLogico(ctx context.Context, ids []string) (int64, error) {
+	return 0, nil
+}

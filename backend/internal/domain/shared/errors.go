@@ -38,6 +38,8 @@ type DomainError struct {
 	Message string
 	Cause   error
 	Fields  []FieldError
+	// Contexto lleva datos legibles para que la interfaz explique el error (p. ej. un choque de horario).
+	Contexto map[string]string
 }
 
 type FieldError struct {

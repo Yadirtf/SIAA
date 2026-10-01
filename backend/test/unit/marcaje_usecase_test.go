@@ -301,3 +301,7 @@ func TestHistorial_Privacidad(t *testing.T) {
 		}
 	})
 }
+
+func (r *fakeSesionRepo) EliminarLogico(ctx context.Context, ids []string) (int64, error) {
+	return 0, nil
+}

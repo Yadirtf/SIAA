@@ -16,6 +16,7 @@ type errorResponse struct {
 	Codigo        string              `json:"codigo"`
 	Mensaje       string              `json:"mensaje"`
 	Detalles      []shared.FieldError `json:"detalles,omitempty"`
+	Contexto      map[string]string   `json:"contexto,omitempty"`
 	CorrelationID string              `json:"correlationId"`
 }
 
@@ -36,6 +37,7 @@ func ErrorHandler(log *applog.Logger) echo.HTTPErrorHandler {
 				Codigo:        string(de.Code),
 				Mensaje:       de.Message,
 				Detalles:      de.Fields,
+				Contexto:      de.Contexto,
 				CorrelationID: correlationID,
 			})
 			return

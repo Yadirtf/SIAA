@@ -913,3 +913,7 @@ func TestGeo_AutoInterseccion_Y_Normalizacion(t *testing.T) {
 		t.Fatalf("se esperaba área > 0, obtenido %f", area)
 	}
 }
+
+func (m *mockSesionChecker) EliminarLogico(ctx context.Context, ids []string) (int64, error) {
+	return 0, nil
+}

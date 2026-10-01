@@ -1,5 +1,6 @@
 // horario_card.dart - Tarjeta compacta de una sesión del horario (US-ACA-01..09, §9.1)
 import 'package:flutter/material.dart';
+import '../../../../core/utils/fechas_es.dart';
 import '../../data/models/sesion_horario_model.dart';
 
 class HorarioCard extends StatelessWidget {
@@ -30,13 +31,15 @@ class HorarioCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 52,
+              width: 76,
               child: Column(
                 children: [
-                  Text(sesion.horaInicio,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, color: color)),
-                  Text(sesion.horaFin,
+                  Text(hora12hDesdeTexto(sesion.horaInicio),
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: color)),
+                  Text(hora12hDesdeTexto(sesion.horaFin),
                       style: TextStyle(fontSize: 12, color: gris)),
                 ],
               ),

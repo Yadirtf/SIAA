@@ -8,7 +8,9 @@ import 'package:siaa_mobile/features/marcaje/domain/models/sesion_activa_model.d
 
 void main() {
   group('SesionActivaModel (US-MAR-01)', () {
-    test('deserializa correctamente detalle de sesión activa con ventana abierta', () {
+    test(
+        'deserializa correctamente detalle de sesión activa con ventana abierta',
+        () {
       final json = {
         'sesion': {
           'id': 'ses-101',
@@ -44,8 +46,30 @@ void main() {
     });
   });
 
+  test('calcula el desfase entre el reloj del servidor y el del celular', () {
+    final servidor = DateTime.now().toUtc().add(const Duration(minutes: 7));
+    final model = SesionActivaModel.fromDetalleJson({
+      'sesion': {'id': 'ses-1'},
+      'ventana': {'estado': 'NO_ABIERTA'},
+      'horaServidor': servidor.toIso8601String(),
+    });
+    expect(model.desfaseReloj.inMinutes, inInclusiveRange(6, 7));
+    expect(
+      model.ahoraServidor().difference(servidor).inSeconds.abs(),
+      lessThan(5),
+    );
+  });
+
+  test('sin hora del servidor no corrige el reloj', () {
+    final model = SesionActivaModel.fromDetalleJson({
+      'sesion': {'id': 'x'}
+    });
+    expect(model.desfaseReloj, Duration.zero);
+  });
+
   group('MarcajeResultModel (US-MAR-03, US-MAR-06)', () {
-    test('deserializa correctamente resultado rechazado con mensaje accionable', () {
+    test('deserializa correctamente resultado rechazado con mensaje accionable',
+        () {
       final json = {
         'marcajeId': 'mar-555',
         'resultado': 'RECHAZADO',

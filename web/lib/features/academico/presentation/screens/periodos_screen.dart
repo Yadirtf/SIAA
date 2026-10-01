@@ -8,6 +8,7 @@ import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
 import '../widgets/estado_periodo_chip.dart';
 import '../widgets/generar_sesiones_boton.dart';
+import '../edicion/editores_academicos.dart';
 
 class PeriodosScreen extends StatelessWidget {
   const PeriodosScreen({super.key});
@@ -223,6 +224,12 @@ class PeriodosScreen extends StatelessWidget {
                               GenerarSesionesBoton(periodo: p),
                               const SizedBox(width: 12),
                               EstadoPeriodoChip(estado: p.estado),
+                              if (p.estado != 'CERRADO')
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Editar periodo',
+                                  onPressed: () => editarPeriodo(context, p),
+                                ),
                             ],
                           ),
                         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'core/network/edicion_remote_datasource.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/academico/data/academico_remote_datasource.dart';
@@ -93,6 +94,9 @@ class SiaaApp extends StatelessWidget {
         ),
         RepositoryProvider<AuditoriaRepository>(
           create: (_) => AuditoriaRepositoryImpl(),
+        ),
+        RepositoryProvider<EdicionRemoteDataSource>(
+          create: (_) => EdicionRemoteDataSource(),
         ),
         // Catálogos de los selectores con búsqueda (sin ids escritos a mano).
         RepositoryProvider<BuscadorUsuarios>(

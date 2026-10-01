@@ -1,6 +1,6 @@
 // notificacion_tile.dart — Elemento de la bandeja de notificaciones (US-NOT-01/02)
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/fechas_es.dart';
 import '../../domain/models/notificacion_model.dart';
 
 class NotificacionTile extends StatelessWidget {
@@ -33,7 +33,7 @@ class NotificacionTile extends StatelessWidget {
     final n = notificacion;
     final fecha = n.creadaEn == null
         ? ''
-        : DateFormat('dd/MM HH:mm').format(n.creadaEn!.toLocal());
+        : diaMesHora(n.creadaEn!);
     return ListTile(
       leading: Icon(_icono(n.tipo)),
       title: Text(
