@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'adjunto_model.dart';
 import 'transicion_model.dart';
+import '../../../../core/utils/hora_12h.dart';
 
 /// Novedad radicada por un docente sobre una sesión (EP-07).
 class JustificacionModel extends Equatable {
@@ -69,7 +70,7 @@ class JustificacionModel extends Equatable {
       sedeId: opcional('sedeId'),
       facultadId: opcional('facultadId'),
       fechaSesion: json['fechaSesion']?.toString() ?? '',
-      nombreSesion: opcional('nombreSesion'),
+      nombreSesion: _horas12h(opcional('nombreSesion')),
       creadoEn: fecha('creadoEn'),
       actualizadoEn: fecha('actualizadoEn'),
     );
@@ -95,3 +96,6 @@ class JustificacionModel extends Equatable {
     actualizadoEn,
   ];
 }
+
+String? _horas12h(String? texto) =>
+    texto == null ? null : horasEnTexto12h(texto);

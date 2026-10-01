@@ -2,6 +2,8 @@
 package exportar
 
 import (
+	"github.com/siaa/backend/internal/domain/shared"
+
 	"crypto/sha256"
 	"encoding/hex"
 	"strings"
@@ -34,7 +36,7 @@ func (t Tabla) Huella() string {
 func (t Tabla) encabezado() [][2]string {
 	meta := append([][2]string(nil), t.Metadatos...)
 	meta = append(meta,
-		[2]string{"Generado", t.GeneradoEn.In(zona()).Format("2006-01-02 15:04 MST")},
+		[2]string{"Generado", shared.FechaHoraLocal(t.GeneradoEn)},
 		[2]string{"Generado por", t.GeneradoPor},
 		[2]string{"Huella SHA-256", t.Huella()},
 	)

@@ -67,7 +67,7 @@ func (s *Service) Radicar(ctx context.Context, actor Actor, req SolicitudRadicar
 	j.SedeID = sesion.SedeID()
 	j.FacultadID = sesion.FacultadID()
 	j.FechaSesion = sesion.Fecha()
-	j.NombreSesion = fmt.Sprintf("%s %s-%s", sesion.Fecha(), sesion.HoraInicio(), sesion.HoraFin())
+	j.NombreSesion = fmt.Sprintf("%s %s - %s", sesion.Fecha(), shared.Hora12h(sesion.HoraInicio()), shared.Hora12h(sesion.HoraFin()))
 
 	for i, a := range adjuntos {
 		if err := s.adjuntos.Guardar(ctx, a.ID, req.Soportes[i].Contenido); err != nil {

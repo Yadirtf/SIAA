@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../network/api_exception.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../utils/hora_12h.dart';
 
 /// Muestra por qué el servidor rechazó un guardado, encima del formulario, para
 /// que el usuario lo cierre, corrija y vuelva a intentar sin perder lo escrito.
@@ -104,7 +105,8 @@ class _ClaseExistente extends StatelessWidget {
     final dia = datos['dia'] ?? '';
     final horario =
         '${dia.isEmpty ? '' : '${dia[0].toUpperCase()}${dia.substring(1)}, '}'
-        '${datos['horaInicio'] ?? ''} a ${datos['horaFin'] ?? ''}';
+        '${hora12hDesdeTexto(datos['horaInicio'] ?? '')} a '
+        '${hora12hDesdeTexto(datos['horaFin'] ?? '')}';
     final filas = <(String, String?)>[
       ('Asignatura', datos['asignatura']),
       ('Grupo', datos['grupo']),

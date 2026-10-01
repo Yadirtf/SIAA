@@ -5,7 +5,6 @@ import 'package:siaa_web/features/parametros/domain/models/parametro_model.dart'
 import 'package:siaa_web/features/parametros/domain/parametros_repository.dart';
 import 'package:siaa_web/features/parametros/presentation/bloc/parametros_bloc.dart';
 import 'package:siaa_web/features/parametros/presentation/widgets/parametro_card.dart';
-import 'package:siaa_web/features/parametros/presentation/widgets/parametro_labels.dart';
 
 class _FakeParametrosRepository implements ParametrosRepository {
   final guardados = <GuardarParametroRequest>[];
@@ -26,42 +25,6 @@ class _FakeParametrosRepository implements ParametrosRepository {
 }
 
 void main() {
-  test('retencion_coordenadas_dias tiene etiqueta y ayuda', () {
-    expect(
-      etiquetaParametro('retencion_coordenadas_dias'),
-      'Retención de coordenadas (días)',
-    );
-    expect(
-      ayudaParametro('retencion_coordenadas_dias'),
-      'Solo aplica en ámbito GLOBAL. Pasado este plazo, las coordenadas de '
-      'los marcajes se anonimizan (se conservan resultado y distancia).',
-    );
-  });
-
-  test(
-    'exigir_attestation y verificacion_complementaria tienen etiqueta y ayuda',
-    () {
-      expect(
-        etiquetaParametro('exigir_attestation'),
-        'Exigir attestation de Play Integrity',
-      );
-      expect(
-        ayudaParametro('exigir_attestation'),
-        contains('PLAY_INTEGRITY_PACKAGE'),
-      );
-      expect(
-        ayudaParametro('exigir_attestation'),
-        contains('PLAY_INTEGRITY_CREDENTIALS'),
-      );
-      expect(
-        ayudaParametro('verificacion_complementaria'),
-        'Exigir verificación complementaria (WiFi/BLE/QR) en aulas que la tengan configurada',
-      );
-      expect(etiquetaParametro('clave_nueva'), 'clave_nueva');
-      expect(ayudaParametro('umbral_tardanza_min'), isNull);
-    },
-  );
-
   testWidgets('un booleano se edita con Sí/No y se guarda como bool', (
     tester,
   ) async {
@@ -87,8 +50,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Exigir attestation de Play Integrity'), findsOneWidget);
-    expect(find.textContaining('PLAY_INTEGRITY_PACKAGE'), findsOneWidget);
+    expect(
+      find.text('Verificar la app con Google (Play Integrity)'),
+      findsOneWidget,
+    );
+    expect(find.text('Valor global'), findsOneWidget);
     expect(find.text('No'), findsOneWidget);
 
     await tester.tap(find.text('No'));

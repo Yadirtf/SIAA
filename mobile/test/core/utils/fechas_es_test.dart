@@ -33,4 +33,10 @@ void main() {
   test('fechaHora incluye a. m./p. m.', () {
     expect(fechaHora(DateTime(2026, 10, 1, 18, 30)), '01/10/2026 6:30 p. m.');
   });
+
+  test('horasEnTexto12h convierte nombres de sesión antiguos', () {
+    expect(horasEnTexto12h('2026-10-01 18:30-19:30'),
+        '2026-10-01 6:30 p. m.-7:30 p. m.');
+    expect(horasEnTexto12h('Cálculo 7:00 a. m.'), 'Cálculo 7:00 a. m.');
+  });
 }

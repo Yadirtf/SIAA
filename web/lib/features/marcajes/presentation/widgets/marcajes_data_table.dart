@@ -1,7 +1,7 @@
 // marcajes_data_table.dart — Tabla paginada de marcajes con indicadores de integridad (US-MAR-09, US-MAR-10)
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../domain/models/marcaje_admin_model.dart';
+import '../../../../core/utils/formatos.dart';
 
 class MarcajesDataTable extends StatelessWidget {
   final List<MarcajeAdminModel> marcajes;
@@ -34,8 +34,6 @@ class MarcajesDataTable extends StatelessWidget {
       );
     }
 
-    final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
-
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -57,7 +55,7 @@ class MarcajesDataTable extends StatelessWidget {
           rows: marcajes.map((m) {
             return DataRow(
               cells: [
-                DataCell(Text(dateFormat.format(m.timestampServidor), style: const TextStyle(fontSize: 13))),
+                DataCell(Text(Formatos.fechaHoraSegundos(m.timestampServidor), style: const TextStyle(fontSize: 13))),
                 DataCell(Text(m.usuarioId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                 DataCell(Text(m.asignatura.isNotEmpty ? m.asignatura : m.sesionId, style: const TextStyle(fontSize: 13))),
                 DataCell(Text(m.tipo, style: const TextStyle(fontSize: 13))),

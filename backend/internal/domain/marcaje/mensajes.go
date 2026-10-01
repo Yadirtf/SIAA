@@ -31,7 +31,7 @@ func GenerarMensaje(res ResultadoMarcaje, motivo MotivoRechazo, datos DatosMensa
 	switch res {
 	case ResultadoPresente:
 		if !datos.Hora.IsZero() {
-			return fmt.Sprintf("Asistencia registrada exitosamente a las %s.", shared.HoraLocal(datos.Hora))
+			return fmt.Sprintf("Asistencia registrada exitosamente a las %s", shared.HoraLocal(datos.Hora))
 		}
 		return "Asistencia registrada exitosamente a tiempo."
 

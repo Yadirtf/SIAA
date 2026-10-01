@@ -25,8 +25,8 @@ func (s *Service) errorColisionLegible(ctx context.Context, rep *domainAca.Repor
 	ctxDatos := map[string]string{
 		"tipo":       string(rep.Tipo),
 		"dia":        nombreDia(rep.DiaSemana),
-		"horaInicio": hora12h(rep.HoraInicio),
-		"horaFin":    hora12h(rep.HoraFin),
+		"horaInicio": shared.Hora12h(rep.HoraInicio),
+		"horaFin":    shared.Hora12h(rep.HoraFin),
 	}
 	if previa != nil {
 		ctxDatos["asignatura"] = s.nombreAsignatura(ctx, previa.AsignaturaID())
@@ -102,21 +102,4 @@ func nombreDia(d int) string {
 		return fmt.Sprintf("día %d", d)
 	}
 	return nombresDia[d]
-}
-
-// hora12h convierte "18:30" a "6:30 p. m."; si no es una hora válida la devuelve igual.
-func hora12h(hhmm string) string {
-	var h, m int
-	if _, err := fmt.Sscanf(hhmm, "%d:%d", &h, &m); err != nil || h < 0 || h > 23 || m < 0 || m > 59 {
-		return hhmm
-	}
-	sufijo := "a. m."
-	if h >= 12 {
-		sufijo = "p. m."
-	}
-	h12 := h % 12
-	if h12 == 0 {
-		h12 = 12
-	}
-	return fmt.Sprintf("%d:%02d %s", h12, m, sufijo)
 }

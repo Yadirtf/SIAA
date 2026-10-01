@@ -2,6 +2,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'catalogo_justificacion.dart';
+import '../../../../core/utils/fechas_es.dart';
 
 /// Metadatos de un soporte almacenado en el servidor.
 class AdjuntoJustificacion extends Equatable {
@@ -113,7 +114,7 @@ class Justificacion extends Equatable {
         observaciones: _textoOpcional(json['observaciones']),
         historial: _lista(json['historial'], EventoJustificacion.fromJson),
         fechaSesion: json['fechaSesion'] as String? ?? '',
-        nombreSesion: json['nombreSesion'] as String? ?? '',
+        nombreSesion: horasEnTexto12h(json['nombreSesion'] as String? ?? ''),
         creadoEn: _fecha(json['creadoEn']),
         actualizadoEn: _fecha(json['actualizadoEn']),
       );
