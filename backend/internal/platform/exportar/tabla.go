@@ -42,10 +42,3 @@ func (t Tabla) encabezado() [][2]string {
 	)
 	return meta
 }
-
-func zona() *time.Location {
-	if loc, err := time.LoadLocation("America/Bogota"); err == nil {
-		return loc
-	}
-	return time.FixedZone("COT", -5*60*60)
-}
