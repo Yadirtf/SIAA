@@ -1,6 +1,8 @@
 package exportar
 
 import (
+	"github.com/siaa/backend/internal/domain/shared"
+
 	"bytes"
 	"fmt"
 
@@ -21,7 +23,7 @@ func PDF(t Tabla) ([]byte, error) {
 		pdf.SetFont("Helvetica", "I", 7)
 		pdf.SetTextColor(110, 110, 110)
 		pie := fmt.Sprintf("SIAA · %s · Generado %s · Página %d/{nb}", t.Titulo,
-			t.GeneradoEn.In(zona()).Format("2006-01-02 15:04"), pdf.PageNo())
+			shared.FechaHoraLocal(t.GeneradoEn), pdf.PageNo())
 		pdf.CellFormat(0, 5, tr(pie), "", 0, "C", false, 0, "")
 	})
 	pdf.AliasNbPages("")

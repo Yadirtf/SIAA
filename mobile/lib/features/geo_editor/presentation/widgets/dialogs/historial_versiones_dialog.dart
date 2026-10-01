@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:siaa_mobile/core/theme/app_theme.dart';
 import 'package:siaa_mobile/features/geo_editor/domain/models/geometria_historial_item.dart';
+import 'package:siaa_mobile/core/utils/fechas_es.dart';
 
 /// Modal para consultar el histórico de versiones de geometría de un espacio (US-GEO-06 AC-04).
 /// Permite visualizar la fecha, autor, área calculada y superponer la versión sobre el mapa.
@@ -200,7 +201,5 @@ class HistorialVersionesDialog extends StatelessWidget {
     );
   }
 
-  static String _formatearFecha(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
+  static String _formatearFecha(DateTime dt) => fechaHora(dt);
 }

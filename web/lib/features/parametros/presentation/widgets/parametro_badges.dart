@@ -17,7 +17,7 @@ class OrigenIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: isGlobal
             ? AppColors.surfaceMuted
-            : AppColors.primaryAccent.withOpacity(0.1),
+            : AppColors.primaryAccent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
@@ -33,7 +33,10 @@ class OrigenIcon extends StatelessWidget {
 class NivelBadge extends StatelessWidget {
   final String nivel;
 
-  const NivelBadge({super.key, required this.nivel});
+  /// Texto a mostrar; por defecto el nombre del nivel.
+  final String? texto;
+
+  const NivelBadge({super.key, required this.nivel, this.texto});
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +46,18 @@ class NivelBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: isGlobal
             ? AppColors.surfaceMuted
-            : AppColors.primaryAccent.withOpacity(0.08),
+            : AppColors.primaryAccent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isGlobal
               ? AppColors.border
-              : AppColors.primaryAccent.withOpacity(0.25),
+              : AppColors.primaryAccent.withValues(alpha: 0.25),
         ),
       ),
       child: Text(
-        nivel,
+        texto ?? nivel,
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,

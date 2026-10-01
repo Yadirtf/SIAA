@@ -83,7 +83,7 @@ func (s *Service) Exportar(ctx context.Context, actorID, rolActivo string, f rep
 	}
 	for _, e := range s.conNombres(ctx, lista) {
 		tabla.Filas = append(tabla.Filas, []string{
-			e.CreadoEn.In(shared.ZonaInstitucional()).Format("2006-01-02 15:04:05"),
+			shared.FechaHoraSegundosLocal(e.CreadoEn),
 			e.ActorNombre, e.RolActivo, e.Accion, e.Entidad, e.EntidadID, e.IPOrigen,
 			comoTexto(e.ValorAnterior), comoTexto(e.ValorNuevo),
 		})
@@ -162,10 +162,10 @@ func metadatos(f repository.FiltroAuditoria, exportados int, total int64) [][2]s
 		}
 	}
 	if f.Desde != nil {
-		m = append(m, [2]string{"Desde", f.Desde.Format("2006-01-02 15:04")})
+		m = append(m, [2]string{"Desde", shared.FechaHoraLocal(*f.Desde)})
 	}
 	if f.Hasta != nil {
-		m = append(m, [2]string{"Hasta", f.Hasta.Format("2006-01-02 15:04")})
+		m = append(m, [2]string{"Hasta", shared.FechaHoraLocal(*f.Hasta)})
 	}
 	return append(m, [2]string{"Registros", fmt.Sprintf("%d de %d", exportados, total)})
 }

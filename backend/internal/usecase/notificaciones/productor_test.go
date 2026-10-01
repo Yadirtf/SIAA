@@ -87,7 +87,7 @@ func TestProductor_CambioSesionUnoPorDocente(t *testing.T) {
 		if !strings.HasPrefix(n.ClaveDedupe, "cambio:ses-3:"+d+":") || n.Datos["ruta"] != "/horario" {
 			t.Fatalf("clave/datos inesperados: %q %v", n.ClaveDedupe, n.Datos)
 		}
-		if n.Cuerpo != "Cálculo (A-301) del 30/09 a las 10:00. Motivo: paro" {
+		if n.Cuerpo != "Cálculo (A-301) del 30/09 a las 10:00 a. m. Motivo: paro" {
 			t.Fatalf("cuerpo inesperado: %q", n.Cuerpo)
 		}
 	}

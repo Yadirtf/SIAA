@@ -1,5 +1,6 @@
 // sesion_summary_model.dart — Modelo resumido de sesión académica para selectores en UI (US-ACA-05, US-MAR-09)
 import 'package:equatable/equatable.dart';
+import '../../../../core/utils/hora_12h.dart';
 
 class SesionSummaryModel extends Equatable {
   final String id;
@@ -26,7 +27,7 @@ class SesionSummaryModel extends Equatable {
 
   String get etiquetaSelector {
     final cortaId = id.length > 6 ? id.substring(id.length - 6) : id;
-    final horario = (horaInicio.isNotEmpty && horaFin.isNotEmpty) ? ' $horaInicio-$horaFin' : '';
+    final horario = (horaInicio.isNotEmpty && horaFin.isNotEmpty) ? ' ${hora12hDesdeTexto(horaInicio)} - ${hora12hDesdeTexto(horaFin)}' : '';
     final f = fecha.isNotEmpty ? ' [$fecha$horario]' : '';
     return 'Sesión #$cortaId$f ($estado)';
   }

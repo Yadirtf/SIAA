@@ -1,6 +1,8 @@
 package notificaciones
 
 import (
+	"github.com/siaa/backend/internal/domain/shared"
+
 	"context"
 	"fmt"
 	"time"
@@ -60,14 +62,15 @@ func (p *Productor) describir(ctx context.Context, s *academico.Sesion) string {
 	return nombre
 }
 
-func hora(t time.Time) string { return t.In(zona).Format("15:04") }
+// hora devuelve "7:00 a. m."; su punto final también cierra la oración.
+func hora(t time.Time) string { return shared.HoraLocal(t) }
 
 // RecordatorioSesion avisa que una clase está por iniciar (RF-NOT-002).
 func (p *Productor) RecordatorioSesion(ctx context.Context, s *academico.Sesion, docenteID string) error {
 	inicio := s.InicioProgramado()
 	cierre := s.VentanaEntradaCierra()
 	return p.encolar(ctx, docenteID, notificacion.TipoRecordatorioSesion, "Tu clase inicia pronto",
-		fmt.Sprintf("%s inicia a las %s. Recuerda marcar tu entrada desde el aula.", p.describir(ctx, s), hora(inicio)),
+		fmt.Sprintf("%s inicia a las %s Recuerda marcar tu entrada desde el aula.", p.describir(ctx, s), hora(inicio)),
 		"recordatorio:"+s.ID()+":"+docenteID, map[string]string{"sesionId": s.ID()}, &cierre)
 }
 
@@ -75,7 +78,7 @@ func (p *Productor) RecordatorioSesion(ctx context.Context, s *academico.Sesion,
 func (p *Productor) CierreVentana(ctx context.Context, s *academico.Sesion, docenteID string) error {
 	cierre := s.VentanaEntradaCierra()
 	return p.encolar(ctx, docenteID, notificacion.TipoCierreVentana, "Tu ventana de marcaje está por cerrar",
-		fmt.Sprintf("Aún no registras la entrada de %s. La ventana cierra a las %s.", p.describir(ctx, s), hora(cierre)),
+		fmt.Sprintf("Aún no registras la entrada de %s. La ventana cierra a las %s", p.describir(ctx, s), hora(cierre)),
 		"cierre:"+s.ID()+":"+docenteID, map[string]string{"sesionId": s.ID()}, &cierre)
 }
 
@@ -94,7 +97,7 @@ func (p *Productor) ResultadoJustificacion(ctx context.Context, docenteID, justi
 // CambioSesion informa una cancelación, un cambio de aula o de docente (RF-NOT-002). Es de
 // mejor esfuerzo: el cambio ya quedó registrado y el horario de la app lo refleja.
 func (p *Productor) CambioSesion(ctx context.Context, s *academico.Sesion, docentes []string, titulo, detalle string) {
-	cuerpo := fmt.Sprintf("%s del %s a las %s. %s", p.describir(ctx, s), s.InicioProgramado().In(zona).Format("02/01"), hora(s.InicioProgramado()), detalle)
+	cuerpo := fmt.Sprintf("%s del %s a las %s %s", p.describir(ctx, s), s.InicioProgramado().In(zona).Format("02/01"), hora(s.InicioProgramado()), detalle)
 	marca := time.Now().UTC().Format(time.RFC3339Nano)
 	for _, d := range docentes {
 		_ = p.encolar(ctx, d, notificacion.TipoCambioHorario, titulo, cuerpo,
