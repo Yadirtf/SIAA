@@ -7,11 +7,12 @@ import '../../data/models/geo_models.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
 import '../dialogs/verificacion_espacio_dialog.dart';
+import '../edicion/editores_geo.dart';
 import '../editor/editor_geometria_dialog.dart';
 import 'verificacion_indicador.dart';
 
 /// Fila de la lista de espacios: datos básicos, indicador de verificación
-/// complementaria (RF-GEO-016) y acciones de configurar y eliminar.
+/// complementaria (RF-GEO-016) y acciones de editar, configurar y eliminar.
 class EspacioTile extends StatelessWidget {
   final EspacioModel espacio;
 
@@ -52,6 +53,11 @@ class EspacioTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Editar datos del espacio',
+              onPressed: () => editarEspacio(context, espacio),
+            ),
             IconButton(
               icon: Icon(
                 espacio.tieneGeometria

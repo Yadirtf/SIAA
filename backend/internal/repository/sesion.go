@@ -36,4 +36,6 @@ type SesionRepository interface {
 	List(ctx context.Context, filter SesionFilter) ([]*academico.Sesion, error)
 	Update(ctx context.Context, s *academico.Sesion) error
 	CountSesionesFuturasPorEspacio(ctx context.Context, espacioID string, desde time.Time) (int64, error)
+	// EliminarLogico oculta sesiones que aún no ocurren y se reemplazan al editar su asignación.
+	EliminarLogico(ctx context.Context, ids []string) (int64, error)
 }

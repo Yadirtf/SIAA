@@ -78,6 +78,14 @@ func (s *Service) ActualizarPeriodo(ctx context.Context, actor ContextoActor, id
 		return nil, err
 	}
 
+	// Lo que el formulario de edición no envía se conserva.
+	if cmd.SedeID == "" {
+		cmd.SedeID = p.SedeID()
+	}
+	if cmd.CodigoExterno == nil {
+		cmd.CodigoExterno = p.CodigoExterno()
+	}
+
 	ahora := s.clk.Now()
 	nuevo, err := domainAca.NuevoPeriodo(
 		id,

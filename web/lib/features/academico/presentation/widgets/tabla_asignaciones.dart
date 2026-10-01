@@ -8,11 +8,13 @@ import '../helpers/filtro_asignaciones.dart';
 /// Tabla de asignaciones con nombres legibles, ordenada por día y hora.
 class TablaAsignaciones extends StatelessWidget {
   final List<FilaAsignacion> filas;
+  final ValueChanged<FilaAsignacion> onEditar;
   final ValueChanged<FilaAsignacion> onEliminar;
 
   const TablaAsignaciones({
     super.key,
     required this.filas,
+    required this.onEditar,
     required this.onEliminar,
   });
 
@@ -65,10 +67,23 @@ class TablaAsignaciones extends StatelessWidget {
         DataCell(Text(f.aula)),
         DataCell(Text(_modalidad(a.modalidad))),
         DataCell(
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.accentRose),
-            tooltip: 'Eliminar asignación',
-            onPressed: () => onEliminar(f),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Editar asignación',
+                onPressed: () => onEditar(f),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.accentRose,
+                ),
+                tooltip: 'Eliminar asignación',
+                onPressed: () => onEliminar(f),
+              ),
+            ],
           ),
         ),
       ],

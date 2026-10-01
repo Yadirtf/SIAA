@@ -150,6 +150,15 @@ class _AsignacionesScreenState extends State<AsignacionesScreen> {
               ? _vacio(state.asignaciones.isEmpty)
               : TablaAsignaciones(
                   filas: filas,
+                  onEditar: (f) => showDialog(
+                    context: context,
+                    builder: (_) => AsignacionDialog(
+                      periodos: state.periodos,
+                      grupos: state.grupos,
+                      asignaturas: state.asignaturas,
+                      inicial: f.asignacion,
+                    ),
+                  ),
                   onEliminar: (f) => _confirmarEliminar(context, f),
                 ),
         ),
@@ -198,7 +207,9 @@ class _AsignacionesScreenState extends State<AsignacionesScreen> {
         content: Text(
           '${f.asignatura}, grupo ${f.grupo}, con ${f.docente}, '
           '${nombreDia(a.diaSemana).toLowerCase()} de '
-          '${hora12hDesdeTexto(a.horaInicio)} a ${hora12hDesdeTexto(a.horaFin)}.',
+          '${hora12hDesdeTexto(a.horaInicio)} a ${hora12hDesdeTexto(a.horaFin)}.\n\n'
+          'Las clases que aún no han ocurrido se cancelarán. '
+          'Las ya dictadas se conservan en el historial.',
         ),
         actions: [
           TextButton(

@@ -144,5 +144,9 @@ func (s *Service) EliminarAsignacion(ctx context.Context, actor ContextoActor, i
 			return ErrFueraDeAmbitoFacultad
 		}
 	}
-	return s.asignacionRepo.DeleteLogico(ctx, id)
+	if err := s.asignacionRepo.DeleteLogico(ctx, id); err != nil {
+		return err
+	}
+	s.cancelarSesionesFuturas(ctx, actor, id)
+	return nil
 }

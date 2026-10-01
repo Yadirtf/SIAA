@@ -17,6 +17,8 @@ type GenerarSesionesCmd struct {
 	PeriodoID    string        `json:"periodoId"`
 	AsignacionID *string       `json:"asignacionId,omitempty"` // Opcional: generar solo para una asignación
 	Actor        ContextoActor `json:"-"`
+	// Desde omite las sesiones cuya ventana de entrada ya abrió (cero = todo el periodo).
+	Desde time.Time `json:"-"`
 }
 
 // FechaExcluidaDTO detalle de una fecha no lectiva excluida de la generación (AC-05).

@@ -206,6 +206,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/sedes", rbac.PermAulaLeer)
 		sedesProtected.POST("", geoH.CrearSede, mw.RequirePermission(rbac.PermSedeAdministrar, auditoria))
 		registry.RegisterPermission(http.MethodPost, "/api/v1/sedes", rbac.PermSedeAdministrar)
+		sedesProtected.PUT("/:id", geoH.ActualizarSede, mw.RequirePermission(rbac.PermSedeAdministrar, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/sedes/:id", rbac.PermSedeAdministrar)
 		sedesProtected.GET("/:id", geoH.ObtenerSede, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/sedes/:id", rbac.PermAulaLeer)
 
@@ -215,6 +217,8 @@ func NewRouter(
 		registry.RegisterPermission(http.MethodGet, "/api/v1/bloques", rbac.PermAulaLeer)
 		bloquesProtected.POST("", geoH.CrearBloque, mw.RequirePermission(rbac.PermBloqueAdministrar, auditoria))
 		registry.RegisterPermission(http.MethodPost, "/api/v1/bloques", rbac.PermBloqueAdministrar)
+		bloquesProtected.PUT("/:id", geoH.ActualizarBloque, mw.RequirePermission(rbac.PermBloqueAdministrar, auditoria))
+		registry.RegisterPermission(http.MethodPut, "/api/v1/bloques/:id", rbac.PermBloqueAdministrar)
 		bloquesProtected.GET("/:id", geoH.ObtenerBloque, mw.RequirePermission(rbac.PermAulaLeer, auditoria))
 		registry.RegisterPermission(http.MethodGet, "/api/v1/bloques/:id", rbac.PermAulaLeer)
 		bloquesProtected.POST("/:id/clonar-piso", geoH.ClonarPiso, mw.RequirePermission(rbac.PermAulaCrear, auditoria))

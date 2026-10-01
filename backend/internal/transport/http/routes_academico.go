@@ -62,6 +62,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/facultades", rbac.PermHorarioLeer)
 	facultades.POST("", acaH.CrearFacultad, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/facultades", rbac.PermHorarioCrear)
+	facultades.PUT("/:id", acaH.ActualizarFacultad, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/facultades/:id", rbac.PermHorarioCrear)
 	facultades.DELETE("/:id", acaH.EliminarFacultad, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/facultades/:id", rbac.PermHorarioCrear)
 
@@ -71,6 +73,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/programas", rbac.PermHorarioLeer)
 	programas.POST("", acaH.CrearPrograma, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/programas", rbac.PermHorarioCrear)
+	programas.PUT("/:id", acaH.ActualizarPrograma, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/programas/:id", rbac.PermHorarioCrear)
 	programas.DELETE("/:id", acaH.EliminarPrograma, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/programas/:id", rbac.PermHorarioCrear)
 
@@ -80,6 +84,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/asignaturas", rbac.PermHorarioLeer)
 	asignaturas.POST("", acaH.CrearAsignatura, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/asignaturas", rbac.PermHorarioCrear)
+	asignaturas.PUT("/:id", acaH.ActualizarAsignatura, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/asignaturas/:id", rbac.PermHorarioCrear)
 	asignaturas.DELETE("/:id", acaH.EliminarAsignatura, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/asignaturas/:id", rbac.PermHorarioCrear)
 
@@ -89,6 +95,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/grupos", rbac.PermHorarioLeer)
 	grupos.POST("", acaH.CrearGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/grupos", rbac.PermHorarioCrear)
+	grupos.PUT("/:id", acaH.ActualizarGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
 	grupos.DELETE("/:id", acaH.EliminarGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
 
@@ -98,6 +106,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/asignaciones", rbac.PermHorarioLeer)
 	asignaciones.POST("", acaH.CrearAsignacion, mw.RequirePermission(rbac.PermAsignacionCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/asignaciones", rbac.PermAsignacionCrear)
+	asignaciones.PUT("/:id", acaH.ActualizarAsignacion, mw.RequirePermission(rbac.PermAsignacionCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/asignaciones/:id", rbac.PermAsignacionCrear)
 	asignaciones.DELETE("/:id", acaH.EliminarAsignacion, mw.RequirePermission(rbac.PermAsignacionCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/asignaciones/:id", rbac.PermAsignacionCrear)
 

@@ -166,6 +166,10 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 				holguraDespues := getParamInt(paramsCongelados, parametro.ClaveHolguraEntradaDespues, 15)
 				ventanaEntradaAbre := inicioProg.Add(-time.Duration(holguraAntes) * time.Minute)
 				ventanaEntradaCierra := inicioProg.Add(time.Duration(holguraDespues) * time.Minute)
+				if !cmd.Desde.IsZero() && !ventanaEntradaAbre.After(cmd.Desde) {
+					cur = cur.AddDate(0, 0, 1)
+					continue
+				}
 
 				var ventanaSalidaAbre, ventanaSalidaCierra *time.Time
 				salidaOblig := fmt.Sprintf("%v", paramsCongelados[string(parametro.ClaveSalidaObligatoria)])

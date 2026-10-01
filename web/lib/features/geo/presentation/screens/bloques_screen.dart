@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
 import '../bloc/geo_state.dart';
+import '../edicion/editores_geo.dart';
 
 class BloquesScreen extends StatelessWidget {
   const BloquesScreen({super.key});
@@ -187,6 +188,12 @@ class BloquesScreen extends StatelessWidget {
                                 subtitle: Text(
                                   'Pisos registrados: ${bloque.pisos.join(", ")}',
                                   style: AppTextStyles.bodyMedium,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Editar bloque',
+                                  onPressed: () =>
+                                      editarBloque(context, bloque),
                                 ),
                               ),
                             );
