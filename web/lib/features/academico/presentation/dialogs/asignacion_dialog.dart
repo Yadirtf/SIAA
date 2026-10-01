@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/error_operacion_dialog.dart';
 import '../../../geo/presentation/widgets/selector_espacio.dart';
 import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 import '../../data/models/academico_models.dart';
@@ -39,6 +42,7 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
   String? _codocenteId;
   String? _espacioId;
   FranjaHoraria _franja = FranjaHoraria.porDefecto;
+  bool _guardando = false;
 
   @override
   void initState() {
@@ -74,8 +78,8 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
     return '$nombre · Grupo ${g.numero}';
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _submit() async {
+    if (_guardando || !_formKey.currentState!.validate()) return;
     final grupo = _gruposDelPeriodo.where((g) => g.id == _grupoId);
     if (_periodoId == null || grupo.isEmpty || _docenteId == null) return;
 
@@ -90,10 +94,21 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
       horaInicio: _franja.inicioTexto,
       horaFin: _franja.finTexto,
     );
+    // El formulario queda abierto hasta que el servidor acepte; si rechaza
+    // (p. ej. un cruce de horario) se explica en un modal y se puede corregir.
+    final resultado = Completer<void>();
+    setState(() => _guardando = true);
     context.read<AcademicoBloc>().add(
-      CreateAsignacionEvent(asignacion.toJson()),
+      CreateAsignacionEvent(asignacion.toJson(), resultado: resultado),
     );
-    Navigator.pop(context);
+    try {
+      await resultado.future;
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _guardando = false);
+      await mostrarErrorOperacion(context, e);
+    }
   }
 
   @override
@@ -174,9 +189,15 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
           child: const Text('Cancelar'),
         ),
         ElevatedButton.icon(
-          onPressed: _submit,
-          icon: const Icon(Icons.save_rounded, size: 18),
-          label: const Text('Guardar Asignación'),
+          onPressed: _guardando ? null : _submit,
+          icon: _guardando
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded, size: 18),
+          label: Text(_guardando ? 'Guardando…' : 'Guardar Asignación'),
         ),
       ],
     );

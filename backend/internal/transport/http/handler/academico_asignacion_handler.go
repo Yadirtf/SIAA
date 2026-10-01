@@ -70,9 +70,13 @@ func (h *AcademicoHandler) ListarAsignaciones(c echo.Context) error {
 		return mapearErrorAcademico(err)
 	}
 
+	nombres := h.svc.NombresDeAsignaciones(c.Request().Context(), lista)
 	res := make([]dto.AsignacionResponse, 0, len(lista))
 	for _, a := range lista {
-		res = append(res, dto.FromAsignacionDomain(&a, nil))
+		item := dto.FromAsignacionDomain(&a, nil)
+		n := nombres[a.ID()]
+		item.AsignaturaCodigo, item.AsignaturaNombre, item.GrupoNumero = n.AsignaturaCodigo, n.AsignaturaNombre, n.GrupoNumero
+		res = append(res, item)
 	}
 	return c.JSON(http.StatusOK, res)
 }

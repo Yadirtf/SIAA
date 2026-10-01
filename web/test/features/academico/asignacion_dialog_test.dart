@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:siaa_web/core/network/api_exception.dart';
 import 'package:siaa_web/core/widgets/selector_busqueda.dart';
 import 'package:siaa_web/features/academico/data/models/academico_models.dart';
 import 'package:siaa_web/features/academico/presentation/bloc/academico_bloc.dart';
@@ -14,12 +15,36 @@ import 'fake_catalogos.dart';
 class _RepoQueCaptura extends FakeAcademicoRepository {
   final cuerpos = <Map<String, dynamic>>[];
 
+  /// Si se define, el "servidor" rechaza el guardado con este error.
+  Object? rechazo;
+
   @override
   Future<AsignacionModel> createAsignacion(Map<String, dynamic> body) {
     cuerpos.add(body);
+    if (rechazo != null) return Future.error(rechazo!);
     return super.createAsignacion(body);
   }
 }
+
+const _choqueDocente = ApiException(
+  statusCode: 409,
+  message:
+      'Ana Pérez ya tiene clase el miércoles de 6:30 p. m. a 7:30 p. m. '
+      '(Cálculo I, grupo 01, aula A-101 · Aula 101).',
+  details: {
+    'codigo': 'CONFLICTO_HORARIO',
+    'contexto': {
+      'tipo': 'COLISION_DOCENTE',
+      'docente': 'Ana Pérez',
+      'asignatura': 'Cálculo I',
+      'grupo': '01',
+      'aula': 'A-101 · Aula 101',
+      'dia': 'miércoles',
+      'horaInicio': '6:30 p. m.',
+      'horaFin': '7:30 p. m.',
+    },
+  },
+);
 
 const _periodos = [
   PeriodoModel(
@@ -306,4 +331,29 @@ void main() {
     expect(espacios.sedesPedidas.last, isNull);
     expect(find.text('S-900 · Aula Sur'), findsOneWidget);
   });
+
+  testWidgets(
+    'un cruce de horario se explica en un modal y no cierra el formulario',
+    (tester) async {
+      repo.rechazo = _choqueDocente;
+      await abrir(tester);
+      await elegir(tester, 'Docente principal *', 'Ana Pérez');
+      await elegir(tester, 'Aula *', 'A-101 · Aula 101');
+      await tester.tap(find.text('Guardar Asignación'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('El docente ya tiene clase a esa hora'), findsOneWidget);
+      expect(find.text('Clase que ya ocupa ese horario'), findsOneWidget);
+      expect(find.text('Miércoles, 6:30 p. m. a 7:30 p. m.'), findsOneWidget);
+      expect(find.textContaining('doc-1'), findsNothing);
+
+      await tester.tap(find.text('Revisar el formulario'));
+      await tester.pumpAndSettle();
+
+      // El formulario sigue abierto con lo elegido, listo para corregir.
+      expect(find.text('Guardar Asignación'), findsOneWidget);
+      expect(find.text('Ana Pérez'), findsOneWidget);
+      expect(find.text('El docente ya tiene clase a esa hora'), findsNothing);
+    },
+  );
 }

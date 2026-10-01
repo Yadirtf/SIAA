@@ -103,7 +103,7 @@ func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd 
 
 	if colision := domainAca.DetectarColisiones(existentes, *asig); colision != nil {
 		s.log.Warn("colisión horaria rechazada", applog.Extra(map[string]interface{}{"tipo": colision.Tipo, "mensaje": colision.Mensaje}))
-		return nil, fmt.Errorf("%w: %s", ErrColisionDetectada, colision.Mensaje)
+		return nil, s.errorColisionLegible(ctx, colision, existentes)
 	}
 
 	var advertencias []string

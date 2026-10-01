@@ -36,6 +36,10 @@ func mapearErrorAcademico(err error) error {
 	if err == nil {
 		return nil
 	}
+	var colision *shared.DomainError
+	if errors.As(err, &colision) && colision.Code == shared.ErrConflictoHorario {
+		return colision
+	}
 	if errors.Is(err, usecaseAca.ErrColisionDetectada) {
 		return echo.NewHTTPError(http.StatusConflict, err.Error())
 	}

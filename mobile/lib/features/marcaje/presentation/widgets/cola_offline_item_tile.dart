@@ -1,6 +1,6 @@
 // cola_offline_item_tile.dart — Fila de un marcaje offline rechazado o fallido (US-MAR-11)
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/fechas_es.dart';
 import '../../domain/models/offline_marcaje_item.dart';
 
 class ColaOfflineItemTile extends StatelessWidget {
@@ -19,8 +19,7 @@ class ColaOfflineItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final esRechazo = item.estado == EstadoSincronizacion.rechazado;
     final color = esRechazo ? Colors.red.shade700 : Colors.orange.shade800;
-    final fecha = DateFormat('dd/MM HH:mm')
-        .format(item.request.timestampDispositivo.toLocal());
+    final fecha = diaMesHora(item.request.timestampDispositivo);
     final mensaje = esRechazo
         ? (item.resultadoServidor?.mensaje.isNotEmpty == true
             ? item.resultadoServidor!.mensaje

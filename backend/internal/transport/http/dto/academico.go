@@ -203,6 +203,10 @@ type AsignacionResponse struct {
 	FechaFin           string                 `json:"fechaFin"`
 	CodigoExterno      *string                `json:"codigoExterno,omitempty"`
 	Advertencias       []string               `json:"advertencias,omitempty"`
+	// Nombres legibles para la consola (asignatura y grupo).
+	AsignaturaCodigo string `json:"asignaturaCodigo,omitempty"`
+	AsignaturaNombre string `json:"asignaturaNombre,omitempty"`
+	GrupoNumero      string `json:"grupoNumero,omitempty"`
 }
 
 func FromAsignacionDomain(a *domainAca.Asignacion, adv []string) AsignacionResponse {

@@ -90,6 +90,10 @@ class SesionActivaModel extends Equatable {
   final bool tieneMarcajeSalida;
   final String? marcajeEntradaEstado;
 
+  /// Diferencia entre el reloj del servidor y el del celular al recibir la
+  /// sesión; la cuenta regresiva la suma para no depender de un reloj mal puesto.
+  final Duration desfaseReloj;
+
   const SesionActivaModel({
     required this.id,
     required this.asignatura,
@@ -105,7 +109,11 @@ class SesionActivaModel extends Equatable {
     this.tieneMarcajeEntrada = false,
     this.tieneMarcajeSalida = false,
     this.marcajeEntradaEstado,
+    this.desfaseReloj = Duration.zero,
   });
+
+  /// Hora actual corregida con el reloj del servidor.
+  DateTime ahoraServidor() => DateTime.now().add(desfaseReloj);
 
   factory SesionActivaModel.fromDetalleJson(Map<String, dynamic> json) {
     final sesionMap = json['sesion'] as Map<String, dynamic>? ?? {};
@@ -143,7 +151,14 @@ class SesionActivaModel extends Equatable {
       tieneMarcajeEntrada: tieneEntrada,
       tieneMarcajeSalida: false,
       marcajeEntradaEstado: marcajeExistente?['resultado'] as String?,
+      desfaseReloj: _desfase(json['horaServidor']),
     );
+  }
+
+  static Duration _desfase(Object? horaServidor) {
+    final servidor = DateTime.tryParse(horaServidor as String? ?? '');
+    if (servidor == null) return Duration.zero;
+    return servidor.difference(DateTime.now());
   }
 
   @override
@@ -162,5 +177,6 @@ class SesionActivaModel extends Equatable {
         tieneMarcajeEntrada,
         tieneMarcajeSalida,
         marcajeEntradaEstado,
+        desfaseReloj,
       ];
 }

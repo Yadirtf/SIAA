@@ -1,13 +1,16 @@
 // sesion_card.dart — Tarjeta de sesión activa y cuenta regresiva de ventana (US-MAR-01)
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/fechas_es.dart';
 import '../../domain/models/sesion_activa_model.dart';
 
 class SesionCard extends StatefulWidget {
   final SesionActivaModel sesion;
 
-  const SesionCard({super.key, required this.sesion});
+  /// Se llama una vez cuando la ventana abre o cierra, para recargar la sesión.
+  final VoidCallback? onVentanaCambia;
+
+  const SesionCard({super.key, required this.sesion, this.onVentanaCambia});
 
   @override
   State<SesionCard> createState() => _SesionCardState();
@@ -16,16 +19,28 @@ class SesionCard extends StatefulWidget {
 class _SesionCardState extends State<SesionCard> {
   Timer? _timer;
   late Duration _restante;
+  bool _avisado = false;
 
   @override
   void initState() {
     super.initState();
     _actualizarRestante();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _actualizarRestante());
+    _timer = Timer.periodic(
+        const Duration(seconds: 1), (_) => _actualizarRestante());
+  }
+
+  @override
+  void didUpdateWidget(SesionCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final antes = oldWidget.sesion;
+    final ahora = widget.sesion;
+    if (antes.id != ahora.id || antes.ventana.estado != ahora.ventana.estado) {
+      _avisado = false;
+    }
   }
 
   void _actualizarRestante() {
-    final ahora = DateTime.now();
+    final ahora = widget.sesion.ahoraServidor();
     final ventana = widget.sesion.ventana;
     if (ventana.estaAbierta) {
       _restante = ventana.cierraEn.isAfter(ahora)
@@ -37,6 +52,11 @@ class _SesionCardState extends State<SesionCard> {
           : Duration.zero;
     } else {
       _restante = Duration.zero;
+    }
+    final cambio = !ventana.estaCerrada && _restante == Duration.zero;
+    if (cambio && !_avisado) {
+      _avisado = true;
+      widget.onVentanaCambia?.call();
     }
     if (mounted) setState(() {});
   }
@@ -59,9 +79,8 @@ class _SesionCardState extends State<SesionCard> {
   @override
   Widget build(BuildContext context) {
     final sesion = widget.sesion;
-    final timeFormat = DateFormat('hh:mm a');
     final horarioStr =
-        '${timeFormat.format(sesion.inicioProgramado)} - ${timeFormat.format(sesion.finProgramado)}';
+        '${hora12h(sesion.inicioProgramado)} - ${hora12h(sesion.finProgramado)}';
 
     return Card(
       elevation: 2,
@@ -75,7 +94,8 @@ class _SesionCardState extends State<SesionCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -90,9 +110,12 @@ class _SesionCardState extends State<SesionCard> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: sesion.ventana.estaAbierta ? Colors.green.shade50 : Colors.orange.shade50,
+                    color: sesion.ventana.estaAbierta
+                        ? Colors.green.shade50
+                        : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -100,7 +123,9 @@ class _SesionCardState extends State<SesionCard> {
                       Icon(
                         Icons.timer_outlined,
                         size: 14,
-                        color: sesion.ventana.estaAbierta ? Colors.green.shade800 : Colors.orange.shade800,
+                        color: sesion.ventana.estaAbierta
+                            ? Colors.green.shade800
+                            : Colors.orange.shade800,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -110,7 +135,9 @@ class _SesionCardState extends State<SesionCard> {
                                 ? 'Abre en: ${_formatDuration(_restante)}'
                                 : 'Ventana cerrada',
                         style: TextStyle(
-                          color: sesion.ventana.estaAbierta ? Colors.green.shade800 : Colors.orange.shade800,
+                          color: sesion.ventana.estaAbierta
+                              ? Colors.green.shade800
+                              : Colors.orange.shade800,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -131,7 +158,8 @@ class _SesionCardState extends State<SesionCard> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.meeting_room_outlined, size: 18, color: Colors.grey),
+                const Icon(Icons.meeting_room_outlined,
+                    size: 18, color: Colors.grey),
                 const SizedBox(width: 6),
                 Text(
                   '${sesion.espacio.codigo} — ${sesion.espacio.nombre}',
@@ -142,7 +170,8 @@ class _SesionCardState extends State<SesionCard> {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.access_time_rounded, size: 18, color: Colors.grey),
+                const Icon(Icons.access_time_rounded,
+                    size: 18, color: Colors.grey),
                 const SizedBox(width: 6),
                 Text(
                   horarioStr,

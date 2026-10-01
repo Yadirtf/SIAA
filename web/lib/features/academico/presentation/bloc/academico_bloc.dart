@@ -260,14 +260,16 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
   }
 
   Future<void> _onCreateAsignacion(
-
     CreateAsignacionEvent event,
     Emitter<AcademicoState> emit,
   ) async {
     try {
       await _repository.createAsignacion(event.body);
+      event.resultado?.complete();
       add(const LoadAcademicoDataEvent());
     } catch (e) {
+      final resultado = event.resultado;
+      if (resultado != null) return resultado.completeError(e);
       emit(
         AcademicoError(
           e

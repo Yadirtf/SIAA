@@ -72,10 +72,17 @@ func (s *Service) ListarAsignacionesEnAlcance(ctx context.Context, actor Context
 	if err != nil || actor.alcanceEfectivo() == nil {
 		return lista, err
 	}
-	sede := s.sedeDePeriodo(ctx, periodoID)
+	// Sin periodo la lista mezcla periodos: la sede se resuelve por el periodo de cada asignación.
+	sedes := map[string]string{}
 	visibles := make([]domainAca.Asignacion, 0, len(lista))
 	for i := range lista {
-		if a := lista[i]; actor.permiteAsignacion(&a, sede) {
+		a := lista[i]
+		sede, ok := sedes[a.PeriodoID()]
+		if !ok {
+			sede = s.sedeDePeriodo(ctx, a.PeriodoID())
+			sedes[a.PeriodoID()] = sede
+		}
+		if actor.permiteAsignacion(&a, sede) {
 			visibles = append(visibles, a)
 		}
 	}
