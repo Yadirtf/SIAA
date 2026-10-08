@@ -64,5 +64,5 @@ func (s *Sesion) CerrarVentanaEstudiantil(ahora time.Time) error {
 }
 
 func conflictoSesion(msg string) error {
-	return &shared.DomainError{Code: shared.ErrConflictoUnicidad, Message: msg}
+	return &shared.DomainError{Code: shared.ErrEstadoInvalido, Message: msg}
 }

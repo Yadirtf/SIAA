@@ -147,7 +147,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	// ─── Motor de Marcaje (EP-06) ─────────────────────────────
 	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
 	grupoEstRepo := impl.NewGrupoEstudiantesRepository(mongoClient)
-	acaSvc.WithEstudiantesGrupo(grupoEstRepo)
+	acaSvc.WithEstudiantesGrupo(grupoEstRepo).WithTrabajos(impl.NewTrabajoRepository(mongoClient))
 	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
 		WithAsignaciones(asignacionRepo).WithGrupoEstudiantes(grupoEstRepo)
 	if v := verificadorAttestation(cfg, log); v != nil {

@@ -127,11 +127,11 @@ func construirEscenarioSinConsentimiento(e *entorno, parametros map[string]inter
 			"ambito": "SEDE", "ambito_id": s.sede, "clave": clave, "valor": valor,
 		}, s.admin, http.StatusOK)
 	}
-	gen := e.exigir(http.MethodPost, "/periodos/"+s.periodo+"/generar-sesiones", map[string]interface{}{}, s.admin, http.StatusOK)
+	gen := e.exigir(http.MethodPost, "/periodos/"+s.periodo+"/generar-sesiones", map[string]interface{}{"incluirPasadas": true}, s.admin, http.StatusOK)
 	if gen["sesionesGeneradas"].(float64) < 1 {
 		e.t.Fatalf("no se generaron sesiones: %v", gen)
 	}
-	gen2 := e.exigir(http.MethodPost, "/periodos/"+s.periodo+"/generar-sesiones", map[string]interface{}{}, s.admin, http.StatusOK)
+	gen2 := e.exigir(http.MethodPost, "/periodos/"+s.periodo+"/generar-sesiones", map[string]interface{}{"incluirPasadas": true}, s.admin, http.StatusOK)
 	if gen2["sesionesGeneradas"].(float64) != 0 {
 		e.t.Fatalf("la generación debe ser idempotente: %v", gen2)
 	}

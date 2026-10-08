@@ -45,3 +45,23 @@ func poligonoDeDoc(doc *geoJSONPolygonDoc) *geo.GeoPolygon {
 	}
 	return &poly
 }
+
+// ranuraDoc guarda la fecha y hora generadas de una sesión reprogramada (US-ACA-06).
+type ranuraDoc struct {
+	Fecha      string `bson:"fecha"`
+	HoraInicio string `bson:"horaInicio"`
+}
+
+func ranuraDeDominio(r *academico.RanuraOriginal) *ranuraDoc {
+	if r == nil {
+		return nil
+	}
+	return &ranuraDoc{Fecha: r.Fecha, HoraInicio: r.HoraInicio}
+}
+
+func (d *ranuraDoc) dominio() *academico.RanuraOriginal {
+	if d == nil {
+		return nil
+	}
+	return &academico.RanuraOriginal{Fecha: d.Fecha, HoraInicio: d.HoraInicio}
+}

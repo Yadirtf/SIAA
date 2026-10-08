@@ -152,10 +152,10 @@ func (uc *ListaManualUseCase) sesionDelDocente(ctx context.Context, sesionID, do
 		return nil, ErrDocenteNoAutorizado
 	}
 	if s.Estado() == academico.EstadoSesionCancelada || s.Estado() == academico.EstadoSesionExcluida {
-		return nil, &shared.DomainError{Code: shared.ErrConflictoUnicidad, Message: "La sesión está cancelada; no admite lista de asistencia"}
+		return nil, &shared.DomainError{Code: shared.ErrEstadoInvalido, Message: "La sesión está cancelada; no admite lista de asistencia"}
 	}
 	if ahora.Before(s.VentanaEntradaAbre()) {
-		return nil, &shared.DomainError{Code: shared.ErrConflictoUnicidad, Message: "La lista manual se habilita cuando empieza la sesión"}
+		return nil, &shared.DomainError{Code: shared.ErrEstadoInvalido, Message: "La lista manual se habilita cuando empieza la sesión"}
 	}
 	return s, nil
 }

@@ -19,6 +19,8 @@ type GenerarSesionesCmd struct {
 	Actor        ContextoActor `json:"-"`
 	// Desde omite las sesiones cuya ventana de entrada ya abrió (cero = todo el periodo).
 	Desde time.Time `json:"-"`
+	// IncluirPasadas genera también las fechas anteriores a hoy (carga histórica explícita).
+	IncluirPasadas bool `json:"incluirPasadas,omitempty"`
 }
 
 // FechaExcluidaDTO detalle de una fecha no lectiva excluida de la generación (AC-05).
@@ -36,16 +38,19 @@ type AsignacionOmitidaDTO struct {
 
 // InformeGeneracionDTO resultado exhaustivo de la generación de sesiones (AC-03, AC-05).
 type InformeGeneracionDTO struct {
-	PeriodoID                    string                 `json:"periodoId"`
-	TotalDiasCalendario          int                    `json:"totalDiasCalendario"`
-	AsignacionesProcesadas       int                    `json:"asignacionesProcesadas"`
-	SesionesGeneradas            int                    `json:"sesionesGeneradas"`
-	SesionesOmitidasIdempotencia int                    `json:"sesionesOmitidasIdempotencia"`
-	SesionesReactivadas          int                    `json:"sesionesReactivadas"`
-	FechasExcluidas              []FechaExcluidaDTO     `json:"fechasExcluidas"`
-	AsignacionesOmitidas         []AsignacionOmitidaDTO `json:"asignacionesOmitidas"`
-	DuracionMs                   int64                  `json:"duracionMs"`
-	Mensaje                      string                 `json:"mensaje"`
+	PeriodoID                    string `json:"periodoId"`
+	TotalDiasCalendario          int    `json:"totalDiasCalendario"`
+	AsignacionesProcesadas       int    `json:"asignacionesProcesadas"`
+	SesionesGeneradas            int    `json:"sesionesGeneradas"`
+	SesionesOmitidasIdempotencia int    `json:"sesionesOmitidasIdempotencia"`
+	SesionesReactivadas          int    `json:"sesionesReactivadas"`
+	// SesionesPasadasOmitidas: fechas anteriores a hoy que no se generan, para no registrar
+	// ausencias de clases que ya pasaron antes de existir la asignación.
+	SesionesPasadasOmitidas int                    `json:"sesionesPasadasOmitidas"`
+	FechasExcluidas         []FechaExcluidaDTO     `json:"fechasExcluidas"`
+	AsignacionesOmitidas    []AsignacionOmitidaDTO `json:"asignacionesOmitidas"`
+	DuracionMs              int64                  `json:"duracionMs"`
+	Mensaje                 string                 `json:"mensaje"`
 }
 
 func esFechaExcluida(fecha time.Time, sedeID, facultadID string, excepciones []*academico.CalendarioExcepcion) (bool, string) {

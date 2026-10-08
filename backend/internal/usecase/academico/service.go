@@ -51,6 +51,8 @@ type Service struct {
 	umbralImportacion *float64
 	// Integrantes de cada grupo (US-MAR-13, US-MAR-14).
 	grupoEstRepo repository.GrupoEstudiantesRepository
+	// Trabajos asíncronos (US-ACA-05 AC-04).
+	trabajoRepo repository.TrabajoRepository
 }
 
 // AmbitoParametros identifica los niveles de la cascada que aplican a una asignación (RN-002).

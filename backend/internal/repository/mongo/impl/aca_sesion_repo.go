@@ -44,6 +44,7 @@ type sesionDoc struct {
 	SedeID                  string             `bson:"sedeId"`
 	FacultadID              string             `bson:"facultadId"`
 	VentanaEstudiantil      *ventanaEstDoc     `bson:"ventanaEstudiantil,omitempty"`
+	RanuraOriginal          *ranuraDoc         `bson:"ranuraOriginal,omitempty"`
 	Eliminado               bool               `bson:"eliminado"`
 	CreadoEn                time.Time          `bson:"creadoEn"`
 	ActualizadoEn           time.Time          `bson:"actualizadoEn"`
@@ -110,12 +111,11 @@ func (r *sesionRepository) FindByID(ctx context.Context, id string) (*academico.
 
 func (r *sesionRepository) FindByAsignacionFechaHora(ctx context.Context, asignacionID string, fecha string, horaInicio string) (*academico.Sesion, error) {
 	var doc sesionDoc
-	err := r.col.FindOne(ctx, bson.D{
-		{Key: "asignacionId", Value: asignacionID},
-		{Key: "fecha", Value: fecha},
-		{Key: "horaInicio", Value: horaInicio},
-		{Key: "eliminado", Value: false},
-	}).Decode(&doc)
+	// Una sesión reprogramada se reconoce por su ranura original (US-ACA-06).
+	err := r.col.FindOne(ctx, bson.M{"asignacionId": asignacionID, "eliminado": false, "$or": []bson.M{
+		{"fecha": fecha, "horaInicio": horaInicio, "ranuraOriginal": nil},
+		{"ranuraOriginal.fecha": fecha, "ranuraOriginal.horaInicio": horaInicio},
+	}}).Decode(&doc)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, nil
 	}
@@ -181,23 +181,6 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	return res, nil
 }
 
-func (r *sesionRepository) Update(ctx context.Context, s *academico.Sesion) error {
-	oid, err := primitive.ObjectIDFromHex(s.ID())
-	if err != nil {
-		return fmt.Errorf("invalid sesion ID: %w", err)
-	}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "espacioId", Value: s.EspacioID()},
-		{Key: "estado", Value: string(s.Estado())},
-		{Key: "espacioVersionGeometria", Value: s.EspacioVersionGeometria()},
-		{Key: "motivoCancelacion", Value: s.MotivoCancelacion()},
-		{Key: "ventanaEstudiantil", Value: ventanaEstDeDominio(s.VentanaEstudiantil())},
-		{Key: "actualizadoEn", Value: time.Now().UTC()},
-	}}}
-	_, err = r.col.UpdateByID(ctx, oid, update)
-	return err
-}
-
 func (r *sesionRepository) CountSesionesFuturasPorEspacio(ctx context.Context, espacioID string, desde time.Time) (int64, error) {
 	return r.col.CountDocuments(ctx, bson.D{
 		{Key: "espacioId", Value: espacioID},
@@ -231,6 +214,7 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 		SedeID:                  s.SedeID(),
 		FacultadID:              s.FacultadID(),
 		VentanaEstudiantil:      ventanaEstDeDominio(s.VentanaEstudiantil()),
+		RanuraOriginal:          ranuraDeDominio(s.RanuraOriginal()),
 		Eliminado:               false,
 		CreadoEn:                s.CreadoEn(),
 		ActualizadoEn:           s.ActualizadoEn(),
@@ -289,5 +273,6 @@ func docToSesion(doc *sesionDoc) *academico.Sesion {
 		doc.MotivoCancelacion,
 		doc.CreadoEn,
 		doc.ActualizadoEn,
-	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID).ConVentanaEstudiantil(doc.VentanaEstudiantil.dominio())
+	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID).ConVentanaEstudiantil(doc.VentanaEstudiantil.dominio()).
+		ConRanuraOriginal(doc.RanuraOriginal.dominio())
 }

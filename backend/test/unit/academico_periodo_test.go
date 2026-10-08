@@ -2,6 +2,7 @@ package unit_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -123,15 +124,21 @@ func TestUSACA01_PeriodosYEstados(t *testing.T) {
 		t.Errorf("esperado estado ACTIVO, obtenido %s", res.Periodo.Estado())
 	}
 
-	// AC-03: Advertencia si se activa un segundo periodo solapado en la misma sede
-	res2, err := svc.CrearPeriodo(ctx, adminActor, usecaseAca.CrearPeriodoCmd{
+	// AC-03: un segundo periodo activo solapado exige confirmación y, confirmado, se advierte.
+	solapado := usecaseAca.CrearPeriodoCmd{
 		Codigo:      "2026-2-INT",
 		Nombre:      "Intersemestral 2026",
 		FechaInicio: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
 		FechaFin:    time.Date(2026, 11, 30, 23, 59, 59, 0, time.UTC),
 		Estado:      domainAca.EstadoActivo,
 		SedeID:      "sede-principal",
-	})
+	}
+	var sinConfirmar *shared.DomainError
+	if _, err := svc.CrearPeriodo(ctx, adminActor, solapado); !errors.As(err, &sinConfirmar) || sinConfirmar.Code != shared.ErrConfirmacionRequerida {
+		t.Fatalf("sin confirmar se esperaba CONFIRMACION_REQUERIDA, obtenido %v", err)
+	}
+	solapado.ConfirmarSolapamiento = true
+	res2, err := svc.CrearPeriodo(ctx, adminActor, solapado)
 	if err != nil {
 		t.Fatalf("error al crear segundo periodo: %v", err)
 	}

@@ -123,6 +123,7 @@ func (s *Service) CrearAsignacion(ctx context.Context, actor ContextoActor, cmd 
 		return nil, fmt.Errorf("error al persistir asignación: %w", err)
 	}
 
+	s.auditar(ctx, "asignacion", asig.ID(), "ASIGNACION_CREADA", actor, nil, resumenAsignacion(asig))
 	s.log.Info("asignación creada", applog.UsuarioID(actor.UsuarioID), applog.Extra(map[string]interface{}{"id": asig.ID(), "periodo": asig.PeriodoID(), "grupo": asig.GrupoID()}))
 	return &ResultadoAsignacion{
 		Asignacion:   asig,
@@ -147,6 +148,7 @@ func (s *Service) EliminarAsignacion(ctx context.Context, actor ContextoActor, i
 	if err := s.asignacionRepo.DeleteLogico(ctx, id); err != nil {
 		return err
 	}
+	s.auditar(ctx, "asignacion", id, "ASIGNACION_ELIMINADA", actor, map[string]interface{}{"id": id}, nil)
 	s.cancelarSesionesFuturas(ctx, actor, id)
 	return nil
 }

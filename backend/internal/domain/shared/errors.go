@@ -26,10 +26,14 @@ const (
 	ErrRecursoNoEncontrado     ErrorCode = "RECURSO_NO_ENCONTRADO"
 	ErrConflictoHorario        ErrorCode = "CONFLICTO_HORARIO"
 	ErrConflictoUnicidad       ErrorCode = "CONFLICTO_UNICIDAD"
-	ErrGeometriaInvalida       ErrorCode = "GEOMETRIA_INVALIDA"
-	ErrGeometriaSolapada       ErrorCode = "GEOMETRIA_SOLAPADA"
-	ErrLimiteTasa              ErrorCode = "LIMITE_TASA"
-	ErrInterno                 ErrorCode = "ERROR_INTERNO"
+	// ErrEstadoInvalido: la operación no aplica al estado actual (periodo cerrado, sesión cancelada…).
+	ErrEstadoInvalido ErrorCode = "ESTADO_INVALIDO"
+	// ErrConfirmacionRequerida: la operación tiene impacto y debe repetirse confirmándola.
+	ErrConfirmacionRequerida ErrorCode = "CONFIRMACION_REQUERIDA"
+	ErrGeometriaInvalida     ErrorCode = "GEOMETRIA_INVALIDA"
+	ErrGeometriaSolapada     ErrorCode = "GEOMETRIA_SOLAPADA"
+	ErrLimiteTasa            ErrorCode = "LIMITE_TASA"
+	ErrInterno               ErrorCode = "ERROR_INTERNO"
 )
 
 // DomainError es el error tipado que cruza las capas sin exponer detalles internos al cliente.

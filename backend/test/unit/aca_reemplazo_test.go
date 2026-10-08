@@ -31,7 +31,7 @@ func Test_US_ACA_09_ReemplazoDocenteSesion(t *testing.T) {
 
 	// Designar docente suplente para esta sesión puntual
 	actualizada, err := svc.AsignarDocenteReemplazo(
-		context.Background(), "SES-30", "DOC-SUPLENTE", "Licencia médica del titular",
+		context.Background(), "SES-30", "DOC-SUPLENTE", usecaseAca.CambioSesion{Motivo: "Licencia médica del titular", Confirmar: true},
 		usecaseAca.ContextoActor{
 			UsuarioID: "COORD-1", Rol: "COORDINADOR_ACADEMICO",
 		},

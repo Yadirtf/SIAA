@@ -15,7 +15,10 @@ import (
 )
 
 type GenerarSesionesRequest struct {
-	AsignacionID *string `json:"asignacionId,omitempty"`
+	AsignacionID   *string `json:"asignacionId,omitempty"`
+	IncluirPasadas bool    `json:"incluirPasadas,omitempty"`
+	// Asincrono devuelve 202 con un trabajo consultable en GET /trabajos/:id (AC-04).
+	Asincrono bool `json:"asincrono,omitempty"`
 }
 
 type CancelarSesionRequest struct {
@@ -24,12 +27,14 @@ type CancelarSesionRequest struct {
 
 type ReasignarAulaRequest struct {
 	NuevoEspacioID string `json:"nuevoEspacioId" validate:"required"`
-	Motivo         string `json:"motivo,omitempty"`
+	Motivo         string `json:"motivo"`
+	Confirmar      bool   `json:"confirmar,omitempty"`
 }
 
 type AsignarDocenteReemplazoRequest struct {
 	DocenteID string `json:"docenteId" validate:"required"`
-	Motivo    string `json:"motivo,omitempty"`
+	Motivo    string `json:"motivo"`
+	Confirmar bool   `json:"confirmar,omitempty"`
 }
 
 type SesionResponseDTO struct {
@@ -72,12 +77,20 @@ func (h *AcademicoHandler) GenerarSesiones(c echo.Context) error {
 	var req GenerarSesionesRequest
 	_ = c.Bind(&req)
 
-	actor := extraerActorAcademico(c)
-	informe, err := h.svc.GenerarSesiones(c.Request().Context(), usecaseAca.GenerarSesionesCmd{
-		PeriodoID:    periodoID,
-		AsignacionID: req.AsignacionID,
-		Actor:        actor,
-	})
+	cmd := usecaseAca.GenerarSesionesCmd{
+		PeriodoID:      periodoID,
+		AsignacionID:   req.AsignacionID,
+		IncluirPasadas: req.IncluirPasadas,
+		Actor:          extraerActorAcademico(c),
+	}
+	if req.Asincrono || c.QueryParam("asincrono") == "true" {
+		trabajo, err := h.svc.IniciarGeneracion(c.Request().Context(), cmd)
+		if err != nil {
+			return mapearErrorAcademico(err)
+		}
+		return c.JSON(http.StatusAccepted, trabajo)
+	}
+	informe, err := h.svc.GenerarSesiones(c.Request().Context(), cmd)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}
@@ -161,7 +174,8 @@ func (h *AcademicoHandler) ReasignarAulaSesion(c echo.Context) error {
 	}
 
 	actor := extraerActorAcademico(c)
-	sesion, err := h.svc.ReasignarAulaSesion(c.Request().Context(), id, req.NuevoEspacioID, req.Motivo, actor)
+	sesion, err := h.svc.ReasignarAulaSesion(c.Request().Context(), id, req.NuevoEspacioID,
+		usecaseAca.CambioSesion{Motivo: req.Motivo, Confirmar: req.Confirmar}, actor)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}
@@ -180,7 +194,8 @@ func (h *AcademicoHandler) AsignarDocenteReemplazo(c echo.Context) error {
 	}
 
 	actor := extraerActorAcademico(c)
-	sesion, err := h.svc.AsignarDocenteReemplazo(c.Request().Context(), id, req.DocenteID, req.Motivo, actor)
+	sesion, err := h.svc.AsignarDocenteReemplazo(c.Request().Context(), id, req.DocenteID,
+		usecaseAca.CambioSesion{Motivo: req.Motivo, Confirmar: req.Confirmar}, actor)
 	if err != nil {
 		return mapearErrorAcademico(err)
 	}

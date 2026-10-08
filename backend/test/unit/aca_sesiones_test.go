@@ -198,7 +198,7 @@ func Test_US_ACA_06_ReasignarAulaSesion(t *testing.T) {
 	_ = sesRepo.Create(context.Background(), ses)
 
 	// Reasignar al aula 2 (AC-01..AC-04)
-	_, err := svc.ReasignarAulaSesion(context.Background(), "SES-10", "AULA-2", "Cambio por capacidad", usecaseAca.ContextoActor{
+	_, err := svc.ReasignarAulaSesion(context.Background(), "SES-10", "AULA-2", usecaseAca.CambioSesion{Motivo: "Cambio por capacidad", Confirmar: true}, usecaseAca.ContextoActor{
 		UsuarioID: "ADMIN", Rol: "ADMINISTRADOR",
 	})
 	if err != nil {

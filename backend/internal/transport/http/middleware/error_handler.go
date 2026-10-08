@@ -81,7 +81,8 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 		return http.StatusUnprocessableEntity
 	case shared.ErrRecursoNoEncontrado:
 		return http.StatusNotFound
-	case shared.ErrConflictoHorario, shared.ErrConflictoUnicidad, shared.ErrGeometriaSolapada:
+	case shared.ErrConflictoHorario, shared.ErrConflictoUnicidad, shared.ErrGeometriaSolapada,
+		shared.ErrEstadoInvalido, shared.ErrConfirmacionRequerida:
 		return http.StatusConflict
 	case shared.ErrLimiteTasa:
 		return http.StatusTooManyRequests

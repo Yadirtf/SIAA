@@ -18,6 +18,8 @@ type CrearPeriodoRequest struct {
 	Estado        string `json:"estado"`      // PLANEACION, ACTIVO, CERRADO
 	SedeID        string `json:"sedeId,omitempty"`
 	CodigoExterno string `json:"codigoExterno,omitempty"`
+	// ConfirmarSolapamiento acepta activarlo aunque se cruce con otro periodo activo.
+	ConfirmarSolapamiento bool `json:"confirmarSolapamiento,omitempty"`
 }
 
 type PeriodoResponse struct {

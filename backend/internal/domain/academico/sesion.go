@@ -50,6 +50,7 @@ type Sesion struct {
 	sedeID                  string // ubicación académica para el alcance ABAC (RF-ROL-003)
 	facultadID              string
 	ventanaEstudiantil      *VentanaEstudiantil // US-MAR-13: abierta por el docente
+	ranuraOriginal          *RanuraOriginal     // US-ACA-06: fecha y hora generadas si se reprogramó
 	creadoEn                time.Time
 	actualizadoEn           time.Time
 }

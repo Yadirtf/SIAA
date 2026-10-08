@@ -71,6 +71,7 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 		loc = time.UTC
 	}
 
+	hoy := s.clk.Now().In(loc).Format("2006-01-02")
 	diasTotal := 0
 	sesionesNuevas := make([]*academico.Sesion, 0)
 	omitidasIdempotencia := 0
@@ -133,7 +134,9 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 			fechaStr := cur.Format("2006-01-02")
 
 			// Verificar si coincide con el día de la semana de la franja
-			if w == diaSemanaObjetivo {
+			if w == diaSemanaObjetivo && cmd.Desde.IsZero() && !cmd.IncluirPasadas && fechaStr < hoy {
+				informe.SesionesPasadasOmitidas++
+			} else if w == diaSemanaObjetivo {
 				// AC-01: Verificar excepciones de calendario (festivos, paros, recesos)
 				excluida, motivoEx := esFechaExcluida(cur, periodo.SedeID(), asig.FacultadID(), excepciones)
 				if excluida {
