@@ -41,6 +41,7 @@ type InformeGeneracionDTO struct {
 	AsignacionesProcesadas       int                    `json:"asignacionesProcesadas"`
 	SesionesGeneradas            int                    `json:"sesionesGeneradas"`
 	SesionesOmitidasIdempotencia int                    `json:"sesionesOmitidasIdempotencia"`
+	SesionesReactivadas          int                    `json:"sesionesReactivadas"`
 	FechasExcluidas              []FechaExcluidaDTO     `json:"fechasExcluidas"`
 	AsignacionesOmitidas         []AsignacionOmitidaDTO `json:"asignacionesOmitidas"`
 	DuracionMs                   int64                  `json:"duracionMs"`

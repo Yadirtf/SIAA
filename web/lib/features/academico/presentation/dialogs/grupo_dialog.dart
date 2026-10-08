@@ -61,13 +61,13 @@ class _GrupoDialogState extends State<GrupoDialog> {
     }
 
     context.read<AcademicoBloc>().add(
-          CreateGrupoEvent(
-            numero: numero,
-            asignaturaId: asignaturaId,
-            periodoId: periodoId,
-            cupo: cupo,
-          ),
-        );
+      CreateGrupoEvent(
+        numero: numero,
+        asignaturaId: asignaturaId,
+        periodoId: periodoId,
+        cupo: cupo,
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -121,10 +121,12 @@ class _GrupoDialogState extends State<GrupoDialog> {
                   prefixIcon: Icon(Icons.menu_book_rounded),
                 ),
                 items: widget.asignaturas
-                    .map((a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text('${a.codigo} - ${a.nombre}'),
-                        ))
+                    .map(
+                      (a) => DropdownMenuItem(
+                        value: a.id,
+                        child: Text('${a.codigo} - ${a.nombre}'),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedAsignaturaId = val);
@@ -139,10 +141,12 @@ class _GrupoDialogState extends State<GrupoDialog> {
                   prefixIcon: Icon(Icons.calendar_today_rounded),
                 ),
                 items: widget.periodos
-                    .map((p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text('${p.codigo} (${p.estado})'),
-                        ))
+                    .map(
+                      (p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text('${p.codigo} (${p.estado})'),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedPeriodoId = val);
@@ -157,10 +161,7 @@ class _GrupoDialogState extends State<GrupoDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Crear Grupo'),
-        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Crear Grupo')),
       ],
     );
   }

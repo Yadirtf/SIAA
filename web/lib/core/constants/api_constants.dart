@@ -12,6 +12,10 @@ class ApiConstants {
   static const String logout = '$baseUrl/auth/logout';
   static const String recuperar = '$baseUrl/auth/recuperar';
   static const String confirmarRecuperar = '$baseUrl/auth/recuperar/confirmar';
+  static const String totpVerificar = '$baseUrl/auth/totp/verificar';
+  static const String totpEnrolar = '$baseUrl/auth/totp/enrolar';
+  static const String totpEnrolarConfirmar =
+      '$baseUrl/auth/totp/enrolar/confirmar';
 
   // Geo
   static const String sedes = '$baseUrl/sedes';
@@ -51,6 +55,10 @@ class ApiConstants {
   static const String academicoImportarPreview =
       '$baseUrl/academico/importar/preview';
   static const String academicoImportar = '$baseUrl/academico/importar';
+  static const String academicoImportarDiagnostico =
+      '$baseUrl/academico/importar/diagnostico';
+  static String academicoImportarPlantilla(String formato) =>
+      '$baseUrl/academico/importar/plantilla?formato=$formato';
 
   // Usuarios (US-ROL-01..05, US-AUT-02/07)
   static const String usuarios = '$baseUrl/usuarios';

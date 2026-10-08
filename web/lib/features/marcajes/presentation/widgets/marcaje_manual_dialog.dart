@@ -1,5 +1,6 @@
 // marcaje_manual_dialog.dart — Modal con selectores dinámicos para registro de marcaje manual administrativo (US-MAR-09 AC-04)
 import 'package:flutter/material.dart';
+
 import '../../data/datasources/marcajes_admin_remote_datasource.dart';
 import '../../domain/models/sesion_summary_model.dart';
 import '../../domain/models/usuario_summary_model.dart';
@@ -12,7 +13,8 @@ class MarcajeManualDialog extends StatefulWidget {
     required String tipo,
     required String resultado,
     required String motivo,
-  }) onConfirmar;
+  })
+  onConfirmar;
 
   const MarcajeManualDialog({super.key, required this.onConfirmar});
 
@@ -24,7 +26,8 @@ class MarcajeManualDialog extends StatefulWidget {
       required String tipo,
       required String resultado,
       required String motivo,
-    }) onConfirmar,
+    })
+    onConfirmar,
   }) {
     return showDialog(
       context: context,
@@ -68,7 +71,8 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
   @override
   Widget build(BuildContext context) {
     final chars = _motivoCtrl.text.trim().length;
-    final puedeGuardar = _sesionId != null &&
+    final puedeGuardar =
+        _sesionId != null &&
         _sesionId!.isNotEmpty &&
         _usuarioId != null &&
         _usuarioId!.isNotEmpty &&
@@ -102,7 +106,8 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
                 items: _sesiones,
                 labelExtractor: (s) => s.etiquetaSelector,
                 idExtractor: (s) => s.id,
-                filter: (s, q) => s.etiquetaSelector.toLowerCase().contains(q.toLowerCase()),
+                filter: (s, q) =>
+                    s.etiquetaSelector.toLowerCase().contains(q.toLowerCase()),
                 onSelected: (id) => setState(() => _sesionId = id),
                 isRequired: true,
               ),
@@ -126,10 +131,20 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _tipo,
-                      decoration: const InputDecoration(labelText: 'Tipo', border: OutlineInputBorder(), isDense: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'ENTRADA', child: Text('ENTRADA')),
-                        DropdownMenuItem(value: 'SALIDA', child: Text('SALIDA')),
+                        DropdownMenuItem(
+                          value: 'ENTRADA',
+                          child: Text('ENTRADA'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'SALIDA',
+                          child: Text('SALIDA'),
+                        ),
                       ],
                       onChanged: (val) => setState(() => _tipo = val!),
                     ),
@@ -138,10 +153,20 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _resultado,
-                      decoration: const InputDecoration(labelText: 'Resultado', border: OutlineInputBorder(), isDense: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Resultado',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'ACEPTADO', child: Text('ACEPTADO')),
-                        DropdownMenuItem(value: 'RECHAZADO', child: Text('RECHAZADO')),
+                        DropdownMenuItem(
+                          value: 'ACEPTADO',
+                          child: Text('ACEPTADO'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'RECHAZADO',
+                          child: Text('RECHAZADO'),
+                        ),
                       ],
                       onChanged: (val) => setState(() => _resultado = val!),
                     ),
@@ -152,7 +177,10 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Motivo (Auditoría obligatoria):', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Motivo (Auditoría obligatoria):',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     '$chars / 20 mín',
                     style: TextStyle(
@@ -178,7 +206,10 @@ class _MarcajeManualDialogState extends State<MarcajeManualDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
         ElevatedButton(
           onPressed: puedeGuardar
               ? () {

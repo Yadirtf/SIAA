@@ -24,15 +24,14 @@ class FakeAcademicoRepository implements AcademicoRepository {
     required String fechaInicio,
     required String fechaFin,
     required String estado,
-  }) async =>
-      PeriodoModel(
-        id: 'p-1',
-        codigo: codigo,
-        nombre: nombre,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-        estado: estado,
-      );
+  }) async => PeriodoModel(
+    id: 'p-1',
+    codigo: codigo,
+    nombre: nombre,
+    fechaInicio: fechaInicio,
+    fechaFin: fechaFin,
+    estado: estado,
+  );
 
   @override
   Future<List<FacultadModel>> getFacultades() async => [];
@@ -41,8 +40,7 @@ class FakeAcademicoRepository implements AcademicoRepository {
     required String codigo,
     required String nombre,
     String? sedeId,
-  }) async =>
-      FacultadModel(id: 'fac-1', codigo: codigo, nombre: nombre);
+  }) async => FacultadModel(id: 'fac-1', codigo: codigo, nombre: nombre);
   @override
   Future<void> deleteFacultad(String id) async {}
 
@@ -53,8 +51,12 @@ class FakeAcademicoRepository implements AcademicoRepository {
     required String codigo,
     required String nombre,
     required String facultadId,
-  }) async =>
-      ProgramaModel(id: 'pr-1', codigo: codigo, nombre: nombre, facultadId: facultadId);
+  }) async => ProgramaModel(
+    id: 'pr-1',
+    codigo: codigo,
+    nombre: nombre,
+    facultadId: facultadId,
+  );
   @override
   Future<void> deletePrograma(String id) async {}
 
@@ -66,8 +68,13 @@ class FakeAcademicoRepository implements AcademicoRepository {
     required String nombre,
     required String programaId,
     required int creditos,
-  }) async =>
-      AsignaturaModel(id: 'as-1', codigo: codigo, nombre: nombre, programaId: programaId, creditos: creditos);
+  }) async => AsignaturaModel(
+    id: 'as-1',
+    codigo: codigo,
+    nombre: nombre,
+    programaId: programaId,
+    creditos: creditos,
+  );
   @override
   Future<void> deleteAsignatura(String id) async {}
 
@@ -79,8 +86,13 @@ class FakeAcademicoRepository implements AcademicoRepository {
     required String asignaturaId,
     required String periodoId,
     required int cupo,
-  }) async =>
-      GrupoModel(id: 'gr-1', numero: numero, asignaturaId: asignaturaId, periodoId: periodoId, cupo: cupo);
+  }) async => GrupoModel(
+    id: 'gr-1',
+    numero: numero,
+    asignaturaId: asignaturaId,
+    periodoId: periodoId,
+    cupo: cupo,
+  );
   @override
   Future<void> deleteGrupo(String id) async {}
 
@@ -105,25 +117,6 @@ class FakeAcademicoRepository implements AcademicoRepository {
 
   @override
   Future<List<ExcepcionModel>> getExcepciones() async => [];
-  @override
-  Future<ExcepcionModel> createExcepcion({
-    required String nombre,
-    required String tipo,
-    required String ambito,
-    required String fechaInicio,
-    required String fechaFin,
-    String? ambitoId,
-  }) async =>
-      ExcepcionModel(
-        id: 'ex-1',
-        nombre: nombre,
-        tipo: tipo,
-        ambito: ambito,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-      );
-  @override
-  Future<void> deleteExcepcion(String id) async {}
 
   @override
   Future<List<SesionModel>> getSesiones({
@@ -134,77 +127,67 @@ class FakeAcademicoRepository implements AcademicoRepository {
     String? estado,
     String? desde,
     String? hasta,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
-  Future<void> cancelarSesion({required String sesionId, required String motivo}) async {}
+  Future<void> cancelarSesion({
+    required String sesionId,
+    required String motivo,
+  }) async {}
 
   @override
   Future<SesionModel> reasignarAulaSesion({
     required String sesionId,
     required String nuevoEspacioId,
     String? motivo,
-  }) async =>
-      SesionModel(
-        id: sesionId,
-        periodoId: 'per-1',
-        asignacionId: 'asig-1',
-        asignaturaId: 'asig-1',
-        grupoId: 'grp-1',
-        docenteIds: const ['doc-1'],
-        espacioId: nuevoEspacioId,
-        fecha: '2026-09-25',
-        horaInicio: '08:00',
-        horaFin: '10:00',
-        inicioProgramado: '2026-09-25T08:00:00Z',
-        finProgramado: '2026-09-25T10:00:00Z',
-        estado: 'PROGRAMADA',
-      );
+  }) async => SesionModel(
+    id: sesionId,
+    periodoId: 'per-1',
+    asignacionId: 'asig-1',
+    asignaturaId: 'asig-1',
+    grupoId: 'grp-1',
+    docenteIds: const ['doc-1'],
+    espacioId: nuevoEspacioId,
+    fecha: '2026-09-25',
+    horaInicio: '08:00',
+    horaFin: '10:00',
+    inicioProgramado: '2026-09-25T08:00:00Z',
+    finProgramado: '2026-09-25T10:00:00Z',
+    estado: 'PROGRAMADA',
+  );
 
   @override
   Future<SesionModel> asignarDocenteReemplazo({
     required String sesionId,
     required String docenteId,
     String? motivo,
-  }) async =>
-      SesionModel(
-        id: sesionId,
-        periodoId: 'per-1',
-        asignacionId: 'asig-1',
-        asignaturaId: 'asig-1',
-        grupoId: 'grp-1',
-        docenteIds: [docenteId],
-        espacioId: 'esp-1',
-        fecha: '2026-09-25',
-        horaInicio: '08:00',
-        horaFin: '10:00',
-        inicioProgramado: '2026-09-25T08:00:00Z',
-        finProgramado: '2026-09-25T10:00:00Z',
-        estado: 'PROGRAMADA',
-      );
-
-  @override
-  Future<PreviewImportacionModel> previewImportarCsv({
-    required List<int> bytes,
-    required String filename,
-  }) async =>
-      const PreviewImportacionModel(totalFilas: 0, filasValidas: 0, filasConError: 0, filas: []);
-
-  @override
-  Future<void> confirmarImportarCsv({required List<Map<String, dynamic>> filas}) async {}
+  }) async => SesionModel(
+    id: sesionId,
+    periodoId: 'per-1',
+    asignacionId: 'asig-1',
+    asignaturaId: 'asig-1',
+    grupoId: 'grp-1',
+    docenteIds: [docenteId],
+    espacioId: 'esp-1',
+    fecha: '2026-09-25',
+    horaInicio: '08:00',
+    horaFin: '10:00',
+    inicioProgramado: '2026-09-25T08:00:00Z',
+    finProgramado: '2026-09-25T10:00:00Z',
+    estado: 'PROGRAMADA',
+  );
 }
 
 Widget wrapWithBlocs(Widget child) {
   final repo = FakeAcademicoRepository();
   return MultiBlocProvider(
     providers: [
-      BlocProvider<AcademicoBloc>(create: (_) => AcademicoBloc(repository: repo)),
+      BlocProvider<AcademicoBloc>(
+        create: (_) => AcademicoBloc(repository: repo),
+      ),
       BlocProvider<SesionesBloc>(create: (_) => SesionesBloc(repository: repo)),
     ],
-    child: MaterialApp(
-      home: Scaffold(body: child),
-    ),
+    child: MaterialApp(home: Scaffold(body: child)),
   );
 }
 
@@ -255,8 +238,8 @@ void main() {
             'numeroFila': 2,
             'valida': false,
             'errores': ['Docente no encontrado'],
-          }
-        ]
+          },
+        ],
       };
 
       final preview = PreviewImportacionModel.fromJson(json);
@@ -432,9 +415,7 @@ void main() {
                 context: ctx,
                 builder: (_) => BlocProvider.value(
                   value: ctx.read<SesionesBloc>(),
-                  child: const CancelarSesionDialog(
-                    sesionId: 'ses-1',
-                  ),
+                  child: const CancelarSesionDialog(sesionId: 'ses-1'),
                 ),
               ),
               child: const Text('Abrir Cancelar'),
@@ -478,7 +459,9 @@ void main() {
       expect(find.text('Aula actual: Aula 101'), findsOneWidget);
     });
 
-    testWidgets('DocenteReemplazoDialog renderiza selector de reemplazo', (tester) async {
+    testWidgets('DocenteReemplazoDialog renderiza selector de reemplazo', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         wrapWithBlocs(
           Builder(

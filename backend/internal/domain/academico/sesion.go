@@ -4,6 +4,7 @@
 package academico
 
 import (
+	"strings"
 	"time"
 
 	"github.com/siaa/backend/internal/domain/geo"
@@ -221,6 +222,26 @@ func (s *Sesion) Cancelar(motivo string, ahora time.Time) error {
 	s.motivoCancelacion = motivo
 	s.actualizadoEn = ahora
 	return nil
+}
+
+// MotivoExcepcionPrefijo marca las cancelaciones hechas por una excepción de calendario,
+// las únicas que se pueden reactivar si la excepción se elimina (US-ACA-04 AC-03/AC-04).
+const MotivoExcepcionPrefijo = "Excepción de calendario: "
+
+// CanceladaPorExcepcion indica si la sesión se canceló por una excepción de calendario.
+func (s *Sesion) CanceladaPorExcepcion() bool {
+	return s.estado == EstadoSesionCancelada && strings.HasPrefix(s.motivoCancelacion, MotivoExcepcionPrefijo)
+}
+
+// Reactivar devuelve a PROGRAMADA una sesión cancelada por una excepción ya eliminada.
+func (s *Sesion) Reactivar(ahora time.Time) bool {
+	if !s.CanceladaPorExcepcion() {
+		return false
+	}
+	s.estado = EstadoSesionProgramada
+	s.motivoCancelacion = ""
+	s.actualizadoEn = ahora
+	return true
 }
 
 // ReasignarEspacio actualiza el aula asignada para esta sesión puntual y congela la versión de su geometría (US-ACA-06).

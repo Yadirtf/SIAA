@@ -127,8 +127,8 @@ class _LoginFormCardState extends State<LoginFormCard> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(RecuperarPasswordScreen.routeName),
+                onPressed: () => Navigator.of(context)
+                    .pushNamed(RecuperarPasswordScreen.routeName),
                 child: Text(
                   '¿Olvidaste tu contraseña?',
                   style: SIAATypography.labelLarge.copyWith(

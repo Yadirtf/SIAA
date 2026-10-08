@@ -6,6 +6,7 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/academico/data/academico_remote_datasource.dart';
 import 'features/academico/domain/academico_repository.dart';
+import 'features/academico/domain/importacion_repository.dart';
 import 'features/academico/presentation/bloc/academico_bloc.dart';
 import 'features/academico/presentation/bloc/sesiones_bloc.dart';
 import 'features/academico/presentation/bloc/importacion_bloc.dart';
@@ -128,8 +129,8 @@ class SiaaApp extends StatelessWidget {
                 SesionesBloc(repository: ctx.read<AcademicoRepository>()),
           ),
           BlocProvider<ImportacionBloc>(
-            create: (ctx) =>
-                ImportacionBloc(repository: ctx.read<AcademicoRepository>()),
+            create: (_) =>
+                ImportacionBloc(repository: ImportacionRepositoryImpl()),
           ),
           BlocProvider<DispositivosBloc>(
             create: (ctx) => DispositivosBloc(
@@ -204,7 +205,9 @@ class _AuthGate extends StatelessWidget {
         if (state is Authenticated) {
           return const DashboardShell();
         }
-        if (state is Unauthenticated || state is AuthFailure) {
+        if (state is Unauthenticated ||
+            state is AuthFailure ||
+            state is SegundoFactorRequerido) {
           return const LoginScreen();
         }
         return const Scaffold(

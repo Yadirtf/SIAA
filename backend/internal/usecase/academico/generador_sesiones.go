@@ -149,7 +149,14 @@ func (s *Service) GenerarSesiones(ctx context.Context, cmd GenerarSesionesCmd) (
 				// AC-03: Verificar idempotencia — no duplicar sesión
 				existente, _ := s.sesionRepo.FindByAsignacionFechaHora(ctx, asig.ID(), fechaStr, franja.HoraInicio())
 				if existente != nil {
-					omitidasIdempotencia++
+					// US-ACA-04 AC-04: al regenerar tras eliminar la excepción, la sesión que
+					// esa excepción canceló vuelve a quedar programada (si aún es futura).
+					if existente.CanceladaPorExcepcion() && existente.InicioProgramado().After(s.clk.Now()) &&
+						existente.Reactivar(s.clk.Now()) && s.sesionRepo.Update(ctx, existente) == nil {
+						informe.SesionesReactivadas++
+					} else {
+						omitidasIdempotencia++
+					}
 					cur = cur.AddDate(0, 0, 1)
 					continue
 				}

@@ -258,6 +258,8 @@ type ExcepcionResponse struct {
 	AmbitoID    string `json:"ambitoId,omitempty"`
 	FechaInicio string `json:"fechaInicio"`
 	FechaFin    string `json:"fechaFin"`
+	// SesionesCanceladas solo viene al crear: sesiones ya generadas que la excepción canceló.
+	SesionesCanceladas *int `json:"sesionesCanceladas,omitempty"`
 }
 
 func FromExcepcionDomain(e *domainAca.CalendarioExcepcion) ExcepcionResponse {

@@ -170,6 +170,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	if err != nil {
 		return nil, fmt.Errorf("cifrado de soportes: %w", err)
 	}
+	acaSvc.WithCargasMasivas(impl.NewCargaMasivaRepository(mongoClient, cifrador), cfg.ImportacionUmbralErroresPct)
 	justificacionRepo := impl.NewJustificacionRepository(mongoClient)
 	justificacionesSvc := usecaseJus.NewService(justificacionRepo, impl.NewAdjuntoRepository(mongoClient, cifrador),
 		sesionRepo, marcajeRepo, usuarioRepo, auditoriaRepo, clk).

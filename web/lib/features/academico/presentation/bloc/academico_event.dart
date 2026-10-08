@@ -147,30 +147,3 @@ class DeleteAsignacionEvent extends AcademicoEvent {
   @override
   List<Object?> get props => [id];
 }
-
-class CreateExcepcionEvent extends AcademicoEvent {
-  final String nombre;
-  final String tipo;
-  final String ambito;
-  final String fechaInicio;
-  final String fechaFin;
-
-  const CreateExcepcionEvent({
-    required this.nombre,
-    required this.tipo,
-    required this.ambito,
-    required this.fechaInicio,
-    required this.fechaFin,
-  });
-
-  @override
-  List<Object?> get props => [nombre, tipo, ambito, fechaInicio, fechaFin];
-}
-
-class DeleteExcepcionEvent extends AcademicoEvent {
-  final String id;
-  const DeleteExcepcionEvent(this.id);
-
-  @override
-  List<Object?> get props => [id];
-}

@@ -1,5 +1,6 @@
 // marcajes_filter_bar.dart — Barra de filtros administrativos y búsqueda avanzada con selectores dinámicos (US-MAR-09)
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../data/datasources/marcajes_admin_remote_datasource.dart';
 import '../../domain/models/marcaje_admin_model.dart';
@@ -108,7 +109,8 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
                 items: _sesiones,
                 labelExtractor: (s) => s.etiquetaSelector,
                 idExtractor: (s) => s.id,
-                filter: (s, q) => s.etiquetaSelector.toLowerCase().contains(q.toLowerCase()),
+                filter: (s, q) =>
+                    s.etiquetaSelector.toLowerCase().contains(q.toLowerCase()),
                 onSelected: (id) => _sesionId = id,
               ),
             ),
@@ -125,8 +127,14 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
                 items: const [
                   DropdownMenuItem(value: null, child: Text('Todos')),
                   DropdownMenuItem(value: 'ACEPTADO', child: Text('Aceptado')),
-                  DropdownMenuItem(value: 'RECHAZADO', child: Text('Rechazado')),
-                  DropdownMenuItem(value: 'AUSENCIA_AUTOMATICA', child: Text('Ausencia')),
+                  DropdownMenuItem(
+                    value: 'RECHAZADO',
+                    child: Text('Rechazado'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'AUSENCIA_AUTOMATICA',
+                    child: Text('Ausencia'),
+                  ),
                 ],
                 onChanged: (val) => setState(() => _resultado = val),
               ),
@@ -161,10 +169,22 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
                 ),
                 items: const [
                   DropdownMenuItem(value: null, child: Text('Todos')),
-                  DropdownMenuItem(value: 'MOVIL_ONLINE', child: Text('Móvil Online')),
-                  DropdownMenuItem(value: 'MOVIL_OFFLINE', child: Text('Móvil Offline')),
-                  DropdownMenuItem(value: 'MANUAL_DOCENTE', child: Text('Manual Docente')),
-                  DropdownMenuItem(value: 'SISTEMA_AUTOMATICO', child: Text('Sistema')),
+                  DropdownMenuItem(
+                    value: 'MOVIL_ONLINE',
+                    child: Text('Móvil Online'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MOVIL_OFFLINE',
+                    child: Text('Móvil Offline'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MANUAL_DOCENTE',
+                    child: Text('Manual Docente'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'SISTEMA_AUTOMATICO',
+                    child: Text('Sistema'),
+                  ),
                 ],
                 onChanged: (val) => setState(() => _origen = val),
               ),
@@ -176,7 +196,10 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
             OutlinedButton.icon(
@@ -184,7 +207,10 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
               icon: const Icon(Icons.clear_all, size: 18),
               label: const Text('Limpiar'),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -195,7 +221,10 @@ class _MarcajesFilterBarState extends State<MarcajesFilterBar> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal.shade700,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ],

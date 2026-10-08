@@ -1,6 +1,5 @@
 import '../data/academico_remote_datasource.dart';
 import '../data/models/academico_models.dart';
-import '../data/models/importacion_model.dart';
 import '../data/models/sesion_model.dart';
 
 abstract class AcademicoRepository {
@@ -52,14 +51,6 @@ abstract class AcademicoRepository {
   Future<void> deleteAsignacion(String id);
 
   Future<List<ExcepcionModel>> getExcepciones();
-  Future<ExcepcionModel> createExcepcion({
-    required String nombre,
-    required String tipo,
-    required String ambito,
-    required String fechaInicio,
-    required String fechaFin,
-  });
-  Future<void> deleteExcepcion(String id);
 
   Future<List<SesionModel>> getSesiones({
     String? periodoId,
@@ -83,14 +74,6 @@ abstract class AcademicoRepository {
     required String sesionId,
     required String docenteId,
     String? motivo,
-  });
-
-  Future<PreviewImportacionModel> previewImportarCsv({
-    required List<int> bytes,
-    required String filename,
-  });
-  Future<void> confirmarImportarCsv({
-    required List<Map<String, dynamic>> filas,
   });
 }
 
@@ -210,25 +193,6 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
       _remoteDataSource.getExcepciones();
 
   @override
-  Future<ExcepcionModel> createExcepcion({
-    required String nombre,
-    required String tipo,
-    required String ambito,
-    required String fechaInicio,
-    required String fechaFin,
-  }) => _remoteDataSource.createExcepcion(
-    nombre: nombre,
-    tipo: tipo,
-    ambito: ambito,
-    fechaInicio: fechaInicio,
-    fechaFin: fechaFin,
-  );
-
-  @override
-  Future<void> deleteExcepcion(String id) =>
-      _remoteDataSource.deleteExcepcion(id);
-
-  @override
   Future<void> deleteGrupo(String id) => _remoteDataSource.deleteGrupo(id);
 
   @override
@@ -277,15 +241,4 @@ class AcademicoRepositoryImpl implements AcademicoRepository {
     docenteId: docenteId,
     motivo: motivo,
   );
-
-  @override
-  Future<PreviewImportacionModel> previewImportarCsv({
-    required List<int> bytes,
-    required String filename,
-  }) => _remoteDataSource.previewImportarCsv(bytes: bytes, filename: filename);
-
-  @override
-  Future<void> confirmarImportarCsv({
-    required List<Map<String, dynamic>> filas,
-  }) => _remoteDataSource.confirmarImportarCsv(filas: filas);
 }

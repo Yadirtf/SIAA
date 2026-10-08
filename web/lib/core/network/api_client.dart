@@ -197,6 +197,43 @@ class ApiClient {
     }
   }
 
+  /// POST multipart que devuelve un archivo (p. ej. el diagnóstico de una carga).
+  Future<ArchivoBinario> postMultipartBytes(
+    String url, {
+    required List<int> fileBytes,
+    required String filename,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      final token = await _tokenStorage.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.files.add(
+        http.MultipartFile.fromBytes('file', fileBytes, filename: filename),
+      );
+      final response = await http.Response.fromStream(
+        await _client.send(request),
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _processResponse(response);
+      }
+      final mime = (response.headers['content-type'] ?? '')
+          .split(';')
+          .first
+          .trim();
+      return ArchivoBinario(
+        bytes: response.bodyBytes,
+        mime: mime.isEmpty ? 'application/octet-stream' : mime,
+        nombre: ArchivoBinario.nombreDesdeDisposition(
+          response.headers['content-disposition'],
+        ),
+      );
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
   dynamic _processResponse(http.Response response) {
     final statusCode = response.statusCode;
     final bodyString = response.body;

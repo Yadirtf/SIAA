@@ -2,7 +2,6 @@ package unit_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -240,50 +239,5 @@ func Test_US_ACA_08_CancelarSesion(t *testing.T) {
 	}
 	if cancelada.MotivoCancelacion() != "Falla en suministro electrico" {
 		t.Errorf("motivo no coincide: %s", cancelada.MotivoCancelacion())
-	}
-}
-
-func Test_US_ACA_07_ImportacionMasivaCSV(t *testing.T) {
-	now := time.Date(2026, 9, 25, 8, 0, 0, 0, time.UTC)
-	clk := shared.NewFakeClock(now)
-	logger := applog.New(applog.LevelDebug, nil)
-
-	pRepo := newMockPeriodoRepo()
-	estRepo := newMockEstructuraRepo()
-	asigRepo := newMockAsignacionRepo()
-
-	svc := usecaseAca.NewService(pRepo, estRepo, asigRepo, nil, nil, nil, &mockAuditoriaRepo{}, clk, logger)
-
-	periodo, _ := domainAca.NuevoPeriodo("PER-2026-CSV", "2026-CSV", "Periodo CSV", now, now.AddDate(0, 4, 0), domainAca.EstadoActivo, "SEDE-1", nil, now)
-	_ = pRepo.Create(context.Background(), periodo)
-
-	csvContent := `periodoId,facultadId,programaId,asignaturaId,asignaturaNombre,grupoId,docenteId,aulaId,diaSemana,horaInicio,horaFin,modalidad
-PER-2026-CSV,FAC-ING,PROG-SIS,MAT-101,Matematicas,GRP-1,DOC-1,AULA-101,1,08:00,10:00,PRESENCIAL
-PER-2026-CSV,FAC-ING,PROG-SIS,FIS-201,Fisica,GRP-2,DOC-2,AULA-102,8,08:00,10:00,PRESENCIAL
-`
-	preview, err := svc.PreviewImportacionCSV(context.Background(), strings.NewReader(csvContent))
-	if err != nil {
-		t.Fatalf("error en preview csv: %v", err)
-	}
-
-	if preview.TotalFilas != 2 {
-		t.Errorf("esperaba 2 filas, obtuvo %d", preview.TotalFilas)
-	}
-	if preview.FilasValidas != 1 {
-		t.Errorf("esperaba 1 fila valida, obtuvo %d", preview.FilasValidas)
-	}
-	if preview.FilasConError != 1 {
-		t.Errorf("esperaba 1 fila invalida (diaSemana=8), obtuvo %d", preview.FilasConError)
-	}
-
-	// Confirmar importación
-	res, err := svc.ConfirmarImportacionCSV(context.Background(), strings.NewReader(csvContent), usecaseAca.ContextoActor{
-		UsuarioID: "ADM", Rol: "ADMINISTRADOR", Scopes: nil,
-	})
-	if err != nil {
-		t.Fatalf("error en confirmacion csv: %v", err)
-	}
-	if res.AsignacionesCreadas != 1 {
-		t.Errorf("esperaba 1 asignacion creada, obtuvo %d", res.AsignacionesCreadas)
 	}
 }

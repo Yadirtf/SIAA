@@ -27,8 +27,13 @@ class CargarParametrosEfectivosEvent extends ParametrosEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [sedeId, facultadId, bloqueId, espacioId, asignacionId];
+  List<Object?> get props => [
+    sedeId,
+    facultadId,
+    bloqueId,
+    espacioId,
+    asignacionId,
+  ];
 }
 
 /// Guarda un parámetro en el nivel indicado (US-PAR-01 AC-02).

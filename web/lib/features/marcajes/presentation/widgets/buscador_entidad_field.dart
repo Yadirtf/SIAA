@@ -28,10 +28,12 @@ class BuscadorEntidadField<T extends Object> extends StatefulWidget {
   });
 
   @override
-  State<BuscadorEntidadField<T>> createState() => _BuscadorEntidadFieldState<T>();
+  State<BuscadorEntidadField<T>> createState() =>
+      _BuscadorEntidadFieldState<T>();
 }
 
-class _BuscadorEntidadFieldState<T extends Object> extends State<BuscadorEntidadField<T>> {
+class _BuscadorEntidadFieldState<T extends Object>
+    extends State<BuscadorEntidadField<T>> {
   @override
   Widget build(BuildContext context) {
     return Autocomplete<T>(
@@ -41,7 +43,9 @@ class _BuscadorEntidadFieldState<T extends Object> extends State<BuscadorEntidad
         if (query.isEmpty) {
           return widget.items.take(15);
         }
-        return widget.items.where((item) => widget.filter(item, query)).take(15);
+        return widget.items
+            .where((item) => widget.filter(item, query))
+            .take(15);
       },
       onSelected: (item) {
         widget.onSelected(widget.idExtractor(item));

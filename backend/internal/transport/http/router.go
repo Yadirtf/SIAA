@@ -154,11 +154,7 @@ func NewRouter(
 
 	// Autenticación (públicas con límite estricto de 20 req/min por origen — US-AUT-02 AC-03)
 	authGroup := api.Group("/auth")
-	authRateLimit := 20
-	if cfg.RateLimitPerMinute > 0 && cfg.RateLimitPerMinute < 20 {
-		authRateLimit = cfg.RateLimitPerMinute
-	}
-	authGroup.Use(mw.RateLimiterByIP(authRateLimit))
+	authGroup.Use(mw.RateLimiterByIP(limiteAutenticacion(cfg)))
 	authGroup.POST("/login", authH.Login)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/login")
 	authGroup.POST("/refresh", authH.Refresh)
@@ -169,6 +165,10 @@ func NewRouter(
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/recuperar/confirmar")
 	authGroup.POST("/totp/verificar", authH.VerificarTOTP)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/verificar")
+	authGroup.POST("/totp/enrolar", authH.EnrolarTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/enrolar")
+	authGroup.POST("/totp/enrolar/confirmar", authH.ConfirmarEnrolamientoTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/enrolar/confirmar")
 
 	// Autenticación (requiere token válido y tasa de 120 req/min por usuario — US-AUT-02 AC-04)
 	authProtected := api.Group("/auth", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

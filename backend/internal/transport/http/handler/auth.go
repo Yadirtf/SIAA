@@ -31,7 +31,7 @@ func NewAuthHandler(svc *auth.Service) *AuthHandler {
 // @Accept      json
 // @Produce     json
 // @Param       body body dto.LoginRequest true "Credenciales"
-// @Success     200 {object} dto.TokenPairResponse
+// @Success     200 {object} dto.TokenPairResponse "o dto.DesafioTOTPResponse si falta el segundo factor"
 // @Failure     401 {object} middleware.errorResponse
 // @Failure     423 {object} middleware.errorResponse
 // @Router      /auth/login [post]
@@ -51,6 +51,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	})
 	if err != nil {
 		return err
+	}
+	if pair.Desafio != nil {
+		return c.JSON(http.StatusOK, desafioResponse(pair.Desafio))
 	}
 
 	return c.JSON(http.StatusOK, dto.TokenPairResponse{

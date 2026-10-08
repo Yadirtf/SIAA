@@ -30,7 +30,7 @@ func (h *AcademicoHandler) CrearExcepcion(c echo.Context) error {
 	}
 
 	actor := extraerActorAcademico(c)
-	exc, err := h.svc.CrearExcepcion(c.Request().Context(), actor, usecaseAca.CrearExcepcionCmd{
+	res, err := h.svc.CrearExcepcion(c.Request().Context(), actor, usecaseAca.CrearExcepcionCmd{
 		Nombre:      req.Nombre,
 		Tipo:        domainAca.TipoExcepcion(req.Tipo),
 		Ambito:      domainAca.AmbitoExcepcion(req.Ambito),
@@ -42,7 +42,9 @@ func (h *AcademicoHandler) CrearExcepcion(c echo.Context) error {
 		return mapearErrorAcademico(err)
 	}
 
-	return c.JSON(http.StatusCreated, dto.FromExcepcionDomain(exc))
+	out := dto.FromExcepcionDomain(res.Excepcion)
+	out.SesionesCanceladas = &res.SesionesCanceladas
+	return c.JSON(http.StatusCreated, out)
 }
 
 func (h *AcademicoHandler) ListarExcepciones(c echo.Context) error {
@@ -61,8 +63,10 @@ func (h *AcademicoHandler) ListarExcepciones(c echo.Context) error {
 func (h *AcademicoHandler) EliminarExcepcion(c echo.Context) error {
 	id := c.Param("id")
 	actor := extraerActorAcademico(c)
-	if err := h.svc.EliminarExcepcion(c.Request().Context(), actor, id); err != nil {
+	liberadas, err := h.svc.EliminarExcepcion(c.Request().Context(), actor, id)
+	if err != nil {
 		return mapearErrorAcademico(err)
 	}
-	return c.NoContent(http.StatusNoContent)
+	// AC-04: se informa qué se puede regenerar; no se regenera automáticamente.
+	return c.JSON(http.StatusOK, liberadas)
 }

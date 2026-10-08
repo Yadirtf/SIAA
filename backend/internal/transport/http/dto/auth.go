@@ -49,10 +49,26 @@ type ActivarTOTPRequest struct {
 }
 
 // VerificarTOTPRequest es el cuerpo de POST /auth/totp/verificar (US-AUT-05).
+// DesafioToken es el que entrega /auth/login tras validar la contraseña.
 type VerificarTOTPRequest struct {
-	UsuarioID     string `json:"usuarioId" validate:"required"`
+	DesafioToken  string `json:"desafioToken" validate:"required"`
 	Codigo        string `json:"codigo" validate:"required"`
 	DispositivoID string `json:"dispositivoId,omitempty"`
+}
+
+// EnrolarTOTPRequest es el cuerpo de POST /auth/totp/enrolar (US-AUT-05 AC-01).
+type EnrolarTOTPRequest struct {
+	DesafioToken string `json:"desafioToken" validate:"required"`
+}
+
+// DesafioTOTPResponse es la respuesta de /auth/login cuando falta el segundo factor.
+// Proposito es VERIFICAR_TOTP (presentar código) o CONFIGURAR_TOTP (enrolamiento obligatorio).
+type DesafioTOTPResponse struct {
+	RequiereTOTP           bool   `json:"requiereTOTP"`
+	RequiereConfigurarTOTP bool   `json:"requiereConfigurarTOTP"`
+	Proposito              string `json:"proposito"`
+	DesafioToken           string `json:"desafioToken"`
+	ExpiraEn               string `json:"expiraEn"`
 }
 
 // ─── Respuestas ────────────────────────────────────────────────

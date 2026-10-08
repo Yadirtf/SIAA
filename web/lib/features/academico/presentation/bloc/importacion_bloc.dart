@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/download/guardar_archivo.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/models/importacion_model.dart';
-import '../../domain/academico_repository.dart';
+import '../../domain/importacion_repository.dart';
 
 // ─── Events ───
 abstract class ImportacionEvent extends Equatable {
@@ -11,6 +13,7 @@ abstract class ImportacionEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Archivo CSV o XLSX elegido: se valida en el servidor sin persistir.
 class PreviewImportarCsvEvent extends ImportacionEvent {
   final List<int> bytes;
   final String filename;
@@ -18,15 +21,25 @@ class PreviewImportarCsvEvent extends ImportacionEvent {
   const PreviewImportarCsvEvent({required this.bytes, required this.filename});
 
   @override
-  List<Object?> get props => [bytes, filename];
+  List<Object?> get props => [filename, bytes.length];
 }
 
+/// Aplica el archivo validado (el servidor lo revalida completo).
 class ConfirmarImportarCsvEvent extends ImportacionEvent {
-  final List<Map<String, dynamic>> filas;
-  const ConfirmarImportarCsvEvent(this.filas);
+  const ConfirmarImportarCsvEvent();
+}
 
+/// Descarga el archivo con la columna de diagnóstico por fila.
+class DescargarDiagnosticoEvent extends ImportacionEvent {
+  const DescargarDiagnosticoEvent();
+}
+
+/// Descarga la plantilla publicada (`csv` o `xlsx`).
+class DescargarPlantillaEvent extends ImportacionEvent {
+  final String formato;
+  const DescargarPlantillaEvent(this.formato);
   @override
-  List<Object?> get props => [filas];
+  List<Object?> get props => [formato];
 }
 
 class ClearImportacionEvent extends ImportacionEvent {
@@ -46,7 +59,7 @@ class ImportacionInitial extends ImportacionState {
 
 class ImportacionLoading extends ImportacionState {
   final String message;
-  const ImportacionLoading({this.message = 'Procesando archivo CSV...'});
+  const ImportacionLoading({this.message = 'Procesando archivo...'});
 
   @override
   List<Object?> get props => [message];
@@ -54,10 +67,19 @@ class ImportacionLoading extends ImportacionState {
 
 class ImportacionPreviewLoaded extends ImportacionState {
   final PreviewImportacionModel preview;
-  const ImportacionPreviewLoaded(this.preview);
+  final String nombreArchivo;
+
+  /// Mensaje del último intento de aplicar que no se aplicó (sobre el umbral).
+  final String? aviso;
+
+  const ImportacionPreviewLoaded(
+    this.preview, {
+    this.nombreArchivo = '',
+    this.aviso,
+  });
 
   @override
-  List<Object?> get props => [preview];
+  List<Object?> get props => [preview, nombreArchivo, aviso];
 }
 
 class ImportacionSuccess extends ImportacionState {
@@ -78,49 +100,98 @@ class ImportacionError extends ImportacionState {
 
 // ─── BLoC ───
 class ImportacionBloc extends Bloc<ImportacionEvent, ImportacionState> {
-  final AcademicoRepository _repository;
+  final ImportacionRepository _repository;
+  final GuardarArchivo _guardar;
+  List<int>? _bytes;
+  String _nombre = '';
 
-  ImportacionBloc({required AcademicoRepository repository})
-      : _repository = repository,
-        super(const ImportacionInitial()) {
-    on<PreviewImportarCsvEvent>(_onPreviewCsv);
-    on<ConfirmarImportarCsvEvent>(_onConfirmarCsv);
-    on<ClearImportacionEvent>((_, emit) => emit(const ImportacionInitial()));
+  ImportacionBloc({
+    required ImportacionRepository repository,
+    GuardarArchivo guardar = guardarEnNavegador,
+  }) : _repository = repository,
+       _guardar = guardar,
+       super(const ImportacionInitial()) {
+    on<PreviewImportarCsvEvent>(_onPreview);
+    on<ConfirmarImportarCsvEvent>(_onConfirmar);
+    on<DescargarDiagnosticoEvent>(_onDiagnostico);
+    on<DescargarPlantillaEvent>(_onPlantilla);
+    on<ClearImportacionEvent>((_, emit) {
+      _bytes = null;
+      emit(const ImportacionInitial());
+    });
   }
 
-  Future<void> _onPreviewCsv(
+  Future<void> _onPreview(
     PreviewImportarCsvEvent event,
     Emitter<ImportacionState> emit,
   ) async {
-    emit(const ImportacionLoading(message: 'Validando archivo CSV en el servidor...'));
+    _bytes = event.bytes;
+    _nombre = event.filename;
+    emit(
+      const ImportacionLoading(message: 'Validando archivo en el servidor...'),
+    );
     try {
-      final preview = await _repository.previewImportarCsv(
-        bytes: event.bytes,
-        filename: event.filename,
-      );
-      emit(ImportacionPreviewLoaded(preview));
+      final preview = await _repository.preview(event.bytes, event.filename);
+      emit(ImportacionPreviewLoaded(preview, nombreArchivo: _nombre));
     } catch (e) {
-      emit(ImportacionError(_cleanError(e)));
+      emit(ImportacionError(_mensaje(e)));
     }
   }
 
-  Future<void> _onConfirmarCsv(
+  Future<void> _onConfirmar(
     ConfirmarImportarCsvEvent event,
     Emitter<ImportacionState> emit,
   ) async {
-    emit(const ImportacionLoading(message: 'Guardando asignaciones en base de datos...'));
+    final bytes = _bytes;
+    if (bytes == null) return;
+    emit(const ImportacionLoading(message: 'Aplicando la carga...'));
     try {
-      await _repository.confirmarImportarCsv(filas: event.filas);
-      emit(const ImportacionSuccess('¡Importación masiva completada exitosamente!'));
+      final r = await _repository.confirmar(bytes, _nombre);
+      if (r.aplicada) {
+        emit(ImportacionSuccess(r.mensaje));
+      } else if (r.informe != null) {
+        emit(
+          ImportacionPreviewLoaded(
+            r.informe!,
+            nombreArchivo: _nombre,
+            aviso: r.mensaje,
+          ),
+        );
+      } else {
+        emit(ImportacionError(r.mensaje));
+      }
     } catch (e) {
-      emit(ImportacionError(_cleanError(e)));
+      emit(ImportacionError(_mensaje(e)));
     }
   }
 
-  String _cleanError(dynamic e) {
-    return e
-        .toString()
-        .replaceAll('ApiException: ', '')
-        .replaceAll('Exception: ', '');
+  Future<void> _onDiagnostico(
+    DescargarDiagnosticoEvent event,
+    Emitter<ImportacionState> emit,
+  ) async {
+    final bytes = _bytes;
+    if (bytes == null) return;
+    try {
+      final archivo = await _repository.diagnostico(bytes, _nombre);
+      _guardar(archivo, 'diagnostico-$_nombre');
+    } catch (e) {
+      emit(ImportacionError(_mensaje(e)));
+    }
   }
+
+  Future<void> _onPlantilla(
+    DescargarPlantillaEvent event,
+    Emitter<ImportacionState> emit,
+  ) async {
+    try {
+      final archivo = await _repository.plantilla(event.formato);
+      _guardar(archivo, 'plantilla-carga-academica.${event.formato}');
+    } catch (e) {
+      emit(ImportacionError(_mensaje(e)));
+    }
+  }
+
+  String _mensaje(Object e) => e is ApiException
+      ? e.message
+      : e.toString().replaceAll('Exception: ', '');
 }

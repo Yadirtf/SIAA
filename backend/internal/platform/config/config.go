@@ -29,13 +29,17 @@ type Config struct {
 	JWTIssuer        string
 
 	// Seguridad
-	BcryptCost           int
-	RateLimitPerMinute   int
-	FailedLoginMax       int
-	FailedLoginWindowMin int
-	LockoutDurationMin   int
-	AllowedEmailDomains  []string
-	CORSAllowedOrigins   []string
+	BcryptCost         int
+	RateLimitPerMinute int
+	// AuthRateLimitPerMinute limita /auth por IP (US-AUT-02 AC-03); por defecto 20.
+	AuthRateLimitPerMinute int
+	// ImportacionUmbralErroresPct: % de filas con error que aún permite aplicar una carga (US-ACA-07 AC-03).
+	ImportacionUmbralErroresPct float64
+	FailedLoginMax              int
+	FailedLoginWindowMin        int
+	LockoutDurationMin          int
+	AllowedEmailDomains         []string
+	CORSAllowedOrigins          []string
 
 	// Correo
 	SMTPHost string
@@ -106,6 +110,8 @@ func Load() (*Config, error) {
 	// Seguridad
 	cfg.BcryptCost = getEnvInt("BCRYPT_COST", 12)
 	cfg.RateLimitPerMinute = getEnvInt("RATE_LIMIT_PER_MINUTE", 120)
+	cfg.AuthRateLimitPerMinute = getEnvInt("AUTH_RATE_LIMIT_PER_MINUTE", 20)
+	cfg.ImportacionUmbralErroresPct = float64(getEnvInt("IMPORTACION_UMBRAL_ERRORES_PCT", 5))
 	cfg.FailedLoginMax = getEnvInt("FAILED_LOGIN_MAX", 5)
 	cfg.FailedLoginWindowMin = getEnvInt("FAILED_LOGIN_WINDOW_MIN", 15)
 	cfg.LockoutDurationMin = getEnvInt("LOCKOUT_DURATION_MIN", 15)

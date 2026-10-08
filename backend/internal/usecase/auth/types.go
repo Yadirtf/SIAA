@@ -24,6 +24,8 @@ type TokenPair struct {
 	RefreshToken string
 	ExpiraEn     time.Time
 	Usuario      *UsuarioInfo
+	// Desafio no es nil cuando falta el segundo factor (US-AUT-05): en ese caso no hay tokens.
+	Desafio *DesafioTOTP
 }
 
 // UsuarioInfo es la información del usuario devuelta al cliente tras la autenticación.

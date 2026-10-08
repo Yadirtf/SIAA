@@ -88,6 +88,15 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (*TokenPair, erro
 	// Autenticación exitosa: resetear contador de intentos
 	_ = s.usuarios.ResetIntentosFallidos(ctx, usuario.ID)
 
+	// Segundo factor obligatorio: se entrega un desafío en lugar de tokens (US-AUT-05 AC-01/AC-02)
+	if requiereSegundoFactor(usuario, s.clock.Now()) {
+		desafio, err := s.emitirDesafio(usuario, input.DispositivoID)
+		if err != nil {
+			return nil, err
+		}
+		return &TokenPair{Desafio: desafio}, nil
+	}
+
 	// Emitir par de tokens
 	pair, err := s.emitTokens(ctx, usuario, input.DispositivoID)
 	if err != nil {

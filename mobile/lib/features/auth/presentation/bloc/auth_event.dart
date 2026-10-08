@@ -43,3 +43,14 @@ class AuthContextoSolicitado extends AuthEvent {
   @override
   List<Object?> get props => [rol];
 }
+
+/// Código TOTP (o de respaldo) para el desafío pendiente (US-AUT-05).
+class AuthSegundoFactorEnviado extends AuthEvent {
+  final String codigo;
+  const AuthSegundoFactorEnviado(this.codigo);
+  @override
+  List<Object?> get props => [codigo];
+}
+
+/// Abandona el segundo factor y vuelve al formulario.
+class AuthSegundoFactorCancelado extends AuthEvent {}

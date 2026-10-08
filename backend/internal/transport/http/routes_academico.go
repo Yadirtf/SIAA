@@ -55,6 +55,10 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar/preview", rbac.PermHorarioCrear)
 	acaImport.POST("/importar", acaH.ConfirmarImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar", rbac.PermHorarioCrear)
+	acaImport.POST("/importar/diagnostico", acaH.DiagnosticoImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar/diagnostico", rbac.PermHorarioCrear)
+	acaImport.GET("/importar/plantilla", acaH.PlantillaImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/academico/importar/plantilla", rbac.PermHorarioCrear)
 
 	// Facultades
 	facultades := api.Group("/facultades", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

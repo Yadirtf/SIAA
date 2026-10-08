@@ -54,13 +54,13 @@ class _AsignaturaDialogState extends State<AsignaturaDialog> {
     }
 
     context.read<AcademicoBloc>().add(
-          CreateAsignaturaEvent(
-            codigo: codigo,
-            nombre: nombre,
-            programaId: programaId,
-            creditos: creditos,
-          ),
-        );
+      CreateAsignaturaEvent(
+        codigo: codigo,
+        nombre: nombre,
+        programaId: programaId,
+        creditos: creditos,
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -122,10 +122,12 @@ class _AsignaturaDialogState extends State<AsignaturaDialog> {
                   prefixIcon: Icon(Icons.school_rounded),
                 ),
                 items: widget.programas
-                    .map((p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text('${p.codigo} - ${p.nombre}'),
-                        ))
+                    .map(
+                      (p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text('${p.codigo} - ${p.nombre}'),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedProgramaId = val);

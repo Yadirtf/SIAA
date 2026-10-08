@@ -1,292 +1,148 @@
 // Package academico — Importación masiva de estructura académica y horarios (US-ACA-07).
-// Satisface US-ACA-07 (AC-01..AC-06), RF-ACA-009 y el pipeline de carga masiva.
+// El servidor siempre valida el archivo original: el cliente no envía filas "ya validadas".
 package academico
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"io"
-	"strconv"
 	"strings"
 
-	"github.com/siaa/backend/internal/domain/academico"
 	"github.com/siaa/backend/internal/domain/shared"
+	"github.com/siaa/backend/internal/platform/importar"
+	"github.com/siaa/backend/internal/repository"
 )
 
-// FilaImportacionAcademica representa una fila procesada del archivo CSV.
-type FilaImportacionAcademica struct {
-	NumeroFila       int      `json:"numeroFila"`
-	PeriodoCodigo    string   `json:"periodoCodigo"`
-	FacultadCodigo   string   `json:"facultadCodigo"`
-	ProgramaCodigo   string   `json:"programaCodigo"`
-	AsignaturaCodigo string   `json:"asignaturaCodigo"`
-	AsignaturaNombre string   `json:"asignaturaNombre"`
-	GrupoCodigo      string   `json:"grupoCodigo"`
-	DocenteDocumento string   `json:"docenteDocumento"`
-	AulaCodigo       string   `json:"aulaCodigo"`
-	DiaSemana        int      `json:"diaSemana"`
-	HoraInicio       string   `json:"horaInicio"`
-	HoraFin          string   `json:"horaFin"`
-	Modalidad        string   `json:"modalidad"`
-	Valida           bool     `json:"valida"`
-	Errores          []string `json:"errores,omitempty"`
-}
-
-// PreviewImportacionAcademicaDTO resumen preliminar con validaciones estructurales y de negocio (AC-01, AC-02).
+// PreviewImportacionAcademicaDTO es el informe por fila sin persistir nada (AC-01).
 type PreviewImportacionAcademicaDTO struct {
+	Formato       string                     `json:"formato"`
 	TotalFilas    int                        `json:"totalFilas"`
 	FilasValidas  int                        `json:"filasValidas"`
 	FilasConError int                        `json:"filasConError"`
+	UmbralPct     float64                    `json:"umbralErroresPct"`
+	SuperaUmbral  bool                       `json:"superaUmbral"`
 	Filas         []FilaImportacionAcademica `json:"filas"`
 }
 
-// ResultadoImportacionAcademicaDTO resultado tras confirmación de la importación (AC-03, AC-04).
+// ResultadoImportacionAcademicaDTO es el resultado de aplicar la carga (AC-03, AC-06).
 type ResultadoImportacionAcademicaDTO struct {
-	TotalProcesadas     int      `json:"totalProcesadas"`
-	AsignacionesCreadas int      `json:"asignacionesCreadas"`
-	Errores             []string `json:"errores,omitempty"`
-	Mensaje             string   `json:"mensaje"`
+	Aplicada            bool                            `json:"aplicada"`
+	CargaID             string                          `json:"cargaId,omitempty"`
+	AsignacionesCreadas int                             `json:"asignacionesCreadas"`
+	GruposCreados       int                             `json:"gruposCreados"`
+	FilasOmitidas       int                             `json:"filasOmitidas"`
+	Mensaje             string                          `json:"mensaje"`
+	Informe             *PreviewImportacionAcademicaDTO `json:"informe"`
 }
 
-// ValidarImportacionCSV procesa y valida estructuralmente un archivo CSV (US-ACA-07 AC-01, AC-02).
-func (s *Service) ValidarImportacionCSV(r io.Reader) (*PreviewImportacionAcademicaDTO, error) {
-	reader := csv.NewReader(r)
-	reader.TrimLeadingSpace = true
+// umbralErroresDefecto es el porcentaje de filas con error que aún permite aplicar la carga.
+const umbralErroresDefecto = 5.0
 
-	// Leer encabezados
-	headers, err := reader.Read()
+// WithCargasMasivas inyecta el almacén del archivo original y el umbral configurado (AC-03, AC-06).
+func (s *Service) WithCargasMasivas(repo repository.CargaMasivaRepository, umbralPct float64) *Service {
+	s.cargasRepo = repo
+	if umbralPct >= 0 {
+		s.umbralImportacion = &umbralPct
+	}
+	return s
+}
+
+func (s *Service) umbralErrores() float64 {
+	if s.umbralImportacion != nil {
+		return *s.umbralImportacion
+	}
+	return umbralErroresDefecto
+}
+
+// PreviewImportacion valida el archivo CSV o XLSX completo sin persistir (AC-01, AC-04, AC-05).
+func (s *Service) PreviewImportacion(ctx context.Context, actor ContextoActor, contenido []byte) (*PreviewImportacionAcademicaDTO, error) {
+	prev, _, _, err := s.analizarImportacion(ctx, actor, contenido)
+	return prev, err
+}
+
+// DiagnosticoImportacion devuelve el mismo archivo con una columna de diagnóstico por fila (AC-02).
+func (s *Service) DiagnosticoImportacion(ctx context.Context, actor ContextoActor, contenido []byte) ([]byte, string, error) {
+	prev, tabla, _, err := s.analizarImportacion(ctx, actor, contenido)
 	if err != nil {
-		return nil, shared.NewValidationError("No se pudo leer el encabezado del archivo CSV", shared.FieldError{
-			Campo: "archivo", Error: "CSV_VACIO_O_INVALIDO",
-		})
+		return nil, "", err
 	}
-	if len(headers) < 8 {
-		return nil, shared.NewValidationError("El archivo CSV no cuenta con las columnas mínimas requeridas", shared.FieldError{
-			Campo: "columnas", Error: "COLUMNAS_INSUFICIENTES",
-		})
+	diagnosticos := make(map[int]string, len(prev.Filas))
+	for _, f := range prev.Filas {
+		partes := append(append([]string{}, f.Errores...), prefijar("Advertencia: ", f.Advertencias)...)
+		if len(f.Errores) > 0 {
+			partes[0] = "ERROR: " + partes[0]
+		}
+		diagnosticos[f.NumeroFila] = strings.Join(partes, " | ")
 	}
-
-	preview := &PreviewImportacionAcademicaDTO{
-		Filas: make([]FilaImportacionAcademica, 0),
-	}
-
-	numFila := 1
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			continue
-		}
-		numFila++
-
-		fila := FilaImportacionAcademica{
-			NumeroFila: numFila,
-			Valida:     true,
-			Errores:    make([]string, 0),
-		}
-
-		if len(record) > 0 {
-			fila.PeriodoCodigo = strings.TrimSpace(record[0])
-		}
-		if len(record) > 1 {
-			fila.FacultadCodigo = strings.TrimSpace(record[1])
-		}
-		if len(record) > 2 {
-			fila.ProgramaCodigo = strings.TrimSpace(record[2])
-		}
-		if len(record) > 3 {
-			fila.AsignaturaCodigo = strings.TrimSpace(record[3])
-		}
-		if len(record) > 4 {
-			fila.AsignaturaNombre = strings.TrimSpace(record[4])
-		}
-		if len(record) > 5 {
-			fila.GrupoCodigo = strings.TrimSpace(record[5])
-		}
-		if len(record) > 6 {
-			fila.DocenteDocumento = strings.TrimSpace(record[6])
-		}
-		if len(record) > 7 {
-			fila.AulaCodigo = strings.TrimSpace(record[7])
-		}
-
-		if len(record) > 8 {
-			d, errDia := strconv.Atoi(strings.TrimSpace(record[8]))
-			if errDia != nil || d < 1 || d > 7 {
-				fila.Valida = false
-				fila.Errores = append(fila.Errores, "Día de la semana debe ser entero entre 1 (Lunes) y 7 (Domingo)")
-			} else {
-				fila.DiaSemana = d
-			}
-		} else {
-			fila.DiaSemana = 1
-		}
-
-		if len(record) > 9 {
-			fila.HoraInicio = strings.TrimSpace(record[9])
-		} else {
-			fila.HoraInicio = "08:00"
-		}
-		if len(record) > 10 {
-			fila.HoraFin = strings.TrimSpace(record[10])
-		} else {
-			fila.HoraFin = "10:00"
-		}
-		if len(record) > 11 {
-			fila.Modalidad = strings.ToUpper(strings.TrimSpace(record[11]))
-		} else {
-			fila.Modalidad = "PRESENCIAL"
-		}
-
-		// Validaciones de obligatoriedad
-		if fila.PeriodoCodigo == "" {
-			fila.Valida = false
-			fila.Errores = append(fila.Errores, "El código del periodo es obligatorio")
-		}
-		if fila.AsignaturaCodigo == "" {
-			fila.Valida = false
-			fila.Errores = append(fila.Errores, "El código de la asignatura es obligatorio")
-		}
-		if fila.DocenteDocumento == "" {
-			fila.Valida = false
-			fila.Errores = append(fila.Errores, "El documento o ID del docente es obligatorio")
-		}
-
-		// Validar formato de horas
-		if _, _, errH := academico.NuevaFranjaHoraria(fila.DiaSemana, fila.HoraInicio, fila.HoraFin, "America/Bogota"); errH != nil {
-			fila.Valida = false
-			fila.Errores = append(fila.Errores, fmt.Sprintf("Franja horaria inválida (%s - %s): %v", fila.HoraInicio, fila.HoraFin, errH))
-		}
-
-		preview.TotalFilas++
-		if fila.Valida {
-			preview.FilasValidas++
-		} else {
-			preview.FilasConError++
-		}
-		preview.Filas = append(preview.Filas, fila)
-	}
-
-	return preview, nil
+	return importar.Anotar(tabla, diagnosticos)
 }
 
-// ConfirmarImportacionAcademicaCmd payload con filas validadas a persistir.
-type ConfirmarImportacionAcademicaCmd struct {
-	Filas []FilaImportacionAcademica `json:"filas"`
-	Actor ContextoActor              `json:"-"`
-}
-
-// ConfirmarImportacionAcademica persiste las asignaciones académicas validadas (US-ACA-07 AC-03).
-func (s *Service) ConfirmarImportacionAcademica(ctx context.Context, cmd ConfirmarImportacionAcademicaCmd) (*ResultadoImportacionAcademicaDTO, error) {
-	if len(cmd.Filas) == 0 {
-		return nil, shared.NewValidationError("No hay filas para importar", shared.FieldError{Campo: "filas", Error: "LISTA_VACIA"})
-	}
-
-	res := &ResultadoImportacionAcademicaDTO{
-		TotalProcesadas: len(cmd.Filas),
-		Errores:         make([]string, 0),
-	}
-
-	now := s.clk.Now()
-
-	for _, f := range cmd.Filas {
-		if !f.Valida {
-			continue
-		}
-
-		// 1. Obtener periodo por código
-		var periodo *academico.Periodo
-		periodos, _ := s.periodoRepo.ListAll(ctx)
-		for _, p := range periodos {
-			if p.Codigo() == f.PeriodoCodigo || p.ID() == f.PeriodoCodigo {
-				periodo = p
-				break
-			}
-		}
-		if periodo == nil {
-			res.Errores = append(res.Errores, fmt.Sprintf("Fila %d: periodo '%s' no encontrado", f.NumeroFila, f.PeriodoCodigo))
-			continue
-		}
-
-		// 2. Obtener o validar aula si es presencial
-		espacioID := f.AulaCodigo
-		if f.AulaCodigo != "" && s.espacioRepo != nil {
-			esp, _ := s.espacioRepo.FindByCodigo(ctx, f.AulaCodigo)
-			if esp != nil {
-				espacioID = esp.ID
-			}
-		}
-
-		// 3. Crear FranjaHoraria
-		franja, _, errFranja := academico.NuevaFranjaHoraria(f.DiaSemana, f.HoraInicio, f.HoraFin, "America/Bogota")
-		if errFranja != nil {
-			res.Errores = append(res.Errores, fmt.Sprintf("Fila %d: franja inválida: %v", f.NumeroFila, errFranja))
-			continue
-		}
-
-		// 4. Crear Asignación
-		modalidad := academico.ModalidadPresencial
-		if f.Modalidad == "VIRTUAL" {
-			modalidad = academico.ModalidadVirtual
-		} else if f.Modalidad == "HIBRIDA" {
-			modalidad = academico.ModalidadHibrida
-		}
-
-		asig, errAsig := academico.NuevaAsignacion(
-			shared.NewID(),
-			periodo.ID(),
-			[]string{f.DocenteDocumento},
-			"Docente",
-			f.GrupoCodigo,
-			f.AsignaturaCodigo,
-			f.FacultadCodigo,
-			espacioID,
-			f.AulaCodigo,
-			franja,
-			modalidad,
-			nil,
-			periodo.FechaInicio(),
-			periodo.FechaFin(),
-			nil,
-			now,
-		)
-		if errAsig != nil {
-			res.Errores = append(res.Errores, fmt.Sprintf("Fila %d: error al construir asignación: %v", f.NumeroFila, errAsig))
-			continue
-		}
-
-		if errSave := s.asignacionRepo.Create(ctx, asig); errSave != nil {
-			res.Errores = append(res.Errores, fmt.Sprintf("Fila %d: error al persistir asignación: %v", f.NumeroFila, errSave))
-		} else {
-			res.AsignacionesCreadas++
-		}
-	}
-
-	res.Mensaje = fmt.Sprintf("Importación académica completada: %d asignaciones creadas.", res.AsignacionesCreadas)
-	s.auditar(ctx, "academico", "masivo", "CARGA_MASIVA_ACADEMICA", cmd.Actor, nil, map[string]interface{}{
-		"creadas": res.AsignacionesCreadas,
-		"errores": len(res.Errores),
-	})
-
-	return res, nil
-}
-
-// PreviewImportacionCSV valida un archivo CSV (US-ACA-07 AC-01, AC-02).
-func (s *Service) PreviewImportacionCSV(ctx context.Context, r io.Reader) (*PreviewImportacionAcademicaDTO, error) {
-	return s.ValidarImportacionCSV(r)
-}
-
-// ConfirmarImportacionCSV procesa y persiste asignaciones desde un CSV (US-ACA-07 AC-03, AC-04).
-func (s *Service) ConfirmarImportacionCSV(ctx context.Context, r io.Reader, actor ContextoActor) (*ResultadoImportacionAcademicaDTO, error) {
-	prev, err := s.ValidarImportacionCSV(r)
+// ConfirmarImportacion revalida y aplica la carga como un lote: si las filas con error superan
+// el umbral no se aplica nada; si falla una escritura se revierte lo creado (AC-03, AC-06).
+func (s *Service) ConfirmarImportacion(ctx context.Context, actor ContextoActor, nombre string, contenido []byte) (*ResultadoImportacionAcademicaDTO, error) {
+	prev, tabla, planes, err := s.analizarImportacion(ctx, actor, contenido)
 	if err != nil {
 		return nil, err
 	}
-	return s.ConfirmarImportacionAcademica(ctx, ConfirmarImportacionAcademicaCmd{
-		Filas: prev.Filas,
-		Actor: actor,
-	})
+	res := &ResultadoImportacionAcademicaDTO{Informe: prev, FilasOmitidas: prev.FilasConError}
+	if prev.SuperaUmbral || len(planes) == 0 {
+		res.FilasOmitidas = prev.TotalFilas
+		res.Mensaje = fmt.Sprintf("No se aplicó nada: %d de %d filas tienen errores (umbral %.1f%%).",
+			prev.FilasConError, prev.TotalFilas, prev.UmbralPct)
+		return res, nil
+	}
+	creadas, grupos, err := s.aplicarPlanes(ctx, planes)
+	if err != nil {
+		return nil, err
+	}
+	res.Aplicada, res.AsignacionesCreadas, res.GruposCreados = true, creadas, grupos
+	res.CargaID = shared.NewID()
+	resumen := map[string]interface{}{"archivo": nombre, "formato": tabla.Formato, "totalFilas": prev.TotalFilas,
+		"asignacionesCreadas": creadas, "gruposCreados": grupos, "filasOmitidas": prev.FilasConError}
+	if s.cargasRepo != nil {
+		if err := s.cargasRepo.Guardar(ctx, &repository.CargaMasiva{ID: res.CargaID, Nombre: nombre,
+			Formato: tabla.Formato, Contenido: contenido, ActorID: actor.UsuarioID, Resumen: resumen, CreadoEn: s.clk.Now()}); err != nil {
+			s.log.Warn("no se guardó el archivo original de la carga masiva: " + err.Error())
+		}
+	}
+	s.auditar(ctx, "carga_masiva", res.CargaID, "CARGA_MASIVA_ACADEMICA", actor, nil, resumen)
+	res.Mensaje = fmt.Sprintf("Carga aplicada: %d asignaciones y %d grupos creados; %d filas omitidas por errores.",
+		creadas, grupos, prev.FilasConError)
+	return res, nil
+}
+
+// analizarImportacion lee el archivo, valida cada fila y calcula si supera el umbral.
+func (s *Service) analizarImportacion(ctx context.Context, actor ContextoActor, contenido []byte) (*PreviewImportacionAcademicaDTO, *importar.Tabla, []*planFila, error) {
+	tabla, err := importar.Leer(contenido)
+	if err != nil {
+		return nil, nil, nil, shared.NewValidationError("No se pudo leer el archivo: "+err.Error(),
+			shared.FieldError{Campo: "archivo", Error: "ARCHIVO_INVALIDO"})
+	}
+	if len(tabla.Filas) == 0 {
+		return nil, nil, nil, shared.NewValidationError("El archivo no tiene filas de datos",
+			shared.FieldError{Campo: "archivo", Error: "SIN_FILAS"})
+	}
+	idx := indiceColumnas(tabla.Encabezados)
+	filas := make([]FilaImportacionAcademica, 0, len(tabla.Filas))
+	for _, f := range tabla.Filas {
+		filas = append(filas, parsearFila(f, idx))
+	}
+	planes := s.validarFilas(ctx, actor, filas)
+	prev := &PreviewImportacionAcademicaDTO{Formato: tabla.Formato, TotalFilas: len(filas), Filas: filas, UmbralPct: s.umbralErrores()}
+	for _, f := range filas {
+		if f.Valida {
+			prev.FilasValidas++
+		} else {
+			prev.FilasConError++
+		}
+	}
+	prev.SuperaUmbral = float64(prev.FilasConError)*100 > prev.UmbralPct*float64(prev.TotalFilas)
+	return prev, tabla, planes, nil
+}
+
+func prefijar(p string, l []string) []string {
+	out := make([]string, len(l))
+	for i, v := range l {
+		out[i] = p + v
+	}
+	return out
 }

@@ -1,6 +1,7 @@
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import 'models/login_response_model.dart';
+import 'models/segundo_factor_model.dart';
 
 class AuthRemoteDataSource {
   final ApiClient _client;
@@ -22,6 +23,31 @@ class AuthRemoteDataSource {
       requiresAuth: false,
     );
 
+    return LoginResponseModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  /// Inicia la configuración obligatoria del segundo factor (US-AUT-05 AC-01).
+  Future<TotpEnrolamiento> enrolarTotp(String desafio) async {
+    final response = await _client.post(
+      ApiConstants.totpEnrolar,
+      body: {'desafioToken': desafio},
+      requiresAuth: false,
+    );
+    return TotpEnrolamiento.fromJson(response as Map<String, dynamic>);
+  }
+
+  /// Presenta el código del desafío: confirma el enrolamiento o verifica el TOTP activo.
+  Future<LoginResponseModel> completarTotp({
+    required DesafioTotp desafio,
+    required String codigo,
+  }) async {
+    final response = await _client.post(
+      desafio.configurar
+          ? ApiConstants.totpEnrolarConfirmar
+          : ApiConstants.totpVerificar,
+      body: {'desafioToken': desafio.token, 'codigo': codigo},
+      requiresAuth: false,
+    );
     return LoginResponseModel.fromJson(response as Map<String, dynamic>);
   }
 

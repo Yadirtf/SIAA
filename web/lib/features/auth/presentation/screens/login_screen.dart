@@ -7,6 +7,7 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
+import '../widgets/segundo_factor_panel.dart';
 import 'recuperar_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -98,36 +99,44 @@ class _LoginScreenState extends State<LoginScreen> {
                     horizontal: 32,
                     vertical: 40,
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 32),
-                        _buildCorreoField(),
-                        const SizedBox(height: 20),
-                        _buildPasswordField(),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _abrirRecuperacion,
-                            child: const Text('¿Olvidaste tu contraseña?'),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildSubmitButton(),
-                        const SizedBox(height: 20),
-                        _buildFooter(),
-                      ],
-                    ),
+                  child: BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) => state is SegundoFactorRequerido
+                        ? SegundoFactorPanel(estado: state)
+                        : _buildForm(),
                   ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 32),
+          _buildCorreoField(),
+          const SizedBox(height: 20),
+          _buildPasswordField(),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _abrirRecuperacion,
+              child: const Text('¿Olvidaste tu contraseña?'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildSubmitButton(),
+          const SizedBox(height: 20),
+          _buildFooter(),
+        ],
       ),
     );
   }

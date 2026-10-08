@@ -24,14 +24,20 @@ void main() {
       '2026-10-01 6:30 p. m.-7:30 p. m.',
     );
     // Lo que ya está en 12 h no se toca.
-    expect(horasEnTexto12h('6:30 p. m. - 7:30 p. m.'), '6:30 p. m. - 7:30 p. m.');
+    expect(
+      horasEnTexto12h('6:30 p. m. - 7:30 p. m.'),
+      '6:30 p. m. - 7:30 p. m.',
+    );
   });
 
   test('Formatos muestra fecha y hora con a. m./p. m.', () {
     final d = DateTime(2026, 10, 1, 18, 5, 9);
     expect(Formatos.fechaHora(d), '2026-10-01 6:05 p. m.');
     expect(Formatos.fechaHoraSegundos(d), '2026-10-01 6:05:09 p. m.');
-    expect(Formatos.fechaHora(DateTime(2026, 10, 1, 0, 15)), '2026-10-01 12:15 a. m.');
+    expect(
+      Formatos.fechaHora(DateTime(2026, 10, 1, 0, 15)),
+      '2026-10-01 12:15 a. m.',
+    );
     expect(Formatos.fechaHora(null), '—');
   });
 }

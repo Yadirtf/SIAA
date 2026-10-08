@@ -59,7 +59,9 @@ class ParametrosSnapshot {
     final lista = json['parametros'] as List<dynamic>? ?? [];
     return ParametrosSnapshot(
       parametros: lista
-          .map((e) => ParametroEfectivoModel.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => ParametroEfectivoModel.fromJson(e as Map<String, dynamic>),
+          )
           .toList(),
     );
   }

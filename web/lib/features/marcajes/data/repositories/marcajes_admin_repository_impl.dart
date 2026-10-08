@@ -7,7 +7,7 @@ class MarcajesAdminRepositoryImpl implements MarcajesAdminRepository {
   final MarcajesAdminRemoteDataSource _remoteDataSource;
 
   MarcajesAdminRepositoryImpl({MarcajesAdminRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? MarcajesAdminRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? MarcajesAdminRemoteDataSource();
 
   @override
   Future<MarcajeAdminPageModel> listarMarcajes({

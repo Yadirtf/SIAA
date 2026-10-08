@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:siaa_web/core/network/api_exception.dart';
+import 'package:siaa_web/features/auth/data/models/segundo_factor_model.dart';
 import 'package:siaa_web/features/auth/data/models/user_model.dart';
 import 'package:siaa_web/features/auth/domain/auth_repository.dart';
 import 'package:siaa_web/features/auth/presentation/cubit/recuperacion_cubit.dart';
@@ -32,8 +33,20 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserModel> login({required String correo, required String password}) =>
+  Future<LoginResultado> login({
+    required String correo,
+    required String password,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<TotpEnrolamiento> enrolarTotp(DesafioTotp desafio) =>
       throw UnimplementedError();
+
+  @override
+  Future<UserModel> completarTotp({
+    required DesafioTotp desafio,
+    required String codigo,
+  }) => throw UnimplementedError();
 
   @override
   Future<UserModel?> checkAuthStatus() async => null;
