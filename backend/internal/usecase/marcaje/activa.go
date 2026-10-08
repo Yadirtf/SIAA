@@ -22,7 +22,9 @@ type DetalleSesionActiva struct {
 	VerificacionComplementariaExigida bool                   `json:"verificacionComplementariaExigida"`
 	MetodosVerificacion               []string               `json:"metodosVerificacion,omitempty"`
 	MarcajeExistente                  *domainMarcaje.Marcaje `json:"marcajeExistente"`
-	HoraServidor                      time.Time              `json:"horaServidor"`
+	// VentanaEstudiantil es la ventana que el docente abrió para el grupo (US-MAR-13).
+	VentanaEstudiantil *VentanaEstudiantilDTO `json:"ventanaEstudiantil,omitempty"`
+	HoraServidor       time.Time              `json:"horaServidor"`
 }
 
 type SesionItemDTO struct {
@@ -68,6 +70,7 @@ type SesionActivaUseCase struct {
 	// asignacionRepo permite informar la modalidad real de la sesión (virtual, híbrida).
 	asignacionRepo repository.AsignacionRepository
 	estructuraRepo repository.EstructuraRepository
+	grupoEstRepo   repository.GrupoEstudiantesRepository
 }
 
 // WithAsignaciones habilita que la sesión activa informe su modalidad (RF-ACA-013).
@@ -98,6 +101,11 @@ func (uc *SesionActivaUseCase) ObtenerSesionActiva(ctx context.Context, docenteI
 	sesiones, err := uc.sesionRepo.ListByDocenteYFecha(ctx, docenteID, fechaHoy)
 	if err != nil {
 		return nil, err
+	}
+	if len(sesiones) == 0 { // Sin clases como docente: puede ser estudiante de un grupo (US-MAR-13)
+		if propias, errEst := uc.sesionesComoEstudiante(ctx, docenteID, fechaHoy); errEst == nil && len(propias) > 0 {
+			return uc.sesionActivaEstudiante(ctx, docenteID, propias, ahora)
+		}
 	}
 
 	var sesionActiva *academico.Sesion
@@ -223,6 +231,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 		VerificacionComplementariaExigida: exigida,
 		MetodosVerificacion:               metodosVerificacion,
 		MarcajeExistente:                  previo,
+		VentanaEstudiantil:                ventanaEstudiantilDTO(s, ahora),
 		HoraServidor:                      ahora,
 	}, nil
 }
@@ -237,6 +246,9 @@ func (uc *SesionActivaUseCase) ListarSesionesHoy(ctx context.Context, docenteID 
 	sesiones, err := uc.sesionRepo.ListByDocenteYFecha(ctx, docenteID, fechaHoy)
 	if err != nil {
 		return nil, err
+	}
+	if len(sesiones) == 0 {
+		sesiones, _ = uc.sesionesComoEstudiante(ctx, docenteID, fechaHoy)
 	}
 
 	resultado := make([]ResumenSesionHoy, 0, len(sesiones))

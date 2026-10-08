@@ -38,6 +38,15 @@ func CrearIndicesJustificacionesYAuditoria(ctx context.Context, db *mongo.Databa
 			Keys:    bson.D{{Key: "accion", Value: 1}, {Key: "creadoEn", Value: -1}},
 			Options: options.Index().SetName("auditoria_accion"),
 		}},
+		// Integrantes de grupo (US-MAR-13): una vez por grupo y búsqueda por estudiante.
+		{"grupo_estudiantes", mongo.IndexModel{
+			Keys:    bson.D{{Key: "grupoId", Value: 1}, {Key: "estudianteId", Value: 1}},
+			Options: options.Index().SetUnique(true).SetName("grupo_estudiantes_unico"),
+		}},
+		{"grupo_estudiantes", mongo.IndexModel{
+			Keys:    bson.D{{Key: "estudianteId", Value: 1}},
+			Options: options.Index().SetName("grupo_estudiantes_estudiante"),
+		}},
 		// Reportes: sesiones de un periodo por fecha.
 		{"sesiones", mongo.IndexModel{
 			Keys:    bson.D{{Key: "periodoId", Value: 1}, {Key: "fecha", Value: 1}},

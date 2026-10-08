@@ -65,12 +65,21 @@ func registerMarcajeRoutes(
 	registry.RegisterPermission(http.MethodGet, "/api/v1/me/historial", rbac.PermMarcajeLeer)
 
 	if marcajeAdminH != nil {
+		// GET /me/asistencia: porcentaje acumulado del estudiante por asignatura (US-MAR-13 AC-05)
+		me.GET("/asistencia", marcajeAdminH.MiAsistencia, mw.RequirePermission(rbac.PermMarcajeLeer, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/me/asistencia", rbac.PermMarcajeLeer)
+
 		sesiones := api.Group("/sesiones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		// POST /sesiones/:id/ventana-estudiantil (US-MAR-13)
 		sesiones.POST("/:id/ventana-estudiantil", marcajeAdminH.VentanaEstudiantil, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
 		registry.RegisterPermission(http.MethodPost, "/api/v1/sesiones/:id/ventana-estudiantil", rbac.PermMarcajeCrear)
 
-		// POST /sesiones/:id/lista-manual (US-MAR-14)
+		sesiones.DELETE("/:id/ventana-estudiantil", marcajeAdminH.CerrarVentanaEstudiantil, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
+		registry.RegisterPermission(http.MethodDelete, "/api/v1/sesiones/:id/ventana-estudiantil", rbac.PermMarcajeCrear)
+
+		// GET y POST /sesiones/:id/lista-manual (US-MAR-14)
+		sesiones.GET("/:id/lista-manual", marcajeAdminH.ConsultarListaManual, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
+		registry.RegisterPermission(http.MethodGet, "/api/v1/sesiones/:id/lista-manual", rbac.PermMarcajeCrear)
 		sesiones.POST("/:id/lista-manual", marcajeAdminH.ListaManual, mw.RequirePermission(rbac.PermMarcajeCrear, auditoria))
 		registry.RegisterPermission(http.MethodPost, "/api/v1/sesiones/:id/lista-manual", rbac.PermMarcajeCrear)
 	}

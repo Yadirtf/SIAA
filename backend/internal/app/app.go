@@ -146,19 +146,22 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 
 	// ─── Motor de Marcaje (EP-06) ─────────────────────────────
 	marcajeRepo := impl.NewMarcajeMongoRepository(mongoClient.DB())
+	grupoEstRepo := impl.NewGrupoEstudiantesRepository(mongoClient)
+	acaSvc.WithEstudiantesGrupo(grupoEstRepo)
 	crearMarcajeUC := usecaseMarcaje.NewCrearMarcajeUseCase(marcajeRepo, sesionRepo, espacioRepo, dispositivoRepo, auditoriaRepo, nil).
-		WithAsignaciones(asignacionRepo)
+		WithAsignaciones(asignacionRepo).WithGrupoEstudiantes(grupoEstRepo)
 	if v := verificadorAttestation(cfg, log); v != nil {
 		crearMarcajeUC.WithAttestation(v)
 	}
 	activaUC := usecaseMarcaje.NewSesionActivaUseCase(sesionRepo, espacioRepo, marcajeRepo).
 		WithAsignaciones(asignacionRepo).
-		WithEstructura(estructuraRepo)
+		WithEstructura(estructuraRepo).WithGrupoEstudiantes(grupoEstRepo)
 	historialUC := usecaseMarcaje.NewHistorialUseCase(marcajeRepo)
 	ajustarUC := usecaseMarcaje.NewAjustarMarcajeUseCase(marcajeRepo, sesionRepo, auditoriaRepo)
 	syncUC := usecaseMarcaje.NewSyncOfflineUseCase(crearMarcajeUC, marcajeRepo)
-	ventanaEstudiantilUC := usecaseMarcaje.NewVentanaEstudiantilUseCase(sesionRepo, marcajeRepo)
-	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo)
+	ventanaEstudiantilUC := usecaseMarcaje.NewVentanaEstudiantilUseCase(sesionRepo, marcajeRepo).WithAuditoria(auditoriaRepo)
+	listaManualUC := usecaseMarcaje.NewListaManualUseCase(sesionRepo, marcajeRepo, auditoriaRepo).WithGrupo(grupoEstRepo, usuarioRepo)
+	asistenciaEstUC := usecaseMarcaje.NewAsistenciaEstudianteUseCase(sesionRepo, marcajeRepo, grupoEstRepo, activaUC)
 	ausenciasWorker := NuevoAusenciasWorker(mongoClient)
 
 	// ─── Justificaciones, reportes y bitácora (EP-07, EP-08, RF-AUD-003) ───
@@ -194,7 +197,8 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	parametroH := handler.NewParametroHandler(parametroSvc)
 	nombrador := usecaseMarcaje.NewNombradorMarcajes(sesionRepo, estructuraRepo, espacioRepo, usuarioRepo)
 	marcajeH := handler.NewMarcajeHandler(crearMarcajeUC, activaUC, historialUC).WithNombrador(nombrador)
-	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC).WithNombrador(nombrador)
+	marcajeAdminH := handler.NewMarcajeAdminHandler(ajustarUC, ventanaEstudiantilUC, listaManualUC).WithNombrador(nombrador).
+		WithAsistenciaEstudiante(asistenciaEstUC)
 	marcajeSyncH := handler.NewMarcajeSyncHandler(syncUC)
 	usuariosH := handler.NewUsuariosHandler(usuariosSvc)
 	seguimiento := &apphttp.HandlersSeguimiento{

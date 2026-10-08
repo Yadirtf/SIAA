@@ -67,6 +67,9 @@ func EvaluarMarcaje(entrada SolicitudMarcaje, ctx ContextoSesion, ahora time.Tim
 	var ventanaAbre, ventanaCierra time.Time
 	if entrada.RolMarcaje == RolEstudiante && ctx.Sesion.VentanaEstudiantilAbierta {
 		ventanaAbre = ctx.Sesion.InicioProgramado
+		if !ctx.Sesion.VentanaEstudiantilAbre.IsZero() {
+			ventanaAbre = ctx.Sesion.VentanaEstudiantilAbre
+		}
 		ventanaCierra = ctx.Sesion.VentanaEstudiantilCierra
 	} else if entrada.Tipo == TipoSalida {
 		ventanaAbre = ctx.Sesion.FinProgramado.Add(-time.Duration(ctx.Parametros.HolguraSalidaAntesMin) * time.Minute)

@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/siaa/backend/internal/domain/academico"
-	"github.com/siaa/backend/internal/domain/geo"
 	"github.com/siaa/backend/internal/repository"
 	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 )
@@ -44,6 +43,7 @@ type sesionDoc struct {
 	MotivoCancelacion       string             `bson:"motivoCancelacion,omitempty"`
 	SedeID                  string             `bson:"sedeId"`
 	FacultadID              string             `bson:"facultadId"`
+	VentanaEstudiantil      *ventanaEstDoc     `bson:"ventanaEstudiantil,omitempty"`
 	Eliminado               bool               `bson:"eliminado"`
 	CreadoEn                time.Time          `bson:"creadoEn"`
 	ActualizadoEn           time.Time          `bson:"actualizadoEn"`
@@ -145,6 +145,9 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	if filter.DocenteID != "" {
 		criteria = append(criteria, bson.E{Key: "docenteIds", Value: filter.DocenteID})
 	}
+	if filter.GrupoIDs != nil {
+		criteria = append(criteria, bson.E{Key: "grupoId", Value: bson.M{"$in": filter.GrupoIDs}})
+	}
 	if filter.EspacioID != "" {
 		criteria = append(criteria, bson.E{Key: "espacioId", Value: filter.EspacioID})
 	}
@@ -188,6 +191,7 @@ func (r *sesionRepository) Update(ctx context.Context, s *academico.Sesion) erro
 		{Key: "estado", Value: string(s.Estado())},
 		{Key: "espacioVersionGeometria", Value: s.EspacioVersionGeometria()},
 		{Key: "motivoCancelacion", Value: s.MotivoCancelacion()},
+		{Key: "ventanaEstudiantil", Value: ventanaEstDeDominio(s.VentanaEstudiantil())},
 		{Key: "actualizadoEn", Value: time.Now().UTC()},
 	}}}
 	_, err = r.col.UpdateByID(ctx, oid, update)
@@ -226,6 +230,7 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 		MotivoCancelacion:       s.MotivoCancelacion(),
 		SedeID:                  s.SedeID(),
 		FacultadID:              s.FacultadID(),
+		VentanaEstudiantil:      ventanaEstDeDominio(s.VentanaEstudiantil()),
 		Eliminado:               false,
 		CreadoEn:                s.CreadoEn(),
 		ActualizadoEn:           s.ActualizadoEn(),
@@ -251,31 +256,8 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 }
 
 func docToSesion(doc *sesionDoc) *academico.Sesion {
-	var geomSnap *geo.GeoPolygon
-	if doc.GeometriaSnapshot != nil && len(doc.GeometriaSnapshot.Coordinates) > 0 {
-		verts := make([]geo.GeoPoint, 0, len(doc.GeometriaSnapshot.Coordinates[0]))
-		for _, c := range doc.GeometriaSnapshot.Coordinates[0] {
-			if pt, err := geo.NewGeoPoint(c[0], c[1]); err == nil {
-				verts = append(verts, pt)
-			}
-		}
-		if poly, err := geo.NewGeoPolygon(verts); err == nil {
-			geomSnap = &poly
-		}
-	}
-
-	var geomBufSnap *geo.GeoPolygon
-	if doc.GeometriaBufferSnapshot != nil && len(doc.GeometriaBufferSnapshot.Coordinates) > 0 {
-		vertsBuf := make([]geo.GeoPoint, 0, len(doc.GeometriaBufferSnapshot.Coordinates[0]))
-		for _, c := range doc.GeometriaBufferSnapshot.Coordinates[0] {
-			if pt, err := geo.NewGeoPoint(c[0], c[1]); err == nil {
-				vertsBuf = append(vertsBuf, pt)
-			}
-		}
-		if polyBuf, err := geo.NewGeoPolygon(vertsBuf); err == nil {
-			geomBufSnap = &polyBuf
-		}
-	}
+	geomSnap := poligonoDeDoc(doc.GeometriaSnapshot)
+	geomBufSnap := poligonoDeDoc(doc.GeometriaBufferSnapshot)
 
 	params := make(map[string]interface{}, len(doc.ParametrosCongelados))
 	for k, v := range doc.ParametrosCongelados {
@@ -307,5 +289,5 @@ func docToSesion(doc *sesionDoc) *academico.Sesion {
 		doc.MotivoCancelacion,
 		doc.CreadoEn,
 		doc.ActualizadoEn,
-	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID)
+	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID).ConVentanaEstudiantil(doc.VentanaEstudiantil.dominio())
 }

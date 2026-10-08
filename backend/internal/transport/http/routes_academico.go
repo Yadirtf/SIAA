@@ -103,6 +103,11 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPut, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
 	grupos.DELETE("/:id", acaH.EliminarGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
+	// Estudiantes del grupo (US-MAR-13, US-MAR-14)
+	grupos.GET("/:id/estudiantes", acaH.ListarEstudiantesGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/grupos/:id/estudiantes", rbac.PermHorarioCrear)
+	grupos.PUT("/:id/estudiantes", acaH.ReemplazarEstudiantesGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/grupos/:id/estudiantes", rbac.PermHorarioCrear)
 
 	// Asignaciones (US-ACA-03)
 	asignaciones := api.Group("/asignaciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

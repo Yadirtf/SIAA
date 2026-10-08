@@ -24,6 +24,7 @@ type MarcajeAdminHandler struct {
 	estudianteUC  *usecaseMarcaje.VentanaEstudiantilUseCase
 	listaManualUC *usecaseMarcaje.ListaManualUseCase
 	nombrador     *usecaseMarcaje.NombradorMarcajes
+	asistenciaUC  *usecaseMarcaje.AsistenciaEstudianteUseCase
 }
 
 // WithNombrador hace que el listado muestre persona, asignatura, grupo y aula por nombre.
@@ -158,71 +159,4 @@ func (h *MarcajeAdminHandler) CrearManual(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, m)
-}
-
-// VentanaEstudiantil abre la ventana de marcaje para los estudiantes del grupo (US-MAR-13).
-// POST /api/v1/sesiones/:id/ventana-estudiantil
-func (h *MarcajeAdminHandler) VentanaEstudiantil(c echo.Context) error {
-	claims, ok := middleware.GetClaims(c)
-	if !ok {
-		return shared.NewAuthError(shared.ErrTokenExpirado, "Autenticación requerida")
-	}
-
-	sesionID := c.Param("id")
-	var req dto.VentanaEstudiantilRequest
-	_ = c.Bind(&req)
-
-	cierraEn, err := h.estudianteUC.AbrirVentana(c.Request().Context(), sesionID, claims.UsuarioID, req.DuracionMinutos)
-	if err != nil {
-		if errors.Is(err, usecaseMarcaje.ErrDocenteNoAutorizado) {
-			return echo.NewHTTPError(http.StatusForbidden, err.Error())
-		}
-		// El manejador central traduce los errores de dominio y oculta los internos.
-		return err
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"abierta":  true,
-		"cierraEn": cierraEn.Format(time.RFC3339),
-	})
-}
-
-// ListaManual procesa el pase de lista de contingencia por el docente (US-MAR-14).
-// POST /api/v1/sesiones/:id/lista-manual
-func (h *MarcajeAdminHandler) ListaManual(c echo.Context) error {
-	claims, ok := middleware.GetClaims(c)
-	if !ok {
-		return shared.NewAuthError(shared.ErrTokenExpirado, "Autenticación requerida")
-	}
-
-	sesionID := c.Param("id")
-	var req dto.ListaManualRequest
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Cuerpo inválido")
-	}
-
-	items := make([]usecaseMarcaje.ItemListaEstudiante, len(req.Estudiantes))
-	for i, est := range req.Estudiantes {
-		items[i] = usecaseMarcaje.ItemListaEstudiante{
-			EstudianteID: est.EstudianteID,
-			Presente:     est.Presente,
-		}
-	}
-
-	err := h.listaManualUC.Registrar(c.Request().Context(), sesionID, claims.UsuarioID, req.Motivo, items)
-	if err != nil {
-		if errors.Is(err, usecaseMarcaje.ErrDocenteNoAutorizado) {
-			return echo.NewHTTPError(http.StatusForbidden, err.Error())
-		}
-		if errors.Is(err, usecaseMarcaje.ErrMotivoListaRequerido) {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
-		// El manejador central traduce los errores de dominio y oculta los internos.
-		return err
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"mensaje":     "Lista manual registrada y auditada exitosamente",
-		"estudiantes": len(items),
-	})
 }

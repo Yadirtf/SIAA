@@ -49,6 +49,8 @@ type Service struct {
 	// Carga masiva (US-ACA-07): archivo original y umbral de filas con error.
 	cargasRepo        repository.CargaMasivaRepository
 	umbralImportacion *float64
+	// Integrantes de cada grupo (US-MAR-13, US-MAR-14).
+	grupoEstRepo repository.GrupoEstudiantesRepository
 }
 
 // AmbitoParametros identifica los niveles de la cascada que aplican a una asignación (RN-002).

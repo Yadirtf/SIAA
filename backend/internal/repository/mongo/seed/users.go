@@ -69,6 +69,20 @@ func seedUsers(ctx context.Context, db *mongo.Database) error {
 			apellido: "Gómez",
 			rol:      rbac.RolCoordinador,
 		},
+		{
+			correo:   "estudiante@siaa.edu.co",
+			password: "Estudiante1234*",
+			nombre:   "Laura",
+			apellido: "Morales",
+			rol:      rbac.RolEstudiante,
+		},
+		{
+			correo:   "estudiante2@siaa.edu.co",
+			password: "Estudiante1234*",
+			nombre:   "Mateo",
+			apellido: "Ortega",
+			rol:      rbac.RolEstudiante,
+		},
 	})
 }
 
