@@ -9,16 +9,24 @@ import '../../../../core/navigation/presentation/bloc/nav_event.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../home/presentation/widgets/dialogs/confirmar_logout_dialog.dart';
+import '../../data/asistencia_remote_datasource.dart';
 import '../../data/perfil_remote_datasource.dart';
 import '../../domain/perfil_model.dart';
 import '../cubit/perfil_cubit.dart';
 import '../widgets/dispositivo_tile.dart';
+import '../widgets/mi_asistencia_section.dart';
 
 class PerfilScreen extends StatelessWidget {
   final PerfilRemoteDataSource? remote;
   final Future<String> Function()? instalacionId;
+  final AsistenciaRemoteDataSource? asistenciaRemote;
 
-  const PerfilScreen({super.key, this.remote, this.instalacionId});
+  const PerfilScreen({
+    super.key,
+    this.remote,
+    this.instalacionId,
+    this.asistenciaRemote,
+  });
 
   static PerfilModel _desdeSesion(AuthState s) => s is AuthAuthenticated
       ? PerfilModel(
@@ -86,6 +94,8 @@ class PerfilScreen extends StatelessWidget {
           Wrap(spacing: 8, runSpacing: 4, children: [
             for (final r in p.roles) Chip(label: Text(etiquetaRol(r))),
           ]),
+          if (p.roles.any((r) => rolSlugDe(r) == 'estudiante'))
+            MiAsistenciaSection(remote: asistenciaRemote),
           _seccion('Dispositivos vinculados'),
           if (p.dispositivos.isEmpty)
             Text(p.completo ? 'Sin dispositivos registrados' : 'No disponible',

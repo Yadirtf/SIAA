@@ -1,6 +1,7 @@
 // sesion_activa_model.dart — Modelo de sesión activa y ventana para marcaje (US-MAR-01)
 import 'package:equatable/equatable.dart';
 import 'marcaje_result_model.dart';
+import 'ventana_estudiantil_model.dart';
 
 class EspacioInfo extends Equatable {
   final String id;
@@ -94,6 +95,9 @@ class SesionActivaModel extends Equatable {
   /// sesión; la cuenta regresiva la suma para no depender de un reloj mal puesto.
   final Duration desfaseReloj;
 
+  /// Ventana que el docente abrió a los estudiantes (US-MAR-13); null si nunca se abrió.
+  final VentanaEstudiantil? ventanaEstudiantil;
+
   const SesionActivaModel({
     required this.id,
     required this.asignatura,
@@ -110,6 +114,7 @@ class SesionActivaModel extends Equatable {
     this.tieneMarcajeSalida = false,
     this.marcajeEntradaEstado,
     this.desfaseReloj = Duration.zero,
+    this.ventanaEstudiantil,
   });
 
   /// Hora actual corregida con el reloj del servidor.
@@ -120,6 +125,8 @@ class SesionActivaModel extends Equatable {
     final ventanaMap = json['ventana'] as Map<String, dynamic>? ?? {};
     final espacioMap = sesionMap['espacio'] as Map<String, dynamic>? ?? {};
     final marcajeExistente = json['marcajeExistente'] as Map<String, dynamic>?;
+    final ventanaEst =
+        json['ventanaEstudiantil'] ?? sesionMap['ventanaEstudiantil'];
     final parametros = json['parametros'] as Map<String, dynamic>? ?? {};
     final metodos = (json['metodosVerificacion'] as List<dynamic>? ?? [])
         .whereType<String>()
@@ -152,6 +159,9 @@ class SesionActivaModel extends Equatable {
       tieneMarcajeSalida: false,
       marcajeEntradaEstado: marcajeExistente?['resultado'] as String?,
       desfaseReloj: _desfase(json['horaServidor']),
+      ventanaEstudiantil: ventanaEst is Map<String, dynamic>
+          ? VentanaEstudiantil.fromJson(ventanaEst)
+          : null,
     );
   }
 
@@ -178,5 +188,6 @@ class SesionActivaModel extends Equatable {
         tieneMarcajeSalida,
         marcajeEntradaEstado,
         desfaseReloj,
+        ventanaEstudiantil,
       ];
 }

@@ -101,32 +101,4 @@ class MarcajeRemoteDataSource {
     final data = response.data as Map<String, dynamic>;
     return HistorialPaginadoModel.fromJson(data);
   }
-
-  /// Abre la ventana para marcaje de estudiantes del grupo (US-MAR-13)
-  Future<DateTime> abrirVentanaEstudiantil(String sesionId,
-      {int duracionMinutos = 5}) async {
-    final response = await _dio.post(
-      '/sesiones/$sesionId/ventana-estudiantil',
-      data: {'duracionMinutos': duracionMinutos},
-    );
-    final data = response.data as Map<String, dynamic>;
-    final cierraEnStr = data['cierraEn'] as String? ?? '';
-    return DateTime.tryParse(cierraEnStr) ??
-        DateTime.now().add(Duration(minutes: duracionMinutos));
-  }
-
-  /// Registra el pase de lista manual docente (US-MAR-14)
-  Future<void> registrarListaManual({
-    required String sesionId,
-    required String motivo,
-    required List<Map<String, dynamic>> estudiantes,
-  }) async {
-    await _dio.post(
-      '/sesiones/$sesionId/lista-manual',
-      data: {
-        'motivo': motivo,
-        'estudiantes': estudiantes,
-      },
-    );
-  }
 }

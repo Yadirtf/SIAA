@@ -16,8 +16,11 @@ String mensajeDeError(Object error,
         : porDefecto;
   }
   final data = error.response?.data;
-  if (data is Map && data['mensaje'] is String) {
-    return data['mensaje'] as String;
+  if (data is Map) {
+    for (final clave in const ['mensaje', 'message']) {
+      final texto = data[clave];
+      if (texto is String && texto.trim().isNotEmpty) return texto;
+    }
   }
   switch (error.response?.statusCode) {
     case 401:

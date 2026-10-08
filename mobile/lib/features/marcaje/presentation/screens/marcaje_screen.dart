@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/presentation/permisos_sesion.dart';
 import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
 import '../../../privacidad/data/consentimiento_gate.dart';
 import '../../../privacidad/presentation/cubit/consentimiento_cubit.dart';
@@ -228,6 +229,7 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                         SesionCard(
                           sesion: state.sesionActiva!,
                           onVentanaCambia: _recargar,
+                          esEstudiante: esEstudianteSesion(context),
                         ),
                         const SizedBox(height: 32),
                         OneTouchButton(
