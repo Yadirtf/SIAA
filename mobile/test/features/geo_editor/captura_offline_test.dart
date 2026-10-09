@@ -13,6 +13,7 @@ import 'package:siaa_mobile/features/geo_editor/presentation/screens/capturas_pe
 class _RepoFake extends EspacioRepository {
   int versionServidor = 1;
   Object? errorAlGuardar;
+  int? versionEnviada;
   final guardadas = <List<List<double>>>[];
 
   _RepoFake() : super(client: Dio());
@@ -41,7 +42,9 @@ class _RepoFake extends EspacioRepository {
     double? precisionPromedioMetros,
     bool confirmarSolapamiento = false,
     String? motivoSolapamiento,
+    int? versionEsperada,
   }) async {
+    versionEnviada = versionEsperada;
     if (errorAlGuardar != null) throw errorAlGuardar!;
     guardadas.add(coordenadas);
     return obtenerEspacioPorId(espacioId);
@@ -82,6 +85,16 @@ void main() {
       final r = await sync.sincronizar();
       expect(r.sincronizados, 1);
       expect(repo.guardadas.single.length, 4);
+      expect(repo.versionEnviada, 1, reason: 'envía la versión leída');
+    });
+
+    test('AC-04: otro cambio entre la lectura y el guardado es conflicto',
+        () async {
+      await cola.guardarCapturaOffline(_captura());
+      repo.errorAlGuardar = ConflictoVersionGeometriaException('cambió');
+      final r = await sync.sincronizar();
+      expect(r.conflictos, 1);
+      expect((await cola.obtenerPorId('c-1'))?.vertices.length, 4);
     });
 
     test('AC-04: versión mayor en el servidor es conflicto y no se envía',

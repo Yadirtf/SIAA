@@ -46,8 +46,14 @@ class CartografiaSyncService {
         coordenadas: captura.vertices,
         metodoCaptura: captura.metodoCaptura,
         precisionPromedioMetros: captura.precisionPromedioMetros,
+        versionEsperada: actual.versionGeometria,
       );
       return const EnvioCaptura(ResultadoEnvioCaptura.aceptada);
+    } on ConflictoVersionGeometriaException {
+      // Otro cambio llegó entre la lectura y el guardado (US-GEO-10 AC-04).
+      final vigente = await _repositorio.obtenerEspacioPorId(captura.espacioId);
+      return EnvioCaptura(ResultadoEnvioCaptura.conflicto,
+          versionServidor: vigente.versionGeometria);
     } on SinConexionGeometriaException {
       return const EnvioCaptura(ResultadoEnvioCaptura.sinConexion);
     } on SolapamientoAdvertenciaException catch (e) {

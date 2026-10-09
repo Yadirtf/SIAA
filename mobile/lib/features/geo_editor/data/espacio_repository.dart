@@ -191,19 +191,20 @@ class EspacioRepository {
     double? precisionPromedioMetros,
     bool confirmarSolapamiento = false,
     String? motivoSolapamiento,
+    int? versionEsperada,
   }) async {
     try {
       final payload = <String, dynamic>{
         'coordenadas': coordenadas,
         'metodoCaptura': metodoCaptura,
         'confirmarSolapamiento': confirmarSolapamiento,
+        if (precisionPromedioMetros != null)
+          'precisionPromedioMetros': precisionPromedioMetros,
+        if (motivoSolapamiento != null && motivoSolapamiento.isNotEmpty)
+          'motivoSolapamiento': motivoSolapamiento,
+        // Precondición optimista: 409 CONFLICTO_VERSION si otro la cambió.
+        if (versionEsperada != null) 'versionEsperada': versionEsperada,
       };
-      if (precisionPromedioMetros != null) {
-        payload['precisionPromedioMetros'] = precisionPromedioMetros;
-      }
-      if (motivoSolapamiento != null && motivoSolapamiento.isNotEmpty) {
-        payload['motivoSolapamiento'] = motivoSolapamiento;
-      }
 
       final response = await _client.put(
         '/espacios/$espacioId/geometria',
@@ -215,30 +216,7 @@ class EspacioRepository {
       if (e.response == null && _esFalloDeRed(e)) {
         throw SinConexionGeometriaException();
       }
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final codigo = data['codigo'] as String?;
-        final mensaje =
-            data['mensaje'] as String? ?? 'Error al guardar geometría';
-        final detalles = (data['detalles'] as List<dynamic>?)
-            ?.map((d) => d is Map<String, dynamic>
-                ? d['error']?.toString() ?? ''
-                : d.toString())
-            .toList();
-
-        if (codigo == 'VALIDACION' &&
-            mensaje.toLowerCase().contains('solapamiento')) {
-          throw SolapamientoAdvertenciaException(
-              mensaje: mensaje, detalles: detalles);
-        } else if (codigo == 'GEOMETRIA_SOLAPADA') {
-          throw SolapamientoCriticoException(mensaje: mensaje);
-        }
-        throw Exception(mensaje);
-      }
-      final errorMsg = e.response?.data?.toString() ??
-          e.message ??
-          'Error de red o servidor inalcanzable. Detalles: ${e.toString()}';
-      throw Exception(errorMsg);
+      throw excepcionGuardadoGeometria(e);
     }
   }
 
