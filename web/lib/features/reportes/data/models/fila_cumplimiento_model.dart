@@ -14,6 +14,12 @@ class FilaCumplimientoModel extends Equatable {
   final int ausenciasJustificadas;
   final int ausenciasInjustificadas;
   final int ajustadas;
+
+  /// Clases dictadas con salida OBLIGATORIA sin marcaje de salida (US-MAR-15).
+  final int salidasFaltantes;
+
+  /// Cumplimiento por debajo del umbral de alerta (US-PAR-04 AC-01).
+  final bool bajoUmbral;
   final double porcentajeCumplimiento;
 
   const FilaCumplimientoModel({
@@ -29,6 +35,8 @@ class FilaCumplimientoModel extends Equatable {
     this.ausenciasJustificadas = 0,
     this.ausenciasInjustificadas = 0,
     this.ajustadas = 0,
+    this.salidasFaltantes = 0,
+    this.bajoUmbral = false,
     this.porcentajeCumplimiento = 0,
   });
 
@@ -48,6 +56,8 @@ class FilaCumplimientoModel extends Equatable {
       ausenciasJustificadas: entero('ausenciasJustificadas'),
       ausenciasInjustificadas: entero('ausenciasInjustificadas'),
       ajustadas: entero('ajustadas'),
+      salidasFaltantes: entero('salidasFaltantes'),
+      bajoUmbral: json['bajoUmbral'] == true,
       porcentajeCumplimiento: real('porcentajeCumplimiento'),
     );
   }
@@ -66,6 +76,8 @@ class FilaCumplimientoModel extends Equatable {
     ausenciasJustificadas,
     ausenciasInjustificadas,
     ajustadas,
+    salidasFaltantes,
+    bajoUmbral,
     porcentajeCumplimiento,
   ];
 }

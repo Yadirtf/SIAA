@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../network/confirmacion_requerida.dart';
 import '../theme/app_text_styles.dart';
 import 'campo_fecha.dart';
 import 'error_operacion_dialog.dart';
@@ -86,6 +87,8 @@ class _FormularioEdicionDialogState extends State<FormularioEdicionDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _guardando = false);
+      // Si el usuario no confirmó, el formulario sigue abierto sin error.
+      if (e is OperacionCancelada) return;
       await mostrarErrorOperacion(context, e);
     }
   }

@@ -7,43 +7,40 @@ import '../../../../core/utils/formatos.dart';
 import '../../../../core/widgets/aviso_panel.dart';
 import '../../../../core/widgets/botones_exportar.dart';
 import '../../../../core/widgets/encabezado_seccion.dart';
-import '../bloc/catalogo_reporte_cubit.dart';
-import '../bloc/reporte_cumplimiento_cubit.dart';
-import '../bloc/reporte_cumplimiento_state.dart';
-import '../widgets/reporte_filtros_bar.dart';
-import '../widgets/reporte_indicadores.dart';
-import '../widgets/reporte_tabla.dart';
+import '../bloc/ocupacion_cubit.dart';
+import '../bloc/ocupacion_state.dart';
+import '../widgets/ocupacion_filtros.dart';
+import '../widgets/ocupacion_tabla.dart';
 
-/// Reporte de cumplimiento docente con indicadores y exportación (EP-08).
-class ReporteCumplimientoScreen extends StatefulWidget {
+/// Reporte de ocupación de espacios (US-REP-04). Requiere un [OcupacionCubit]
+/// en el contexto.
+class OcupacionScreen extends StatefulWidget {
   /// true si el usuario tiene `reporte:exportar`.
   final bool puedeExportar;
 
-  const ReporteCumplimientoScreen({super.key, this.puedeExportar = false});
+  const OcupacionScreen({super.key, this.puedeExportar = false});
 
   @override
-  State<ReporteCumplimientoScreen> createState() =>
-      _ReporteCumplimientoScreenState();
+  State<OcupacionScreen> createState() => _OcupacionScreenState();
 }
 
-class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
+class _OcupacionScreenState extends State<OcupacionScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CatalogoReporteCubit>().cargar();
+    context.read<OcupacionCubit>().cargarPeriodos();
   }
 
   void _snack(String texto, Color color) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(texto), backgroundColor: color));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(texto), backgroundColor: color));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ReporteCumplimientoCubit, ReporteCumplimientoState>(
-      listenWhen: (a, b) =>
-          (b.mensajeExito != null && a.mensajeExito != b.mensajeExito) ||
-          (b.mensajeError != null && a.mensajeError != b.mensajeError),
+    return BlocConsumer<OcupacionCubit, OcupacionState>(
+      listenWhen: (a, b) => b.mensajeExito != null || b.mensajeError != null,
       listener: (context, s) {
         if (s.mensajeExito != null) {
           _snack(s.mensajeExito!, AppColors.statusSuccessText);
@@ -52,16 +49,16 @@ class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
         }
       },
       builder: (context, state) {
-        final cubit = context.read<ReporteCumplimientoCubit>();
+        final cubit = context.read<OcupacionCubit>();
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               EncabezadoSeccion(
-                icono: Icons.insights_rounded,
-                titulo: 'Reportes de cumplimiento',
-                subtitulo: 'Horas dictadas, tardanzas y ausencias por docente',
+                icono: Icons.meeting_room_outlined,
+                titulo: 'Ocupación de espacios',
+                subtitulo: 'Horas programadas frente a uso confirmado',
                 acciones: [
                   if (widget.puedeExportar)
                     BotonesExportar(
@@ -72,10 +69,12 @@ class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              ReporteFiltrosBar(
+              OcupacionFiltros(
                 filtro: state.filtro,
-                consultando: state.status == ReporteStatus.cargando,
+                periodos: state.periodos,
+                consultando: state.status == OcupacionStatus.cargando,
                 onCambio: cubit.cambiarFiltro,
+                onAgrupar: cubit.agrupar,
                 onConsultar: cubit.consultar,
               ),
               const SizedBox(height: 16),
@@ -87,12 +86,9 @@ class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
     );
   }
 
-  Widget _contenido(
-    ReporteCumplimientoState state,
-    ReporteCumplimientoCubit cubit,
-  ) {
+  Widget _contenido(OcupacionState state, OcupacionCubit cubit) {
     switch (state.status) {
-      case ReporteStatus.inicial:
+      case OcupacionStatus.inicial:
         return const AvisoPanel(
           icono: Icons.query_stats_rounded,
           titulo: 'Configure el reporte',
@@ -100,44 +96,31 @@ class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
               'Elija un periodo académico o un rango de fechas y pulse '
               '"Consultar".',
         );
-      case ReporteStatus.cargando:
+      case OcupacionStatus.cargando:
         return AvisoPanel.cargando();
-      case ReporteStatus.error:
+      case OcupacionStatus.error:
         return AvisoPanel.error(
           titulo: 'Error al generar el reporte',
           detalle: state.error ?? '',
           onReintentar: cubit.consultar,
         );
-      case ReporteStatus.cargado:
+      case OcupacionStatus.cargado:
         final r = state.reporte!;
+        if (r.filas.isEmpty) {
+          return const AvisoPanel(
+            icono: Icons.meeting_room_outlined,
+            titulo: 'Sin sesiones en el alcance',
+            detalle: 'No hay sesiones terminadas para estos filtros.',
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ReporteIndicadores(reporte: r),
-            const SizedBox(height: 16),
-            if (r.docentes.isEmpty)
-              const AvisoPanel(
-                icono: Icons.person_search_rounded,
-                titulo: 'Sin sesiones en el alcance',
-                detalle: 'No hay docentes con sesiones para estos filtros.',
-              )
-            else
-              ReporteTabla(
-                docentes: r.docentes,
-                totales: r.totales,
-                umbralAlerta: r.umbralAlerta,
-              ),
-            if (r.umbralAlerta > 0) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Filas resaltadas: cumplimiento por debajo del umbral de '
-                'alerta (${Formatos.porcentaje(r.umbralAlerta)}).',
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
+            OcupacionTabla(reporte: r),
             const SizedBox(height: 8),
             Text(
-              'Generado: ${Formatos.fechaHora(r.generadoEn)}',
+              'Utilización = horas con entrada válida del docente / horas '
+              'programadas. Generado: ${Formatos.fechaHora(r.generadoEn)}',
               style: AppTextStyles.bodySmall,
             ),
           ],

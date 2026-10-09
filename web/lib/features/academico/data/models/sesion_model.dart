@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+import 'diferencia_parametro.dart';
+
+export 'diferencia_parametro.dart';
+
 class SesionModel extends Equatable {
   final String id;
   final String periodoId;
@@ -30,6 +34,13 @@ class SesionModel extends Equatable {
   final String bloqueId;
   final String bloqueNombre;
 
+  /// Parámetros con que se generó la sesión; no cambian aunque cambie la
+  /// cascada (RN-002). Solo vienen completos en GET /sesiones/:id.
+  final Map<String, dynamic> parametrosCongelados;
+
+  /// Claves congeladas que difieren del valor vigente (US-PAR-03 AC-03).
+  final List<DiferenciaParametro> parametrosDiferentes;
+
   const SesionModel({
     required this.id,
     required this.periodoId,
@@ -55,6 +66,8 @@ class SesionModel extends Equatable {
     this.sedeNombre = '',
     this.bloqueId = '',
     this.bloqueNombre = '',
+    this.parametrosCongelados = const {},
+    this.parametrosDiferentes = const [],
   });
 
   static String _unir(List<String> partes) =>
@@ -138,6 +151,12 @@ class SesionModel extends Equatable {
       sedeNombre: texto('sedeNombre'),
       bloqueId: texto('bloqueId'),
       bloqueNombre: texto('bloqueNombre'),
+      parametrosCongelados: json['parametrosCongelados'] is Map
+          ? Map<String, dynamic>.from(json['parametrosCongelados'] as Map)
+          : const {},
+      parametrosDiferentes: DiferenciaParametro.listaDesde(
+        json['parametrosDiferentes'],
+      ),
     );
   }
 
@@ -165,5 +184,7 @@ class SesionModel extends Equatable {
     sedeNombre,
     bloqueId,
     bloqueNombre,
+    parametrosCongelados,
+    parametrosDiferentes,
   ];
 }

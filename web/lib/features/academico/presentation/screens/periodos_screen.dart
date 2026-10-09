@@ -4,120 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/academico_bloc.dart';
-import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
 import '../widgets/estado_periodo_chip.dart';
 import '../widgets/generar_sesiones_boton.dart';
+import '../dialogs/periodo_dialog.dart';
 import '../edicion/editores_academicos.dart';
 
 class PeriodosScreen extends StatelessWidget {
   const PeriodosScreen({super.key});
-
-  void _showCreateDialog(BuildContext context) {
-    final codigoCtrl = TextEditingController(text: '2026-1');
-    final nombreCtrl = TextEditingController(text: 'Primer Semestre 2026');
-    final inicioCtrl = TextEditingController(text: '2026-02-01');
-    final finCtrl = TextEditingController(text: '2026-06-30');
-    String selectedEstado = 'PLANEACION';
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setModalState) => AlertDialog(
-          title: Text('Nuevo Periodo Académico', style: AppTextStyles.h3),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: codigoCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Código (ej: 2026-1)',
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: nombreCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: inicioCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Fecha Inicio (YYYY-MM-DD)',
-                        ),
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: finCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Fecha Fin (YYYY-MM-DD)',
-                        ),
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedEstado,
-                  decoration: const InputDecoration(
-                    labelText: 'Estado Inicial',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'PLANEACION',
-                      child: Text('PLANEACIÓN'),
-                    ),
-                    DropdownMenuItem(value: 'ACTIVO', child: Text('ACTIVO')),
-                    DropdownMenuItem(value: 'CERRADO', child: Text('CERRADO')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setModalState(() => selectedEstado = val);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() ?? false) {
-                  context.read<AcademicoBloc>().add(
-                    CreatePeriodoEvent(
-                      codigo: codigoCtrl.text.trim(),
-                      nombre: nombreCtrl.text.trim(),
-                      fechaInicio: inicioCtrl.text.trim(),
-                      fechaFin: finCtrl.text.trim(),
-                      estado: selectedEstado,
-                    ),
-                  );
-                  Navigator.pop(dialogCtx);
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +36,7 @@ class PeriodosScreen extends StatelessWidget {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () => _showCreateDialog(context),
+                onPressed: () => crearPeriodo(context),
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Nuevo Periodo'),
               ),
@@ -182,7 +76,7 @@ class PeriodosScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () => _showCreateDialog(context),
+                            onPressed: () => crearPeriodo(context),
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text('Crear Periodo'),
                           ),

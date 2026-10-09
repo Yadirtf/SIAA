@@ -1,127 +1,16 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/mensaje_error.dart';
 import '../../data/models/sesion_model.dart';
 import '../../domain/academico_repository.dart';
+import 'sesiones_event.dart';
+import 'sesiones_state.dart';
 
-// ─── Events ───
-abstract class SesionesEvent extends Equatable {
-  const SesionesEvent();
-  @override
-  List<Object?> get props => [];
-}
+export 'sesiones_event.dart';
+export 'sesiones_state.dart';
 
-class LoadSesionesEvent extends SesionesEvent {
-  final String? periodoId;
-  final String? docenteId;
-  final String? espacioId;
-  final String? fecha;
-  final String? estado;
-
-  /// Rango de fechas AAAA-MM-DD, inclusivo (la tabla consulta una semana).
-  final String? desde;
-  final String? hasta;
-
-  const LoadSesionesEvent({
-    this.periodoId,
-    this.docenteId,
-    this.espacioId,
-    this.fecha,
-    this.estado,
-    this.desde,
-    this.hasta,
-  });
-
-  @override
-  List<Object?> get props => [
-    periodoId,
-    docenteId,
-    espacioId,
-    fecha,
-    estado,
-    desde,
-    hasta,
-  ];
-}
-
-class CancelarSesionEvent extends SesionesEvent {
-  final String sesionId;
-  final String motivo;
-
-  const CancelarSesionEvent({required this.sesionId, required this.motivo});
-
-  @override
-  List<Object?> get props => [sesionId, motivo];
-}
-
-class ReasignarAulaSesionEvent extends SesionesEvent {
-  final String sesionId;
-  final String nuevoEspacioId;
-  final String? motivo;
-
-  const ReasignarAulaSesionEvent({
-    required this.sesionId,
-    required this.nuevoEspacioId,
-    this.motivo,
-  });
-
-  @override
-  List<Object?> get props => [sesionId, nuevoEspacioId, motivo];
-}
-
-class AsignarDocenteReemplazoEvent extends SesionesEvent {
-  final String sesionId;
-  final String docenteId;
-  final String? motivo;
-
-  const AsignarDocenteReemplazoEvent({
-    required this.sesionId,
-    required this.docenteId,
-    this.motivo,
-  });
-
-  @override
-  List<Object?> get props => [sesionId, docenteId, motivo];
-}
-
-// ─── States ───
-abstract class SesionesState extends Equatable {
-  const SesionesState();
-  @override
-  List<Object?> get props => [];
-}
-
-class SesionesInitial extends SesionesState {
-  const SesionesInitial();
-}
-
-class SesionesLoading extends SesionesState {
-  const SesionesLoading();
-}
-
-class SesionesLoaded extends SesionesState {
-  final List<SesionModel> sesiones;
-  final String? successMessage;
-
-  /// Error de una acción (cancelar, reasignar); la tabla se conserva.
-  final String? errorMessage;
-
-  const SesionesLoaded(this.sesiones, {this.successMessage, this.errorMessage});
-
-  @override
-  List<Object?> get props => [sesiones, successMessage, errorMessage];
-}
-
-class SesionesError extends SesionesState {
-  final String message;
-  const SesionesError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
-
-// ─── BLoC ───
+/// Sesiones de la semana consultada y sus cambios puntuales (US-ACA-05,
+/// US-ACA-06, US-ACA-09). Tras cada cambio recarga con los mismos filtros.
 class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
   final AcademicoRepository _repository;
 
@@ -135,6 +24,7 @@ class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
     on<CancelarSesionEvent>(
       (e, emit) => _accion(
         emit,
+        e,
         () =>
             _repository.cancelarSesion(sesionId: e.sesionId, motivo: e.motivo),
         'Sesión cancelada.',
@@ -143,10 +33,11 @@ class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
     on<ReasignarAulaSesionEvent>(
       (e, emit) => _accion(
         emit,
+        e,
         () => _repository.reasignarAulaSesion(
           sesionId: e.sesionId,
           nuevoEspacioId: e.nuevoEspacioId,
-          motivo: e.motivo,
+          cambio: e.cambio,
         ),
         'Aula reasignada.',
       ),
@@ -154,12 +45,25 @@ class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
     on<AsignarDocenteReemplazoEvent>(
       (e, emit) => _accion(
         emit,
+        e,
         () => _repository.asignarDocenteReemplazo(
           sesionId: e.sesionId,
           docenteId: e.docenteId,
-          motivo: e.motivo,
+          cambio: e.cambio,
         ),
         'Docente suplente asignado.',
+      ),
+    );
+    on<ReprogramarSesionEvent>(
+      (e, emit) => _accion(
+        emit,
+        e,
+        () => _repository.reprogramarSesion(
+          sesionId: e.sesionId,
+          nueva: e.nueva,
+          cambio: e.cambio,
+        ),
+        'Sesión reprogramada.',
       ),
     );
   }
@@ -184,35 +88,37 @@ class SesionesBloc extends Bloc<SesionesEvent, SesionesState> {
     try {
       emit(SesionesLoaded(await _consultar(event)));
     } catch (e) {
-      emit(SesionesError(_cleanError(e)));
+      emit(SesionesError(mensajeDeError(e)));
     }
   }
 
   /// Ejecuta una acción sobre una sesión y recarga con los filtros vigentes.
-  /// Si falla, la tabla sigue visible y el error se informa aparte.
+  /// Si el diálogo espera el resultado, el error se le entrega a él; si no,
+  /// la tabla sigue visible y el error se informa aparte.
   Future<void> _accion(
     Emitter<SesionesState> emit,
+    AccionSesionEvent evento,
     Future<void> Function() accion,
     String exito,
   ) async {
     try {
       await accion();
-      emit(SesionesLoaded(await _consultar(_ultima), successMessage: exito));
     } catch (e) {
+      final resultado = evento.resultado;
+      if (resultado != null) return resultado.completeError(e);
       final previo = state;
       emit(
         previo is SesionesLoaded
-            ? SesionesLoaded(previo.sesiones, errorMessage: _cleanError(e))
-            : SesionesError(_cleanError(e)),
+            ? SesionesLoaded(previo.sesiones, errorMessage: mensajeDeError(e))
+            : SesionesError(mensajeDeError(e)),
       );
+      return;
     }
-  }
-
-  String _cleanError(dynamic e) {
-    if (e is ApiException) return e.message;
-    return e
-        .toString()
-        .replaceAll('ApiException: ', '')
-        .replaceAll('Exception: ', '');
+    evento.resultado?.complete();
+    try {
+      emit(SesionesLoaded(await _consultar(_ultima), successMessage: exito));
+    } catch (e) {
+      emit(SesionesError(mensajeDeError(e)));
+    }
   }
 }

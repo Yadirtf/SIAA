@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'academico_models.dart' show textosDe;
+
 /// Asignación horaria tal como la lista `GET /asignaciones` (US-ACA-03), con los
 /// nombres de asignatura y grupo que resuelve el backend.
 class AsignacionModel extends Equatable {
@@ -20,6 +22,10 @@ class AsignacionModel extends Equatable {
   final String modalidad;
   final String estado;
 
+  /// Avisos no bloqueantes del guardado (franja muy corta, aula sin
+  /// geometría…), US-ACA-03/04. Solo vienen en la respuesta de POST/PUT.
+  final List<String> advertencias;
+
   const AsignacionModel({
     required this.id,
     required this.periodoId,
@@ -37,6 +43,7 @@ class AsignacionModel extends Equatable {
     required this.horaFin,
     required this.modalidad,
     required this.estado,
+    this.advertencias = const [],
   });
 
   factory AsignacionModel.fromJson(Map<String, dynamic> json) {
@@ -63,6 +70,7 @@ class AsignacionModel extends Equatable {
       horaFin: franja['horaFin']?.toString() ?? '',
       modalidad: json['modalidad']?.toString() ?? 'PRESENCIAL',
       estado: json['estado']?.toString() ?? 'PROPUESTA',
+      advertencias: textosDe(json['advertencias']),
     );
   }
 
@@ -84,5 +92,6 @@ class AsignacionModel extends Equatable {
     horaFin,
     modalidad,
     estado,
+    advertencias,
   ];
 }

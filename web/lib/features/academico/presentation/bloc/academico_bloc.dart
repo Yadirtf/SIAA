@@ -11,7 +11,6 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
     : _repository = repository,
       super(const AcademicoInitial()) {
     on<LoadAcademicoDataEvent>(_onLoadData);
-    on<CreatePeriodoEvent>(_onCreatePeriodo);
     on<CreateFacultadEvent>(_onCreateFacultad);
     on<DeleteFacultadEvent>(_onDeleteFacultad);
     on<CreateProgramaEvent>(_onCreatePrograma);
@@ -50,31 +49,6 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
           excepciones: excepciones,
         ),
       );
-    } catch (e) {
-      emit(
-        AcademicoError(
-          e
-              .toString()
-              .replaceAll('ApiException: ', '')
-              .replaceAll('Exception: ', ''),
-        ),
-      );
-    }
-  }
-
-  Future<void> _onCreatePeriodo(
-    CreatePeriodoEvent event,
-    Emitter<AcademicoState> emit,
-  ) async {
-    try {
-      await _repository.createPeriodo(
-        codigo: event.codigo,
-        nombre: event.nombre,
-        fechaInicio: event.fechaInicio,
-        fechaFin: event.fechaFin,
-        estado: event.estado,
-      );
-      add(const LoadAcademicoDataEvent());
     } catch (e) {
       emit(
         AcademicoError(
@@ -262,8 +236,8 @@ class AcademicoBloc extends Bloc<AcademicoEvent, AcademicoState> {
     Emitter<AcademicoState> emit,
   ) async {
     try {
-      await _repository.createAsignacion(event.body);
-      event.resultado?.complete();
+      final creada = await _repository.createAsignacion(event.body);
+      event.resultado?.complete(creada);
       add(const LoadAcademicoDataEvent());
     } catch (e) {
       final resultado = event.resultado;

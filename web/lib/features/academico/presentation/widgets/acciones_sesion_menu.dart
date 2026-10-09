@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/sesion_model.dart';
+import '../dialogs/sesion_detalle_dialog.dart';
 import '../dialogs/sesion_ops_dialogs.dart';
 
-/// Menú de acciones puntuales sobre una sesión: reasignar aula, asignar
-/// suplente o cancelarla (US-ACA-06, US-ACA-09).
+/// Menú de acciones puntuales sobre una sesión: ver su detalle, reasignar
+/// aula, asignar suplente, reprogramar o cancelarla (US-ACA-06, US-ACA-09).
 class AccionesSesionMenu extends StatelessWidget {
   final SesionModel sesion;
 
@@ -14,6 +15,8 @@ class AccionesSesionMenu extends StatelessWidget {
   void _abrir(BuildContext context, String accion) {
     final s = sesion;
     final Widget dialogo = switch (accion) {
+      'detalle' => SesionDetalleDialog(sesion: s),
+      'reprogramar' => ReprogramarSesionDialog(sesion: s),
       'aula' => ReasignarAulaDialog(
         sesionId: s.id,
         aulaActual: s.aulaTexto,
@@ -54,6 +57,9 @@ class AccionesSesionMenu extends StatelessWidget {
       tooltip: 'Acciones de sesión',
       onSelected: (v) => _abrir(context, v),
       itemBuilder: (_) => [
+        _item('detalle', Icons.info_outline_rounded, 'Ver detalle'),
+        if (cancelable)
+          _item('reprogramar', Icons.event_repeat_rounded, 'Reprogramar'),
         _item('aula', Icons.meeting_room_outlined, 'Reasignar aula'),
         _item('suplente', Icons.person_add_alt_outlined, 'Asignar suplente'),
         if (cancelable)

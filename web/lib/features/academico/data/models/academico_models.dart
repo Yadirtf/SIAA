@@ -13,6 +13,9 @@ class PeriodoModel extends Equatable {
   /// Sede del periodo; limita las aulas asignables (null = sin sede fija).
   final String? sedeId;
 
+  /// Avisos con que el servidor aceptó crear o editar el periodo.
+  final List<String> advertencias;
+
   const PeriodoModel({
     required this.id,
     required this.codigo,
@@ -21,6 +24,7 @@ class PeriodoModel extends Equatable {
     required this.fechaFin,
     required this.estado,
     this.sedeId,
+    this.advertencias = const [],
   });
 
   factory PeriodoModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,7 @@ class PeriodoModel extends Equatable {
       fechaFin: json['fechaFin']?.toString() ?? '',
       estado: json['estado']?.toString() ?? 'PLANEACION',
       sedeId: _textoOpcional(json['sedeId']),
+      advertencias: textosDe(json['advertencias']),
     );
   }
 
@@ -46,6 +51,11 @@ class PeriodoModel extends Equatable {
     sedeId,
   ];
 }
+
+/// Lista de textos de un campo JSON (vacía si no es una lista).
+List<String> textosDe(dynamic valor) => valor is List
+    ? valor.map((e) => e?.toString() ?? '').where((t) => t.isNotEmpty).toList()
+    : const [];
 
 String? _textoOpcional(dynamic valor) {
   final texto = valor?.toString() ?? '';

@@ -68,8 +68,9 @@ const catalogoParametros = <InfoParametro>[
         'Desactivado: solo se marca la entrada. Opcional u Obligatorio: la '
         'clase tiene además una ventana de salida alrededor de la hora de fin '
         '(definida por los dos parámetros siguientes) y la app ofrece marcar '
-        'la salida. Hoy Opcional y Obligatorio se comportan igual: la falta '
-        'de salida no genera una inasistencia.',
+        'la salida. Con Obligatorio, además, cada clase dictada sin marcaje '
+        'de salida se cuenta como "salida faltante" en el reporte de '
+        'cumplimiento; no genera una inasistencia.',
     recomendacion:
         'Actívelo si la institución necesita evidencia de que la clase '
         'duró completa.',

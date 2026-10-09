@@ -20,11 +20,20 @@ class _RepoQueCaptura extends FakeAcademicoRepository {
   /// Si se define, el "servidor" rechaza el guardado con este error.
   Object? rechazo;
 
+  /// Advertencias con que el "servidor" acepta la asignación.
+  List<String> advertencias = const [];
+
   @override
-  Future<AsignacionModel> createAsignacion(Map<String, dynamic> body) {
+  Future<AsignacionModel> createAsignacion(Map<String, dynamic> body) async {
     cuerpos.add(body);
     if (rechazo != null) return Future.error(rechazo!);
-    return super.createAsignacion(body);
+    final a = await super.createAsignacion(body);
+    return AsignacionModel.fromJson({
+      'id': a.id,
+      'periodoId': a.periodoId,
+      'grupoId': a.grupoId,
+      'advertencias': advertencias,
+    });
   }
 }
 
@@ -406,5 +415,55 @@ void main() {
     expect(repo.cuerpos, isEmpty);
     expect(find.text('Editar Asignación Horaria'), findsNothing);
     expect(find.textContaining('9 sesiones futuras'), findsOneWidget);
+  });
+
+  testWidgets('muestra las advertencias del servidor antes de cerrar', (
+    tester,
+  ) async {
+    repo.advertencias = [
+      'Advertencia: El espacio asignado no tiene geometría levantada.',
+    ];
+    await abrir(tester);
+    await elegir(tester, 'Docente principal *', 'Ana Pérez');
+    await elegir(tester, 'Aula *', 'A-101 · Aula 101');
+    await tester.tap(find.text('Guardar Asignación'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Asignación guardada con advertencias'), findsOneWidget);
+    expect(find.textContaining('no tiene geometría'), findsOneWidget);
+    await tester.tap(find.text('Entendido'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AsignacionDialog), findsNothing);
+    expect(find.text('Asignación creada.'), findsOneWidget);
+  });
+
+  testWidgets('al editar también muestra las advertencias del PUT', (
+    tester,
+  ) async {
+    edicion.respuesta = {
+      'id': 'a-1',
+      'advertencias': ['Advertencia: la franja dura menos de 30 minutos.'],
+    };
+    await abrir(
+      tester,
+      inicial: const AsignacionModel(
+        id: 'a-1',
+        periodoId: 'per-1',
+        docenteIds: ['doc-1'],
+        docenteNombre: 'Ana Pérez',
+        grupoId: 'g-1',
+        asignaturaId: 'as-1',
+        espacioId: 'esp-1',
+        diaSemana: 1,
+        horaInicio: '08:00',
+        horaFin: '10:00',
+        modalidad: 'PRESENCIAL',
+        estado: 'ACTIVA',
+      ),
+    );
+    await tester.tap(find.text('Guardar cambios'));
+    await tester.pumpAndSettle();
+    expect(edicion.llamadas, hasLength(1));
+    expect(find.textContaining('menos de 30 minutos'), findsOneWidget);
   });
 }

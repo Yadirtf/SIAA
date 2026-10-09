@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 
+import '../../data/models/academico_models.dart';
+
 abstract class AcademicoEvent extends Equatable {
   const AcademicoEvent();
 
@@ -11,25 +13,6 @@ abstract class AcademicoEvent extends Equatable {
 
 class LoadAcademicoDataEvent extends AcademicoEvent {
   const LoadAcademicoDataEvent();
-}
-
-class CreatePeriodoEvent extends AcademicoEvent {
-  final String codigo;
-  final String nombre;
-  final String fechaInicio;
-  final String fechaFin;
-  final String estado;
-
-  const CreatePeriodoEvent({
-    required this.codigo,
-    required this.nombre,
-    required this.fechaInicio,
-    required this.fechaFin,
-    required this.estado,
-  });
-
-  @override
-  List<Object?> get props => [codigo, nombre, fechaInicio, fechaFin, estado];
 }
 
 class CreateFacultadEvent extends AcademicoEvent {
@@ -133,7 +116,8 @@ class CreateAsignacionEvent extends AcademicoEvent {
 
   /// Si viene, el formulario espera aquí el resultado y muestra él mismo el
   /// error, sin reemplazar la pantalla por el estado de error.
-  final Completer<void>? resultado;
+  /// Se completa con la asignación creada, que trae las advertencias.
+  final Completer<AsignacionModel>? resultado;
   const CreateAsignacionEvent(this.body, {this.resultado});
 
   @override

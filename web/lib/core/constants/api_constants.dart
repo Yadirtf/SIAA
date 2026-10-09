@@ -27,6 +27,8 @@ class ApiConstants {
   static const String periodos = '$baseUrl/periodos';
   static String generarSesiones(String periodoId) =>
       '$baseUrl/periodos/$periodoId/generar-sesiones';
+  // Trabajos asíncronos, p. ej. la generación de sesiones (US-ACA-05 AC-04)
+  static String trabajo(String trabajoId) => '$baseUrl/trabajos/$trabajoId';
   static const String facultades = '$baseUrl/facultades';
   static const String programas = '$baseUrl/programas';
   static const String asignaturas = '$baseUrl/asignaturas';
@@ -87,6 +89,14 @@ class ApiConstants {
   static const String reporteCumplimiento = '$baseUrl/reportes/cumplimiento';
   static const String exportarCumplimiento =
       '$baseUrl/reportes/cumplimiento/exportar';
+  static const String reporteTablero = '$baseUrl/reportes/tablero';
+  static const String reporteOcupacion = '$baseUrl/reportes/ocupacion';
+  static const String exportarOcupacion =
+      '$baseUrl/reportes/ocupacion/exportar';
+  static const String reporteAsistenciaEstudiantil =
+      '$baseUrl/reportes/asistencia-estudiantil';
+  static const String gruposAsistenciaEstudiantil =
+      '$baseUrl/reportes/asistencia-estudiantil/grupos';
 
   // Auditoría (RF-AUD-003)
   static const String auditoria = '$baseUrl/auditoria';

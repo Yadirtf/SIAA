@@ -36,6 +36,7 @@ class StubAcademicoRepository implements AcademicoRepository {
     required String fechaInicio,
     required String fechaFin,
     required String estado,
+    bool confirmarSolapamiento = false,
   }) async => PeriodoModel(
     id: 'p-1',
     codigo: codigo,
@@ -205,7 +206,7 @@ class StubAcademicoRepository implements AcademicoRepository {
   Future<SesionModel> reasignarAulaSesion({
     required String sesionId,
     required String nuevoEspacioId,
-    String? motivo,
+    required CambioSesion cambio,
   }) async => SesionModel(
     id: sesionId,
     periodoId: 'per-1',
@@ -226,7 +227,7 @@ class StubAcademicoRepository implements AcademicoRepository {
   Future<SesionModel> asignarDocenteReemplazo({
     required String sesionId,
     required String docenteId,
-    String? motivo,
+    required CambioSesion cambio,
   }) async => SesionModel(
     id: sesionId,
     periodoId: 'per-1',
@@ -240,6 +241,44 @@ class StubAcademicoRepository implements AcademicoRepository {
     horaFin: '10:00',
     inicioProgramado: '2026-09-25T08:00:00Z',
     finProgramado: '2026-09-25T10:00:00Z',
+    estado: 'PROGRAMADA',
+  );
+
+  @override
+  Future<SesionModel> getSesion(String sesionId) async => SesionModel(
+    id: sesionId,
+    periodoId: 'per-1',
+    asignacionId: 'asig-1',
+    asignaturaId: 'asig-1',
+    grupoId: 'grp-1',
+    docenteIds: const ['doc-1'],
+    espacioId: 'esp-1',
+    fecha: '2026-09-25',
+    horaInicio: '08:00',
+    horaFin: '10:00',
+    inicioProgramado: '2026-09-25T08:00:00Z',
+    finProgramado: '2026-09-25T10:00:00Z',
+    estado: 'PROGRAMADA',
+  );
+
+  @override
+  Future<SesionModel> reprogramarSesion({
+    required String sesionId,
+    required ReprogramacionSesion nueva,
+    required CambioSesion cambio,
+  }) async => SesionModel(
+    id: sesionId,
+    periodoId: 'per-1',
+    asignacionId: 'asig-1',
+    asignaturaId: 'asig-1',
+    grupoId: 'grp-1',
+    docenteIds: const ['doc-1'],
+    espacioId: 'esp-1',
+    fecha: nueva.fecha,
+    horaInicio: nueva.horaInicio,
+    horaFin: nueva.horaFin,
+    inicioProgramado: '${nueva.fecha}T${nueva.horaInicio}:00Z',
+    finProgramado: '${nueva.fecha}T${nueva.horaFin}:00Z',
     estado: 'PROGRAMADA',
   );
 }

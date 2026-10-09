@@ -7,6 +7,7 @@ import '../../../../core/widgets/formulario_edicion_dialog.dart';
 import '../../data/models/academico_models.dart';
 import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
+import '../dialogs/periodo_dialog.dart';
 
 /// Formularios de edición de la estructura académica (US-ACA-01 AC-04). Cada
 /// uno abre los datos actuales, guarda con PUT y recarga las listas.
@@ -18,6 +19,7 @@ Future<void> _editar(
   required List<CampoEdicion> campos,
   required Map<String, dynamic> Function(Map<String, String> v) cuerpo,
   String? nota,
+  bool confirmaSolapamiento = false,
 }) async {
   final ds = context.read<EdicionRemoteDataSource>();
   final bloc = context.read<AcademicoBloc>();
@@ -26,7 +28,15 @@ Future<void> _editar(
     titulo: titulo,
     campos: campos,
     nota: nota,
-    guardar: (v) => ds.actualizar(url, cuerpo(v)),
+    guardar: (v) => confirmaSolapamiento
+        ? guardarPeriodoConfirmando(
+            context,
+            (confirmar) => ds.actualizar(url, {
+              ...cuerpo(v),
+              if (confirmar) 'confirmarSolapamiento': true,
+            }),
+          )
+        : ds.actualizar(url, cuerpo(v)),
   );
   if (ok) bloc.add(const LoadAcademicoDataEvent());
 }
@@ -113,6 +123,7 @@ Future<void> editarPeriodo(BuildContext context, PeriodoModel p) => _editar(
   nota:
       'Si amplía las fechas, pulse "Generar sesiones" después para crear las '
       'clases de los días nuevos. Un periodo cerrado ya no se puede modificar.',
+  confirmaSolapamiento: true,
   campos: [
     _codigo(p.codigo),
     _nombre(p.nombre),
@@ -134,11 +145,7 @@ Future<void> editarPeriodo(BuildContext context, PeriodoModel p) => _editar(
       valor: p.estado,
       tipo: TipoCampo.opciones,
       icono: Icons.flag_outlined,
-      opciones: const {
-        'PLANEACION': 'Planeación',
-        'ACTIVO': 'Activo',
-        'CERRADO': 'Cerrado',
-      },
+      opciones: estadosPeriodo,
     ),
   ],
   cuerpo: (v) => {
