@@ -9,6 +9,7 @@ import '../bloc/geo_editor_bloc.dart';
 import '../bloc/geo_editor_event.dart';
 import '../bloc/geo_editor_listener_handler.dart';
 import '../bloc/geo_editor_state.dart';
+import '../cubit/teselas_offline_cubit.dart';
 import '../widgets/dialogs/confirmar_descarte_dialog.dart';
 import '../widgets/dialogs/eliminar_vertice_dialog.dart';
 import '../widgets/geo_editor_app_bar.dart';
@@ -27,12 +28,16 @@ class GeoEditorScreen extends StatefulWidget {
   final String espacioNombre;
   final List<List<double>>? coordenadasExistentes;
 
+  /// Caché de teselas inyectable en pruebas; por defecto se crea uno persistente.
+  final TeselasOfflineCubit? teselas;
+
   const GeoEditorScreen({
     super.key,
     required this.espacioId,
     required this.espacioCodigo,
     required this.espacioNombre,
     this.coordenadasExistentes,
+    this.teselas,
   });
 
   @override
@@ -42,6 +47,8 @@ class GeoEditorScreen extends StatefulWidget {
 class _GeoEditorScreenState extends State<GeoEditorScreen> {
   final GpsLocationService _gpsService = GpsLocationService();
   final MapController _mapController = MapController();
+  late final TeselasOfflineCubit _teselas =
+      widget.teselas ?? TeselasOfflineCubit();
 
   EstadoPermisoUbicacion? _estadoPermiso;
   CapaMapa _capaActual = CapaMapa.googleHibrido;
@@ -130,6 +137,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
   void dispose() {
     _gpsService.detenerEscucha();
     _mapController.dispose();
+    if (widget.teselas == null) _teselas.close();
     super.dispose();
   }
 
@@ -181,6 +189,7 @@ class _GeoEditorScreenState extends State<GeoEditorScreen> {
                     mapController: _mapController,
                     state: state,
                     capaActual: _capaActual,
+                    teselas: _teselas,
                     onRotarCapa: _rotarCapaMapa,
                     onIniciarGps: _iniciarGps,
                     onMapTap: (lon, lat) {

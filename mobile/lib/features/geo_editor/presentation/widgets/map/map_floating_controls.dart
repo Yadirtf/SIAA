@@ -8,6 +8,9 @@ class MapFloatingControls extends StatelessWidget {
   final bool hasGpsPosition;
   final bool hasVertices;
   final VoidCallback onRotarCapa;
+
+  /// Guarda las teselas del área visible para el modo sin conexión (US-GEO-03 AC-04).
+  final VoidCallback? onDescargarZona;
   final VoidCallback onCentrarGps;
   final VoidCallback onCentrarPoligono;
   final VoidCallback onZoomIn;
@@ -19,6 +22,7 @@ class MapFloatingControls extends StatelessWidget {
     required this.hasGpsPosition,
     required this.hasVertices,
     required this.onRotarCapa,
+    this.onDescargarZona,
     required this.onCentrarGps,
     required this.onCentrarPoligono,
     required this.onZoomIn,
@@ -37,6 +41,15 @@ class MapFloatingControls extends StatelessWidget {
           onPressed: onRotarCapa,
         ),
         const SizedBox(height: 8),
+
+        if (onDescargarZona != null) ...[
+          MapFloatingButton(
+            icon: Icons.download_for_offline_outlined,
+            tooltip: 'Guardar zona visible para uso sin conexión',
+            onPressed: onDescargarZona!,
+          ),
+          const SizedBox(height: 8),
+        ],
 
         // Botón Centrar en mi ubicación GPS
         MapFloatingButton(

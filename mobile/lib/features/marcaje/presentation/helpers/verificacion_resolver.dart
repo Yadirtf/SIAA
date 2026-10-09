@@ -1,11 +1,20 @@
 // verificacion_resolver.dart — Obtiene el testigo de verificación complementaria antes de marcar
 // Se ejecuta en el momento de la captura: el testigo viaja en la petición (y en la cola offline).
+// Orden: WiFi (BSSID) → baliza BLE (escaneo corto en primer plano) → QR por cámara o tecleado.
 import 'package:flutter/widgets.dart';
+import '../../data/services/baliza_ble_service.dart';
 import '../../data/services/selector_verificacion.dart';
 import '../../data/services/wifi_bssid_service.dart';
+import '../../domain/models/lectura_baliza.dart';
 import '../../domain/models/sesion_activa_model.dart';
 import '../../domain/models/verificacion_complementaria_model.dart';
+import '../widgets/busqueda_baliza_dialog.dart';
 import '../widgets/codigo_qr_dialog.dart';
+import 'aviso_verificacion.dart';
+
+typedef PedirCodigoQr = Future<String?> Function(BuildContext context,
+    {bool otroMetodoIntentado});
+typedef BuscarBaliza = Future<LecturaBaliza> Function(BuildContext context);
 
 class ResolucionVerificacion {
   final bool cancelado;
@@ -24,15 +33,19 @@ class ResolucionVerificacion {
 
 class VerificacionResolver {
   final WifiBssidService _wifi;
-  final Future<String?> Function(BuildContext context, {bool wifiIntentado})
-      _pedirCodigoQr;
+  final PedirCodigoQr _pedirCodigoQr;
+  final BuscarBaliza _buscarBaliza;
 
   VerificacionResolver({
     WifiBssidService? wifi,
-    Future<String?> Function(BuildContext context, {bool wifiIntentado})?
-        pedirCodigoQr,
+    PedirCodigoQr? pedirCodigoQr,
+    BuscarBaliza? buscarBaliza,
   })  : _wifi = wifi ?? WifiBssidService(),
-        _pedirCodigoQr = pedirCodigoQr ?? CodigoQrDialog.show;
+        _pedirCodigoQr = pedirCodigoQr ?? CodigoQrDialog.show,
+        _buscarBaliza = buscarBaliza ?? _buscarBalizaPorDefecto;
+
+  static Future<LecturaBaliza> _buscarBalizaPorDefecto(BuildContext context) =>
+      BusquedaBalizaDialog.show(context, buscar: BalizaBleService().buscar);
 
   Future<ResolucionVerificacion> resolver(
     BuildContext context,
@@ -43,9 +56,17 @@ class VerificacionResolver {
     if (!exigida) return const ResolucionVerificacion();
 
     String? bssid;
-    if (SelectorVerificacion.requiereBssid(
-        exigida: exigida, metodos: metodos)) {
-      bssid = await _wifi.leerBssid();
+    final wifiIntentado =
+        SelectorVerificacion.requiereBssid(exigida: exigida, metodos: metodos);
+    if (wifiIntentado) bssid = await _wifi.leerBssid();
+
+    LecturaBaliza? baliza;
+    if (SelectorVerificacion.requiereBle(
+        exigida: exigida, metodos: metodos, bssid: bssid)) {
+      if (!context.mounted) {
+        return const ResolucionVerificacion(cancelado: true);
+      }
+      baliza = await _buscarBaliza(context);
     }
 
     String? codigoQr;
@@ -53,13 +74,13 @@ class VerificacionResolver {
       exigida: exigida,
       metodos: metodos,
       bssid: bssid,
+      uuidBle: baliza?.uuid,
     )) {
       if (!context.mounted) {
         return const ResolucionVerificacion(cancelado: true);
       }
       codigoQr = await _pedirCodigoQr(context,
-          wifiIntentado: SelectorVerificacion.requiereBssid(
-              exigida: exigida, metodos: metodos));
+          otroMetodoIntentado: wifiIntentado || baliza != null);
       if (codigoQr == null) {
         return const ResolucionVerificacion(cancelado: true);
       }
@@ -69,25 +90,14 @@ class VerificacionResolver {
       exigida: exigida,
       metodos: metodos,
       bssid: bssid,
+      uuidBle: baliza?.uuid,
       codigoQr: codigoQr,
     );
     return ResolucionVerificacion(
       verificacion: verificacion,
-      aviso: verificacion == null ? avisoSinTestigo(metodos) : null,
+      aviso: verificacion == null
+          ? AvisoVerificacion.sinTestigo(metodos, baliza?.motivo)
+          : null,
     );
-  }
-
-  /// Por qué no se pudo aportar el testigo exigido con los métodos del aula.
-  static String avisoSinTestigo(List<String> metodos) {
-    final m = metodos.map((e) => e.toUpperCase()).toSet();
-    if (m.contains(VerificacionComplementariaModel.metodoWifi)) {
-      return 'No se pudo leer la red WiFi del aula. Active el WiFi y la '
-          'ubicación precisa, conéctese a la red institucional e intente de nuevo.';
-    }
-    if (m.contains(VerificacionComplementariaModel.metodoBle)) {
-      return 'Esta aula exige verificación por baliza BLE y esta versión de la app '
-          'aún no puede leerla. Informe al administrador del espacio.';
-    }
-    return 'Esta aula exige verificación complementaria y no se aportó ninguna.';
   }
 }

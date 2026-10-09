@@ -29,7 +29,9 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>SIAA usa Face ID para reabrir tu sesión sin escribir la contraseña. La verificación ocurre solo en este dispositivo y ningún dato biométrico sale de él.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>SIAA usa la cámara para fotografiar el soporte de una justificación de inasistencia.</string>
+	<string>SIAA usa la cámara para escanear el código QR del aula al marcar asistencia y para fotografiar el soporte de una justificación de inasistencia.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>SIAA usa Bluetooth solo durante unos segundos al marcar asistencia, para detectar la baliza del aula y confirmar el piso. No se rastrea tu ubicación ni se escanea en segundo plano.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SIAA accede a tus fotos para adjuntar el soporte de una justificación de inasistencia.</string>
 	<key>LSRequiresIPhoneOS</key>
