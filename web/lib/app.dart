@@ -41,6 +41,7 @@ import 'features/marcajes/domain/repositories/marcajes_admin_repository.dart';
 import 'features/marcajes/presentation/bloc/marcajes_admin_bloc.dart';
 import 'features/reportes/domain/reportes_repository.dart';
 import 'features/reportes/domain/reportes_repository_impl.dart';
+import 'features/reportes/domain/reportes_operativos_repository.dart';
 import 'features/reportes/presentation/bloc/catalogo_reporte_cubit.dart';
 import 'features/reportes/presentation/bloc/reporte_cumplimiento_cubit.dart';
 import 'features/usuarios/data/buscador_usuarios.dart';
@@ -92,6 +93,9 @@ class SiaaApp extends StatelessWidget {
         ),
         RepositoryProvider<ReportesRepository>(
           create: (_) => ReportesRepositoryImpl(),
+        ),
+        RepositoryProvider<ReportesOperativosRepository>(
+          create: (_) => ReportesOperativosRepositoryImpl(),
         ),
         RepositoryProvider<AuditoriaRepository>(
           create: (_) => AuditoriaRepositoryImpl(),

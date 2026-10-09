@@ -63,7 +63,9 @@ class TableroSinMarcaje extends StatelessWidget {
                 rows: sesiones
                     .map(
                       (s) => DataRow(
-                        key: ValueKey('sin-marcaje-${s.sesionId}-${s.docenteId}'),
+                        key: ValueKey(
+                          'sin-marcaje-${s.sesionId}-${s.docenteId}',
+                        ),
                         cells: [
                           DataCell(Text(s.docente)),
                           DataCell(Text(s.aula)),

@@ -32,9 +32,8 @@ class _OcupacionScreenState extends State<OcupacionScreen> {
   }
 
   void _snack(String texto, Color color) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(texto), backgroundColor: color));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(texto), backgroundColor: color));
   }
 
   @override
