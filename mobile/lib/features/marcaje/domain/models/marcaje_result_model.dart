@@ -16,6 +16,9 @@ class MarcajeResultModel extends Equatable {
   final bool permiteReintento;
   final bool puedeJustificar;
 
+  /// Minutos desde la entrada válida en una salida aceptada (US-MAR-15 AC-02).
+  final int? permanenciaMin;
+
   const MarcajeResultModel({
     this.marcajeId,
     required this.resultado,
@@ -29,6 +32,7 @@ class MarcajeResultModel extends Equatable {
     this.pasoFallido = 0,
     this.permiteReintento = false,
     this.puedeJustificar = false,
+    this.permanenciaMin,
   });
 
   /// Resultados de aceptación: el motor devuelve PRESENTE/TARDANZA (y VALIDO/RETARDO heredados).
@@ -59,6 +63,7 @@ class MarcajeResultModel extends Equatable {
       pasoFallido: (json['pasoFallido'] as num?)?.toInt() ?? 0,
       permiteReintento: json['permiteReintento'] as bool? ?? false,
       puedeJustificar: json['puedeJustificar'] as bool? ?? false,
+      permanenciaMin: (json['permanenciaMin'] as num?)?.toInt(),
     );
   }
 
@@ -76,6 +81,7 @@ class MarcajeResultModel extends Equatable {
         'pasoFallido': pasoFallido,
         'permiteReintento': permiteReintento,
         'puedeJustificar': puedeJustificar,
+        if (permanenciaMin != null) 'permanenciaMin': permanenciaMin,
       };
 
   @override
@@ -92,5 +98,6 @@ class MarcajeResultModel extends Equatable {
         pasoFallido,
         permiteReintento,
         puedeJustificar,
+        permanenciaMin,
       ];
 }

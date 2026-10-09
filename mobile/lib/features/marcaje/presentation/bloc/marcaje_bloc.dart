@@ -37,9 +37,10 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
 
       SemaforoMarcaje semaforo = SemaforoMarcaje.fueraDeVentana;
       if (sesion != null) {
-        if (sesion.tieneMarcajeEntrada) {
+        // El marcaje que cuenta es el de la ventana vigente (ENTRADA o SALIDA, US-MAR-15).
+        if (sesion.marcajeVentanaRegistrado) {
           semaforo = SemaforoMarcaje.registrado;
-        } else if (sesion.ventana.estaAbierta) {
+        } else if (sesion.ventana.estaAbierta && sesion.admiteMarcaje) {
           semaforo = SemaforoMarcaje.buscandoGps;
         } else {
           semaforo = SemaforoMarcaje.fueraDeVentana;
@@ -56,12 +57,12 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         consentimientoRequerido: !consentido,
       ));
 
-      // Si la ventana está abierta y no tiene entrada, capturar GPS automáticamente
+      // Si la ventana está abierta y aún admite marcaje, capturar GPS automáticamente
       // (solo con consentimiento vigente: US-LEG-01).
       if (consentido &&
           sesion != null &&
           sesion.ventana.estaAbierta &&
-          !sesion.tieneMarcajeEntrada) {
+          sesion.admiteMarcaje) {
         add(const CapturarUbicacionEvent());
       }
     } catch (e) {
@@ -176,6 +177,14 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
         colaOffline: cola,
         semaforo: sem,
       ));
+
+      // Salida aceptada sin permanencia en la respuesta: se recarga la sesión,
+      // que trae el marcaje de salida con su permanencia (US-MAR-15 AC-02).
+      if (event.tipo == 'SALIDA' &&
+          resultado.esAceptado &&
+          resultado.permanenciaMin == null) {
+        add(const CargarSesionActivaEvent());
+      }
     } on ConsentimientoRequeridoException catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
