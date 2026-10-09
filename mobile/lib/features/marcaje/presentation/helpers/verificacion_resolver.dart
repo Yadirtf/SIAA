@@ -11,16 +11,26 @@ class ResolucionVerificacion {
   final bool cancelado;
   final VerificacionComplementariaModel? verificacion;
 
-  const ResolucionVerificacion({this.cancelado = false, this.verificacion});
+  /// Se exige verificación y el dispositivo no pudo aportar ninguna: explica por qué
+  /// antes de que el servidor rechace con RECHAZADO_VERIFICACION (US-GEO-13 AC-02).
+  final String? aviso;
+
+  const ResolucionVerificacion({
+    this.cancelado = false,
+    this.verificacion,
+    this.aviso,
+  });
 }
 
 class VerificacionResolver {
   final WifiBssidService _wifi;
-  final Future<String?> Function(BuildContext context) _pedirCodigoQr;
+  final Future<String?> Function(BuildContext context, {bool wifiIntentado})
+      _pedirCodigoQr;
 
   VerificacionResolver({
     WifiBssidService? wifi,
-    Future<String?> Function(BuildContext context)? pedirCodigoQr,
+    Future<String?> Function(BuildContext context, {bool wifiIntentado})?
+        pedirCodigoQr,
   })  : _wifi = wifi ?? WifiBssidService(),
         _pedirCodigoQr = pedirCodigoQr ?? CodigoQrDialog.show;
 
@@ -47,19 +57,37 @@ class VerificacionResolver {
       if (!context.mounted) {
         return const ResolucionVerificacion(cancelado: true);
       }
-      codigoQr = await _pedirCodigoQr(context);
+      codigoQr = await _pedirCodigoQr(context,
+          wifiIntentado: SelectorVerificacion.requiereBssid(
+              exigida: exigida, metodos: metodos));
       if (codigoQr == null) {
         return const ResolucionVerificacion(cancelado: true);
       }
     }
 
-    return ResolucionVerificacion(
-      verificacion: SelectorVerificacion.seleccionar(
-        exigida: exigida,
-        metodos: metodos,
-        bssid: bssid,
-        codigoQr: codigoQr,
-      ),
+    final verificacion = SelectorVerificacion.seleccionar(
+      exigida: exigida,
+      metodos: metodos,
+      bssid: bssid,
+      codigoQr: codigoQr,
     );
+    return ResolucionVerificacion(
+      verificacion: verificacion,
+      aviso: verificacion == null ? avisoSinTestigo(metodos) : null,
+    );
+  }
+
+  /// Por qué no se pudo aportar el testigo exigido con los métodos del aula.
+  static String avisoSinTestigo(List<String> metodos) {
+    final m = metodos.map((e) => e.toUpperCase()).toSet();
+    if (m.contains(VerificacionComplementariaModel.metodoWifi)) {
+      return 'No se pudo leer la red WiFi del aula. Active el WiFi y la '
+          'ubicación precisa, conéctese a la red institucional e intente de nuevo.';
+    }
+    if (m.contains(VerificacionComplementariaModel.metodoBle)) {
+      return 'Esta aula exige verificación por baliza BLE y esta versión de la app '
+          'aún no puede leerla. Informe al administrador del espacio.';
+    }
+    return 'Esta aula exige verificación complementaria y no se aportó ninguna.';
   }
 }

@@ -1,117 +1,131 @@
+// Pruebas de la cola offline de cartografía (US-GEO-10 AC-01..AC-04, RF-GEO-013).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:siaa_mobile/core/geo/offline_cartografia_service.dart';
+
+CapturaOfflineEspacio _captura(String id, {int version = 1, int n = 3}) =>
+    CapturaOfflineEspacio(
+      id: id,
+      espacioId: 'esp-$id',
+      espacioCodigo: 'A-$id',
+      vertices: [
+        for (var i = 0; i < n; i++) [-74.0650 + i * 0.0001, 4.6500],
+      ],
+      metodoCaptura: 'TOQUE_MAPA',
+      capturadoEn: DateTime(2026, 10, 9, 8),
+      versionEsperada: version,
+    );
 
 void main() {
   group('US-GEO-10: OfflineCartografiaService', () {
     late OfflineCartografiaService service;
 
-    setUp(() {
-      service = OfflineCartografiaService();
-    });
+    setUp(() => service = OfflineCartografiaService());
 
-    test('AC-01: Guardar captura offline con estado pendienteSincronizacion', () async {
-      final captura = CapturaOfflineEspacio(
-        id: 'cap-1',
-        espacioId: 'esp-101',
-        vertices: [
-          [-74.0650, 4.6500],
-          [-74.0649, 4.6500],
-          [-74.0649, 4.6501],
-          [-74.0650, 4.6501],
-        ],
-        metodoCaptura: 'RECORRIDO_PERIMETRAL',
-        capturadoEn: DateTime.now(),
-      );
-
-      await service.guardarCapturaOffline(captura);
+    test('AC-01: guarda la captura con estado pendienteSincronizacion',
+        () async {
+      await service.guardarCapturaOffline(_captura('1', n: 4));
       final pendientes = await service.obtenerPendientes();
 
       expect(pendientes.length, 1);
-      expect(pendientes.first.estado, EstadoSincronizacion.pendienteSincronizacion);
+      expect(pendientes.first.estado,
+          EstadoSincronizacion.pendienteSincronizacion);
       expect(pendientes.first.vertices.length, 4);
     });
 
-    test('AC-02: Sincronizar automáticamente cuando hay red', () async {
-      final captura = CapturaOfflineEspacio(
-        id: 'cap-2',
-        espacioId: 'esp-102',
-        vertices: [
-          [-74.0650, 4.6500],
-          [-74.0649, 4.6500],
-          [-74.0649, 4.6501],
-        ],
-        metodoCaptura: 'TOQUE_MAPA',
-        capturadoEn: DateTime.now(),
-        versionEsperada: 1,
-      );
-      await service.guardarCapturaOffline(captura);
+    test('AC-01: persiste en el almacén seguro y sobrevive a un reinicio',
+        () async {
+      String? almacen;
+      Future<String?> leer() async => almacen;
+      Future<void> escribir(String v) async => almacen = v;
+
+      await OfflineCartografiaService(leer: leer, escribir: escribir)
+          .guardarCapturaOffline(_captura('p', n: 5));
+      expect(almacen, contains('esp-p'));
+
+      final reabierto =
+          OfflineCartografiaService(leer: leer, escribir: escribir);
+      final c = await reabierto.obtenerPorId('p');
+      expect(c?.vertices.length, 5);
+      expect(c?.espacioCodigo, 'A-p');
+    });
+
+    test('AC-02: sincroniza cuando hay red', () async {
+      await service.guardarCapturaOffline(_captura('2'));
 
       final resultado = await service.sincronizarPendientes(
         isOnline: true,
-        syncHandler: (c) async => 1, // Servidor acepta versión 1
+        syncHandler: (c) async =>
+            const EnvioCaptura(ResultadoEnvioCaptura.aceptada),
       );
 
       expect(resultado.sincronizados, 1);
-      expect(resultado.pendientesRestantes.length, 0);
-
-      final guardado = await service.obtenerPorId('cap-2');
-      expect(guardado?.estado, EstadoSincronizacion.sincronizado);
+      expect(resultado.pendientesRestantes, isEmpty);
+      expect(resultado.resumen, contains('1 sincronizada'));
+      expect((await service.obtenerPorId('2'))?.estado,
+          EstadoSincronizacion.sincronizado);
     });
 
-    test('AC-03: Conservar vértices intactos ante fallo de validación del servidor', () async {
-      final captura = CapturaOfflineEspacio(
-        id: 'cap-3',
-        espacioId: 'esp-103',
-        vertices: [
-          [-74.0650, 4.6500],
-          [-74.0649, 4.6500],
-          [-74.0649, 4.6501],
-        ],
-        metodoCaptura: 'TOQUE_MAPA',
-        capturadoEn: DateTime.now(),
+    test('sin red no envía nada y la captura sigue pendiente', () async {
+      await service.guardarCapturaOffline(_captura('x'));
+      var llamadas = 0;
+      final sinRed = await service.sincronizarPendientes(
+        isOnline: false,
+        syncHandler: (c) async {
+          llamadas++;
+          return const EnvioCaptura(ResultadoEnvioCaptura.aceptada);
+        },
       );
-      await service.guardarCapturaOffline(captura);
+      final cortada = await service.sincronizarPendientes(
+        isOnline: true,
+        syncHandler: (c) async =>
+            const EnvioCaptura(ResultadoEnvioCaptura.sinConexion),
+      );
+      expect(llamadas, 0);
+      expect(sinRed.procesados + cortada.procesados, 0);
+      expect((await service.obtenerPendientes()).length, 1);
+    });
+
+    test('AC-03: rechazo del servidor conserva los vértices para corrección',
+        () async {
+      await service.guardarCapturaOffline(_captura('3'));
 
       final resultado = await service.sincronizarPendientes(
         isOnline: true,
-        syncHandler: (c) async => throw Exception('GEOMETRIA_INVALIDA: polígono autointersecante'),
+        syncHandler: (c) async => const EnvioCaptura(
+            ResultadoEnvioCaptura.rechazada,
+            mensaje: 'GEOMETRIA_INVALIDA: polígono autointersecante'),
       );
 
       expect(resultado.erroresValidacion, 1);
-      expect(resultado.sincronizados, 0);
-
-      final guardado = await service.obtenerPorId('cap-3');
+      final guardado = await service.obtenerPorId('3');
       expect(guardado?.estado, EstadoSincronizacion.errorValidacion);
-      expect(guardado?.vertices.length, 3, reason: 'Los vértices no deben perderse');
+      expect(guardado?.vertices.length, 3,
+          reason: 'Los vértices no deben perderse');
       expect(guardado?.mensajeError, contains('GEOMETRIA_INVALIDA'));
     });
 
-    test('AC-04: Detectar conflicto si el espacio fue modificado en el servidor', () async {
-      final captura = CapturaOfflineEspacio(
-        id: 'cap-4',
-        espacioId: 'esp-104',
-        vertices: [
-          [-74.0650, 4.6500],
-          [-74.0649, 4.6500],
-          [-74.0649, 4.6501],
-        ],
-        metodoCaptura: 'TOQUE_MAPA',
-        capturadoEn: DateTime.now(),
-        versionEsperada: 1,
-      );
-      await service.guardarCapturaOffline(captura);
+    test(
+        'AC-04: conflicto queda para decisión del usuario y puede reintentarse',
+        () async {
+      await service.guardarCapturaOffline(_captura('4'));
 
       final resultado = await service.sincronizarPendientes(
         isOnline: true,
-        syncHandler: (c) async => 2, // Servidor ya está en versión 2
+        syncHandler: (c) async => const EnvioCaptura(
+            ResultadoEnvioCaptura.conflicto,
+            versionServidor: 2),
       );
 
       expect(resultado.conflictos, 1);
-      expect(resultado.sincronizados, 0);
-
-      final guardado = await service.obtenerPorId('cap-4');
+      final guardado = await service.obtenerPorId('4');
       expect(guardado?.estado, EstadoSincronizacion.conflicto);
+      expect(guardado?.versionServidor, 2);
       expect(guardado?.mensajeError, contains('Conflicto'));
+
+      await service.reintentar('4', versionEsperada: 2);
+      final reintento = await service.obtenerPorId('4');
+      expect(reintento?.estado, EstadoSincronizacion.pendienteSincronizacion);
+      expect(reintento?.versionEsperada, 2);
     });
   });
 }

@@ -10,7 +10,14 @@ abstract class MarcajeEvent extends Equatable {
 }
 
 class CargarSesionActivaEvent extends MarcajeEvent {
-  const CargarSesionActivaEvent();
+  /// Refresco disparado por la app (p. ej. al abrir la ventana), no por el usuario:
+  /// se aplica jitter para no sincronizar el pico de las 7:00 (US-PLT-05 AC-05).
+  final bool automatico;
+
+  const CargarSesionActivaEvent({this.automatico = false});
+
+  @override
+  List<Object?> get props => [automatico];
 }
 
 class CapturarUbicacionEvent extends MarcajeEvent {

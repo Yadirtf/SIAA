@@ -37,6 +37,10 @@ String mensajeDeError(Object error,
       return 'La conexión tardó demasiado. Verifica tu internet.';
     case DioExceptionType.connectionError:
       return 'No se pudo conectar al servidor. Verifica tu conexión.';
+    case DioExceptionType.badCertificate:
+      // Fijación de certificado fallida o compilación sin pines (US-SEG-01).
+      return 'No se pudo verificar la identidad del servidor de SIAA. '
+          'Actualiza la aplicación o contacta a soporte.';
     default:
       return porDefecto;
   }

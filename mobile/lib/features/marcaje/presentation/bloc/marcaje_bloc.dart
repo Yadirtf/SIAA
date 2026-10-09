@@ -1,6 +1,7 @@
 // marcaje_bloc.dart — BLoC para flujo de marcaje puntual (US-MAR-01..US-MAR-15)
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/network/jitter_service.dart';
 import '../../../privacidad/data/consentimiento_gate.dart';
 import '../../../privacidad/data/consentimiento_requerido.dart';
 import '../../data/repositories/marcaje_repository.dart';
@@ -11,12 +12,17 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
   final MarcajeRepository _repository;
   final bool Function() _consentimientoOtorgado;
 
+  /// Espera aleatoria de hasta 20 s antes de un refresco automático (US-PLT-05 AC-05).
+  final Future<void> Function() _esperarJitter;
+
   MarcajeBloc({
     MarcajeRepository? repository,
     bool Function()? consentimientoOtorgado,
+    Future<void> Function()? esperarJitter,
   })  : _repository = repository ?? MarcajeRepository(),
         _consentimientoOtorgado = consentimientoOtorgado ??
             (() => ConsentimientoGate.instance.permiteUbicacion),
+        _esperarJitter = esperarJitter ?? JitterService().waitJitter,
         super(const MarcajeState()) {
     on<CargarSesionActivaEvent>(_onCargarSesionActiva);
     on<CapturarUbicacionEvent>(_onCapturarUbicacion);
@@ -30,6 +36,7 @@ class MarcajeBloc extends Bloc<MarcajeEvent, MarcajeState> {
     CargarSesionActivaEvent event,
     Emitter<MarcajeState> emit,
   ) async {
+    if (event.automatico) await _esperarJitter();
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final sesion = await _repository.obtenerSesionActiva();

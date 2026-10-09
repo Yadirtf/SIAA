@@ -21,7 +21,9 @@ void main() {
       );
     });
 
-    test('AC-01: Autenticación exitosa recupera token de refresco del almacenamiento seguro', () async {
+    test(
+        'AC-01: Autenticación exitosa recupera token de refresco del almacenamiento seguro',
+        () async {
       authResult = true;
 
       final result = await service.authenticate();
@@ -32,7 +34,9 @@ void main() {
       expect(service.failedAttempts, equals(0));
     });
 
-    test('AC-02: Dispositivo sin biometría reporta fallback obligatorio a contraseña', () async {
+    test(
+        'AC-02: Dispositivo sin biometría reporta fallback obligatorio a contraseña',
+        () async {
       canCheck = false;
 
       final result = await service.authenticate();
@@ -41,7 +45,9 @@ void main() {
       expect(result.requiresPasswordFallback, isTrue);
     });
 
-    test('AC-03: Tres intentos fallidos bloquean la biometría y exigen contraseña institucional', () async {
+    test(
+        'AC-03: Tres intentos fallidos bloquean la biometría y exigen contraseña institucional',
+        () async {
       authResult = false;
 
       // Intento 1
@@ -66,12 +72,39 @@ void main() {
       final res4 = await service.authenticate();
       expect(res4.success, isFalse);
       expect(res4.requiresPasswordFallback, isTrue);
-      expect(res4.errorMessage, contains('Límite de 3 intentos biométricos excedido'));
+      expect(res4.errorMessage,
+          contains('Límite de 3 intentos biométricos excedido'));
     });
 
     test('resetFailedAttempts reinicia el contador de intentos', () {
       service.resetFailedAttempts();
       expect(service.failedAttempts, equals(0));
+    });
+
+    test('AC-02: sin biometría, el PIN del dispositivo recupera la sesión',
+        () async {
+      final conPin = BiometricAuthService(
+        availabilityChecker: () async => false,
+        authInvoker: (_) async => false,
+        credencialInvoker: (_) async => true,
+        tokenFetcher: () async => storedToken,
+      );
+
+      final result = await conPin.autenticarConCredencialDispositivo();
+
+      expect(result.success, isTrue);
+      expect(result.refreshToken, equals('sample-refresh-token-12345'));
+      expect(conPin.failedAttempts, equals(0));
+    });
+
+    test('verificación superada sin sesión guardada exige credenciales',
+        () async {
+      storedToken = null;
+
+      final result = await service.authenticate();
+
+      expect(result.success, isFalse);
+      expect(result.requiresPasswordFallback, isTrue);
     });
   });
 }

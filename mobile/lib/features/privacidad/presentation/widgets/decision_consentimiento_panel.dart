@@ -19,9 +19,8 @@ class DecisionConsentimientoPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = state.consentimiento;
     final colores = Theme.of(context).colorScheme;
-    final fecha = c?.decididoEn == null
-        ? ''
-        : ' el ${fechaHora(c!.decididoEn!)}';
+    final fecha =
+        c?.decididoEn == null ? '' : ' el ${fechaHora(c!.decididoEn!)}';
 
     String? resumen;
     if (state.otorgado) {

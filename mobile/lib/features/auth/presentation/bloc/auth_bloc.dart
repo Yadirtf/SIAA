@@ -5,6 +5,7 @@ import '../../../../core/auth/jwt_claims.dart';
 import '../../../../core/device/device_info_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../data/auth_repository.dart';
+import '../../data/desbloqueo_local.dart';
 import '../../data/sesion_restaurador.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -23,17 +24,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final Future<void> Function()? _antesDeCerrarSesion;
   final SesionRestaurador _restaurador;
 
+  /// true si la sesión guardada debe desbloquearse localmente antes de usarse (US-AUT-06).
+  final Future<bool> Function() _requiereDesbloqueo;
+
   AuthBloc({
     required AuthRepository repository,
     DeviceInfoService? deviceInfoService,
     Future<void> Function()? antesDeCerrarSesion,
     SesionRestaurador? restaurador,
+    Future<bool> Function()? requiereDesbloqueo,
   })  : _repository = repository,
         _deviceInfoService = deviceInfoService ?? const DeviceInfoService(),
         _antesDeCerrarSesion = antesDeCerrarSesion,
         _restaurador = restaurador ?? SesionRestaurador(),
+        _requiereDesbloqueo =
+            requiereDesbloqueo ?? DesbloqueoLocal().requiereDesbloqueo,
         super(AuthInitial()) {
     on<AuthSessionChecked>(_onSessionChecked);
+    on<AuthDesbloqueoSuperado>((_, emit) => _restaurarSesion(emit));
+    on<AuthDesbloqueoDescartado>(
+        (_, emit) => _onLogoutRequested(AuthLogoutRequested(), emit));
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthRecuperarSolicitado>(_onRecuperarSolicitado);
     on<AuthNuevoPasswordConfirmado>(_onNuevoPasswordConfirmado);
@@ -43,11 +53,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSegundoFactorCancelado>((_, emit) => emit(AuthUnauthenticated()));
   }
 
-  /// Restaura la sesión guardada al abrir la app con nombre, roles y permisos reales.
+  /// Al abrir la app: pide verificación local si corresponde (US-AUT-06) o restaura.
   Future<void> _onSessionChecked(
     AuthSessionChecked event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthCheckingSession());
+    if (await _requiereDesbloqueo()) {
+      emit(AuthDesbloqueoRequerido());
+      return;
+    }
+    await _restaurarSesion(emit);
+  }
+
+  /// Restaura la sesión guardada con nombre, roles y permisos reales.
+  Future<void> _restaurarSesion(Emitter<AuthState> emit) async {
     emit(AuthCheckingSession());
     final sesion = await _restaurador.restaurar();
     if (sesion == null) {

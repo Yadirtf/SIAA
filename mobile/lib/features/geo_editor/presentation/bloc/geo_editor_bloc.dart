@@ -17,6 +17,14 @@ typedef SaveGeometryCallback = Future<void> Function({
   String? motivoSolapamiento,
 });
 
+/// Guarda la geometría cerrada en el dispositivo cuando no hay conexión (US-GEO-10 AC-01).
+typedef SaveOfflineCallback = Future<void> Function({
+  required String espacioId,
+  required List<List<double>> coordenadas,
+  required String metodoCaptura,
+  double? precisionPromedioMetros,
+});
+
 typedef FetchHistorialCallback = Future<List<GeometriaHistorialItem>> Function(
     String espacioId);
 
@@ -24,11 +32,17 @@ class GeoEditorBloc extends Bloc<GeoEditorEvent, GeoEditorState> {
   final VertexCaptureAlgorithm captureAlgorithm;
   final SaveGeometryCallback? onSaveGeometry;
   final FetchHistorialCallback? onFetchHistorial;
+  final SaveOfflineCallback? onSaveOffline;
+
+  /// true si el dispositivo tiene alguna red; sin ella no se intenta el envío.
+  final Future<bool> Function()? hayConexion;
 
   GeoEditorBloc({
     this.captureAlgorithm = const VertexCaptureAlgorithm(),
     this.onSaveGeometry,
     this.onFetchHistorial,
+    this.onSaveOffline,
+    this.hayConexion,
   }) : super(const GeoEditorState()) {
     // Modo de captura y telemetría GPS
     on<CambiarModoCapturaRequested>(onCambiarModoCapturaRequested);

@@ -13,6 +13,7 @@ import '../../data/asistencia_remote_datasource.dart';
 import '../../data/perfil_remote_datasource.dart';
 import '../../domain/perfil_model.dart';
 import '../cubit/perfil_cubit.dart';
+import '../widgets/biometria_switch_tile.dart';
 import '../widgets/dispositivo_tile.dart';
 import '../widgets/mi_asistencia_section.dart';
 
@@ -91,6 +92,7 @@ class PerfilScreen extends StatelessWidget {
           if (p.documento.isNotEmpty) _dato('Documento', p.documento),
           _dato('Verificación en dos pasos',
               p.totpActivado ? 'Activada' : 'No activada'),
+          const BiometriaSwitchTile(),
           Wrap(spacing: 8, runSpacing: 4, children: [
             for (final r in p.roles) Chip(label: Text(etiquetaRol(r))),
           ]),

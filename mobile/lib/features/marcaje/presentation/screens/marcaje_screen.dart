@@ -65,6 +65,10 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
 
   void _recargar() => _bloc.add(const CargarSesionActivaEvent());
 
+  /// Todos los docentes ven abrir la ventana a la misma hora: refresco con jitter (R-05).
+  void _recargarAutomatico() =>
+      _bloc.add(const CargarSesionActivaEvent(automatico: true));
+
   /// 403 CONSENTIMIENTO_REQUERIDO en línea: se reconsulta y se presenta el aviso.
   Future<void> _solicitarConsentimiento() async {
     await context.read<ConsentimientoCubit>().requerirDeNuevo();
@@ -97,6 +101,10 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
 
     final res = await _verificacionResolver.resolver(context, sesion);
     if (res.cancelado) return;
+    if (res.aviso != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(res.aviso!)));
+    }
     _bloc.add(RealizarMarcajeEvent(tipo: tipo, verificacion: res.verificacion));
   }
 
@@ -232,7 +240,7 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                       if (state.sesionActiva != null) ...[
                         SesionCard(
                           sesion: state.sesionActiva!,
-                          onVentanaCambia: _recargar,
+                          onVentanaCambia: _recargarAutomatico,
                           esEstudiante: esEstudianteSesion(context),
                         ),
                         const SizedBox(height: 32),

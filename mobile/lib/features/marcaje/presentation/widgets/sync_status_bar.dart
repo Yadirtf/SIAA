@@ -43,7 +43,8 @@ class SyncStatusBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               backgroundColor: Colors.amber.shade800,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Sincronizar', style: TextStyle(fontSize: 12)),
           ),

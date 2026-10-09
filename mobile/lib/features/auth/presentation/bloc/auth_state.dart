@@ -58,6 +58,10 @@ class AuthAuthenticated extends AuthState {
       [usuarioId, nombre, roles, permisos, rolActivo, avisoContexto];
 }
 
+/// Hay una sesión guardada, pero antes de restaurarla se exige verificación local
+/// con biometría o el PIN del dispositivo (US-AUT-06).
+class AuthDesbloqueoRequerido extends AuthState {}
+
 /// No hay sesion activa: mostrar pantalla de login.
 class AuthUnauthenticated extends AuthState {}
 

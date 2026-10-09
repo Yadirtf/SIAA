@@ -1,15 +1,21 @@
 // codigo_qr_dialog.dart — Solicita el código impreso en el QR del aula (verificación complementaria)
 import 'package:flutter/material.dart';
 
+// La app no incluye lector de QR por cámara (no hay paquete de escaneo en pubspec):
+// el docente escribe el código impreso bajo el QR del aula (US-GEO-13 AC-05 parcial).
 class CodigoQrDialog extends StatefulWidget {
-  const CodigoQrDialog({super.key});
+  /// Se intentó leer el WiFi (y no se pudo) antes de pedir el código.
+  final bool wifiIntentado;
+
+  const CodigoQrDialog({super.key, this.wifiIntentado = false});
 
   /// Devuelve el código tecleado o null si el docente cancela.
-  static Future<String?> show(BuildContext context) {
+  static Future<String?> show(BuildContext context,
+      {bool wifiIntentado = false}) {
     return showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const CodigoQrDialog(),
+      builder: (_) => CodigoQrDialog(wifiIntentado: wifiIntentado),
     );
   }
 
@@ -41,10 +47,13 @@ class _CodigoQrDialogState extends State<CodigoQrDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Esta aula exige verificación complementaria y no fue posible '
-            'identificar la red WiFi institucional. Escriba el código impreso '
-            'bajo el QR del aula.',
+          Text(
+            widget.wifiIntentado
+                ? 'Esta aula exige verificación complementaria y no fue posible '
+                    'identificar la red WiFi institucional. Escriba el código '
+                    'impreso bajo el QR del aula.'
+                : 'Esta aula exige verificación complementaria. Escriba el '
+                    'código impreso bajo el QR del aula.',
           ),
           const SizedBox(height: 16),
           TextField(

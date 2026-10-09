@@ -14,12 +14,8 @@ on:
 
 env:
   FLUTTER_VERSION: "3.47.6" # mismo SDK con el que se generan pubspec.lock y se validan las pruebas
-  # Archivos con avisos (warnings) heredados que se corrigen en una tarea en curso.
-  # El análisis falla con cualquier otro warning o error. Vaciar cuando queden limpios.
-  ANALYZE_WARNING_ALLOWLIST: >-
-    lib/core/auth/biometric_auth_service.dart
-    lib/core/network/certificate_pinning.dart
-    test/core/network/certificate_pinning_test.dart
+  # Archivos con avisos (warnings) heredados tolerados por el análisis. Hoy no hay ninguno.
+  ANALYZE_WARNING_ALLOWLIST: ""
 
 jobs:
   # ─── Calidad y pruebas (T-PLT-02.1) ────────────────────────────────────────
@@ -42,8 +38,8 @@ jobs:
       - name: Dependencias
         run: flutter pub get
 
-      # El formateo (dart format --set-exit-if-changed) se habilitará cuando el código
-      # móvil quede formateado; hoy hay archivos sin formatear en ramas activas.
+      - name: Formato
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: flutter analyze (falla con errores y warnings; infos permitidos)
         run: |

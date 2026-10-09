@@ -15,6 +15,9 @@ class EspacioModel {
   final bool tieneGeometria;
   final List<List<double>>? coordenadas;
 
+  /// Versión de la geometría en el servidor (detección de conflictos, US-GEO-10).
+  final int versionGeometria;
+
   const EspacioModel({
     required this.id,
     required this.sedeId,
@@ -30,6 +33,7 @@ class EspacioModel {
     required this.areaMetrosCuadrados,
     required this.tieneGeometria,
     this.coordenadas,
+    this.versionGeometria = 0,
   });
 
   factory EspacioModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +69,7 @@ class EspacioModel {
           (json['areaMetrosCuadrados'] as num?)?.toDouble() ?? 0.0,
       tieneGeometria: coords != null && coords.isNotEmpty,
       coordenadas: coords,
+      versionGeometria: (json['versionGeometria'] as num?)?.toInt() ?? 0,
     );
   }
 

@@ -1,118 +1,157 @@
-// Pruebas unitarias de Certificate Pinning.
-// Satisface US-PLT-03, AC-06 y RNF-SEG-001.
-import 'dart:convert';
+// Pruebas de fijación de certificado con certificados reales (US-SEG-01 AC-02, RNF-SEG-001).
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:siaa_mobile/core/network/certificate_pinning.dart';
 
-class _FakeX509Certificate implements X509Certificate {
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:siaa_mobile/core/network/api_error.dart';
+import 'package:siaa_mobile/core/network/certificate_pinning.dart';
+import 'package:siaa_mobile/core/network/politica_pinning.dart';
+import 'package:siaa_mobile/core/network/spki_extractor.dart';
+
+import 'certificados_prueba.dart';
+
+/// Solo expone el DER, que es lo único que usa el validador.
+class _CertificadoFalso implements X509Certificate {
   @override
   final Uint8List der;
 
-  _FakeX509Certificate(this.der);
+  _CertificadoFalso(this.der);
 
   @override
-  DateTime get end => DateTime.now().add(const Duration(days: 365));
-
-  @override
-  DateTime get endValidity => end;
-
-  @override
-  DateTime get start => DateTime.now().subtract(const Duration(days: 1));
-
-  @override
-  DateTime get startValidity => start;
-
-  @override
-  String get pem => '-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----';
-
-  @override
-  String get issuer => 'CN=SIAA Root CA';
-
-  @override
-  Uint8List get sha1 => Uint8List(20);
-
-  @override
-  String get subject => 'CN=api.siaa.edu.co';
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+const _api = 'https://api.siaa.test/api/v1';
+
 void main() {
-  group('CertificatePinningValidator (US-PLT-03 AC-06)', () {
-    late Uint8List certBytesPrimary;
-    late String primaryFingerprint;
-    late Uint8List certBytesBackup;
-    late String backupFingerprint;
-    late Uint8List certBytesUntrusted;
-
-    setUp(() {
-      certBytesPrimary = Uint8List.fromList(utf8.encode('CERTIFICADO_PRIMARIO_PRODUCCION_SIAA'));
-      primaryFingerprint = sha256.convert(certBytesPrimary).toString().toUpperCase();
-
-      certBytesBackup = Uint8List.fromList(utf8.encode('CERTIFICADO_RESPALDO_ROTACION_SIAA'));
-      backupFingerprint = sha256.convert(certBytesBackup).toString().toUpperCase();
-
-      certBytesUntrusted = Uint8List.fromList(utf8.encode('CERTIFICADO_FALSO_MAN_IN_THE_MIDDLE'));
+  group('SpkiExtractor', () {
+    test('calcula el mismo pin que openssl para EC y RSA', () {
+      expect(
+          CertificatePinningValidator.pinDe(certificadoEc), pinCertificadoEc);
+      expect(
+          CertificatePinningValidator.pinDe(certificadoRsa), pinCertificadoRsa);
     });
 
-    test('acepta certificado cuando su fingerprint coincide con el pin primario', () {
-      final config = CertificatePinningConfig(
-        pinnedFingerprints: [primaryFingerprint, backupFingerprint],
-        allowedHosts: ['api.siaa.edu.co'],
+    test('devuelve null ante DER truncado o basura', () {
+      expect(SpkiExtractor.extraer(certificadoEc.sublist(0, 40)), isNull);
+      expect(SpkiExtractor.extraer([0x02, 0x01, 0x00]), isNull);
+      expect(SpkiExtractor.extraer(const []), isNull);
+    });
+  });
+
+  group('CertificatePinningConfig.desdeEntorno', () {
+    test('lee pines separados por coma, admite prefijo sha256/ y toma el host',
+        () {
+      final config = CertificatePinningConfig.desdeEntorno(
+        baseUrl: _api,
+        pines: ' sha256/$pinCertificadoEc , $pinCertificadoRsa ,',
       );
-      final validator = CertificatePinningValidator(config: config);
-
-      final cert = _FakeX509Certificate(certBytesPrimary);
-      final isValid = validator.validate(cert, 'api.siaa.edu.co', 443);
-
-      expect(isValid, isTrue);
+      expect(config.pinesSpki, [pinCertificadoEc, pinCertificadoRsa]);
+      expect(config.pinesInvalidos, isEmpty);
+      expect(config.hosts, ['api.siaa.test']);
     });
 
-    test('acepta certificado cuando coincide con el pin de respaldo (rotación sin downtime)', () {
-      final config = CertificatePinningConfig(
-        pinnedFingerprints: [primaryFingerprint, backupFingerprint],
-        allowedHosts: ['api.siaa.edu.co'],
+    test('separa los pines mal formados (no son SHA-256 en Base64)', () {
+      final config = CertificatePinningConfig.desdeEntorno(
+        baseUrl: _api,
+        pines: 'A1B2C3D4E5F6,$pinCertificadoEc',
       );
-      final validator = CertificatePinningValidator(config: config);
-
-      final cert = _FakeX509Certificate(certBytesBackup);
-      final isValid = validator.validate(cert, 'api.siaa.edu.co', 443);
-
-      expect(isValid, isTrue);
+      expect(config.pinesSpki, [pinCertificadoEc]);
+      expect(config.pinesInvalidos, ['A1B2C3D4E5F6']);
     });
 
-    test('rechaza certificado cuando el fingerprint no coincide con ningún pin (mitigación MITM)', () {
-      final config = CertificatePinningConfig(
-        pinnedFingerprints: [primaryFingerprint, backupFingerprint],
-        allowedHosts: ['api.siaa.edu.co'],
+    test('sin dart-define no hay pines (no existen valores de relleno)', () {
+      final config = CertificatePinningConfig.desdeEntorno(baseUrl: _api);
+      expect(config.tienePines, isFalse);
+    });
+  });
+
+  group('CertificatePinningValidator', () {
+    final validador = CertificatePinningValidator(
+      CertificatePinningConfig.desdeEntorno(
+          baseUrl: _api, pines: pinCertificadoEc),
+    );
+
+    test('acepta el certificado cuya clave pública está fijada', () {
+      expect(
+        validador.validate(
+            _CertificadoFalso(certificadoEc), 'api.siaa.test', 443),
+        isTrue,
       );
-      final validator = CertificatePinningValidator(config: config);
-
-      final cert = _FakeX509Certificate(certBytesUntrusted);
-      final isValid = validator.validate(cert, 'api.siaa.edu.co', 443);
-
-      expect(isValid, isFalse);
     });
 
-    test('rechaza inmediatamente si el certificado es nulo', () {
-      final validator = CertificatePinningValidator();
-      final isValid = validator.validate(null, 'api.siaa.edu.co', 443);
-
-      expect(isValid, isFalse);
-    });
-
-    test('rechaza si el host no está en la lista de hosts permitidos', () {
-      final config = CertificatePinningConfig(
-        pinnedFingerprints: [primaryFingerprint],
-        allowedHosts: ['api.siaa.edu.co'],
+    test('rechaza un certificado con otra clave (MITM)', () {
+      expect(
+        validador.validate(
+            _CertificadoFalso(certificadoRsa), 'api.siaa.test', 443),
+        isFalse,
       );
-      final validator = CertificatePinningValidator(config: config);
+    });
 
-      final cert = _FakeX509Certificate(certBytesPrimary);
-      final isValid = validator.validate(cert, 'sitio-malicioso.com', 443);
+    test('rechaza certificado nulo y hosts no protegidos', () {
+      expect(validador.validate(null, 'api.siaa.test', 443), isFalse);
+      expect(
+        validador.validate(_CertificadoFalso(certificadoEc), 'otro.com', 443),
+        isFalse,
+      );
+    });
+  });
 
-      expect(isValid, isFalse);
+  group('PoliticaPinning', () {
+    CertificatePinningConfig config(String pines, [String url = _api]) =>
+        CertificatePinningConfig.desdeEntorno(baseUrl: url, pines: pines);
+
+    test('debug: sin pinning aunque no haya pines', () {
+      final p = PoliticaPinning.resolver(
+          esDebug: true, baseUrl: _api, config: config(''));
+      expect(p.modo, ModoPinning.desactivado);
+    });
+
+    test('release sin pines: bloquea con motivo explícito', () {
+      final p = PoliticaPinning.resolver(
+          esDebug: false, baseUrl: _api, config: config(''));
+      expect(p.modo, ModoPinning.bloqueado);
+      expect(p.motivo, contains('SIAA_CERT_PINS'));
+    });
+
+    test('release con pin mal formado o API en HTTP: bloquea', () {
+      expect(
+        PoliticaPinning.resolver(
+                esDebug: false, baseUrl: _api, config: config('xyz'))
+            .modo,
+        ModoPinning.bloqueado,
+      );
+      const http = 'http://api.siaa.test/api/v1';
+      expect(
+        PoliticaPinning.resolver(
+                esDebug: false,
+                baseUrl: http,
+                config: config(pinCertificadoEc, http))
+            .modo,
+        ModoPinning.bloqueado,
+      );
+    });
+
+    test('release con pines válidos y HTTPS: aplica pinning', () {
+      final p = PoliticaPinning.resolver(
+          esDebug: false, baseUrl: _api, config: config(pinCertificadoEc));
+      expect(p.modo, ModoPinning.aplicado);
+    });
+
+    test('el interceptor de bloqueo rechaza toda petición con error legible',
+        () async {
+      final politica = PoliticaPinning.resolver(
+          esDebug: false, baseUrl: _api, config: config(''));
+      final dio = Dio(BaseOptions(baseUrl: _api))
+        ..interceptors.add(PinningBloqueoInterceptor(politica));
+      try {
+        await dio.get('/me/perfil');
+        fail('La petición debía rechazarse');
+      } on DioException catch (e) {
+        expect(e.type, DioExceptionType.badCertificate);
+        expect(mensajeDeError(e), contains('identidad del servidor'));
+      }
     });
   });
 }

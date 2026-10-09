@@ -5,7 +5,8 @@ import 'package:siaa_mobile/features/geo_editor/presentation/bloc/geo_editor_blo
 import 'package:siaa_mobile/features/geo_editor/presentation/screens/geo_editor_screen.dart';
 
 void main() {
-  testWidgets('GeoEditorScreen pumps without crashing for newly created aula', (tester) async {
+  testWidgets('GeoEditorScreen pumps without crashing for newly created aula',
+      (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: BlocProvider<GeoEditorBloc>(

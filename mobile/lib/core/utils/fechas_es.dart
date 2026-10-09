@@ -85,7 +85,8 @@ String diaMesHora(DateTime f) {
 /// "2026-09-25".
 String fechaIso(DateTime f) => '${f.year}-${_dos(f.month)}-${_dos(f.day)}';
 
-final _hora24 = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b(?!\s?[ap]\. ?m\.)(?!:\d)');
+final _hora24 =
+    RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b(?!\s?[ap]\. ?m\.)(?!:\d)');
 
 /// Reescribe en 12 h cada hora "HH:mm" dentro de un texto, p. ej. el nombre de
 /// sesión "2026-10-01 18:30-19:30" que guardaban las justificaciones antiguas.

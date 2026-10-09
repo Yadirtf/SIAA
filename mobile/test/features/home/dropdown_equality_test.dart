@@ -4,7 +4,9 @@ import 'package:siaa_mobile/features/geo_editor/data/espacio_repository.dart';
 import 'package:siaa_mobile/features/home/presentation/widgets/panels/jerarquia_selector_panel.dart';
 
 void main() {
-  testWidgets('DropdownButtonFormField fails if SedeModel does not implement ==', (tester) async {
+  testWidgets(
+      'DropdownButtonFormField fails if SedeModel does not implement ==',
+      (tester) async {
     final s1 = SedeModel(id: 's1', codigo: 'S1', nombre: 'Sede Principal');
     final s2 = SedeModel(id: 's1', codigo: 'S1', nombre: 'Sede Principal');
 

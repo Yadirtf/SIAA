@@ -53,11 +53,13 @@ class _ParametrosScreenState extends State<ParametrosScreen> {
             );
           }
           if (state is ParametrosFailure) {
-            return _ErrorView(error: state.error, onRetry: () {
-              context
-                  .read<ParametrosBloc>()
-                  .add(const CargarParametrosGlobalesEvent());
-            });
+            return _ErrorView(
+                error: state.error,
+                onRetry: () {
+                  context
+                      .read<ParametrosBloc>()
+                      .add(const CargarParametrosGlobalesEvent());
+                });
           }
           if (state is ParametrosLoaded) {
             return _ParametrosListView(state: state);
@@ -188,7 +190,8 @@ class _ParametroCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                _NivelBadge(nivel: parametro.nivelLabel, esGlobal: parametro.esGlobal),
+                _NivelBadge(
+                    nivel: parametro.nivelLabel, esGlobal: parametro.esGlobal),
               ],
             ),
           ],
@@ -280,7 +283,8 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               error,
-              style: const TextStyle(fontSize: 12, color: SIAAColors.neutral400),
+              style:
+                  const TextStyle(fontSize: 12, color: SIAAColors.neutral400),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
