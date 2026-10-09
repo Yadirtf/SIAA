@@ -8,13 +8,16 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../data/models/geo_models.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
+import 'barra_editor_geometria.dart';
+import 'confirmar_descartar.dart';
 import 'editor_geometria_cubit.dart';
 import 'editor_geometria_state.dart';
 import 'ir_a_coordenadas.dart';
 import 'mapa_geometria.dart';
 import 'solapamiento_dialog.dart';
 
-/// Abre el editor de polígono por escritorio de un aula (SRS §9.2).
+/// Abre el editor de polígono por escritorio de un aula (SRS §9.2,
+/// US-GEO-07): dibuja un polígono nuevo o edita los vértices del guardado.
 Future<void> mostrarEditorGeometria(
   BuildContext context,
   EspacioModel espacio,
@@ -25,22 +28,20 @@ Future<void> mostrarEditorGeometria(
     barrierDismissible: false,
     builder: (_) => BlocProvider(
       create: (_) => EditorGeometriaCubit(espacio: espacio),
-      child: BlocProvider.value(
-        value: geoBloc,
-        child: const _EditorGeometria(),
-      ),
+      child: BlocProvider.value(value: geoBloc, child: const EditorGeometria()),
     ),
   );
 }
 
-class _EditorGeometria extends StatefulWidget {
-  const _EditorGeometria();
+/// Contenido del editor; requiere [EditorGeometriaCubit] y [GeoBloc].
+class EditorGeometria extends StatefulWidget {
+  const EditorGeometria({super.key});
 
   @override
-  State<_EditorGeometria> createState() => _EditorGeometriaState();
+  State<EditorGeometria> createState() => _EditorGeometriaState();
 }
 
-class _EditorGeometriaState extends State<_EditorGeometria> {
+class _EditorGeometriaState extends State<EditorGeometria> {
   final _mapa = MapController();
   bool _satelite = true;
 
@@ -64,30 +65,46 @@ class _EditorGeometriaState extends State<_EditorGeometria> {
     }
   }
 
+  /// US-GEO-07 AC-05: con cambios sin guardar se pide confirmación.
+  Future<void> _alSalir(bool salio, Object? _) async {
+    if (salio) return;
+    final navegador = Navigator.of(context);
+    if (await confirmarDescartarCambios(context)) navegador.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final espacio = context.read<EditorGeometriaCubit>().espacio;
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      child: SizedBox(
-        width: 1100,
-        height: 760,
-        child: BlocConsumer<EditorGeometriaCubit, EditorGeometriaState>(
-          listenWhen: (a, b) =>
-              a.guardado != b.guardado || a.solapamiento != b.solapamiento,
-          listener: _alCambiar,
-          builder: (context, s) => Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _encabezado(context, espacio),
-                const SizedBox(height: 12),
-                Expanded(child: _mapaConCapas(context, s)),
-                if (s.error != null) _aviso(s.error!),
-                const SizedBox(height: 12),
-                _barra(context, s),
-              ],
+    return BlocConsumer<EditorGeometriaCubit, EditorGeometriaState>(
+      listenWhen: (a, b) =>
+          a.guardado != b.guardado || a.solapamiento != b.solapamiento,
+      listener: _alCambiar,
+      builder: (context, s) => PopScope(
+        canPop: !s.modificado || s.guardado != null,
+        onPopInvokedWithResult: _alSalir,
+        child: Dialog(
+          insetPadding: const EdgeInsets.all(24),
+          child: SizedBox(
+            width: 1100,
+            height: 760,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _encabezado(context, espacio, s),
+                  const SizedBox(height: 12),
+                  Expanded(child: _mapaConCapas(context, s)),
+                  if (s.error != null) _aviso(s.error!),
+                  const SizedBox(height: 12),
+                  BarraEditorGeometria(
+                    estado: s,
+                    irACoordenadas: IrACoordenadas(
+                      onIr: (lat, lon) => _mapa.move(ll.LatLng(lat, lon), 19),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -95,7 +112,18 @@ class _EditorGeometriaState extends State<_EditorGeometria> {
     );
   }
 
-  Widget _encabezado(BuildContext context, EspacioModel espacio) {
+  Widget _encabezado(
+    BuildContext context,
+    EspacioModel espacio,
+    EditorGeometriaState s,
+  ) {
+    final ayuda = s.modo == ModoEditor.editar
+        ? 'Arrastre un vértice para moverlo, haga clic sobre un lado para '
+              'insertar uno nuevo y clic derecho (o seleccione y use '
+              '"Eliminar vértice") para quitarlo. Mínimo 3 vértices.'
+        : 'Haga clic en cada esquina del aula, en orden alrededor del '
+              'perímetro. El backend cierra el polígono y le suma el buffer '
+              'de ${espacio.bufferMetros.toStringAsFixed(0)} m.';
     return Row(
       children: [
         Expanded(
@@ -103,23 +131,19 @@ class _EditorGeometriaState extends State<_EditorGeometria> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Polígono de ${espacio.nombre} (${espacio.codigo})',
+                'Polígono de ${espacio.nombre} (${espacio.codigo})'
+                '${espacio.tieneGeometria ? ' · versión ${espacio.versionGeometria}' : ''}',
                 style: AppTextStyles.h3,
               ),
               const SizedBox(height: 4),
-              Text(
-                'Haga clic en cada esquina del aula, en orden alrededor del '
-                'perímetro. El backend cierra el polígono y le suma el buffer '
-                'de ${espacio.bufferMetros.toStringAsFixed(0)} m.',
-                style: AppTextStyles.bodyMedium,
-              ),
+              Text(ayuda, style: AppTextStyles.bodyMedium),
             ],
           ),
         ),
         IconButton(
           icon: const Icon(Icons.close_rounded),
           tooltip: 'Cerrar sin guardar',
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
         ),
       ],
     );
@@ -135,7 +159,13 @@ class _EditorGeometriaState extends State<_EditorGeometria> {
             controller: _mapa,
             vertices: s.vertices,
             satelite: _satelite,
+            modo: s.modo,
+            seleccionado: s.seleccionado,
             onToque: cubit.agregarVertice,
+            onInsertar: cubit.insertarVertice,
+            onMover: cubit.moverVertice,
+            onSeleccionar: cubit.seleccionar,
+            onEliminar: cubit.eliminarVertice,
           ),
           Positioned(
             top: 12,
@@ -159,38 +189,4 @@ class _EditorGeometriaState extends State<_EditorGeometria> {
       style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accentRose),
     ),
   );
-
-  Widget _barra(BuildContext context, EditorGeometriaState s) {
-    final cubit = context.read<EditorGeometriaCubit>();
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        IrACoordenadas(onIr: (lat, lon) => _mapa.move(ll.LatLng(lat, lon), 19)),
-        OutlinedButton.icon(
-          onPressed: s.vertices.isEmpty ? null : cubit.deshacer,
-          icon: const Icon(Icons.undo_rounded, size: 18),
-          label: const Text('Deshacer'),
-        ),
-        OutlinedButton.icon(
-          onPressed: s.vertices.isEmpty ? null : cubit.limpiar,
-          icon: const Icon(Icons.layers_clear_outlined, size: 18),
-          label: const Text('Borrar todo'),
-        ),
-        Text('${s.vertices.length} esquinas', style: AppTextStyles.bodyMedium),
-        ElevatedButton.icon(
-          onPressed: s.puedeGuardar ? cubit.guardar : null,
-          icon: s.guardando
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.save_rounded, size: 18),
-          label: const Text('Guardar polígono'),
-        ),
-      ],
-    );
-  }
 }

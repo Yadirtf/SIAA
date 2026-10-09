@@ -971,28 +971,130 @@ paths:
   /espacios/exportar:
     get:
       operationId: exportarEspaciosGeoJSON
+      parameters:
+      - in: query
+        name: sedeId
+        schema:
+          type: string
+      - in: query
+        name: bloqueId
+        schema:
+          type: string
+      - description: Formato del archivo. geojson (por defecto) o kml (KML 2.2 con un Placemark por espacio, ExtendedData con código y metadatos).
+        in: query
+        name: formato
+        schema:
+          default: geojson
+          enum:
+          - geojson
+          - kml
+          type: string
       responses:
         '200':
-          description: FeatureCollection GeoJSON
-      summary: Exportar espacios como GeoJSON FeatureCollection (US-GEO-11)
+          content:
+            application/geo+json:
+              schema:
+                type: object
+            application/vnd.google-earth.kml+xml:
+              schema:
+                type: string
+          description: FeatureCollection GeoJSON o documento KML con geometría, código, nombre y metadatos (AC-03)
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Formato no soportado (FORMATO_NO_SOPORTADO)
+      summary: Exportar espacios como GeoJSON o KML (US-GEO-11)
       tags:
       - espacios
   /espacios/importar:
     post:
       operationId: confirmarImportarEspaciosGeoJSON
+      description: Persiste los elementos previsualizados (de GeoJSON o KML). El backend revalida cada geometría (US-GEO-04), omite códigos existentes y solapamientos críticos (>50 %, US-GEO-05) y explica cada omisión.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bloqueId:
+                  type: string
+                elementos:
+                  items:
+                    type: object
+                  type: array
+                piso:
+                  type: integer
+                sedeId:
+                  type: string
+              required:
+              - sedeId
+              - elementos
+              type: object
       responses:
         '201':
+          content:
+            application/json:
+              schema:
+                properties:
+                  mensaje:
+                    type: string
+                  omitidos:
+                    items:
+                      properties:
+                        codigo:
+                          type: string
+                        motivo:
+                          type: string
+                      type: object
+                    type: array
+                  totalImportados:
+                    type: integer
+                type: object
           description: Espacios importados exitosamente
-      summary: Confirmar importación masiva de espacios GeoJSON (US-GEO-11)
+      summary: Confirmar importación masiva de espacios GeoJSON/KML (US-GEO-11)
       tags:
       - espacios
   /espacios/importar/preview:
     post:
       operationId: previewImportarEspaciosGeoJSON
+      description: Acepta el archivo en form-data (campo file) o como cuerpo crudo. El formato se toma de ?formato, de la extensión (.kml, .geojson, .json) o del contenido. KML usa Placemark/Polygon/outerBoundaryIs/LinearRing (lon,lat[,alt]); código y nombre salen de ExtendedData (codigo, nombre, tipo, capacidad) o de name/description. Ambos formatos pasan por la misma validación y detección de coordenadas invertidas (AC-04).
+      parameters:
+      - in: query
+        name: formato
+        schema:
+          enum:
+          - geojson
+          - kml
+          type: string
+      requestBody:
+        content:
+          application/geo+json:
+            schema:
+              type: object
+          application/json:
+            schema:
+              type: object
+          application/vnd.google-earth.kml+xml:
+            schema:
+              type: string
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  format: binary
+                  type: string
+              type: object
       responses:
         '200':
-          description: Análisis y preview de Features GeoJSON
-      summary: Previsualizar e inspeccionar GeoJSON de espacios (US-GEO-11)
+          description: Análisis por elemento (válido, errores, advertencias, coordenadasInvertidas) antes de confirmar
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Archivo ilegible (FORMATO_GEOJSON_INVALIDO, FORMATO_KML_INVALIDO) o formato no soportado
+      summary: Previsualizar e inspeccionar GeoJSON o KML de espacios (US-GEO-11)
       tags:
       - espacios
   /espacios/{id}:
@@ -1116,6 +1218,12 @@ paths:
         required: true
         schema:
           type: string
+      - description: Precondición optimista opcional con la versionGeometria editada ("3" o W/"3"). Equivale a versionEsperada; si no coincide con la vigente se responde 409 CONFLICTO_VERSION.
+        in: header
+        name: If-Match
+        required: false
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -1129,6 +1237,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/EspacioDTO'
           description: Geometría actualizada correctamente
+          headers:
+            ETag:
+              description: Nueva versionGeometria entre comillas, para usarla como If-Match en la siguiente edición.
+              schema:
+                type: string
         '400':
           description: Solicitud malformada
         '401':
@@ -1137,6 +1250,12 @@ paths:
           description: Permiso denegado
         '404':
           description: Espacio no encontrado
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: CONFLICTO_VERSION (la geometría cambió desde que se leyó; contexto.versionVigente indica la actual) o GEOMETRIA_SOLAPADA
         '422':
           description: Polígono inválido o coordenadas fuera de rango
       summary: Guardar geometría perimetral del espacio (US-GEO-02, T-GEO-02.7)
@@ -4822,6 +4941,11 @@ components:
         precisionPromedioMetros:
           example: 4.8
           type: number
+        versionEsperada:
+          description: Precondición optimista opcional (alternativa a If-Match). versionGeometria sobre la que se hizo la edición; si difiere de la vigente se responde 409 CONFLICTO_VERSION. Si se omite no se exige.
+          example: 3
+          minimum: 0
+          type: integer
       required:
       - coordenadas
       - metodoCaptura

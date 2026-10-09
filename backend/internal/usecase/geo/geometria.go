@@ -22,6 +22,9 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 	if espacio == nil {
 		return nil, shared.NewNotFoundError("Espacio", cmd.EspacioID)
 	}
+	if err := verificarVersionEsperada(espacio, cmd.VersionEsperada); err != nil {
+		return nil, err
+	}
 
 	var poly geo.GeoPolygon
 	// US-GEO-09 AC-01: Generación a partir de centroide + radio
@@ -105,7 +108,16 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 
 	valorAnterior := *espacio
 
-	// US-GEO-06 AC-01: archivar versión previa en histórico inmutable
+	if err := espacio.AsignarGeometria(poly, cmd.MetodoCaptura, cmd.PrecisionPromedioMetros); err != nil {
+		return nil, err
+	}
+
+	// Compare-and-set sobre la versión leída: una edición concurrente no se pisa en silencio.
+	if err := s.persistirGeometria(ctx, espacio, valorAnterior.VersionGeometria); err != nil {
+		return nil, err
+	}
+
+	// US-GEO-06 AC-01: archivar versión previa en histórico inmutable (solo si el guardado ganó).
 	if s.histRepo != nil && valorAnterior.Geometria != nil && valorAnterior.VersionGeometria > 0 {
 		hist, err := geo.NewEspacioGeometriaHist(&valorAnterior, cmd.Actor.ActorID, cmd.MotivoSolapamiento, s.clk.Now())
 		if err == nil {
@@ -113,14 +125,6 @@ func (s *Service) GuardarGeometriaEspacio(ctx context.Context, cmd GuardarGeomet
 				s.log.Warn("no se pudo archivar versión histórica de geometría", applog.Err(errHist))
 			}
 		}
-	}
-
-	if err := espacio.AsignarGeometria(poly, cmd.MetodoCaptura, cmd.PrecisionPromedioMetros); err != nil {
-		return nil, err
-	}
-
-	if err := s.espacioRepo.Update(ctx, espacio); err != nil {
-		return nil, fmt.Errorf("guardar geometria espacio: %w", err)
 	}
 
 	if len(advertencias) > 0 && cmd.ConfirmarSolapamiento {

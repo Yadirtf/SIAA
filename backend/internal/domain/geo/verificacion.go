@@ -26,14 +26,15 @@ type VerificacionEspacio struct {
 }
 
 // NormalizarValorVerificacion lleva un valor observado a la forma canónica del método,
-// para que "A4-2B-8C-11-02-9F" y "a4:2b:8c:11:02:9f" coincidan.
+// para que "A4-2B-8C-11-02-9F" y "a4:2b:8c:11:02:9f" coincidan. En BLE se descartan los
+// guiones: un UUID 8-4-4-4-12 y su forma de 32 hexadecimales sin guiones son el mismo beacon.
 func NormalizarValorVerificacion(metodo, valor string) string {
 	valor = strings.TrimSpace(valor)
 	switch strings.ToUpper(strings.TrimSpace(metodo)) {
 	case MetodoVerificacionWifi:
 		return strings.ToLower(strings.ReplaceAll(valor, "-", ":"))
 	case MetodoVerificacionBLE:
-		return strings.ToLower(valor)
+		return strings.ToLower(strings.ReplaceAll(valor, "-", ""))
 	case MetodoVerificacionQR:
 		return strings.ToUpper(valor)
 	}
@@ -58,7 +59,9 @@ func (v *VerificacionEspacio) Normalizar() {
 		}
 	}
 	v.WifiBssids = bssids
-	v.BleUUID = NormalizarValorVerificacion(MetodoVerificacionBLE, v.BleUUID)
+	// El UUID se guarda en minúsculas conservando sus guiones para mostrarlo legible; la
+	// comparación (ClaveVerificacion) sí los descarta.
+	v.BleUUID = strings.ToLower(strings.TrimSpace(v.BleUUID))
 	v.QrCodigo = NormalizarValorVerificacion(MetodoVerificacionQR, v.QrCodigo)
 }
 

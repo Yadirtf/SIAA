@@ -157,53 +157,6 @@ func (h *GeoHandler) EliminarEspacio(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// ActualizarGeometria maneja PUT /api/v1/espacios/:id/geometria.
-// RF-GEO-002, T-GEO-02.7, AC-06, AC-07, ADR-04.
-func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
-	id := c.Param("id")
-	var req dto.ActualizarGeometriaRequest
-	if err := c.Bind(&req); err != nil {
-		return err
-	}
-	if err := c.Validate(&req); err != nil {
-		return err
-	}
-
-	vertices := make([]geo.GeoPoint, 0, len(req.Coordenadas))
-	for _, coord := range req.Coordenadas {
-		pt, err := geo.NewGeoPoint(coord[0], coord[1])
-		if err != nil {
-			return err
-		}
-		vertices = append(vertices, pt)
-	}
-
-	var centroide *geo.GeoPoint
-	if req.Centroide != nil {
-		if pt, errPt := geo.NewGeoPoint(req.Centroide[0], req.Centroide[1]); errPt == nil {
-			centroide = &pt
-		}
-	}
-
-	actor := extraerActor(c)
-	espacio, err := h.svc.GuardarGeometriaEspacio(c.Request().Context(), usecaseGeo.GuardarGeometriaCmd{
-		EspacioID:               id,
-		Vertices:                vertices,
-		Centroide:               centroide,
-		RadioMetros:             req.RadioMetros,
-		MetodoCaptura:           req.MetodoCaptura,
-		PrecisionPromedioMetros: req.PrecisionPromedioMetros,
-		ConfirmarSolapamiento:   req.ConfirmarSolapamiento,
-		MotivoSolapamiento:      req.MotivoSolapamiento,
-		Actor:                   actor,
-	})
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, dto.EspacioToResponse(espacio))
-}
-
 // InformeSolapamientos maneja GET /api/v1/espacios/solapamientos.
 // AC-04, T-GEO-05.3.
 func (h *GeoHandler) InformeSolapamientos(c echo.Context) error {

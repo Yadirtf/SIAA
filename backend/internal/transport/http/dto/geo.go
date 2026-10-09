@@ -112,6 +112,9 @@ type ActualizarGeometriaRequest struct {
 	PrecisionPromedioMetros *float64          `json:"precisionPromedioMetros,omitempty"`
 	ConfirmarSolapamiento   bool              `json:"confirmarSolapamiento,omitempty"`
 	MotivoSolapamiento      string            `json:"motivoSolapamiento,omitempty"`
+	// VersionEsperada es la precondición optimista: la versionGeometria que el cliente editó.
+	// Equivale a la cabecera If-Match; si no coincide con la vigente se responde 409.
+	VersionEsperada *int `json:"versionEsperada,omitempty"`
 }
 
 type ActualizarBufferRequest struct {

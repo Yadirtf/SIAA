@@ -30,10 +30,12 @@ const (
 	ErrEstadoInvalido ErrorCode = "ESTADO_INVALIDO"
 	// ErrConfirmacionRequerida: la operación tiene impacto y debe repetirse confirmándola.
 	ErrConfirmacionRequerida ErrorCode = "CONFIRMACION_REQUERIDA"
-	ErrGeometriaInvalida     ErrorCode = "GEOMETRIA_INVALIDA"
-	ErrGeometriaSolapada     ErrorCode = "GEOMETRIA_SOLAPADA"
-	ErrLimiteTasa            ErrorCode = "LIMITE_TASA"
-	ErrInterno               ErrorCode = "ERROR_INTERNO"
+	// ErrConflictoVersion: el recurso cambió desde que el cliente lo leyó (precondición optimista).
+	ErrConflictoVersion  ErrorCode = "CONFLICTO_VERSION"
+	ErrGeometriaInvalida ErrorCode = "GEOMETRIA_INVALIDA"
+	ErrGeometriaSolapada ErrorCode = "GEOMETRIA_SOLAPADA"
+	ErrLimiteTasa        ErrorCode = "LIMITE_TASA"
+	ErrInterno           ErrorCode = "ERROR_INTERNO"
 )
 
 // DomainError es el error tipado que cruza las capas sin exponer detalles internos al cliente.

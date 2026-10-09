@@ -5,6 +5,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/geo_bloc.dart';
 import '../bloc/geo_event.dart';
 import '../bloc/geo_state.dart';
+import '../cartografia/exportar_cartografia_boton.dart';
+import '../cartografia/importar_cartografia_dialog.dart';
 import '../widgets/espacio_tile.dart';
 
 class EspaciosScreen extends StatelessWidget {
@@ -129,6 +131,21 @@ class EspaciosScreen extends StatelessWidget {
     );
   }
 
+  /// US-GEO-11: importa GeoJSON o KML y recarga la sede si se creó algo.
+  Future<void> _importar(
+    BuildContext context,
+    GeoLoaded state,
+    String sedeId,
+  ) async {
+    final bloc = context.read<GeoBloc>();
+    final creados = await mostrarImportarCartografia(
+      context,
+      sedeId: sedeId,
+      bloques: state.bloques.where((b) => b.sedeId == sedeId).toList(),
+    );
+    if (creados) bloc.add(LoadGeoDataEvent(sedeId: sedeId));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -194,6 +211,16 @@ class EspaciosScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(width: 16),
+                      ExportarCartografiaBoton(sedeId: selectedSedeId),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: selectedSedeId.isNotEmpty
+                            ? () => _importar(context, state, selectedSedeId)
+                            : null,
+                        icon: const Icon(Icons.upload_file_rounded, size: 18),
+                        label: const Text('Importar GeoJSON/KML'),
+                      ),
+                      const SizedBox(width: 8),
                       ElevatedButton.icon(
                         onPressed: selectedSedeId.isNotEmpty
                             ? () => _showCreateDialog(context, selectedSedeId)

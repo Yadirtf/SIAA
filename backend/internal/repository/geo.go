@@ -50,6 +50,13 @@ type EspacioRepository interface {
 	BuscarIntersecciones(ctx context.Context, espacioID string, bloqueID *string, piso *int, geom geo.GeoPolygon) ([]*geo.Espacio, error)
 }
 
+// EspacioActualizadorVersionado es una capacidad opcional del repositorio de espacios: guarda
+// solo si versionGeometria sigue siendo la leída (compare-and-set atómico). El caso de uso la
+// detecta por aserción de tipo, de modo que los dobles de prueba existentes siguen siendo válidos.
+type EspacioActualizadorVersionado interface {
+	UpdateSiVersion(ctx context.Context, e *geo.Espacio, versionLeida int) (bool, error)
+}
+
 // SesionFutureChecker abstrae la verificación de sesiones futuras asociadas a un espacio.
 // Permite desacoplar US-GEO-01 de la implementación completa de sesiones (US-ACA-05).
 type SesionFutureChecker interface {

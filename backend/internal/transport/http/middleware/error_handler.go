@@ -95,7 +95,7 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 	case shared.ErrRecursoNoEncontrado:
 		return http.StatusNotFound
 	case shared.ErrConflictoHorario, shared.ErrConflictoUnicidad, shared.ErrGeometriaSolapada,
-		shared.ErrEstadoInvalido, shared.ErrConfirmacionRequerida:
+		shared.ErrEstadoInvalido, shared.ErrConfirmacionRequerida, shared.ErrConflictoVersion:
 		return http.StatusConflict
 	case shared.ErrLimiteTasa:
 		return http.StatusTooManyRequests

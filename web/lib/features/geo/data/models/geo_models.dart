@@ -92,6 +92,10 @@ class EspacioModel extends Equatable {
   /// Vértices del polígono `[longitud, latitud]`; vacío si aún no se dibujó.
   final List<List<double>> vertices;
 
+  /// Versión vigente de la geometría (US-GEO-06); el editor la envía como
+  /// precondición optimista al guardar.
+  final int versionGeometria;
+
   const EspacioModel({
     required this.id,
     required this.sedeId,
@@ -109,6 +113,7 @@ class EspacioModel extends Equatable {
     required this.activo,
     this.verificacionComplementaria,
     this.vertices = const [],
+    this.versionGeometria = 0,
   });
 
   bool get tieneGeometria => vertices.length >= 3;
@@ -139,6 +144,7 @@ class EspacioModel extends Equatable {
             )
           : null,
       vertices: verticesDesdeGeometria(json['geometria']),
+      versionGeometria: (json['versionGeometria'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -160,6 +166,7 @@ class EspacioModel extends Equatable {
     activo,
     verificacionComplementaria,
     vertices,
+    versionGeometria,
   ];
 }
 

@@ -79,7 +79,9 @@ type GuardarGeometriaCmd struct {
 	PrecisionPromedioMetros *float64
 	ConfirmarSolapamiento   bool
 	MotivoSolapamiento      string
-	Actor                   ContextoActor
+	// VersionEsperada, si viene, exige que la versión vigente sea esa (control optimista).
+	VersionEsperada *int
+	Actor           ContextoActor
 }
 
 // ActualizarBufferCmd define el comando para actualizar el buffer de un espacio sin recapturar vértices.

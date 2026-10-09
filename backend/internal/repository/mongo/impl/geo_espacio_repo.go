@@ -155,68 +155,6 @@ func (r *espacioRepository) List(ctx context.Context, filter repository.EspacioF
 	return espacios, nil
 }
 
-func (r *espacioRepository) Update(ctx context.Context, e *geo.Espacio) error {
-	oid, err := primitive.ObjectIDFromHex(e.ID)
-	if err != nil {
-		return fmt.Errorf("invalid espacio ID: %w", err)
-	}
-
-	var geomDoc *geoJSONPolygonDoc
-	if e.Geometria != nil {
-		geomDoc = &geoJSONPolygonDoc{
-			Type:        "Polygon",
-			Coordinates: [][][2]float64{e.Geometria.Coordinates()},
-		}
-	}
-	var geomBufferDoc *geoJSONPolygonDoc
-	if e.GeometriaBuffer != nil {
-		geomBufferDoc = &geoJSONPolygonDoc{
-			Type:        "Polygon",
-			Coordinates: [][][2]float64{e.GeometriaBuffer.Coordinates()},
-		}
-	}
-	var centroideDoc *geoJSONPointDoc
-	if e.Centroide != nil {
-		centroideDoc = &geoJSONPointDoc{
-			Type:        "Point",
-			Coordinates: e.Centroide.Coordinates(),
-		}
-	}
-	var metodoStr *string
-	if e.MetodoCaptura != nil {
-		s := string(*e.MetodoCaptura)
-		metodoStr = &s
-	}
-
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "sedeId", Value: e.SedeID},
-		{Key: "torre", Value: e.Torre},
-		{Key: "bloqueId", Value: e.BloqueID},
-		{Key: "piso", Value: e.Piso},
-		{Key: "codigo", Value: e.Codigo},
-		{Key: "nombre", Value: e.Nombre},
-		{Key: "capacidad", Value: e.Capacidad},
-		{Key: "tipo", Value: string(e.Tipo)},
-		{Key: "facultadResponsable", Value: e.FacultadResponsable},
-		{Key: "estado", Value: string(e.Estado)},
-		{Key: "nivelValidacion", Value: string(e.NivelValidacion)},
-		{Key: "bufferMetros", Value: e.BufferMetros},
-		{Key: "geometria", Value: geomDoc},
-		{Key: "geometriaBuffer", Value: geomBufferDoc},
-		{Key: "radioMetros", Value: e.RadioMetros},
-		{Key: "areaMetrosCuadrados", Value: e.AreaMetrosCuadrados},
-		{Key: "centroide", Value: centroideDoc},
-		{Key: "precisionPromedioMetros", Value: e.PrecisionPromedioMetros},
-		{Key: "metodoCaptura", Value: metodoStr},
-		{Key: "versionGeometria", Value: e.VersionGeometria},
-		{Key: "verificacionComplementaria", Value: verificacionADoc(e.VerificacionComplementaria)},
-		{Key: "activo", Value: e.Activo},
-		{Key: "actualizadoEn", Value: time.Now().UTC()},
-	}}}
-	_, err = r.col.UpdateByID(ctx, oid, update)
-	return err
-}
-
 func (r *espacioRepository) SoftDelete(ctx context.Context, id string) error {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
