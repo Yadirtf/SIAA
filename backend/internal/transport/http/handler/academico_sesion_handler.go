@@ -57,7 +57,10 @@ type SesionResponseDTO struct {
 	Estado                  string                 `json:"estado"`
 	EspacioVersionGeometria int                    `json:"espacioVersionGeometria"`
 	ParametrosCongelados    map[string]interface{} `json:"parametrosCongelados"`
-	MotivoCancelacion       string                 `json:"motivoCancelacion,omitempty"`
+	// ParametrosDiferentes señala las claves congeladas que ya no coinciden con la cascada
+	// vigente (US-PAR-03 AC-03). Solo se calcula al consultar una sesión.
+	ParametrosDiferentes []usecaseAca.DiferenciaParametro `json:"parametrosDiferentes,omitempty"`
+	MotivoCancelacion    string                           `json:"motivoCancelacion,omitempty"`
 	// Nombres legibles para la interfaz (asignatura, grupo, aula y docentes).
 	AsignaturaCodigo string   `json:"asignaturaCodigo,omitempty"`
 	AsignaturaNombre string   `json:"asignaturaNombre,omitempty"`
@@ -141,7 +144,9 @@ func (h *AcademicoHandler) ObtenerSesion(c echo.Context) error {
 		return shared.NewScopeError()
 	}
 	nombres := h.svc.NombresDeSesiones(c.Request().Context(), []*domainAca.Sesion{sesion})
-	return c.JSON(http.StatusOK, conNombres(sesionToDTO(sesion), nombres[sesion.ID()]))
+	dto := conNombres(sesionToDTO(sesion), nombres[sesion.ID()])
+	dto.ParametrosDiferentes = h.svc.DiferenciasParametros(c.Request().Context(), sesion)
+	return c.JSON(http.StatusOK, dto)
 }
 
 // CancelarSesion maneja POST /api/v1/sesiones/:id/cancelar (US-ACA-08).

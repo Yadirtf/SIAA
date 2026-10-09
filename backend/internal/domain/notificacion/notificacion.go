@@ -15,6 +15,8 @@ const (
 	TipoCierreVentana          Tipo = "CIERRE_VENTANA"
 	TipoResultadoJustificacion Tipo = "RESULTADO_JUSTIFICACION"
 	TipoCambioHorario          Tipo = "CAMBIO_HORARIO"
+	// TipoAlertaInasistencias avisa al coordinador de la facultad (US-PAR-04 AC-02).
+	TipoAlertaInasistencias Tipo = "ALERTA_INASISTENCIAS"
 )
 
 // Estado del aviso en la cola de envío (US-NOT-01 AC-05).
@@ -78,8 +80,8 @@ func RutaDe(t Tipo) string {
 }
 
 // PermiteCorreo indica los avisos que salen por correo cuando no hay push: los cambios de
-// horario. Los recordatorios caducan en minutos y el resultado de una justificación ya se
+// horario y las alertas de inasistencias al coordinador. Los recordatorios caducan en minutos y el resultado de una justificación ya se
 // informa por correo al revisarla.
 func PermiteCorreo(t Tipo) bool {
-	return t == TipoCambioHorario
+	return t == TipoCambioHorario || t == TipoAlertaInasistencias
 }

@@ -72,11 +72,12 @@ func enviadorFCM(cfg *config.Config, log *applog.Logger) *fcm.Enviador {
 	return e
 }
 
-// NuevoRetencionWorker arma la anonimización periódica de coordenadas (Ley 1581).
+// NuevoRetencionWorker arma la anonimización periódica de coordenadas (Ley 1581). Respeta las
+// investigaciones en curso y avisa a quien las marcó cuando suspende un plazo (US-AUD-04 AC-03).
 func NuevoRetencionWorker(mongoClient *mongoRepo.Client) *usecasePriv.RetencionWorker {
 	return usecasePriv.NewRetencionWorker(
 		impl.NewRetencionRepository(mongoClient),
 		impl.NewParametroRepo(mongoClient.DB()),
-		impl.NewAuditoriaRepository(mongoClient),
-	)
+		bitacora(mongoClient, nil),
+	).WithInvestigaciones(impl.NewInvestigacionRepository(mongoClient), impl.NewNotificacionRepository(mongoClient))
 }

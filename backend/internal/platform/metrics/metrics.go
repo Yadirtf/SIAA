@@ -23,13 +23,6 @@ type RouteMetrics struct {
 	Latencia      LatencyPercentiles `json:"latencia"`
 }
 
-// DatabaseMetrics expone el estado del pool de conexiones a MongoDB.
-type DatabaseMetrics struct {
-	ConexionesActivas    uint64  `json:"conexionesActivas"`
-	ConexionesInactivas  uint64  `json:"conexionesInactivas"`
-	SaturacionPorcentaje float64 `json:"saturacionPorcentaje"`
-}
-
 // MetricsReport representa el informe global de métricas del sistema.
 type MetricsReport struct {
 	Timestamp         time.Time               `json:"timestamp"`
@@ -53,8 +46,7 @@ type Collector struct {
 	routes  map[string]*routeData
 	marcaje map[string]uint64
 
-	dbActivas   uint64
-	dbInactivas uint64
+	baseDatos dbCollector
 }
 
 type routeData struct {
@@ -109,12 +101,6 @@ func (c *Collector) RecordMarcajeResultado(resultado string) {
 	c.marcaje[resultado]++
 }
 
-// SetDBStats actualiza las métricas del pool de base de datos.
-func (c *Collector) SetDBStats(activas, inactivas uint64) {
-	atomic.StoreUint64(&c.dbActivas, activas)
-	atomic.StoreUint64(&c.dbInactivas, inactivas)
-}
-
 // GetReport calcula y retorna el reporte consolidado de observabilidad.
 func (c *Collector) GetReport() MetricsReport {
 	c.mu.RLock()
@@ -142,27 +128,14 @@ func (c *Collector) GetReport() MetricsReport {
 		marcajeMap[k] = v
 	}
 
-	activas := atomic.LoadUint64(&c.dbActivas)
-	inactivas := atomic.LoadUint64(&c.dbInactivas)
-	totalConns := activas + inactivas
-
-	var satDB float64
-	if totalConns > 0 {
-		satDB = (float64(activas) / float64(totalConns)) * 100.0
-	}
-
 	return MetricsReport{
-		Timestamp:        time.Now(),
-		UptimeSegundos:   int64(time.Since(c.startTime).Seconds()),
-		SolicitudesTotal: totalReq,
-		ErroresTotal:     totalErr,
-		TasaError:        tasaError,
-		Rutas:            rutasMap,
-		BaseDatos: DatabaseMetrics{
-			ConexionesActivas:    activas,
-			ConexionesInactivas:  inactivas,
-			SaturacionPorcentaje: satDB,
-		},
+		Timestamp:         time.Now(),
+		UptimeSegundos:    int64(time.Since(c.startTime).Seconds()),
+		SolicitudesTotal:  totalReq,
+		ErroresTotal:      totalErr,
+		TasaError:         tasaError,
+		Rutas:             rutasMap,
+		BaseDatos:         c.baseDatos.reporte(),
 		ResultadosMarcaje: marcajeMap,
 	}
 }

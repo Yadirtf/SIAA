@@ -712,6 +712,61 @@
         },
         "type": "object"
       },
+      "FilaOcupacion": {
+        "properties": {
+          "bloque": {
+            "type": "string"
+          },
+          "espacios": {
+            "type": "integer"
+          },
+          "horasConfirmadas": {
+            "type": "number"
+          },
+          "horasProgramadas": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "porcentajeUtilizacion": {
+            "type": "number"
+          },
+          "sede": {
+            "type": "string"
+          },
+          "sesiones": {
+            "type": "integer"
+          },
+          "sesionesConfirmadas": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "GrupoVisibleReporte": {
+        "properties": {
+          "asignatura": {
+            "type": "string"
+          },
+          "asignaturaId": {
+            "type": "string"
+          },
+          "grupo": {
+            "type": "string"
+          },
+          "grupoId": {
+            "type": "string"
+          },
+          "periodoId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "commit": {
@@ -794,6 +849,45 @@
           },
           "validas": {
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Investigacion": {
+        "properties": {
+          "activa": {
+            "type": "boolean"
+          },
+          "alcance": {
+            "enum": [
+              "USUARIO",
+              "SESION",
+              "MARCAJE"
+            ],
+            "type": "string"
+          },
+          "creadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "creadaPor": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "liberadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "liberadaPor": {
+            "type": "string"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "objetivoId": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1155,6 +1249,72 @@
         ],
         "type": "object"
       },
+      "ReporteAsistenciaGrupo": {
+        "properties": {
+          "asignatura": {
+            "type": "string"
+          },
+          "asignaturaId": {
+            "type": "string"
+          },
+          "estudiantes": {
+            "items": {
+              "properties": {
+                "bajoUmbral": {
+                  "type": "boolean"
+                },
+                "documento": {
+                  "type": "string"
+                },
+                "estudianteId": {
+                  "type": "string"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "porcentaje": {
+                  "type": "number"
+                },
+                "sesionesAsistidas": {
+                  "type": "integer"
+                },
+                "sesionesDictadas": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "estudiantesBajoUmbral": {
+            "type": "integer"
+          },
+          "generadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "grupo": {
+            "type": "string"
+          },
+          "grupoId": {
+            "type": "string"
+          },
+          "periodoId": {
+            "type": "string"
+          },
+          "promedioGrupo": {
+            "type": "number"
+          },
+          "sesionesDictadas": {
+            "type": "integer"
+          },
+          "umbral": {
+            "description": "porcentaje_minimo_asistencia congelado en las sesiones del grupo",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "ReporteCumplimiento": {
         "properties": {
           "docentes": {
@@ -1179,6 +1339,30 @@
           },
           "totales": {
             "$ref": "#/components/schemas/FilaCumplimiento"
+          }
+        },
+        "type": "object"
+      },
+      "ReporteOcupacion": {
+        "properties": {
+          "filas": {
+            "items": {
+              "$ref": "#/components/schemas/FilaOcupacion"
+            },
+            "type": "array"
+          },
+          "filtro": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "generadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "totales": {
+            "$ref": "#/components/schemas/FilaOcupacion"
           }
         },
         "type": "object"
@@ -1265,6 +1449,125 @@
           "creadoEn",
           "actualizadoEn"
         ],
+        "type": "object"
+      },
+      "TableroEnVivo": {
+        "properties": {
+          "alertasActivas": {
+            "items": {
+              "properties": {
+                "creadaEn": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "docente": {
+                  "type": "string"
+                },
+                "docenteId": {
+                  "type": "string"
+                },
+                "facultadId": {
+                  "type": "string"
+                },
+                "mensaje": {
+                  "type": "string"
+                },
+                "sesionInicioRachaId": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "fecha": {
+            "description": "Día consultado (AAAA-MM-DD, hora institucional)",
+            "type": "string"
+          },
+          "generadoEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "marcajes": {
+            "properties": {
+              "entradasDocentes": {
+                "type": "integer"
+              },
+              "entradasEstudiantes": {
+                "type": "integer"
+              },
+              "salidasDocentes": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "refrescoSugeridoSegundos": {
+            "type": "integer"
+          },
+          "sesionesCanceladas": {
+            "type": "integer"
+          },
+          "sesionesDelDia": {
+            "description": "Sesiones programadas hoy, sin canceladas ni excluidas",
+            "type": "integer"
+          },
+          "sesionesEnCurso": {
+            "type": "integer"
+          },
+          "sesionesEnCursoSinMarcaje": {
+            "items": {
+              "properties": {
+                "asignatura": {
+                  "type": "string"
+                },
+                "asignaturaId": {
+                  "type": "string"
+                },
+                "aula": {
+                  "type": "string"
+                },
+                "docente": {
+                  "type": "string"
+                },
+                "docenteId": {
+                  "type": "string"
+                },
+                "espacioId": {
+                  "type": "string"
+                },
+                "finProgramado": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "horaFin": {
+                  "type": "string"
+                },
+                "horaInicio": {
+                  "type": "string"
+                },
+                "inicioProgramado": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "minutosTranscurridos": {
+                  "type": "integer"
+                },
+                "sesionId": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "sesionesFinalizadas": {
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "TokenPairResponse": {
@@ -1462,6 +1765,97 @@
         ]
       }
     },
+    "/academico/importar/diagnostico": {
+      "post": {
+        "operationId": "diagnosticoImportacionAcademica",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "archivo": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv": {}
+            },
+            "description": "Archivo diagnosticado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Devolver el archivo con una columna de diagnóstico por fila (US-ACA-07 AC-02)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/academico/importar/plantilla": {
+      "get": {
+        "operationId": "plantillaImportacionAcademica",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv": {}
+            },
+            "description": "Plantilla"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Descargar la plantilla de carga masiva (US-ACA-07)",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
     "/academico/importar/preview": {
       "post": {
         "operationId": "previewImportarAcademicoCSV",
@@ -1622,6 +2016,132 @@
         "tags": [
           "académico"
         ]
+      },
+      "put": {
+        "operationId": "actualizarAsignacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "asignaturaId": {
+                    "description": "Opcional: se toma del grupo; si se envía debe coincidir.",
+                    "type": "string"
+                  },
+                  "docenteIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "docenteNombre": {
+                    "deprecated": true,
+                    "description": "Obsoleto: se ignora, lo calcula el servidor.",
+                    "type": "string"
+                  },
+                  "espacioId": {
+                    "type": "string"
+                  },
+                  "espacioNombre": {
+                    "deprecated": true,
+                    "description": "Obsoleto: se ignora, lo calcula el servidor.",
+                    "type": "string"
+                  },
+                  "facultadId": {
+                    "description": "Opcional: se deriva del programa de la asignatura; si se envía debe coincidir.",
+                    "type": "string"
+                  },
+                  "franja": {
+                    "properties": {
+                      "diaSemana": {
+                        "type": "integer"
+                      },
+                      "horaFin": {
+                        "example": "10:00",
+                        "type": "string"
+                      },
+                      "horaInicio": {
+                        "example": "08:00",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "diaSemana",
+                      "horaInicio",
+                      "horaFin"
+                    ],
+                    "type": "object"
+                  },
+                  "grupoId": {
+                    "type": "string"
+                  },
+                  "modalidad": {
+                    "enum": [
+                      "PRESENCIAL",
+                      "VIRTUAL",
+                      "HIBRIDA"
+                    ],
+                    "type": "string"
+                  },
+                  "periodoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "periodoId",
+                  "grupoId",
+                  "docenteIds",
+                  "franja",
+                  "modalidad"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Asignacion actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar asignacion",
+        "tags": [
+          "académico"
+        ]
       }
     },
     "/asignaturas": {
@@ -1699,6 +2219,81 @@
           }
         },
         "summary": "Eliminar asignatura (lógico)",
+        "tags": [
+          "académico"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarAsignatura",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "creditos": {
+                    "type": "integer"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "programaId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre",
+                  "programaId",
+                  "creditos"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Asignatura actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar asignatura",
         "tags": [
           "académico"
         ]
@@ -1946,6 +2541,157 @@
         ]
       }
     },
+    "/auth/contexto": {
+      "post": {
+        "operationId": "cambiarContexto",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "rol": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rol"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairResponse"
+                }
+              }
+            },
+            "description": "Tokens con el nuevo rol"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Cambiar el rol activo de la sesión y reemitir tokens (US-ROL-02)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/devices": {
+      "post": {
+        "operationId": "registrarDispositivo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "instalacionId": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "so": {
+                    "type": "string"
+                  },
+                  "versionApp": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "instalacionId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "actualizadoEn": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "confiable": {
+                      "type": "boolean"
+                    },
+                    "creadoEn": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "instalacionId": {
+                      "type": "string"
+                    },
+                    "modelo": {
+                      "type": "string"
+                    },
+                    "pendienteAprobacion": {
+                      "type": "boolean"
+                    },
+                    "revocadoEn": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "so": {
+                      "type": "string"
+                    },
+                    "usuarioId": {
+                      "type": "string"
+                    },
+                    "versionApp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Dispositivo registrado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Registrar la instalación de la app como dispositivo (US-AUT-03)",
+        "tags": [
+          "dispositivos"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "description": "Autentica con correo y contraseña. Respuesta idéntica si las credenciales\nson incorrectas o el usuario no existe (AC-02).\nEl rate limiting es de 120 req/min por IP (RNF-SEG-005).\n",
@@ -2185,6 +2931,274 @@
         ]
       }
     },
+    "/auth/totp/activar": {
+      "post": {
+        "operationId": "activarTOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "maxLength": 6,
+                    "minLength": 6,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeResponse"
+                }
+              }
+            },
+            "description": "Segundo factor activado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Activar el segundo factor con el primer código válido",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/totp/enrolar": {
+      "post": {
+        "operationId": "enrolarTOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "desafioToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "desafioToken"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "otpauthUrl": {
+                      "type": "string"
+                    },
+                    "secretKey": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Secreto y URI otpauth"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "security": [],
+        "summary": "Iniciar el enrolamiento TOTP obligatorio desde el desafío de login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/totp/enrolar/confirmar": {
+      "post": {
+        "operationId": "confirmarEnrolamientoTOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "desafioToken": {
+                    "type": "string"
+                  },
+                  "dispositivoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "desafioToken",
+                  "codigo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairResponse"
+                }
+              }
+            },
+            "description": "Tokens emitidos"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "security": [],
+        "summary": "Confirmar el enrolamiento TOTP y emitir tokens",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/totp/setup": {
+      "post": {
+        "operationId": "configurarTOTP",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "otpauthUrl": {
+                      "type": "string"
+                    },
+                    "secretKey": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Secreto y URI otpauth"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Generar un secreto TOTP para el usuario autenticado",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/totp/verificar": {
+      "post": {
+        "operationId": "verificarTOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "desafioToken": {
+                    "type": "string"
+                  },
+                  "dispositivoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "desafioToken",
+                  "codigo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairResponse"
+                }
+              }
+            },
+            "description": "Tokens emitidos"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "security": [],
+        "summary": "Completar el login con el código TOTP (US-AUT-05)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/bloques": {
       "get": {
         "operationId": "listarBloques",
@@ -2337,6 +3351,58 @@
         "tags": [
           "bloques"
         ]
+      },
+      "put": {
+        "operationId": "actualizarBloque",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearBloqueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloqueDTO"
+                }
+              }
+            },
+            "description": "Bloque actualizado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar un bloque",
+        "tags": [
+          "geo"
+        ]
       }
     },
     "/bloques/{id}/clonar-piso": {
@@ -2482,6 +3548,94 @@
         "summary": "Eliminar excepción de calendario",
         "tags": [
           "académico"
+        ]
+      }
+    },
+    "/dispositivos/{id}/aprobar": {
+      "post": {
+        "operationId": "aprobarDispositivo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeResponse"
+                }
+              }
+            },
+            "description": "Dispositivo aprobado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Aprobar un dispositivo pendiente (US-AUT-03)",
+        "tags": [
+          "dispositivos"
+        ]
+      }
+    },
+    "/dispositivos/{id}/revocar": {
+      "post": {
+        "operationId": "revocarDispositivo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeResponse"
+                }
+              }
+            },
+            "description": "Dispositivo revocado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Revocar un dispositivo confiable (US-AUT-03)",
+        "tags": [
+          "dispositivos"
         ]
       }
     },
@@ -2690,6 +3844,122 @@
         "summary": "Previsualizar e inspeccionar GeoJSON de espacios (US-GEO-11)",
         "tags": [
           "espacios"
+        ]
+      }
+    },
+    "/espacios/solapamientos": {
+      "get": {
+        "operationId": "informeSolapamientos",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sedeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bloqueId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Pares de espacios solapados"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Informe de solapamientos entre espacios (US-GEO-04)",
+        "tags": [
+          "geo"
+        ]
+      }
+    },
+    "/espacios/validar-geometria": {
+      "post": {
+        "operationId": "validarGeometria",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "coordenadas": {
+                    "items": {
+                      "items": {
+                        "type": "number"
+                      },
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "type": "array"
+                    },
+                    "type": "array"
+                  },
+                  "maxAreaM2": {
+                    "type": "number"
+                  },
+                  "minAreaM2": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "coordenadas"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Resultado de la validación topológica"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Validar un polígono sin guardarlo (US-GEO-03)",
+        "tags": [
+          "geo"
         ]
       }
     },
@@ -2930,6 +4200,108 @@
         ]
       }
     },
+    "/espacios/{id}/geometria/versiones": {
+      "get": {
+        "operationId": "listarVersionesGeometria",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versiones"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Historial de versiones de la geometría (US-GEO-06)",
+        "tags": [
+          "geo"
+        ]
+      }
+    },
+    "/espacios/{id}/geometria/versiones/{version}": {
+      "get": {
+        "operationId": "obtenerVersionGeometria",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Versión de la geometría"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Versión no encontrada"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Geometría de una versión concreta (US-GEO-06)",
+        "tags": [
+          "geo"
+        ]
+      }
+    },
     "/espacios/{id}/verificacion": {
       "put": {
         "operationId": "actualizarVerificacionEspacio",
@@ -3056,6 +4428,76 @@
         "tags": [
           "académico"
         ]
+      },
+      "put": {
+        "operationId": "actualizarFacultad",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "sedeId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Facultad actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar facultad",
+        "tags": [
+          "académico"
+        ]
       }
     },
     "/grupos": {
@@ -3133,6 +4575,188 @@
           }
         },
         "summary": "Eliminar grupo (lógico)",
+        "tags": [
+          "académico"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarGrupo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "asignaturaId": {
+                    "type": "string"
+                  },
+                  "cupo": {
+                    "type": "integer"
+                  },
+                  "numero": {
+                    "type": "string"
+                  },
+                  "periodoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "numero",
+                  "asignaturaId",
+                  "periodoId",
+                  "cupo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Grupo actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar grupo",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/grupos/{id}/estudiantes": {
+      "get": {
+        "operationId": "listarEstudiantesGrupo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Integrantes del grupo"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Estudiantes matriculados en un grupo (US-MAR-13)",
+        "tags": [
+          "académico"
+        ]
+      },
+      "put": {
+        "operationId": "reemplazarEstudiantesGrupo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "estudiantes": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "estudiantes"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Resultado: matriculados y no encontrados"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Reemplazar la lista de estudiantes del grupo por id, documento o correo (US-MAR-13)",
         "tags": [
           "académico"
         ]
@@ -3966,6 +5590,43 @@
         ]
       }
     },
+    "/me/asistencia": {
+      "get": {
+        "operationId": "miAsistencia",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Asistencia por asignatura"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Porcentaje de asistencia acumulado del estudiante por asignatura (US-MAR-13 AC-05)",
+        "tags": [
+          "marcajes"
+        ]
+      }
+    },
     "/me/consentimiento": {
       "get": {
         "operationId": "consultarConsentimiento",
@@ -4449,12 +6110,57 @@
                 "schema": {
                   "properties": {
                     "baseDatos": {
+                      "description": "Pool de conexiones y comandos de MongoDB medidos por los monitores del driver",
+                      "properties": {
+                        "comandos": {
+                          "additionalProperties": {
+                            "type": "integer"
+                          },
+                          "type": "object"
+                        },
+                        "comandosFallidos": {
+                          "type": "integer"
+                        },
+                        "comandosTotal": {
+                          "type": "integer"
+                        },
+                        "conexionesActivas": {
+                          "type": "integer"
+                        },
+                        "conexionesInactivas": {
+                          "type": "integer"
+                        },
+                        "conexionesMaximas": {
+                          "type": "integer"
+                        },
+                        "latenciaComandos": {
+                          "properties": {
+                            "p50Ms": {
+                              "type": "number"
+                            },
+                            "p95Ms": {
+                              "type": "number"
+                            },
+                            "p99Ms": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "saturacionPorcentaje": {
+                          "type": "number"
+                        }
+                      },
                       "type": "object"
                     },
                     "erroresTotal": {
                       "type": "integer"
                     },
                     "resultadosMarcaje": {
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "description": "Marcajes evaluados por resultado (VALIDO, RETARDO, RECHAZADO_…)",
                       "type": "object"
                     },
                     "rutas": {
@@ -4492,6 +6198,206 @@
         "summary": "Obtener métricas y observabilidad del sistema",
         "tags": [
           "observabilidad"
+        ]
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "obtenerOpenAPI",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Contrato OpenAPI"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "security": [],
+        "summary": "Especificación OpenAPI 3.1 de la API (US-PLT-01 AC-06)",
+        "tags": [
+          "plataforma"
+        ]
+      }
+    },
+    "/parametros": {
+      "get": {
+        "operationId": "listarParametros",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ambito",
+            "required": true,
+            "schema": {
+              "enum": [
+                "GLOBAL",
+                "SEDE",
+                "FACULTAD",
+                "BLOQUE",
+                "AULA",
+                "ASIGNACION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ambito_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "ambito": {
+                        "type": "string"
+                      },
+                      "ambito_id": {
+                        "type": "string"
+                      },
+                      "autor_id": {
+                        "type": "string"
+                      },
+                      "clave": {
+                        "type": "string"
+                      },
+                      "creado_en": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "valor": {},
+                      "valor_anterior": {},
+                      "vigente_desde": {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Parámetros del nivel"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Parámetros configurados en un nivel (US-PAR-01)",
+        "tags": [
+          "parámetros"
+        ]
+      },
+      "put": {
+        "operationId": "guardarParametro",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ambito": {
+                    "enum": [
+                      "GLOBAL",
+                      "SEDE",
+                      "FACULTAD",
+                      "BLOQUE",
+                      "AULA",
+                      "ASIGNACION"
+                    ],
+                    "type": "string"
+                  },
+                  "ambito_id": {
+                    "type": "string"
+                  },
+                  "clave": {
+                    "type": "string"
+                  },
+                  "valor": {},
+                  "vigente_desde": {
+                    "format": "date-time",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ambito",
+                  "clave",
+                  "valor"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Parámetro guardado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "422": {
+            "description": "Clave desconocida o valor fuera de rango"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Crear o cambiar un parámetro; el cambio queda auditado (US-PAR-01 AC-03, US-AUD-01)",
+        "tags": [
+          "parámetros"
         ]
       }
     },
@@ -4682,6 +6588,168 @@
         ]
       }
     },
+    "/privacidad/investigaciones": {
+      "get": {
+        "operationId": "listarInvestigaciones",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/Investigacion"
+                      },
+                      "type": "array"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Investigaciones activas"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Investigaciones en curso que suspenden la retención (auditoria:leer)",
+        "tags": [
+          "auditoría"
+        ]
+      },
+      "post": {
+        "operationId": "marcarInvestigacion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "alcance": {
+                    "enum": [
+                      "USUARIO",
+                      "SESION",
+                      "MARCAJE"
+                    ],
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "minLength": 5,
+                    "type": "string"
+                  },
+                  "objetivoId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alcance",
+                  "objetivoId",
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigacion"
+                }
+              }
+            },
+            "description": "Investigación marcada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "422": {
+            "description": "Datos inválidos"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Marcar un usuario, sesión o marcaje bajo investigación: su retención se suspende y se audita (auditoria:investigar)",
+        "tags": [
+          "auditoría"
+        ]
+      }
+    },
+    "/privacidad/investigaciones/{id}/liberar": {
+      "post": {
+        "operationId": "liberarInvestigacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigacion"
+                }
+              }
+            },
+            "description": "Investigación liberada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "409": {
+            "description": "Ya estaba liberada"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Cerrar la investigación: sus registros vuelven a la retención normal (auditoria:investigar)",
+        "tags": [
+          "auditoría"
+        ]
+      }
+    },
     "/privacidad/politica": {
       "get": {
         "operationId": "obtenerPoliticaPrivacidad",
@@ -4777,6 +6845,196 @@
         "summary": "Eliminar programa (lógico)",
         "tags": [
           "académico"
+        ]
+      },
+      "put": {
+        "operationId": "actualizarPrograma",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "facultadId": {
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre",
+                  "facultadId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Programa actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar programa",
+        "tags": [
+          "académico"
+        ]
+      }
+    },
+    "/reportes/asistencia-estudiantil": {
+      "get": {
+        "description": "Porcentaje acumulado por estudiante del grupo, promedio del grupo y estudiantes bajo el umbral porcentaje_minimo_asistencia (US-REP-05, RF-REP-003). Usa el mismo cálculo que GET /me/asistencia, por lo que el porcentaje coincide exactamente con el que ve el estudiante (AC-03). Requiere marcaje:leer; el docente solo consulta los grupos en los que dicta y el coordinador los de su ámbito (403 en otro caso).",
+        "operationId": "reporteAsistenciaEstudiantil",
+        "parameters": [
+          {
+            "description": "Grupo a consultar",
+            "in": "query",
+            "name": "grupoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteAsistenciaGrupo"
+                }
+              }
+            },
+            "description": "Reporte del grupo"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "El grupo está fuera del ámbito del usuario"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Grupo no encontrado"
+          }
+        },
+        "summary": "Reporte de asistencia estudiantil por grupo",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/asistencia-estudiantil/grupos": {
+      "get": {
+        "description": "Grupos del periodo que el usuario puede consultar en el reporte de asistencia estudiantil (los propios para el docente, los de su ámbito para el coordinador). Requiere marcaje:leer.",
+        "operationId": "gruposAsistenciaEstudiantil",
+        "parameters": [
+          {
+            "description": "Periodo académico",
+            "in": "query",
+            "name": "periodoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GrupoVisibleReporte"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Grupos visibles"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Falta el periodo"
+          }
+        },
+        "summary": "Grupos disponibles para el reporte de asistencia estudiantil",
+        "tags": [
+          "reportes"
         ]
       }
     },
@@ -4998,6 +7256,307 @@
           }
         },
         "summary": "Exportar reporte de cumplimiento",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/ocupacion": {
+      "get": {
+        "description": "Por espacio, horas programadas, horas con asistencia confirmada (entrada válida del docente) y porcentaje de utilización de las sesiones ya terminadas, agregable por aula, bloque o sede (US-REP-04, RF-REP-002). Respeta el ámbito del usuario. Requiere reporte:leer.",
+        "operationId": "reporteOcupacion",
+        "parameters": [
+          {
+            "description": "Agregación de las filas (por defecto aula)",
+            "in": "query",
+            "name": "agrupacion",
+            "schema": {
+              "enum": [
+                "aula",
+                "bloque",
+                "sede"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "sedeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "bloqueId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteOcupacion"
+                }
+              }
+            },
+            "description": "Reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Falta el periodo o el rango de fechas, o la agrupación es inválida"
+          }
+        },
+        "summary": "Reporte de ocupación de espacios",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/ocupacion/exportar": {
+      "get": {
+        "description": "XLSX (números y fechas tipados) o PDF con marca de agua, sello de generación y huella SHA-256 del reporte de ocupación (US-REP-04 AC-03, US-REP-02). La exportación queda auditada. Requiere reporte:exportar.",
+        "operationId": "exportarOcupacion",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "formato",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Agregación de las filas (por defecto aula)",
+            "in": "query",
+            "name": "agrupacion",
+            "schema": {
+              "enum": [
+                "aula",
+                "bloque",
+                "sede"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Periodo académico (obligatorio si no se envía desde/hasta)",
+            "in": "query",
+            "name": "periodoId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha inicial AAAA-MM-DD",
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Fecha final AAAA-MM-DD",
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "sedeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "bloqueId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Archivo del reporte"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Formato o filtros inválidos"
+          }
+        },
+        "summary": "Exportar reporte de ocupación",
+        "tags": [
+          "reportes"
+        ]
+      }
+    },
+    "/reportes/tablero": {
+      "get": {
+        "description": "Pulso del día dentro del ámbito del usuario (US-REP-03, RF-REP-005) — sesiones del día, marcajes efectuados, sesiones en curso sin entrada del docente (con docente, aula y hora) y alertas activas de inasistencias consecutivas (rachas notificadas en los últimos 7 días sin entrada válida posterior). Solo consulta las sesiones de hoy y sus marcajes por sesionId; no recorre la colección de marcajes. El cliente refresca cada refrescoSugeridoSegundos más un desfase aleatorio. Requiere reporte:leer.",
+        "operationId": "tableroEnVivo",
+        "parameters": [
+          {
+            "description": "Facultad (opcional, dentro del ámbito)",
+            "in": "query",
+            "name": "facultadId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableroEnVivo"
+                }
+              }
+            },
+            "description": "Tablero del día"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Permiso denegado"
+          }
+        },
+        "summary": "Tablero de indicadores en vivo",
         "tags": [
           "reportes"
         ]
@@ -5295,6 +7854,58 @@
         "tags": [
           "sedes"
         ]
+      },
+      "put": {
+        "operationId": "actualizarSede",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearSedeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SedeDTO"
+                }
+              }
+            },
+            "description": "Sede actualizada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Editar una sede",
+        "tags": [
+          "geo"
+        ]
       }
     },
     "/sesiones": {
@@ -5490,6 +8101,48 @@
       }
     },
     "/sesiones/{id}/lista-manual": {
+      "get": {
+        "operationId": "consultarListaManual",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Lista de la sesión"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Estudiantes del grupo con su estado para la lista manual (US-MAR-14)",
+        "tags": [
+          "marcajes"
+        ]
+      },
       "post": {
         "operationId": "registrarListaManual",
         "parameters": [
@@ -5550,7 +8203,141 @@
         ]
       }
     },
+    "/sesiones/{id}/reprogramar": {
+      "patch": {
+        "operationId": "reprogramarSesion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "confirmar": {
+                    "type": "boolean"
+                  },
+                  "fecha": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "horaFin": {
+                    "example": "09:00",
+                    "type": "string"
+                  },
+                  "horaInicio": {
+                    "example": "07:00",
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fecha",
+                  "horaInicio",
+                  "horaFin",
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Sesión reprogramada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "409": {
+            "description": "Conflicto de horario o confirmación requerida"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Mover una sesión a otra fecha u hora con motivo (US-ACA-06 AC-01)",
+        "tags": [
+          "sesiones"
+        ]
+      }
+    },
     "/sesiones/{id}/ventana-estudiantil": {
+      "delete": {
+        "operationId": "cerrarVentanaEstudiantil",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "abierta": {
+                      "type": "boolean"
+                    },
+                    "cierraEn": {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Ventana cerrada"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Cerrar la ventana de marcaje estudiantil (US-MAR-13)",
+        "tags": [
+          "marcajes"
+        ]
+      },
       "post": {
         "operationId": "abrirVentanaEstudiantil",
         "parameters": [
@@ -5586,6 +8373,50 @@
         "summary": "Abrir ventana de asistencia para estudiantes del grupo (US-MAR-13)",
         "tags": [
           "marcaje"
+        ]
+      }
+    },
+    "/trabajos/{id}": {
+      "get": {
+        "operationId": "obtenerTrabajo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Estado y progreso del trabajo"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Estado de un trabajo asíncrono, p. ej. generación de sesiones (US-ACA-05 AC-04)",
+        "tags": [
+          "académico"
         ]
       }
     },
@@ -6170,6 +9001,153 @@
           }
         },
         "summary": "Desbloquear cuenta de usuario",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/{id}/dispositivos": {
+      "get": {
+        "operationId": "listarDispositivosUsuario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "actualizadoEn": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "confiable": {
+                        "type": "boolean"
+                      },
+                      "creadoEn": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "instalacionId": {
+                        "type": "string"
+                      },
+                      "modelo": {
+                        "type": "string"
+                      },
+                      "pendienteAprobacion": {
+                        "type": "boolean"
+                      },
+                      "revocadoEn": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "so": {
+                        "type": "string"
+                      },
+                      "usuarioId": {
+                        "type": "string"
+                      },
+                      "versionApp": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Dispositivos"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Dispositivos registrados de un usuario (US-AUT-03)",
+        "tags": [
+          "dispositivos"
+        ]
+      }
+    },
+    "/usuarios/{id}/revocar-sesiones": {
+      "post": {
+        "operationId": "revocarSesiones",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "motivo"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensajeResponse"
+                }
+              }
+            },
+            "description": "Sesiones revocadas"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Cerrar remotamente todas las sesiones de un usuario (US-AUT-07)",
         "tags": [
           "usuarios"
         ]

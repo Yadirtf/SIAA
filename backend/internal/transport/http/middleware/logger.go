@@ -23,12 +23,7 @@ func RequestLogger(log *applog.Logger) echo.MiddlewareFunc {
 			usuarioID, _ := c.Get(CtxUsuarioID).(string)
 
 			duration := time.Since(start).Milliseconds()
-			status := c.Response().Status
-			if err != nil {
-				if he, ok := err.(*echo.HTTPError); ok {
-					status = he.Code
-				}
-			}
+			status := estadoFinal(c, err)
 
 			log.Info("request",
 				applog.CorrelationID(correlationID),
@@ -42,4 +37,13 @@ func RequestLogger(log *applog.Logger) echo.MiddlewareFunc {
 			return err
 		}
 	}
+}
+
+// estadoFinal es el estado que recibe el cliente: si el handler devolvió un error que aún no
+// se escribió, es el que asignará ErrorHandler (401, 403, 423, 429…), no el 200 por defecto.
+func estadoFinal(c echo.Context, err error) int {
+	if err != nil && !c.Response().Committed {
+		return EstadoHTTP(err)
+	}
+	return c.Response().Status
 }

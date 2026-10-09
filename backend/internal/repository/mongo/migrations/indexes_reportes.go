@@ -47,6 +47,11 @@ func CrearIndicesJustificacionesYAuditoria(ctx context.Context, db *mongo.Databa
 			Keys:    bson.D{{Key: "estudianteId", Value: 1}},
 			Options: options.Index().SetName("grupo_estudiantes_estudiante"),
 		}},
+		// Tablero en vivo (US-REP-03): alertas recientes por tipo, sin recorrer las bandejas.
+		{"notificaciones", mongo.IndexModel{
+			Keys:    bson.D{{Key: "tipo", Value: 1}, {Key: "creadaEn", Value: -1}},
+			Options: options.Index().SetName("notificaciones_tipo_fecha"),
+		}},
 		// Reportes: sesiones de un periodo por fecha.
 		{"sesiones", mongo.IndexModel{
 			Keys:    bson.D{{Key: "periodoId", Value: 1}, {Key: "fecha", Value: 1}},

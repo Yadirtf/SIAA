@@ -6,6 +6,7 @@ import (
 	"github.com/siaa/backend/internal/domain/academico"
 	"github.com/siaa/backend/internal/domain/justificacion"
 	"github.com/siaa/backend/internal/domain/marcaje"
+	"github.com/siaa/backend/internal/domain/parametro"
 )
 
 // FilaDocente agrega el cumplimiento de un docente (o los totales).
@@ -22,6 +23,10 @@ type FilaDocente struct {
 	AusenciasJustificadas  int     `json:"ausenciasJustificadas"`
 	AusenciasInjustificada int     `json:"ausenciasInjustificadas"`
 	Ajustadas              int     `json:"ajustadas"`
+	// SalidasFaltantes: sesiones dictadas con salida OBLIGATORIA sin marcaje de salida (US-MAR-15 AC-01).
+	SalidasFaltantes int `json:"salidasFaltantes"`
+	// BajoUmbral: el cumplimiento está por debajo de porcentaje_minimo_asistencia (US-PAR-04 AC-01).
+	BajoUmbral bool `json:"bajoUmbral"`
 	// PorcentajeCumplimiento = dictadas / (programadas − justificadas).
 	PorcentajeCumplimiento float64 `json:"porcentajeCumplimiento"`
 }
@@ -30,23 +35,18 @@ type clave struct{ sesion, docente string }
 
 type agregador struct {
 	entradas       map[clave]*marcaje.Marcaje
+	salidas        map[clave]*marcaje.Marcaje
 	justificadas   map[clave]bool
 	filas          map[string]*FilaDocente
 	falsosRechazos int
 }
 
-func nuevoAgregador(entradas []*marcaje.Marcaje, aprobadas []*justificacion.Justificacion) *agregador {
+func nuevoAgregador(entradas, salidas []*marcaje.Marcaje, aprobadas []*justificacion.Justificacion) *agregador {
 	a := &agregador{
-		entradas:     map[clave]*marcaje.Marcaje{},
+		entradas:     indexar(entradas),
+		salidas:      indexar(salidas),
 		justificadas: map[clave]bool{},
 		filas:        map[string]*FilaDocente{},
-	}
-	for _, m := range entradas {
-		usuario := m.UsuarioID
-		if usuario == "" {
-			usuario = m.DocenteID
-		}
-		a.entradas[clave{m.SesionID, usuario}] = m
 	}
 	for _, j := range aprobadas {
 		a.justificadas[clave{j.SesionID, j.DocenteID}] = true
@@ -82,6 +82,9 @@ func (a *agregador) sumar(s *academico.Sesion, docenteID string) {
 		if m.Origen == marcaje.OrigenAjuste || m.Origen == marcaje.OrigenManual {
 			f.Ajustadas++
 		}
+		if salidaObligatoria(s) && !exitoso(a.salidas[k]) {
+			f.SalidasFaltantes++
+		}
 	case a.justificadas[k]:
 		f.HorasJustificadas += horas
 		f.AusenciasJustificadas++
@@ -91,11 +94,12 @@ func (a *agregador) sumar(s *academico.Sesion, docenteID string) {
 }
 
 // resultado devuelve las filas por docente y la fila de totales, con porcentajes.
-func (a *agregador) resultado() ([]FilaDocente, FilaDocente) {
+func (a *agregador) resultado(umbral float64) ([]FilaDocente, FilaDocente) {
 	filas := make([]FilaDocente, 0, len(a.filas))
 	var t FilaDocente
 	for _, f := range a.filas {
 		f.PorcentajeCumplimiento = porcentaje(f)
+		f.BajoUmbral = f.PorcentajeCumplimiento < umbral
 		filas = append(filas, *f)
 		t.Sesiones += f.Sesiones
 		t.HorasProgramadas += f.HorasProgramadas
@@ -106,8 +110,10 @@ func (a *agregador) resultado() ([]FilaDocente, FilaDocente) {
 		t.AusenciasJustificadas += f.AusenciasJustificadas
 		t.AusenciasInjustificada += f.AusenciasInjustificada
 		t.Ajustadas += f.Ajustadas
+		t.SalidasFaltantes += f.SalidasFaltantes
 	}
 	t.PorcentajeCumplimiento = porcentaje(&t)
+	t.BajoUmbral = t.PorcentajeCumplimiento < umbral
 	return filas, t
 }
 
@@ -117,4 +123,24 @@ func porcentaje(f *FilaDocente) float64 {
 		return 100
 	}
 	return math.Round(f.HorasDictadas/exigibles*1000) / 10
+}
+
+// indexar agrupa los marcajes consolidados por sesión y usuario.
+func indexar(marcajes []*marcaje.Marcaje) map[clave]*marcaje.Marcaje {
+	res := make(map[clave]*marcaje.Marcaje, len(marcajes))
+	for _, m := range marcajes {
+		usuario := m.UsuarioID
+		if usuario == "" {
+			usuario = m.DocenteID
+		}
+		res[clave{m.SesionID, usuario}] = m
+	}
+	return res
+}
+
+func exitoso(m *marcaje.Marcaje) bool { return m != nil && m.EsExitoso() }
+
+// salidaObligatoria lee el modo de salida congelado en la sesión (RN-002).
+func salidaObligatoria(s *academico.Sesion) bool {
+	return s.ParametrosCongelados()[string(parametro.ClaveSalidaObligatoria)] == parametro.SalidaObligatoria
 }

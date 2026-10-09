@@ -54,6 +54,8 @@ type MarcajeResponse struct {
 	PasoFallido           int      `json:"pasoFallido,omitempty"`
 	PermiteReintento      bool     `json:"permiteReintento"`
 	PuedeJustificar       bool     `json:"puedeJustificar"`
+	// PermanenciaMin acompaña a una salida aceptada (US-MAR-15 AC-02).
+	PermanenciaMin *int `json:"permanenciaMin,omitempty"`
 }
 
 // SyncMarcajesRequest representa el lote de marcajes offline para POST /api/v1/marcajes/sync.

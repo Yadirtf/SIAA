@@ -104,3 +104,12 @@ func (p *Productor) CambioSesion(ctx context.Context, s *academico.Sesion, docen
 			"cambio:"+s.ID()+":"+d+":"+marca, map[string]string{"sesionId": s.ID()}, nil)
 	}
 }
+
+// AlertaInasistencias avisa al coordinador que un docente alcanzó el umbral de inasistencias
+// consecutivas (US-PAR-04 AC-02). La clave es la de la racha: mientras la racha siga creciendo
+// no se repite el aviso, queda agrupado en el primero (AC-03).
+func (p *Productor) AlertaInasistencias(ctx context.Context, coordinadorID, docenteID, nombreDocente string, conteo, umbral int, claveRacha string) {
+	_ = p.encolar(ctx, coordinadorID, notificacion.TipoAlertaInasistencias, "Alerta de inasistencias",
+		fmt.Sprintf("%s acumula %d inasistencias consecutivas (umbral: %d). Las siguientes ausencias de esta racha no generan avisos nuevos.", nombreDocente, conteo, umbral),
+		"inasistencias:"+claveRacha+":"+coordinadorID, map[string]string{"docenteId": docenteID}, nil)
+}

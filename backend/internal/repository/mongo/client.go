@@ -12,24 +12,35 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/siaa/backend/internal/platform/metrics"
 )
+
+// maxConexionesPool es el máximo de conexiones simultáneas a MongoDB.
+const maxConexionesPool = 100
 
 // Client envuelve el cliente oficial de MongoDB con el nombre de la base de datos.
 // Es el único punto de acceso a las colecciones en todo el sistema.
 type Client struct {
-	db     *mongo.Database
-	client *mongo.Client
+	db       *mongo.Database
+	client   *mongo.Client
+	metricas *metrics.Collector
 }
 
 // Connect crea, configura y verifica la conexión a MongoDB.
 // Devuelve error si no puede alcanzar el servidor dentro del contexto dado.
+// El pool y los comandos quedan instrumentados en el colector de métricas del cliente.
 func Connect(ctx context.Context, uri, dbName string) (*Client, error) {
+	metricas := metrics.NewCollector()
+	metricas.SetDBPoolMaximo(maxConexionesPool)
 	opts := options.Client().
 		ApplyURI(uri).
 		SetConnectTimeout(10 * time.Second).
 		SetServerSelectionTimeout(10 * time.Second).
-		SetMaxPoolSize(100).
-		SetMinPoolSize(5)
+		SetMaxPoolSize(maxConexionesPool).
+		SetMinPoolSize(5).
+		SetPoolMonitor(monitorPool(metricas)).
+		SetMonitor(monitorComandos(metricas))
 
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
@@ -40,7 +51,7 @@ func Connect(ctx context.Context, uri, dbName string) (*Client, error) {
 		return nil, fmt.Errorf("mongo ping: %w", err)
 	}
 
-	return &Client{db: client.Database(dbName), client: client}, nil
+	return &Client{db: client.Database(dbName), client: client, metricas: metricas}, nil
 }
 
 // Disconnect cierra la conexión de forma ordenada al apagar el servidor.
@@ -61,3 +72,7 @@ func (c *Client) Collection(name string) *mongo.Collection {
 // DB retorna la base de datos subyacente.
 // Solo debe usarse por los paquetes de migración e implementación de repositorios.
 func (c *Client) DB() *mongo.Database { return c.db }
+
+// Metricas devuelve el colector que reciben los monitores del driver. El API lo comparte con
+// el middleware HTTP y el motor de marcaje para que /metrics muestre todo junto.
+func (c *Client) Metricas() *metrics.Collector { return c.metricas }

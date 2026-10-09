@@ -112,7 +112,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	}
 
 	// 6. Construir entidad inmutable con evidencia técnica completa (US-MAR-04)
-	m := uc.construirEntidadMarcaje(req, res, contexto, ahora)
+	m := uc.completarSalida(ctx, uc.construirEntidadMarcaje(req, res, contexto, ahora))
 
 	// 7. Persistir en MongoDB (maneja duplicados concurrentes de forma transparente - ADR-07)
 	if err := uc.marcajeRepo.Crear(ctx, m); err != nil {
@@ -195,7 +195,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 		contexto.MarcajePrevio = previo
 	}
 
-	return contexto, nil
+	return contexto, validarSalidaPermitida(req, contexto)
 }
 
 func (uc *CrearMarcajeUseCase) verificarSaltoImposible(ctx context.Context, req domainMarcaje.SolicitudMarcaje, contexto *domainMarcaje.ContextoSesion, ahora time.Time) {

@@ -22,6 +22,7 @@ type DetalleSesionActiva struct {
 	VerificacionComplementariaExigida bool                   `json:"verificacionComplementariaExigida"`
 	MetodosVerificacion               []string               `json:"metodosVerificacion,omitempty"`
 	MarcajeExistente                  *domainMarcaje.Marcaje `json:"marcajeExistente"`
+	MarcajeSalida                     *domainMarcaje.Marcaje `json:"marcajeSalida,omitempty"`
 	// VentanaEstudiantil es la ventana que el docente abrió para el grupo (US-MAR-13).
 	VentanaEstudiantil *VentanaEstudiantilDTO `json:"ventanaEstudiantil,omitempty"`
 	HoraServidor       time.Time              `json:"horaServidor"`
@@ -47,6 +48,7 @@ type VentanaDTO struct {
 	AbreEn           time.Time `json:"abreEn"`
 	CierraEn         time.Time `json:"cierraEn"`
 	Estado           string    `json:"estado"` // ABIERTA, NO_ABIERTA, CERRADA
+	Tipo             string    `json:"tipo"`   // ENTRADA o SALIDA (US-MAR-15)
 	MinutosParaAbrir int       `json:"minutosParaAbrir,omitempty"`
 }
 
@@ -130,11 +132,15 @@ func (uc *SesionActivaUseCase) ObtenerSesionActiva(ctx context.Context, docenteI
 					AbreEn:   abre,
 					CierraEn: cierra,
 					Estado:   "ABIERTA",
+					Tipo:     VentanaTipoEntrada,
 				}
 			}
 		}
 	}
 
+	if sesionActiva == nil { // 1b. Ventana de salida abierta (US-MAR-15)
+		sesionActiva, ventanaActiva = sesionEnVentanaSalida(sesiones, ahora)
+	}
 	// 2. Si no hay ventana abierta en este momento, buscar la próxima sesión del día (AC-02, T-MAR-01.7)
 	if sesionActiva == nil {
 		var proximaSesion *academico.Sesion
@@ -160,6 +166,7 @@ func (uc *SesionActivaUseCase) ObtenerSesionActiva(ctx context.Context, docenteI
 				AbreEn:           proximaSesion.VentanaEntradaAbre(),
 				CierraEn:         proximaSesion.VentanaEntradaCierra(),
 				Estado:           "NO_ABIERTA",
+				Tipo:             VentanaTipoEntrada,
 				MinutosParaAbrir: int(math.Ceil(proximaSesion.VentanaEntradaAbre().Sub(ahora).Minutes())),
 			}
 		}
@@ -231,6 +238,7 @@ func (uc *SesionActivaUseCase) construirDetalle(ctx context.Context, s *academic
 		VerificacionComplementariaExigida: exigida,
 		MetodosVerificacion:               metodosVerificacion,
 		MarcajeExistente:                  previo,
+		MarcajeSalida:                     uc.salidaPrevia(ctx, s, docenteID, ventana),
 		VentanaEstudiantil:                ventanaEstudiantilDTO(s, ahora),
 		HoraServidor:                      ahora,
 	}, nil

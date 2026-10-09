@@ -19,6 +19,7 @@ type HandlersSeguimiento struct {
 	Justificaciones *handler.JustificacionesHandler
 	Reportes        *handler.ReportesHandler
 	Auditoria       *handler.AuditoriaHandler
+	Investigaciones *handler.InvestigacionesHandler
 }
 
 func registerSeguimientoRoutes(
@@ -49,10 +50,25 @@ func registerSeguimientoRoutes(
 		g := api.Group("/reportes", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		proteger(g, "/reportes", http.MethodGet, "/cumplimiento", r.Cumplimiento, rbac.PermReporteLeer)
 		proteger(g, "/reportes", http.MethodGet, "/cumplimiento/exportar", r.ExportarCumplimiento, rbac.PermReporteExportar)
+		// US-REP-03: tablero del día; US-REP-04: ocupación de espacios.
+		proteger(g, "/reportes", http.MethodGet, "/tablero", r.Tablero, rbac.PermReporteLeer)
+		proteger(g, "/reportes", http.MethodGet, "/ocupacion", r.Ocupacion, rbac.PermReporteLeer)
+		proteger(g, "/reportes", http.MethodGet, "/ocupacion/exportar", r.ExportarOcupacion, rbac.PermReporteExportar)
+		// US-REP-05: el docente del grupo también lo consulta (no tiene reporte:leer); el caso
+		// de uso restringe a sus grupos o a los del ámbito del coordinador.
+		proteger(g, "/reportes", http.MethodGet, "/asistencia-estudiantil", r.AsistenciaGrupo, rbac.PermMarcajeLeer)
+		proteger(g, "/reportes", http.MethodGet, "/asistencia-estudiantil/grupos", r.GruposAsistencia, rbac.PermMarcajeLeer)
 	}
 	if a := h.Auditoria; a != nil {
 		g := api.Group("/auditoria", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
 		proteger(g, "/auditoria", http.MethodGet, "", a.Consultar, rbac.PermAuditoriaLeer)
 		proteger(g, "/auditoria", http.MethodGet, "/exportar", a.Exportar, rbac.PermAuditoriaLeer)
+	}
+	// Investigaciones en curso que suspenden la retención (US-AUD-04 AC-03).
+	if inv := h.Investigaciones; inv != nil {
+		g := api.Group("/privacidad/investigaciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+		proteger(g, "/privacidad/investigaciones", http.MethodGet, "", inv.Listar, rbac.PermAuditoriaLeer)
+		proteger(g, "/privacidad/investigaciones", http.MethodPost, "", inv.Marcar, rbac.PermAuditoriaInvestigar)
+		proteger(g, "/privacidad/investigaciones", http.MethodPost, "/:id/liberar", inv.Liberar, rbac.PermAuditoriaInvestigar)
 	}
 }

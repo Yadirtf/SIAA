@@ -56,6 +56,8 @@ const (
 
 	// Auditoría
 	PermAuditoriaLeer Permission = "auditoria:leer"
+	// PermAuditoriaInvestigar marca y libera investigaciones que suspenden la retención (US-AUD-04 AC-03).
+	PermAuditoriaInvestigar Permission = "auditoria:investigar"
 
 	// Roles
 	PermRolCrear    Permission = "rol:crear"
@@ -74,7 +76,7 @@ var AllPermissions = []Permission{
 	PermUsuarioCrear, PermUsuarioEditar, PermUsuarioLeer, PermUsuarioEliminar,
 	PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
 	PermReporteExportar, PermReporteLeer,
-	PermAuditoriaLeer,
+	PermAuditoriaLeer, PermAuditoriaInvestigar,
 	PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
 }
 
@@ -105,7 +107,7 @@ var DefaultPermissions = map[RoleName][]Permission{
 		PermUsuarioCrear, PermUsuarioEditar, PermUsuarioLeer, PermUsuarioEliminar,
 		PermJustificacionCrear, PermJustificacionAprobar, PermJustificacionLeer,
 		PermReporteExportar, PermReporteLeer,
-		PermAuditoriaLeer,
+		PermAuditoriaLeer, PermAuditoriaInvestigar,
 		PermRolCrear, PermRolEditar, PermRolLeer, PermRolEliminar,
 	},
 	RolAdminInst: {
@@ -117,7 +119,7 @@ var DefaultPermissions = map[RoleName][]Permission{
 		PermUsuarioCrear, PermUsuarioEditar, PermUsuarioLeer,
 		PermJustificacionAprobar, PermJustificacionLeer,
 		PermReporteExportar, PermReporteLeer,
-		PermAuditoriaLeer,
+		PermAuditoriaLeer, PermAuditoriaInvestigar,
 		PermRolLeer,
 	},
 	RolCoordinador: {

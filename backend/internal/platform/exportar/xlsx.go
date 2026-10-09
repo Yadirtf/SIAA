@@ -10,6 +10,7 @@ import (
 const hoja = "Reporte"
 
 // XLSX genera el libro con el encabezado institucional y la tabla con filtros automáticos.
+// Las columnas declaradas en Tabla.Tipos se escriben como número o fecha (US-REP-02 AC-01).
 func XLSX(t Tabla) ([]byte, error) {
 	f := excelize.NewFile()
 	defer func() { _ = f.Close() }()
@@ -25,12 +26,17 @@ func XLSX(t Tabla) ([]byte, error) {
 		return nil, err
 	}
 
+	tipados, err := nuevosEstilos(f)
+	if err != nil {
+		return nil, err
+	}
+
 	_ = f.SetCellValue(hoja, "A1", "SIAA — "+t.Titulo)
 	_ = f.SetCellStyle(hoja, "A1", "A1", titulo)
 	fila := 2
 	for _, m := range t.encabezado() {
 		_ = f.SetCellValue(hoja, fmt.Sprintf("A%d", fila), m[0])
-		_ = f.SetCellValue(hoja, fmt.Sprintf("B%d", fila), m[1])
+		tipados.escribirCelda(f, fmt.Sprintf("B%d", fila), tipoMetadato(m[1]), m[1])
 		_ = f.SetCellStyle(hoja, fmt.Sprintf("A%d", fila), fmt.Sprintf("A%d", fila), negrita)
 		fila++
 	}
@@ -46,7 +52,7 @@ func XLSX(t Tabla) ([]byte, error) {
 		fila++
 		for c, v := range datos {
 			celda, _ := excelize.CoordinatesToCellName(c+1, fila)
-			_ = f.SetCellValue(hoja, celda, v)
+			tipados.escribirCelda(f, celda, t.tipo(c), v)
 		}
 	}
 	if len(t.Columnas) > 0 {

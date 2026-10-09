@@ -12,13 +12,36 @@ import (
 
 // Tabla es el contenido tabular a exportar con su encabezado institucional.
 type Tabla struct {
-	Titulo      string
-	Metadatos   [][2]string // pares etiqueta/valor: filtros, usuario, fecha de generación
-	Columnas    []string
-	Anchos      []float64 // ancho relativo por columna en el PDF; vacío = uniforme
+	Titulo    string
+	Metadatos [][2]string // pares etiqueta/valor: filtros, usuario, fecha de generación
+	Columnas  []string
+	Anchos    []float64 // ancho relativo por columna en el PDF; vacío = uniforme
+	// Tipos indica cómo escribir cada columna en el XLSX (US-REP-02 AC-01); vacío = texto.
+	// Las filas se conservan como texto para que el PDF y la huella no dependan del tipo.
+	Tipos       []TipoColumna
 	Filas       [][]string
 	GeneradoEn  time.Time
 	GeneradoPor string
+}
+
+// TipoColumna es el tipo de dato de una columna en la hoja de cálculo.
+type TipoColumna int
+
+const (
+	Texto      TipoColumna = iota
+	Entero                 // "12"
+	Decimal                // "12.50", dos decimales
+	Porcentaje             // "85.5%" o "85.5" → 0.855 con formato 0.0 %
+	Fecha                  // "2026-10-01" → fecha de Excel
+	FechaHora              // "2026-10-01 14:05" → fecha y hora de Excel
+)
+
+// tipo devuelve el tipo de la columna c (texto si no se declaró).
+func (t Tabla) tipo(c int) TipoColumna {
+	if c < len(t.Tipos) {
+		return t.Tipos[c]
+	}
+	return Texto
 }
 
 // Huella es el SHA-256 de columnas y filas; permite verificar que el archivo no se alteró.

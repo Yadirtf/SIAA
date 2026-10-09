@@ -65,6 +65,10 @@ func (h *MarcajeHandler) Crear(c echo.Context) error {
 	ahoraServidor := time.Now().UTC()
 
 	evalRes, m, err := h.crearUC.Ejecutar(c.Request().Context(), solicitud, ahoraServidor)
+	var errDominio *shared.DomainError
+	if errors.As(err, &errDominio) {
+		return err // p. ej. salida desactivada para la sesión (US-MAR-15 AC-03)
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -85,8 +89,10 @@ func (h *MarcajeHandler) Crear(c echo.Context) error {
 
 	// Marcaje evaluado y persistido (aceptado o rechazado): HTTP 201 (§9.4)
 	marcajeID := ""
+	var permanencia *int
 	if m != nil {
 		marcajeID = m.ID
+		permanencia = m.PermanenciaMin
 	}
 
 	var distPtr *float64
@@ -106,6 +112,7 @@ func (h *MarcajeHandler) Crear(c echo.Context) error {
 		PasoFallido:           int(evalRes.PasoFallido),
 		PermiteReintento:      evalRes.PermiteReintento,
 		PuedeJustificar:       evalRes.PuedeJustificar,
+		PermanenciaMin:        permanencia,
 	})
 }
 
