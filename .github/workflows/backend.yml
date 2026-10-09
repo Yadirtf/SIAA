@@ -50,14 +50,19 @@ jobs:
         with:
           version: "latest"
           working-directory: backend
-          # Usa el Go de setup-go: govulncheck evalúa la biblioteca estándar de esa versión.
-          install-go: false
 
       - name: Escaneo de secretos (T-PLT-02.4)
         uses: trufflesecurity/trufflehog@main
         with:
           # El escaneo git requiere la raíz del repositorio (./backend no es un repo git).
           path: ./
+
+      # staticcheck instala su propio Go; se restaura el del proyecto para que govulncheck
+      # evalúe la biblioteca estándar con la que se compila y despliega.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
 
       - name: Vulnerabilidades de dependencias (T-PLT-02.4)
         run: |
