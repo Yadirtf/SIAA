@@ -31,6 +31,8 @@ class ApiConstants {
   static const String programas = '$baseUrl/programas';
   static const String asignaturas = '$baseUrl/asignaturas';
   static const String grupos = '$baseUrl/grupos';
+  static String estudiantesGrupo(String grupoId) =>
+      '$baseUrl/grupos/$grupoId/estudiantes';
   static const String asignaciones = '$baseUrl/asignaciones';
   static const String excepciones = '$baseUrl/calendario-excepciones';
 
