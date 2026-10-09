@@ -117,6 +117,16 @@ class PerfilScreen extends StatelessWidget {
                 .read<NavBloc>()
                 .add(const NavDrawerItemSelected('/shell/privacidad')),
           ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.folder_shared_outlined),
+            title: const Text('Mis datos y derechos'),
+            subtitle: const Text('Copia, rectificación y supresión'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context
+                .read<NavBloc>()
+                .add(const NavDrawerItemSelected('/shell/derechos')),
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             style:

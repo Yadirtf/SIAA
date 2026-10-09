@@ -194,10 +194,13 @@ func TestUS_ROL_02_ABAC_ScopeEnforcement(t *testing.T) {
 	t.Run("Superadmin sin ámbitos explícitos tiene acceso irrestricto", func(t *testing.T) {
 		superadminScopes := []rbac.Scope{}
 
-		if !rbac.IsInScope(superadminScopes, rbac.ScopeSede, "CUALQUIER-SEDE") {
+		if !rbac.PermiteAmbito(string(rbac.RolSuperadmin), superadminScopes, rbac.ScopeSede, "CUALQUIER-SEDE") {
 			t.Error("superadmin debe tener acceso a cualquier sede")
 		}
-		if !rbac.IsInScope(superadminScopes, rbac.ScopeFacultad, "CUALQUIER-FACULTAD") {
+		if rbac.PermiteAmbito(string(rbac.RolCoordinador), superadminScopes, rbac.ScopeSede, "CUALQUIER-SEDE") {
+			t.Error("un coordinador sin ámbitos no debe tener acceso")
+		}
+		if !rbac.PermiteAmbito(string(rbac.RolSuperadmin), superadminScopes, rbac.ScopeFacultad, "CUALQUIER-FACULTAD") {
 			t.Error("superadmin debe tener acceso a cualquier facultad")
 		}
 	})

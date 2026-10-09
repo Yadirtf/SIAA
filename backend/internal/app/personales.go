@@ -14,13 +14,14 @@ import (
 )
 
 // construirPersonales arma el aviso de privacidad con su consentimiento (Ley 1581) y la
-// bandeja de notificaciones (EP-10). Devuelve además el productor que encola los avisos
+// bandeja de notificaciones (EP-10) y los derechos del titular (US-LEG-02). Devuelve además el productor que encola los avisos
 // que generan el horario y las justificaciones.
 func construirPersonales(cfg *config.Config, mongoClient *mongoRepo.Client, auditoria repository.AuditoriaRepository,
 	estructura repository.EstructuraRepository, espacios repository.EspacioRepository,
 ) (*apphttp.HandlersPersonales, *usecaseNot.Productor) {
+	pol := politica.Construir(cfg.InstitucionNombre, cfg.PrivacidadContacto)
 	privSvc := usecasePriv.NewService(
-		politica.Construir(cfg.InstitucionNombre, cfg.PrivacidadContacto),
+		pol,
 		impl.NewConsentimientoRepository(mongoClient),
 		auditoria,
 	)
@@ -30,11 +31,14 @@ func construirPersonales(cfg *config.Config, mongoClient *mongoRepo.Client, audi
 		impl.NewPreferenciasRepository(mongoClient),
 		cola,
 	)
+	productor := usecaseNot.NewProductor(cola, estructura, espacios)
 	handlers := &apphttp.HandlersPersonales{
+		Derechos:       construirDerechos(pol, mongoClient, auditoria, productor),
+		Auditoria:      auditoria,
 		Privacidad:     handler.NewPrivacidadHandler(privSvc),
 		Notificaciones: handler.NewNotificacionesHandler(notSvc),
 		Perfil: handler.NewPerfilHandler(usecaseUsuarios.NewServicioPerfil(
 			impl.NewUsuarioRepository(mongoClient), impl.NewDispositivoRepository(mongoClient))),
 	}
-	return handlers, usecaseNot.NewProductor(cola, estructura, espacios)
+	return handlers, productor
 }

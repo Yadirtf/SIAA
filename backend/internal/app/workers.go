@@ -20,6 +20,10 @@ import (
 type WorkersNotificaciones struct {
 	Programador *usecaseNot.Programador
 	Despachador *usecaseNot.Despachador
+	// Revision recuerda las justificaciones sin resolver (US-JUS-04 AC-02).
+	Revision *usecaseNot.RecordatorioRevision
+	// VencimientoRoles avisa los roles por vencer (US-ROL-05 AC-02).
+	VencimientoRoles *usecaseNot.AvisoVencimientoRoles
 }
 
 // NuevoWorkersNotificaciones arma las etapas de notificación del proceso cmd/worker.
@@ -55,7 +59,13 @@ func NuevoWorkersNotificaciones(cfg *config.Config, log *applog.Logger, mongoCli
 		impl.NewUsuarioRepository(mongoClient),
 		impl.NewDispositivoRepository(mongoClient),
 		push, correo, silencio)
-	return &WorkersNotificaciones{Programador: programador, Despachador: despachador}, nil
+	usuarios := impl.NewUsuarioRepository(mongoClient)
+	return &WorkersNotificaciones{
+		Programador: programador, Despachador: despachador,
+		Revision: usecaseNot.NewRecordatorioRevision(impl.NewJustificacionesSinResolverRepository(mongoClient), usuarios, productor).
+			ConPlazoHoras(cfg.NotifRevisionHoras),
+		VencimientoRoles: usecaseNot.NewAvisoVencimientoRoles(impl.NewRolesPorVencerRepository(mongoClient), usuarios, productor),
+	}, nil
 }
 
 // enviadorFCM devuelve el cliente de FCM o nil si no está configurado.

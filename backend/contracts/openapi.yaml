@@ -4529,6 +4529,229 @@ paths:
         '401':
           description: No autenticado
         default: *id002
+  /privacidad/derechos:
+    get:
+      operationId: canalDerechosTitular
+      summary: Canal de derechos del titular con sus plazos legales (público, US-LEG-02 AC-04)
+      tags:
+      - privacidad
+      security: []
+      responses:
+        '200':
+          description: Canal y plazos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanalDerechos'
+  /me/datos:
+    get:
+      operationId: descargarMisDatos
+      summary: Copia estructurada de mis datos personales, marcajes, justificaciones y consentimientos (US-LEG-02 AC-01)
+      description: Se entrega como archivo JSON adjunto y queda auditada (DATOS_PERSONALES_EXPORTADOS).
+      tags:
+      - privacidad
+      responses:
+        '200':
+          description: Archivo mis-datos-siaa.json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CopiaDatosPersonales'
+        '401':
+          description: No autenticado
+        default: *id002
+  /me/derechos/solicitudes:
+    get:
+      operationId: misSolicitudesDerechos
+      summary: Mis solicitudes de rectificación y supresión con su estado y plazo
+      tags:
+      - privacidad
+      responses:
+        '200':
+          description: Solicitudes del titular
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolicitudDerecho'
+        '401':
+          description: No autenticado
+        default: *id002
+    post:
+      operationId: radicarSolicitudDerecho
+      summary: Radicar una solicitud de rectificación o supresión (US-LEG-02 AC-02, AC-03)
+      description: Genera un caso con responsable y plazo legal (15 días hábiles). La supresión trae la evaluación de qué se elimina y qué se conserva, con fundamento.
+      tags:
+      - privacidad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  enum:
+                  - RECTIFICACION
+                  - SUPRESION
+                descripcion:
+                  type: string
+                  minLength: 10
+                cambios:
+                  type: object
+                  description: Solo rectificación; claves nombre, apellido y documento.
+                  additionalProperties:
+                    type: string
+              required:
+              - tipo
+              - descripcion
+      responses:
+        '201':
+          description: Caso radicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudDerecho'
+        '409':
+          description: Ya hay una solicitud del mismo tipo en trámite
+        '422':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+        default: *id002
+  /me/derechos/supresion:
+    get:
+      operationId: evaluarSupresion
+      summary: Qué datos pueden suprimirse y cuáles se conservan por obligación legal, con fundamento (US-LEG-02 AC-03)
+      tags:
+      - privacidad
+      responses:
+        '200':
+          description: Evaluación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  elementos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ElementoSupresion'
+        '401':
+          description: No autenticado
+        default: *id002
+  /privacidad/solicitudes:
+    get:
+      operationId: bandejaSolicitudesDerechos
+      summary: Bandeja de solicitudes de derechos de los titulares, por plazo (usuario:editar)
+      tags:
+      - privacidad
+      parameters:
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - RADICADA
+          - EN_TRAMITE
+          - ATENDIDA
+          - DENEGADA
+      - in: query
+        name: tipo
+        schema:
+          type: string
+          enum:
+          - RECTIFICACION
+          - SUPRESION
+      - in: query
+        name: abiertas
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Solicitudes con el titular y si vencieron
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolicitudDerechoEnBandeja'
+        '401':
+          description: No autenticado
+        '403':
+          description: Sin permiso
+        default: *id002
+  /privacidad/solicitudes/{id}/asumir:
+    post:
+      operationId: asumirSolicitudDerecho
+      summary: Asumir el caso como responsable y ponerlo en trámite (usuario:editar)
+      tags:
+      - privacidad
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Caso en trámite
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudDerecho'
+        '404':
+          description: No existe
+        '409':
+          description: Ya resuelta o modificada por otra persona
+        '401':
+          description: No autenticado
+        default: *id002
+  /privacidad/solicitudes/{id}/resolver:
+    post:
+      operationId: resolverSolicitudDerecho
+      summary: Resolver el caso; si se atiende, aplica la rectificación o la supresión de lo eliminable (usuario:editar)
+      tags:
+      - privacidad
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                atendida:
+                  type: boolean
+                respuesta:
+                  type: string
+                  minLength: 10
+              required:
+              - atendida
+              - respuesta
+      responses:
+        '200':
+          description: Caso resuelto y auditado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudDerecho'
+        '404':
+          description: No existe
+        '409':
+          description: Ya resuelta, o el documento pertenece a otra cuenta
+        '422':
+          description: Respuesta faltante
+        '401':
+          description: No autenticado
+        default: *id002
 components:
   schemas:
     ActualizarEspacioRequest:
@@ -5739,6 +5962,143 @@ components:
         liberadaEn:
           type: string
           format: date-time
+    CanalDerechos:
+      type: object
+      properties:
+        institucion:
+          type: string
+        contacto:
+          type: string
+        autoridad:
+          type: string
+        plazos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo:
+                type: string
+              descripcion:
+                type: string
+              diasHabiles:
+                type: integer
+              prorrogaDiasHabiles:
+                type: integer
+              fundamentoLegal:
+                type: string
+              canalEnAplicacion:
+                type: string
+    ElementoSupresion:
+      type: object
+      properties:
+        categoria:
+          type: string
+        descripcion:
+          type: string
+        decision:
+          type: string
+          enum:
+          - ELIMINABLE
+          - CONSERVAR
+        fundamento:
+          type: string
+    SolicitudDerecho:
+      type: object
+      properties:
+        id:
+          type: string
+        titularId:
+          type: string
+        tipo:
+          type: string
+          enum:
+          - RECTIFICACION
+          - SUPRESION
+        estado:
+          type: string
+          enum:
+          - RADICADA
+          - EN_TRAMITE
+          - ATENDIDA
+          - DENEGADA
+        descripcion:
+          type: string
+        cambios:
+          type: object
+          additionalProperties:
+            type: string
+        evaluacion:
+          type: array
+          items:
+            $ref: '#/components/schemas/ElementoSupresion'
+        responsableId:
+          type: string
+        respuesta:
+          type: string
+        radicadaEn:
+          type: string
+          format: date-time
+        venceEn:
+          type: string
+          format: date-time
+        resueltaEn:
+          type: string
+          format: date-time
+        historial:
+          type: array
+          items:
+            type: object
+            properties:
+              estado:
+                type: string
+              actorId:
+                type: string
+              nota:
+                type: string
+              en:
+                type: string
+                format: date-time
+    SolicitudDerechoEnBandeja:
+      allOf:
+      - $ref: '#/components/schemas/SolicitudDerecho'
+      - type: object
+        properties:
+          titularNombre:
+            type: string
+          titularCorreo:
+            type: string
+          vencida:
+            type: boolean
+    CopiaDatosPersonales:
+      type: object
+      properties:
+        generadaEn:
+          type: string
+          format: date-time
+        responsable:
+          type: string
+        titular:
+          type: object
+        dispositivos:
+          type: array
+          items:
+            type: object
+        marcajes:
+          type: array
+          items:
+            type: object
+        justificaciones:
+          type: array
+          items:
+            type: object
+        consentimientos:
+          type: array
+          items:
+            type: object
+        solicitudesDerechos:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolicitudDerecho'
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT

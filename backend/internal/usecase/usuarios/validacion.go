@@ -60,7 +60,8 @@ func (s *Service) validarRoles(ctx context.Context, actor Actor, roles []RolCmd)
 		if r.VigenciaInicio != nil && r.VigenciaFin != nil && r.VigenciaFin.Before(*r.VigenciaInicio) {
 			return nil, shared.NewValidationError(fmt.Sprintf("La vigencia del rol %s termina antes de empezar", nombre))
 		}
-		res = append(res, user.RolAsignado{RolID: nombre, Nombre: rbac.RoleName(nombre), VigenciaInicio: r.VigenciaInicio, VigenciaFin: r.VigenciaFin})
+		res = append(res, user.RolAsignado{RolID: nombre, Nombre: rbac.RoleName(nombre),
+			VigenciaInicio: r.VigenciaInicio, VigenciaFin: r.VigenciaFin, AsignadoPor: actor.UsuarioID})
 	}
 	if len(res) == 0 {
 		return nil, shared.NewValidationError("El usuario debe tener al menos un rol")
@@ -116,10 +117,7 @@ func ambitosDe(a rbac.Alcance) []rbac.Scope {
 	for _, id := range a.Bloques {
 		res = append(res, rbac.Scope{Tipo: rbac.ScopeBloque, ID: id})
 	}
-	if res == nil {
-		// Sin ámbitos no hay nada que otorgar: un ámbito imposible fuerza el rechazo.
-		res = []rbac.Scope{{Tipo: "NINGUNO", ID: "-"}}
-	}
+	// Sin ámbitos no hay nada que otorgar: IsInScope rechaza la lista vacía.
 	return res
 }
 

@@ -17,6 +17,12 @@ const (
 	TipoCambioHorario          Tipo = "CAMBIO_HORARIO"
 	// TipoAlertaInasistencias avisa al coordinador de la facultad (US-PAR-04 AC-02).
 	TipoAlertaInasistencias Tipo = "ALERTA_INASISTENCIAS"
+	// TipoRecordatorioRevision recuerda al revisor una justificación sin resolver (US-JUS-04 AC-02).
+	TipoRecordatorioRevision Tipo = "RECORDATORIO_REVISION"
+	// TipoVencimientoRol avisa al administrador que un rol asignado está por vencer (US-ROL-05 AC-02).
+	TipoVencimientoRol Tipo = "VENCIMIENTO_ROL"
+	// TipoSolicitudDerechos informa al responsable un caso nuevo y al titular su resolución (US-LEG-02).
+	TipoSolicitudDerechos Tipo = "SOLICITUD_DERECHOS"
 )
 
 // Estado del aviso en la cola de envío (US-NOT-01 AC-05).
@@ -75,13 +81,25 @@ func RutaDe(t Tipo) string {
 		return "/marcaje"
 	case TipoResultadoJustificacion:
 		return "/justificaciones"
+	case TipoRecordatorioRevision:
+		return "/justificaciones/revision"
+	case TipoVencimientoRol:
+		return "/usuarios"
+	case TipoSolicitudDerechos:
+		return "/privacidad/derechos"
 	}
 	return "/horario"
 }
 
 // PermiteCorreo indica los avisos que salen por correo cuando no hay push: los cambios de
-// horario y las alertas de inasistencias al coordinador. Los recordatorios caducan en minutos y el resultado de una justificación ya se
-// informa por correo al revisarla.
+// horario, las alertas de inasistencias al coordinador, los recordatorios de revisión, los
+// vencimientos de rol y las solicitudes de derechos del titular (quien los recibe suele
+// trabajar desde la consola web). Los recordatorios de clase caducan en minutos y el resultado
+// de una justificación ya se informa por correo al revisarla.
 func PermiteCorreo(t Tipo) bool {
-	return t == TipoCambioHorario || t == TipoAlertaInasistencias
+	switch t {
+	case TipoCambioHorario, TipoAlertaInasistencias, TipoRecordatorioRevision, TipoVencimientoRol, TipoSolicitudDerechos:
+		return true
+	}
+	return false
 }

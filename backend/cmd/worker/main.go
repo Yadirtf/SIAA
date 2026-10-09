@@ -24,6 +24,10 @@ import (
 // cadaRetencion espacia la anonimización: basta con aplicarla unas veces al día.
 const cadaRetencion = time.Hour
 
+// cadaAvisoAdministrativo espacia los recordatorios de revisión y de vencimiento de roles: su
+// plazo se mide en horas y días, y la cola deduplica los repetidos.
+const cadaAvisoAdministrativo = 15 * time.Minute
+
 func main() {
 	_ = godotenv.Load(".env", "../.env")
 	cfg, err := config.Load()
@@ -53,6 +57,8 @@ func main() {
 	tareas := []tarea{
 		{nombre: "ausencias", ejecutar: app.NuevoAusenciasWorker(mongoClient).EjecutarCiclo},
 		{nombre: "programación de avisos", ejecutar: notificaciones.Programador.EjecutarCiclo},
+		{nombre: "recordatorios de revisión", cada: cadaAvisoAdministrativo, ejecutar: notificaciones.Revision.EjecutarCiclo},
+		{nombre: "avisos de vencimiento de roles", cada: cadaAvisoAdministrativo, ejecutar: notificaciones.VencimientoRoles.EjecutarCiclo},
 		{nombre: "envío de avisos", ejecutar: notificaciones.Despachador.EjecutarCiclo},
 		{nombre: "anonimización de coordenadas", cada: cadaRetencion, ejecutar: retencion(app.NuevoRetencionWorker(mongoClient).EjecutarCiclo)},
 	}

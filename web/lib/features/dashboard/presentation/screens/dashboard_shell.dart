@@ -24,6 +24,7 @@ import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
 import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
 import '../../../privacidad/presentation/screens/politica_privacidad_view.dart';
+import '../../../privacidad/presentation/screens/solicitudes_derechos_screen.dart';
 import '../../../reportes/presentation/screens/reporte_cumplimiento_screen.dart';
 import '../../../reportes/presentation/screens/reportes_operativos_providers.dart';
 import '../../../usuarios/presentation/screens/usuarios_screen.dart';
@@ -108,6 +109,8 @@ class _DashboardShellState extends State<DashboardShell> {
         return const AuditoriaScreen();
       case NavSection.privacidad:
         return const PoliticaPrivacidadView();
+      case NavSection.solicitudesDerechos:
+        return const SolicitudesDerechosScreen();
     }
   }
 

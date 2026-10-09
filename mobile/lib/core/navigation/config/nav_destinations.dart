@@ -133,4 +133,16 @@ class NavDestinations {
 
   /// Destinos de cuenta disponibles para cualquier rol (Drawer).
   static const comunes = [perfil, notificaciones, privacidad];
+
+  /// Derechos del titular (US-LEG-02): se abre desde Perfil, Privacidad o un aviso.
+  static const derechos = NavItem(
+    label: 'Mis datos y derechos',
+    icon: Icons.folder_shared_outlined,
+    iconSelected: Icons.folder_shared_rounded,
+    route: '/shell/derechos',
+    permiso: null,
+  );
+
+  /// Destinos de cuenta sin entrada propia en el menú.
+  static const sinMenu = [derechos];
 }

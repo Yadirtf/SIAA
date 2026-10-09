@@ -74,8 +74,10 @@ type Config struct {
 	NotifSilencioFin     string
 	NotifRecordatorioMin int
 	NotifCierreMin       int
-	InstitucionNombre    string
-	PrivacidadContacto   string
+	// NotifRevisionHoras es el plazo tras el que se recuerda al revisor una justificación (US-JUS-04).
+	NotifRevisionHoras int
+	InstitucionNombre  string
+	PrivacidadContacto string
 
 	// Parámetros GPS por defecto — SRS §3.5
 	DefaultHolguraEntradaAntesMin   int
@@ -153,6 +155,7 @@ func Load() (*Config, error) {
 	cfg.NotifSilencioFin = getEnv("NOTIF_SILENCIO_FIN", "06:00")
 	cfg.NotifRecordatorioMin = getEnvInt("NOTIF_RECORDATORIO_MIN", 15)
 	cfg.NotifCierreMin = getEnvInt("NOTIF_CIERRE_MIN", 5)
+	cfg.NotifRevisionHoras = getEnvInt("NOTIF_REVISION_JUSTIFICACION_HORAS", 48)
 	cfg.InstitucionNombre = getEnv("INSTITUCION_NOMBRE", "")
 	cfg.PrivacidadContacto = getEnv("PRIVACIDAD_CONTACTO", "")
 

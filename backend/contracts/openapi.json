@@ -198,6 +198,46 @@
         ],
         "type": "object"
       },
+      "CanalDerechos": {
+        "properties": {
+          "autoridad": {
+            "type": "string"
+          },
+          "contacto": {
+            "type": "string"
+          },
+          "institucion": {
+            "type": "string"
+          },
+          "plazos": {
+            "items": {
+              "properties": {
+                "canalEnAplicacion": {
+                  "type": "string"
+                },
+                "descripcion": {
+                  "type": "string"
+                },
+                "diasHabiles": {
+                  "type": "integer"
+                },
+                "fundamentoLegal": {
+                  "type": "string"
+                },
+                "prorrogaDiasHabiles": {
+                  "type": "integer"
+                },
+                "tipo": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "ConfirmarRecuperarRequest": {
         "properties": {
           "password": {
@@ -213,6 +253,51 @@
           "token",
           "password"
         ],
+        "type": "object"
+      },
+      "CopiaDatosPersonales": {
+        "properties": {
+          "consentimientos": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "dispositivos": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "generadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "justificaciones": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "marcajes": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "responsable": {
+            "type": "string"
+          },
+          "solicitudesDerechos": {
+            "items": {
+              "$ref": "#/components/schemas/SolicitudDerecho"
+            },
+            "type": "array"
+          },
+          "titular": {
+            "type": "object"
+          }
+        },
         "type": "object"
       },
       "CrearBloqueRequest": {
@@ -383,6 +468,27 @@
           "apellido",
           "roles"
         ],
+        "type": "object"
+      },
+      "ElementoSupresion": {
+        "properties": {
+          "categoria": {
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "ELIMINABLE",
+              "CONSERVAR"
+            ],
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "fundamento": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "EntradaAuditoria": {
@@ -1450,6 +1556,108 @@
           "actualizadoEn"
         ],
         "type": "object"
+      },
+      "SolicitudDerecho": {
+        "properties": {
+          "cambios": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "RADICADA",
+              "EN_TRAMITE",
+              "ATENDIDA",
+              "DENEGADA"
+            ],
+            "type": "string"
+          },
+          "evaluacion": {
+            "items": {
+              "$ref": "#/components/schemas/ElementoSupresion"
+            },
+            "type": "array"
+          },
+          "historial": {
+            "items": {
+              "properties": {
+                "actorId": {
+                  "type": "string"
+                },
+                "en": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "estado": {
+                  "type": "string"
+                },
+                "nota": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "radicadaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "responsableId": {
+            "type": "string"
+          },
+          "respuesta": {
+            "type": "string"
+          },
+          "resueltaEn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "RECTIFICACION",
+              "SUPRESION"
+            ],
+            "type": "string"
+          },
+          "titularId": {
+            "type": "string"
+          },
+          "venceEn": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SolicitudDerechoEnBandeja": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SolicitudDerecho"
+          },
+          {
+            "properties": {
+              "titularCorreo": {
+                "type": "string"
+              },
+              "titularNombre": {
+                "type": "string"
+              },
+              "vencida": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        ]
       },
       "TableroEnVivo": {
         "properties": {
@@ -5733,6 +5941,193 @@
         ]
       }
     },
+    "/me/datos": {
+      "get": {
+        "description": "Se entrega como archivo JSON adjunto y queda auditada (DATOS_PERSONALES_EXPORTADOS).",
+        "operationId": "descargarMisDatos",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopiaDatosPersonales"
+                }
+              }
+            },
+            "description": "Archivo mis-datos-siaa.json"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Copia estructurada de mis datos personales, marcajes, justificaciones y consentimientos (US-LEG-02 AC-01)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/me/derechos/solicitudes": {
+      "get": {
+        "operationId": "misSolicitudesDerechos",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SolicitudDerecho"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Solicitudes del titular"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Mis solicitudes de rectificación y supresión con su estado y plazo",
+        "tags": [
+          "privacidad"
+        ]
+      },
+      "post": {
+        "description": "Genera un caso con responsable y plazo legal (15 días hábiles). La supresión trae la evaluación de qué se elimina y qué se conserva, con fundamento.",
+        "operationId": "radicarSolicitudDerecho",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "cambios": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Solo rectificación; claves nombre, apellido y documento.",
+                    "type": "object"
+                  },
+                  "descripcion": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "RECTIFICACION",
+                      "SUPRESION"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tipo",
+                  "descripcion"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDerecho"
+                }
+              }
+            },
+            "description": "Caso radicado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "409": {
+            "description": "Ya hay una solicitud del mismo tipo en trámite"
+          },
+          "422": {
+            "description": "Datos inválidos"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Radicar una solicitud de rectificación o supresión (US-LEG-02 AC-02, AC-03)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/me/derechos/supresion": {
+      "get": {
+        "operationId": "evaluarSupresion",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "elementos": {
+                      "items": {
+                        "$ref": "#/components/schemas/ElementoSupresion"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Evaluación"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Qué datos pueden suprimirse y cuáles se conservan por obligación legal, con fundamento (US-LEG-02 AC-03)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
     "/me/historial": {
       "get": {
         "description": "Cada elemento de items incluye además usuarioNombre, asignaturaNombre, grupoNumero y espacioCodigo para mostrar nombres en lugar de identificadores.",
@@ -6588,6 +6983,28 @@
         ]
       }
     },
+    "/privacidad/derechos": {
+      "get": {
+        "operationId": "canalDerechosTitular",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanalDerechos"
+                }
+              }
+            },
+            "description": "Canal y plazos"
+          }
+        },
+        "security": [],
+        "summary": "Canal de derechos del titular con sus plazos legales (público, US-LEG-02 AC-04)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
     "/privacidad/investigaciones": {
       "get": {
         "operationId": "listarInvestigaciones",
@@ -6767,6 +7184,205 @@
         },
         "security": [],
         "summary": "Aviso de privacidad vigente (público)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/privacidad/solicitudes": {
+      "get": {
+        "operationId": "bandejaSolicitudesDerechos",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "estado",
+            "schema": {
+              "enum": [
+                "RADICADA",
+                "EN_TRAMITE",
+                "ATENDIDA",
+                "DENEGADA"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "enum": [
+                "RECTIFICACION",
+                "SUPRESION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "abiertas",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SolicitudDerechoEnBandeja"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Solicitudes con el titular y si vencieron"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Bandeja de solicitudes de derechos de los titulares, por plazo (usuario:editar)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/privacidad/solicitudes/{id}/asumir": {
+      "post": {
+        "operationId": "asumirSolicitudDerecho",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDerecho"
+                }
+              }
+            },
+            "description": "Caso en trámite"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "409": {
+            "description": "Ya resuelta o modificada por otra persona"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Asumir el caso como responsable y ponerlo en trámite (usuario:editar)",
+        "tags": [
+          "privacidad"
+        ]
+      }
+    },
+    "/privacidad/solicitudes/{id}/resolver": {
+      "post": {
+        "operationId": "resolverSolicitudDerecho",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "atendida": {
+                    "type": "boolean"
+                  },
+                  "respuesta": {
+                    "minLength": 10,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "atendida",
+                  "respuesta"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDerecho"
+                }
+              }
+            },
+            "description": "Caso resuelto y auditado"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "409": {
+            "description": "Ya resuelta, o el documento pertenece a otra cuenta"
+          },
+          "422": {
+            "description": "Respuesta faltante"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error normalizado §9.2"
+          }
+        },
+        "summary": "Resolver el caso; si se atiende, aplica la rectificación o la supresión de lo eliminable (usuario:editar)",
         "tags": [
           "privacidad"
         ]

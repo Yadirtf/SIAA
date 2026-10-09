@@ -23,6 +23,7 @@ enum NavSection {
   usuarios,
   auditoria,
   privacidad,
+  solicitudesDerechos,
 }
 
 class NavItem {
@@ -182,6 +183,14 @@ class NavItem {
       title: 'Aviso de privacidad',
       icon: Icons.privacy_tip_outlined,
       category: 'LEGAL',
+    ),
+    // Atender rectificaciones y supresiones modifica cuentas (US-LEG-02).
+    NavItem(
+      section: NavSection.solicitudesDerechos,
+      title: 'Derechos de titulares',
+      icon: Icons.folder_shared_outlined,
+      category: 'LEGAL',
+      permiso: 'usuario:editar',
     ),
   ];
 }

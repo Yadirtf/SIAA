@@ -87,6 +87,7 @@ class AppShell extends StatelessWidget {
       ...navState.bottomItems,
       ...navState.drawerExtraItems,
       ...NavDestinations.comunes,
+      ...NavDestinations.sinMenu,
     ];
     for (final item in items) {
       if (item.route == route) return item.label;

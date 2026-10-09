@@ -204,16 +204,19 @@ type Scope struct {
 }
 
 // IsInScope comprueba si un recurso identificado por tipo+id cae dentro de los ámbitos del usuario.
-// Un superadmin con ámbitos vacíos tiene acceso total.
+// Sin ámbitos no hay acceso: el acceso total lo da el rol (EsRolGlobal), nunca la lista vacía
+// (US-ROL-02 AC-06, mínimo privilegio).
 func IsInScope(userScopes []Scope, resourceType ScopeType, resourceID string) bool {
-	if len(userScopes) == 0 {
-		// Sin ámbitos = acceso total (superadmin, ADR-02)
-		return true
-	}
 	for _, s := range userScopes {
 		if s.Tipo == resourceType && s.ID == resourceID {
 			return true
 		}
 	}
 	return false
+}
+
+// PermiteAmbito combina el rol y los ámbitos: los roles institucionales (EsRolGlobal) acceden a
+// todo; el resto solo a lo que tiene asignado.
+func PermiteAmbito(rolActivo string, userScopes []Scope, resourceType ScopeType, resourceID string) bool {
+	return EsRolGlobal(rolActivo) || IsInScope(userScopes, resourceType, resourceID)
 }

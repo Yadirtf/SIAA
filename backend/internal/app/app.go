@@ -178,7 +178,7 @@ func Construir(cfg *config.Config, log *applog.Logger, mongoClient *mongoRepo.Cl
 	authH := handler.NewAuthHandler(authSvc)
 	openapiH := handler.NewOpenAPIHandler(openapiPath)
 	rolesH := handler.NewRolesHandler(rbacSvc)
-	geoH := handler.NewGeoHandler(geoSvc)
+	geoH := handler.NewGeoHandler(geoSvc).WithFacultades(estructuraRepo)
 	acaH := handler.NewAcademicoHandler(acaSvc)
 	parametroH := handler.NewParametroHandler(parametroSvc)
 	nombrador := usecaseMarcaje.NewNombradorMarcajes(sesionRepo, estructuraRepo, espacioRepo, usuarioRepo)

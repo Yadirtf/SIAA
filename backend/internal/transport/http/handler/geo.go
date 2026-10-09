@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/siaa/backend/internal/domain/geo"
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/dto"
 	"github.com/siaa/backend/internal/transport/http/middleware"
@@ -17,7 +16,8 @@ import (
 
 // GeoHandler maneja las peticiones HTTP de sedes, bloques y espacios.
 type GeoHandler struct {
-	svc *usecaseGeo.Service
+	svc        *usecaseGeo.Service
+	facultades LectorFacultades
 }
 
 func NewGeoHandler(svc *usecaseGeo.Service) *GeoHandler {
@@ -61,16 +61,12 @@ func (h *GeoHandler) CrearEspacio(c echo.Context) error {
 }
 
 func (h *GeoHandler) ListarEspacios(c echo.Context) error {
-	claims, _ := middleware.GetClaims(c)
-	sedeID, err := middleware.EnforceScopeFilter(claims, rbac.ScopeSede, c.QueryParam("sedeId"))
+	todas, sedes, err := h.sedesDeConsulta(c, c.QueryParam("sedeId"))
 	if err != nil {
 		return err
 	}
 
-	filter := repository.EspacioFilter{
-		SedeID:   sedeID,
-		BloqueID: c.QueryParam("bloqueId"),
-	}
+	filter := repository.EspacioFilter{BloqueID: c.QueryParam("bloqueId")}
 	if pStr := c.QueryParam("piso"); pStr != "" {
 		if p, err := strconv.Atoi(pStr); err == nil {
 			filter.Piso = &p
@@ -84,15 +80,20 @@ func (h *GeoHandler) ListarEspacios(c echo.Context) error {
 		e := geo.EstadoEspacio(eStr)
 		filter.Estado = &e
 	}
-
-	espacios, err := h.svc.ListarEspacios(c.Request().Context(), filter)
-	if err != nil {
-		return err
+	if todas {
+		sedes = []string{""}
 	}
 
-	res := make([]dto.EspacioResponse, 0, len(espacios))
-	for _, e := range espacios {
-		res = append(res, dto.EspacioToResponse(e))
+	res := make([]dto.EspacioResponse, 0)
+	for _, sedeID := range sedes {
+		filter.SedeID = sedeID
+		espacios, err := h.svc.ListarEspacios(c.Request().Context(), filter)
+		if err != nil {
+			return err
+		}
+		for _, e := range espacios {
+			res = append(res, dto.EspacioToResponse(e))
+		}
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -104,8 +105,7 @@ func (h *GeoHandler) ObtenerEspacio(c echo.Context) error {
 		return err
 	}
 
-	claims, _ := middleware.GetClaims(c)
-	if err := middleware.ValidateResourceScope(claims, rbac.ScopeSede, espacio.SedeID); err != nil {
+	if err := h.exigirSede(c, espacio.SedeID); err != nil {
 		return err
 	}
 

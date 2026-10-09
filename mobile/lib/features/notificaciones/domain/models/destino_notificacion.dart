@@ -1,7 +1,13 @@
 // destino_notificacion.dart — Traduce data.ruta de una notificación a un destino (US-NOT-01/02, US-MAR-12)
 import 'package:equatable/equatable.dart';
 
-enum PantallaNotificacion { marcaje, justificaciones, horario }
+enum PantallaNotificacion {
+  marcaje,
+  justificaciones,
+  horario,
+  revisionJustificaciones,
+  derechos,
+}
 
 class DestinoNotificacion extends Equatable {
   final PantallaNotificacion pantalla;
@@ -18,6 +24,8 @@ class DestinoNotificacion extends Equatable {
     '/marcaje': PantallaNotificacion.marcaje,
     '/justificaciones': PantallaNotificacion.justificaciones,
     '/horario': PantallaNotificacion.horario,
+    '/justificaciones/revision': PantallaNotificacion.revisionJustificaciones,
+    '/privacidad/derechos': PantallaNotificacion.derechos,
   };
 
   /// Ruta del shell que aloja la pantalla destino.
@@ -29,6 +37,10 @@ class DestinoNotificacion extends Equatable {
         return '/shell/justificaciones';
       case PantallaNotificacion.horario:
         return '/shell/horario';
+      case PantallaNotificacion.revisionJustificaciones:
+        return '/shell/aprobar-justificaciones';
+      case PantallaNotificacion.derechos:
+        return '/shell/derechos';
     }
   }
 
