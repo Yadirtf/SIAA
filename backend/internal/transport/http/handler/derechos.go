@@ -45,7 +45,7 @@ func (h *DerechosHandler) MisDatos(c echo.Context) error {
 	}
 	c.Response().Header().Set(echo.HeaderContentDisposition, `attachment; filename="mis-datos-siaa.json"`)
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-store")
-	return c.Blob(http.StatusOK, echo.MIMEApplicationJSONCharsetUTF8, cuerpo)
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, cuerpo)
 }
 
 // MisSolicitudes maneja GET /me/derechos/solicitudes.
