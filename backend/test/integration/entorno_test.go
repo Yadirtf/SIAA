@@ -23,6 +23,7 @@ import (
 	mongoRepo "github.com/siaa/backend/internal/repository/mongo"
 	"github.com/siaa/backend/internal/repository/mongo/migrations"
 	"github.com/siaa/backend/internal/repository/mongo/seed"
+	"github.com/siaa/backend/internal/usecase/auth/crypto"
 )
 
 // Credenciales de los usuarios semilla de desarrollo (seed/users.go).
@@ -43,6 +44,8 @@ type entorno struct {
 	t       *testing.T
 	app     *app.App
 	cliente *mongoRepo.Client
+	// secretosTOTP guarda el secreto de segundo factor enrolado por cada correo administrativo.
+	secretosTOTP map[string]string
 }
 
 // nuevoEntorno crea la base efímera, ejecuta migraciones y semillas y construye la app.
@@ -58,6 +61,7 @@ func nuevoEntorno(t *testing.T) *entorno {
 	t.Setenv("MONGO_DB", "siaa_it_"+hex.EncodeToString(sufijo))
 	t.Setenv("APP_ENV", "test")
 	t.Setenv("RATE_LIMIT_PER_MINUTE", "100000")
+	t.Setenv("AUTH_RATE_LIMIT_PER_MINUTE", "60")
 	if os.Getenv("JWT_SECRET") == "" {
 		t.Setenv("JWT_SECRET", "secreto-de-pruebas-de-integracion-32+")
 	}
@@ -87,7 +91,7 @@ func nuevoEntorno(t *testing.T) *entorno {
 	if err != nil {
 		t.Fatalf("construir app: %v", err)
 	}
-	return &entorno{t: t, app: a, cliente: cliente}
+	return &entorno{t: t, app: a, cliente: cliente, secretosTOTP: map[string]string{}}
 }
 
 // llamar ejecuta una petición HTTP contra el router y decodifica la respuesta JSON.
@@ -152,12 +156,36 @@ func (e *entorno) sinErrorInterno(metodo, ruta string, cuerpo interface{}, token
 	return estado, datos
 }
 
-// iniciarSesion devuelve el access token del usuario.
+// iniciarSesion devuelve los tokens del usuario. Los roles administrativos completan el
+// segundo factor obligatorio (US-AUT-05): lo enrolan la primera vez y luego presentan el código.
 func (e *entorno) iniciarSesion(correo, clave, dispositivo string) map[string]interface{} {
 	e.t.Helper()
-	return e.exigir(http.MethodPost, "/auth/login", map[string]interface{}{
+	res := e.exigir(http.MethodPost, "/auth/login", map[string]interface{}{
 		"correo": correo, "password": clave, "dispositivoId": dispositivo,
 	}, "", http.StatusOK)
+	desafio := texto(res["desafioToken"])
+	if desafio == "" {
+		return res
+	}
+	ruta := "/auth/totp/verificar"
+	if res["requiereConfigurarTOTP"] == true {
+		enrol := e.exigir(http.MethodPost, "/auth/totp/enrolar", map[string]interface{}{"desafioToken": desafio}, "", http.StatusOK)
+		e.secretosTOTP[correo] = texto(enrol["secretKey"])
+		ruta = "/auth/totp/enrolar/confirmar"
+	}
+	return e.exigir(http.MethodPost, ruta, map[string]interface{}{
+		"desafioToken": desafio, "codigo": e.codigoTOTP(correo), "dispositivoId": dispositivo,
+	}, "", http.StatusOK)
+}
+
+// codigoTOTP genera el código vigente del secreto enrolado para el correo.
+func (e *entorno) codigoTOTP(correo string) string {
+	e.t.Helper()
+	codigo, err := crypto.GenerateTOTPCode(e.secretosTOTP[correo], time.Now())
+	if err != nil {
+		e.t.Fatalf("generar código TOTP: %v", err)
+	}
+	return codigo
 }
 
 func (e *entorno) token(correo, clave string) string {

@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/navigation/presentation/bloc/nav_bloc.dart';
 import '../../../../core/navigation/presentation/bloc/nav_event.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/screens/desbloqueo_screen.dart';
 import 'splash_screen.dart';
 
 /// Router inicial que escucha AuthBloc y redirige a /shell o /login.
+/// Con una sesión guardada que exige verificación local muestra el desbloqueo (US-AUT-06).
 class SplashRouter extends StatelessWidget {
   const SplashRouter({super.key});
 
@@ -27,7 +29,14 @@ class SplashRouter extends StatelessWidget {
           Navigator.of(context).pushReplacementNamed('/login');
         }
       },
-      child: const SplashScreen(),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        buildWhen: (antes, ahora) =>
+            (antes is AuthDesbloqueoRequerido) !=
+            (ahora is AuthDesbloqueoRequerido),
+        builder: (context, state) => state is AuthDesbloqueoRequerido
+            ? const DesbloqueoScreen()
+            : const SplashScreen(),
+      ),
     );
   }
 }

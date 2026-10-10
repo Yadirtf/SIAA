@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/siaa/backend/internal/domain/academico"
-	"github.com/siaa/backend/internal/domain/geo"
 	"github.com/siaa/backend/internal/repository"
 	mongoConn "github.com/siaa/backend/internal/repository/mongo"
 )
@@ -44,6 +43,8 @@ type sesionDoc struct {
 	MotivoCancelacion       string             `bson:"motivoCancelacion,omitempty"`
 	SedeID                  string             `bson:"sedeId"`
 	FacultadID              string             `bson:"facultadId"`
+	VentanaEstudiantil      *ventanaEstDoc     `bson:"ventanaEstudiantil,omitempty"`
+	RanuraOriginal          *ranuraDoc         `bson:"ranuraOriginal,omitempty"`
 	Eliminado               bool               `bson:"eliminado"`
 	CreadoEn                time.Time          `bson:"creadoEn"`
 	ActualizadoEn           time.Time          `bson:"actualizadoEn"`
@@ -110,12 +111,11 @@ func (r *sesionRepository) FindByID(ctx context.Context, id string) (*academico.
 
 func (r *sesionRepository) FindByAsignacionFechaHora(ctx context.Context, asignacionID string, fecha string, horaInicio string) (*academico.Sesion, error) {
 	var doc sesionDoc
-	err := r.col.FindOne(ctx, bson.D{
-		{Key: "asignacionId", Value: asignacionID},
-		{Key: "fecha", Value: fecha},
-		{Key: "horaInicio", Value: horaInicio},
-		{Key: "eliminado", Value: false},
-	}).Decode(&doc)
+	// Una sesión reprogramada se reconoce por su ranura original (US-ACA-06).
+	err := r.col.FindOne(ctx, bson.M{"asignacionId": asignacionID, "eliminado": false, "$or": []bson.M{
+		{"fecha": fecha, "horaInicio": horaInicio, "ranuraOriginal": nil},
+		{"ranuraOriginal.fecha": fecha, "ranuraOriginal.horaInicio": horaInicio},
+	}}).Decode(&doc)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, nil
 	}
@@ -144,6 +144,9 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	}
 	if filter.DocenteID != "" {
 		criteria = append(criteria, bson.E{Key: "docenteIds", Value: filter.DocenteID})
+	}
+	if filter.GrupoIDs != nil {
+		criteria = append(criteria, bson.E{Key: "grupoId", Value: bson.M{"$in": filter.GrupoIDs}})
 	}
 	if filter.EspacioID != "" {
 		criteria = append(criteria, bson.E{Key: "espacioId", Value: filter.EspacioID})
@@ -178,22 +181,6 @@ func (r *sesionRepository) List(ctx context.Context, filter repository.SesionFil
 	return res, nil
 }
 
-func (r *sesionRepository) Update(ctx context.Context, s *academico.Sesion) error {
-	oid, err := primitive.ObjectIDFromHex(s.ID())
-	if err != nil {
-		return fmt.Errorf("invalid sesion ID: %w", err)
-	}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "espacioId", Value: s.EspacioID()},
-		{Key: "estado", Value: string(s.Estado())},
-		{Key: "espacioVersionGeometria", Value: s.EspacioVersionGeometria()},
-		{Key: "motivoCancelacion", Value: s.MotivoCancelacion()},
-		{Key: "actualizadoEn", Value: time.Now().UTC()},
-	}}}
-	_, err = r.col.UpdateByID(ctx, oid, update)
-	return err
-}
-
 func (r *sesionRepository) CountSesionesFuturasPorEspacio(ctx context.Context, espacioID string, desde time.Time) (int64, error) {
 	return r.col.CountDocuments(ctx, bson.D{
 		{Key: "espacioId", Value: espacioID},
@@ -226,6 +213,8 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 		MotivoCancelacion:       s.MotivoCancelacion(),
 		SedeID:                  s.SedeID(),
 		FacultadID:              s.FacultadID(),
+		VentanaEstudiantil:      ventanaEstDeDominio(s.VentanaEstudiantil()),
+		RanuraOriginal:          ranuraDeDominio(s.RanuraOriginal()),
 		Eliminado:               false,
 		CreadoEn:                s.CreadoEn(),
 		ActualizadoEn:           s.ActualizadoEn(),
@@ -251,31 +240,8 @@ func toSesionDoc(s *academico.Sesion) sesionDoc {
 }
 
 func docToSesion(doc *sesionDoc) *academico.Sesion {
-	var geomSnap *geo.GeoPolygon
-	if doc.GeometriaSnapshot != nil && len(doc.GeometriaSnapshot.Coordinates) > 0 {
-		verts := make([]geo.GeoPoint, 0, len(doc.GeometriaSnapshot.Coordinates[0]))
-		for _, c := range doc.GeometriaSnapshot.Coordinates[0] {
-			if pt, err := geo.NewGeoPoint(c[0], c[1]); err == nil {
-				verts = append(verts, pt)
-			}
-		}
-		if poly, err := geo.NewGeoPolygon(verts); err == nil {
-			geomSnap = &poly
-		}
-	}
-
-	var geomBufSnap *geo.GeoPolygon
-	if doc.GeometriaBufferSnapshot != nil && len(doc.GeometriaBufferSnapshot.Coordinates) > 0 {
-		vertsBuf := make([]geo.GeoPoint, 0, len(doc.GeometriaBufferSnapshot.Coordinates[0]))
-		for _, c := range doc.GeometriaBufferSnapshot.Coordinates[0] {
-			if pt, err := geo.NewGeoPoint(c[0], c[1]); err == nil {
-				vertsBuf = append(vertsBuf, pt)
-			}
-		}
-		if polyBuf, err := geo.NewGeoPolygon(vertsBuf); err == nil {
-			geomBufSnap = &polyBuf
-		}
-	}
+	geomSnap := poligonoDeDoc(doc.GeometriaSnapshot)
+	geomBufSnap := poligonoDeDoc(doc.GeometriaBufferSnapshot)
 
 	params := make(map[string]interface{}, len(doc.ParametrosCongelados))
 	for k, v := range doc.ParametrosCongelados {
@@ -307,5 +273,6 @@ func docToSesion(doc *sesionDoc) *academico.Sesion {
 		doc.MotivoCancelacion,
 		doc.CreadoEn,
 		doc.ActualizadoEn,
-	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID)
+	).ConUbicacionAcademica(doc.SedeID, doc.FacultadID).ConVentanaEstudiantil(doc.VentanaEstudiantil.dominio()).
+		ConRanuraOriginal(doc.RanuraOriginal.dominio())
 }

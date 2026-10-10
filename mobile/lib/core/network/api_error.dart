@@ -16,8 +16,11 @@ String mensajeDeError(Object error,
         : porDefecto;
   }
   final data = error.response?.data;
-  if (data is Map && data['mensaje'] is String) {
-    return data['mensaje'] as String;
+  if (data is Map) {
+    for (final clave in const ['mensaje', 'message']) {
+      final texto = data[clave];
+      if (texto is String && texto.trim().isNotEmpty) return texto;
+    }
   }
   switch (error.response?.statusCode) {
     case 401:
@@ -34,6 +37,10 @@ String mensajeDeError(Object error,
       return 'La conexión tardó demasiado. Verifica tu internet.';
     case DioExceptionType.connectionError:
       return 'No se pudo conectar al servidor. Verifica tu conexión.';
+    case DioExceptionType.badCertificate:
+      // Fijación de certificado fallida o compilación sin pines (US-SEG-01).
+      return 'No se pudo verificar la identidad del servidor de SIAA. '
+          'Actualiza la aplicación o contacta a soporte.';
     default:
       return porDefecto;
   }

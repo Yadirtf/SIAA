@@ -6,116 +6,75 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
+import '../cubit/excepciones_cubit.dart';
+import '../dialogs/excepcion_dialog.dart';
 
+/// Calendario de excepciones (US-ACA-04): crear con ámbito, eliminar y, si la
+/// eliminación libera sesiones, ofrecer regenerarlas sin hacerlo solo (AC-04).
 class ExcepcionesScreen extends StatelessWidget {
-  const ExcepcionesScreen({super.key});
+  final ExcepcionesCubit? cubit;
 
-  void _showCreateDialog(BuildContext context) {
-    final nombreCtrl = TextEditingController();
-    final inicioCtrl = TextEditingController(text: '2026-03-23');
-    final finCtrl = TextEditingController(text: '2026-03-23');
-    String selectedTipo = 'FESTIVO';
-    final formKey = GlobalKey<FormState>();
+  const ExcepcionesScreen({super.key, this.cubit});
 
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setMState) => AlertDialog(
-          title: Text('Nueva Excepción de Calendario', style: AppTextStyles.h3),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nombreCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre / Motivo (ej: Día Festivo)',
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedTipo,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de Excepción',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'FESTIVO',
-                      child: Text('Festivo Oficial'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'RECESO',
-                      child: Text('Semana de Receso'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'JORNADA_INSTITUCIONAL',
-                      child: Text('Jornada Institucional'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'PARO',
-                      child: Text('Suspensión / Paro'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setMState(() => selectedTipo = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: inicioCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Fecha Inicio',
-                        ),
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: finCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Fecha Fin',
-                        ),
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Requerido' : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() ?? false) {
-                  context.read<AcademicoBloc>().add(
-                    CreateExcepcionEvent(
-                      nombre: nombreCtrl.text.trim(),
-                      tipo: selectedTipo,
-                      ambito: 'GLOBAL',
-                      fechaInicio: inicioCtrl.text.trim(),
-                      fechaFin: finCtrl.text.trim(),
-                    ),
-                  );
-                  Navigator.pop(dialogCtx);
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ExcepcionesCubit>(
+      create: (_) => cubit ?? ExcepcionesCubit(),
+      child: BlocListener<ExcepcionesCubit, ExcepcionesState>(
+        listener: _alCambiar,
+        child: const _ExcepcionesVista(),
       ),
+    );
+  }
+
+  void _alCambiar(BuildContext context, ExcepcionesState state) {
+    final texto = state.error ?? state.mensaje;
+    if (texto == null) return;
+    context.read<AcademicoBloc>().add(const LoadAcademicoDataEvent());
+    final liberadas = state.liberadas;
+    if (liberadas == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
+      return;
+    }
+    final cubit = context.read<ExcepcionesCubit>();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Fechas liberadas'),
+        content: Text(texto),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Ahora no'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              cubit.regenerar(liberadas);
+            },
+            child: const Text('Regenerar sesiones'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExcepcionesVista extends StatelessWidget {
+  const _ExcepcionesVista();
+
+  Future<void> _showCreateDialog(BuildContext context) async {
+    final cubit = context.read<ExcepcionesCubit>();
+    final nueva = await ExcepcionDialog.mostrar(context);
+    if (nueva == null) return;
+    await cubit.crear(
+      nombre: nueva.nombre,
+      tipo: nueva.tipo,
+      ambito: nueva.ambito,
+      ambitoId: nueva.ambitoId,
+      fechaInicio: nueva.fechaInicio,
+      fechaFin: nueva.fechaFin,
     );
   }
 
@@ -223,9 +182,9 @@ class ExcepcionesScreen extends StatelessWidget {
                               Icons.delete_outline,
                               color: AppColors.accentRose,
                             ),
-                            onPressed: () => context.read<AcademicoBloc>().add(
-                              DeleteExcepcionEvent(e.id),
-                            ),
+                            tooltip: 'Eliminar',
+                            onPressed: () =>
+                                context.read<ExcepcionesCubit>().eliminar(e.id),
                           ),
                         ),
                       );

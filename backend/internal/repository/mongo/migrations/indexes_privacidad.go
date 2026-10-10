@@ -36,6 +36,20 @@ func CrearIndicesNotificacionesYPrivacidad(ctx context.Context, db *mongo.Databa
 			Keys:    bson.D{{Key: "usuarioId", Value: 1}, {Key: "decididoEn", Value: -1}},
 			Options: options.Index().SetName("consentimientos_usuario"),
 		}},
+		// Solicitudes de derechos del titular por plazo (US-LEG-02) y recordatorio de revisión
+		// de justificaciones pendientes (US-JUS-04 AC-02).
+		{"solicitudes_derechos", mongo.IndexModel{
+			Keys:    bson.D{{Key: "titularId", Value: 1}, {Key: "estado", Value: 1}},
+			Options: options.Index().SetName("solicitudes_derechos_titular"),
+		}},
+		{"solicitudes_derechos", mongo.IndexModel{
+			Keys:    bson.D{{Key: "estado", Value: 1}, {Key: "venceEn", Value: 1}},
+			Options: options.Index().SetName("solicitudes_derechos_plazo"),
+		}},
+		{"justificaciones", mongo.IndexModel{
+			Keys:    bson.D{{Key: "estado", Value: 1}, {Key: "creadoEn", Value: 1}},
+			Options: options.Index().SetName("justificaciones_pendientes"),
+		}},
 		// Anonimización por retención (RNF-LEG-006).
 		{"marcajes", mongo.IndexModel{
 			Keys:    bson.D{{Key: "timestampServidor", Value: 1}},

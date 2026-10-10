@@ -140,6 +140,7 @@ type SesionInfo struct {
 	FinProgramado             time.Time
 	Modalidad                 string // PRESENCIAL, VIRTUAL
 	VentanaEstudiantilAbierta bool
+	VentanaEstudiantilAbre    time.Time
 	VentanaEstudiantilCierra  time.Time
 }
 

@@ -2,6 +2,9 @@
 // Implementa las llamadas HTTP y transforma los DTO en modelos de dominio.
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import 'segundo_factor.dart';
+
+export 'segundo_factor.dart';
 
 // ─── Modelos de dominio ─────────────────────────────────────────────────────
 
@@ -11,18 +14,24 @@ class TokenPair {
   final String expiraEn;
   final UsuarioInfo usuario;
 
+  /// Presente cuando falta el segundo factor (US-AUT-05); entonces no hay tokens.
+  final DesafioTotp? desafio;
+
   const TokenPair({
     required this.accessToken,
     required this.refreshToken,
     required this.expiraEn,
     required this.usuario,
+    this.desafio,
   });
 
   factory TokenPair.fromJson(Map<String, dynamic> json) => TokenPair(
-        accessToken: json['accessToken'] as String,
-        refreshToken: json['refreshToken'] as String,
+        accessToken: json['accessToken'] as String? ?? '',
+        refreshToken: json['refreshToken'] as String? ?? '',
         expiraEn: json['expiraEn'] as String? ?? '',
-        usuario: UsuarioInfo.fromJson(json['usuario'] as Map<String, dynamic>),
+        usuario: UsuarioInfo.fromJson(
+            json['usuario'] as Map<String, dynamic>? ?? const {}),
+        desafio: DesafioTotp.fromJson(json),
       );
 }
 
@@ -119,6 +128,34 @@ class AuthRepository {
         'correo': correo,
         'password': password,
       });
+      return TokenPair.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
+  /// Inicia el enrolamiento TOTP obligatorio desde el desafío (US-AUT-05 AC-01).
+  Future<TotpEnrolamiento> enrolarTotp(DesafioTotp desafio) async {
+    try {
+      final response = await _client
+          .post('/auth/totp/enrolar', data: {'desafioToken': desafio.token});
+      return TotpEnrolamiento.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
+  /// Presenta el código: confirma el enrolamiento o verifica el TOTP activo.
+  Future<TokenPair> completarTotp({
+    required DesafioTotp desafio,
+    required String codigo,
+  }) async {
+    try {
+      final ruta = desafio.configurar
+          ? '/auth/totp/enrolar/confirmar'
+          : '/auth/totp/verificar';
+      final response = await _client
+          .post(ruta, data: {'desafioToken': desafio.token, 'codigo': codigo});
       return TokenPair.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioError(e);

@@ -11,7 +11,7 @@ import (
 )
 
 // Version de la política vigente. Súbala cada vez que cambie politica.md.
-const Version = "1.0"
+const Version = "1.1"
 
 // ActualizadaEn es la fecha de publicación de la versión vigente.
 const ActualizadaEn = "2026-09-30"

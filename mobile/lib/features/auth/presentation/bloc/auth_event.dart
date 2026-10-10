@@ -43,3 +43,22 @@ class AuthContextoSolicitado extends AuthEvent {
   @override
   List<Object?> get props => [rol];
 }
+
+/// Código TOTP (o de respaldo) para el desafío pendiente (US-AUT-05).
+class AuthSegundoFactorEnviado extends AuthEvent {
+  final String codigo;
+  const AuthSegundoFactorEnviado(this.codigo);
+  @override
+  List<Object?> get props => [codigo];
+}
+
+/// Abandona el segundo factor y vuelve al formulario.
+class AuthSegundoFactorCancelado extends AuthEvent {}
+
+/// Verificación local superada en la pantalla de desbloqueo (US-AUT-06 AC-01):
+/// se restaura la sesión guardada sin reescribir credenciales.
+class AuthDesbloqueoSuperado extends AuthEvent {}
+
+/// El usuario elige su contraseña o agotó los 3 intentos (US-AUT-06 AC-03):
+/// se descarta la sesión guardada y se exige el formulario completo.
+class AuthDesbloqueoDescartado extends AuthEvent {}

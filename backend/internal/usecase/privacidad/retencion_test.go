@@ -7,19 +7,29 @@ import (
 	"time"
 
 	dompar "github.com/siaa/backend/internal/domain/parametro"
+	domain "github.com/siaa/backend/internal/domain/privacidad"
 	"github.com/siaa/backend/internal/repository"
 )
 
-// fakeRetencion registra el límite pedido y devuelve la cantidad configurada.
+// fakeRetencion registra el límite y la exclusión pedidos y devuelve la cantidad configurada.
 type fakeRetencion struct {
-	antesDe time.Time
-	n       int64
-	err     error
+	antesDe   time.Time
+	excluidos domain.ExclusionRetencion
+	n         int64
+	err       error
+	retenidos int64
 }
 
-func (f *fakeRetencion) AnonimizarUbicaciones(_ context.Context, antesDe time.Time) (int64, error) {
-	f.antesDe = antesDe
+func (f *fakeRetencion) AnonimizarUbicaciones(_ context.Context, antesDe time.Time, ex domain.ExclusionRetencion) (int64, error) {
+	f.antesDe, f.excluidos = antesDe, ex
 	return f.n, f.err
+}
+
+func (f *fakeRetencion) ContarRetenidos(_ context.Context, _ time.Time, ex domain.ExclusionRetencion) (int64, error) {
+	if ex.Vacia() {
+		return 0, nil
+	}
+	return f.retenidos, nil
 }
 
 // fakeParametros solo implementa FindByAmbitoAndClave.

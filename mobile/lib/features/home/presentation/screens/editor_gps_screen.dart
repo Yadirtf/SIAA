@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../geo_editor/data/espacio_repository.dart';
+import '../../../geo_editor/presentation/widgets/capturas_pendientes_banner.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
@@ -73,35 +74,40 @@ class _EditorGpsView extends StatelessWidget {
       },
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(SIAASpacing.lg),
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, s) => JerarquiaSelectorPanel(
-            isDark: isDark,
-            sedes: s.sedes,
-            sedeSeleccionada: s.sedeSeleccionada,
-            cargandoSedes: s.cargandoSedes,
-            onSedeChanged: (nueva) {
-              if (nueva != null) {
-                context.read<HomeBloc>().add(SeleccionarSedeRequested(nueva));
-              }
-            },
-            onNuevaSede: () => HomeDialogActions.crearSede(context),
-            bloques: s.bloques,
-            bloqueSeleccionado: s.bloqueSeleccionado,
-            cargandoBloques: s.cargandoBloques,
-            onBloqueChanged: (nuevo) {
-              if (nuevo != null) {
-                context.read<HomeBloc>().add(SeleccionarBloqueRequested(nuevo));
-              }
-            },
-            onNuevoBloque: () =>
-                HomeDialogActions.crearBloque(context, s.sedeSeleccionada),
-            espacios: s.espacios,
-            cargandoEspacios: s.cargandoEspacios,
-            onCrearAula: () => HomeDialogActions.crearAula(
-                context, s.sedeSeleccionada, s.bloqueSeleccionado),
-            onEditarEspacio: (esp) => _abrirGeoEditor(context, esp),
+        child: Column(children: [
+          const CapturasPendientesBanner(),
+          BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, s) => JerarquiaSelectorPanel(
+              isDark: isDark,
+              sedes: s.sedes,
+              sedeSeleccionada: s.sedeSeleccionada,
+              cargandoSedes: s.cargandoSedes,
+              onSedeChanged: (nueva) {
+                if (nueva != null) {
+                  context.read<HomeBloc>().add(SeleccionarSedeRequested(nueva));
+                }
+              },
+              onNuevaSede: () => HomeDialogActions.crearSede(context),
+              bloques: s.bloques,
+              bloqueSeleccionado: s.bloqueSeleccionado,
+              cargandoBloques: s.cargandoBloques,
+              onBloqueChanged: (nuevo) {
+                if (nuevo != null) {
+                  context
+                      .read<HomeBloc>()
+                      .add(SeleccionarBloqueRequested(nuevo));
+                }
+              },
+              onNuevoBloque: () =>
+                  HomeDialogActions.crearBloque(context, s.sedeSeleccionada),
+              espacios: s.espacios,
+              cargandoEspacios: s.cargandoEspacios,
+              onCrearAula: () => HomeDialogActions.crearAula(
+                  context, s.sedeSeleccionada, s.bloqueSeleccionado),
+              onEditarEspacio: (esp) => _abrirGeoEditor(context, esp),
+            ),
           ),
-        ),
+        ]),
       ),
     );
   }

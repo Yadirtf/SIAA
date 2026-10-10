@@ -5,6 +5,12 @@ class InformeGeneracionModel extends Equatable {
   final int asignacionesProcesadas;
   final int sesionesGeneradas;
   final int sesionesOmitidasIdempotencia;
+
+  /// Sesiones canceladas por una excepción ya eliminada que volvieron a programarse.
+  final int sesionesReactivadas;
+
+  /// Fechas ya pasadas que no se generaron (sin "incluir fechas pasadas").
+  final int sesionesPasadasOmitidas;
   final List<String> fechasExcluidas;
   final List<String> asignacionesOmitidas;
   final String mensaje;
@@ -13,6 +19,8 @@ class InformeGeneracionModel extends Equatable {
     required this.asignacionesProcesadas,
     required this.sesionesGeneradas,
     required this.sesionesOmitidasIdempotencia,
+    this.sesionesReactivadas = 0,
+    this.sesionesPasadasOmitidas = 0,
     required this.fechasExcluidas,
     required this.asignacionesOmitidas,
     required this.mensaje,
@@ -31,6 +39,9 @@ class InformeGeneracionModel extends Equatable {
       sesionesGeneradas: (json['sesionesGeneradas'] as num?)?.toInt() ?? 0,
       sesionesOmitidasIdempotencia:
           (json['sesionesOmitidasIdempotencia'] as num?)?.toInt() ?? 0,
+      sesionesReactivadas: (json['sesionesReactivadas'] as num?)?.toInt() ?? 0,
+      sesionesPasadasOmitidas:
+          (json['sesionesPasadasOmitidas'] as num?)?.toInt() ?? 0,
       fechasExcluidas: lineas(
         'fechasExcluidas',
         (m) => '${m['fecha'] ?? ''}: ${m['motivo'] ?? ''}',
@@ -48,6 +59,8 @@ class InformeGeneracionModel extends Equatable {
     asignacionesProcesadas,
     sesionesGeneradas,
     sesionesOmitidasIdempotencia,
+    sesionesReactivadas,
+    sesionesPasadasOmitidas,
     fechasExcluidas,
     asignacionesOmitidas,
     mensaje,

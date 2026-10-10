@@ -1,6 +1,7 @@
 // marcajes_admin_screen.dart — Pantalla principal de administración y ajuste de marcajes (US-MAR-09, US-MAR-10)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 import '../bloc/marcajes_admin_bloc.dart';
 import '../bloc/marcajes_admin_event.dart';
@@ -33,21 +34,22 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
       _paginaActual = 1;
     });
     context.read<MarcajesAdminBloc>().add(
-          CargarMarcajesAdminEvent(filtros: _filtros, pagina: 1),
-        );
+      CargarMarcajesAdminEvent(filtros: _filtros, pagina: 1),
+    );
   }
 
   void _abrirAjuste(MarcajeAdminModel marcaje) {
     AjusteMarcajeDialog.show(
       context,
       marcaje: marcaje,
-      onConfirmar: ({
-        required String accion,
-        String? nuevoResultado,
-        required bool anulado,
-        required String motivo,
-      }) {
-        context.read<MarcajesAdminBloc>().add(
+      onConfirmar:
+          ({
+            required String accion,
+            String? nuevoResultado,
+            required bool anulado,
+            required String motivo,
+          }) {
+            context.read<MarcajesAdminBloc>().add(
               AjustarMarcajeEvent(
                 marcajeId: marcaje.id,
                 accion: accion,
@@ -56,21 +58,22 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
                 motivo: motivo,
               ),
             );
-      },
+          },
     );
   }
 
   void _abrirManual() {
     MarcajeManualDialog.show(
       context,
-      onConfirmar: ({
-        required String sesionId,
-        required String usuarioId,
-        required String tipo,
-        required String resultado,
-        required String motivo,
-      }) {
-        context.read<MarcajesAdminBloc>().add(
+      onConfirmar:
+          ({
+            required String sesionId,
+            required String usuarioId,
+            required String tipo,
+            required String resultado,
+            required String motivo,
+          }) {
+            context.read<MarcajesAdminBloc>().add(
               CrearMarcajeManualEvent(
                 sesionId: sesionId,
                 usuarioId: usuarioId,
@@ -79,7 +82,7 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
                 motivo: motivo,
               ),
             );
-      },
+          },
     );
   }
 
@@ -127,12 +130,18 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
                       children: [
                         const Text(
                           'Gestión y Ajustes de Marcaje',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Consulta registros, audita anomalías de GPS y realiza correcciones con trazabilidad obligatoria.',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -141,8 +150,11 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
                       tooltip: 'Actualizar lista',
                       onPressed: () {
                         context.read<MarcajesAdminBloc>().add(
-                              CargarMarcajesAdminEvent(filtros: _filtros, pagina: _paginaActual),
-                            );
+                          CargarMarcajesAdminEvent(
+                            filtros: _filtros,
+                            pagina: _paginaActual,
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -154,7 +166,9 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
                 ),
                 const SizedBox(height: 16),
                 if (isLoading)
-                  const Expanded(child: Center(child: CircularProgressIndicator()))
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
                 else
                   Expanded(
                     child: SingleChildScrollView(
@@ -192,8 +206,11 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
               ? () {
                   setState(() => _paginaActual--);
                   context.read<MarcajesAdminBloc>().add(
-                        CargarMarcajesAdminEvent(filtros: _filtros, pagina: _paginaActual),
-                      );
+                    CargarMarcajesAdminEvent(
+                      filtros: _filtros,
+                      pagina: _paginaActual,
+                    ),
+                  );
                 }
               : null,
         ),
@@ -204,8 +221,11 @@ class _MarcajesAdminScreenState extends State<MarcajesAdminScreen> {
               ? () {
                   setState(() => _paginaActual++);
                   context.read<MarcajesAdminBloc>().add(
-                        CargarMarcajesAdminEvent(filtros: _filtros, pagina: _paginaActual),
-                      );
+                    CargarMarcajesAdminEvent(
+                      filtros: _filtros,
+                      pagina: _paginaActual,
+                    ),
+                  );
                 }
               : null,
         ),

@@ -35,6 +35,10 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPut, "/api/v1/periodos/:id", rbac.PermHorarioCrear)
 	periodos.POST("/:id/generar-sesiones", acaH.GenerarSesiones, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/periodos/:id/generar-sesiones", rbac.PermHorarioCrear)
+	// Estado de trabajos asíncronos, p. ej. la generación de sesiones (US-ACA-05 AC-04)
+	trabajos := api.Group("/trabajos", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
+	trabajos.GET("/:id", acaH.ObtenerTrabajo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/trabajos/:id", rbac.PermHorarioCrear)
 
 	// Sesiones de clase (US-ACA-05, US-ACA-06, US-ACA-08, US-MAR-01)
 	sesiones := api.Group("/sesiones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -48,6 +52,8 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPut, "/api/v1/sesiones/:id/aula", rbac.PermHorarioCrear)
 	sesiones.PATCH("/:id/docente-reemplazo", acaH.AsignarDocenteReemplazo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPatch, "/api/v1/sesiones/:id/docente-reemplazo", rbac.PermHorarioCrear)
+	sesiones.PATCH("/:id/reprogramar", acaH.ReprogramarSesion, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPatch, "/api/v1/sesiones/:id/reprogramar", rbac.PermHorarioCrear)
 
 	// Importación masiva académica (US-ACA-07)
 	acaImport := api.Group("/academico", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -55,6 +61,10 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar/preview", rbac.PermHorarioCrear)
 	acaImport.POST("/importar", acaH.ConfirmarImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar", rbac.PermHorarioCrear)
+	acaImport.POST("/importar/diagnostico", acaH.DiagnosticoImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPost, "/api/v1/academico/importar/diagnostico", rbac.PermHorarioCrear)
+	acaImport.GET("/importar/plantilla", acaH.PlantillaImportarAcademico, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/academico/importar/plantilla", rbac.PermHorarioCrear)
 
 	// Facultades
 	facultades := api.Group("/facultades", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -99,6 +109,11 @@ func registerAcademicoRoutes(
 	registry.RegisterPermission(http.MethodPut, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
 	grupos.DELETE("/:id", acaH.EliminarGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
 	registry.RegisterPermission(http.MethodDelete, "/api/v1/grupos/:id", rbac.PermHorarioCrear)
+	// Estudiantes del grupo (US-MAR-13, US-MAR-14)
+	grupos.GET("/:id/estudiantes", acaH.ListarEstudiantesGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodGet, "/api/v1/grupos/:id/estudiantes", rbac.PermHorarioCrear)
+	grupos.PUT("/:id/estudiantes", acaH.ReemplazarEstudiantesGrupo, mw.RequirePermission(rbac.PermHorarioCrear, auditoria))
+	registry.RegisterPermission(http.MethodPut, "/api/v1/grupos/:id/estudiantes", rbac.PermHorarioCrear)
 
 	// Asignaciones (US-ACA-03)
 	asignaciones := api.Group("/asignaciones", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))

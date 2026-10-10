@@ -8,6 +8,7 @@ import 'package:siaa_web/core/network/api_client.dart';
 import 'package:siaa_web/features/geo/data/geometria_remote_datasource.dart';
 import 'package:siaa_web/features/geo/data/models/geo_models.dart';
 import 'package:siaa_web/features/geo/presentation/editor/editor_geometria_cubit.dart';
+import 'package:siaa_web/features/geo/presentation/editor/editor_geometria_state.dart';
 
 void main() {
   late List<http.Request> peticiones;
@@ -127,5 +128,118 @@ void main() {
     await c.guardar();
     expect(c.state.error, 'Polígono cruzado');
     expect(c.state.guardando, isFalse);
+  });
+
+  group('edición de vértices (US-GEO-07)', () {
+    const conPoligono = EspacioModel(
+      id: 'e2',
+      sedeId: 's1',
+      codigo: 'AUL-202',
+      nombre: 'Aula 202',
+      capacidad: 30,
+      tipo: 'AULA',
+      estado: 'DISPONIBLE',
+      bufferMetros: 3,
+      areaMetrosCuadrados: 0,
+      activo: true,
+      versionGeometria: 4,
+      vertices: [
+        [-76.6512, 1.1478],
+        [-76.6510, 1.1478],
+        [-76.6510, 1.1476],
+        [-76.6512, 1.1476],
+      ],
+    );
+
+    EditorGeometriaCubit editor(
+      http.Response Function(http.Request) responder,
+    ) => EditorGeometriaCubit(
+      espacio: conPoligono,
+      dataSource: GeometriaRemoteDataSource(
+        client: ApiClient(
+          client: MockClient((req) async {
+            peticiones.add(req);
+            return responder(req);
+          }),
+        ),
+      ),
+    );
+
+    test('abre en modo editar, sin cambios y sin poder guardar', () {
+      final c = editor((_) => http.Response('{}', 200));
+      expect(c.state.modo, ModoEditor.editar);
+      expect(c.state.modificado, isFalse);
+      expect(c.state.puedeGuardar, isFalse);
+      expect(c.state.areaM2, closeTo(495, 10));
+    });
+
+    test('AC-01: mover un vértice recalcula el área en vivo', () {
+      final c = editor((_) => http.Response('{}', 200));
+      final antes = c.state.areaM2;
+      c.moverVertice(1, -76.6508, 1.1478);
+      expect(c.state.vertices[1], [-76.6508, 1.1478]);
+      expect(c.state.areaM2, greaterThan(antes));
+      expect(c.state.modificado, isTrue);
+      expect(c.state.seleccionado, 1);
+    });
+
+    test('AC-02: insertar en una arista agrega el vértice tras su inicio', () {
+      final c = editor((_) => http.Response('{}', 200));
+      c.insertarVertice(0, -76.6511, 1.1479);
+      expect(c.state.vertices.length, 5);
+      expect(c.state.vertices[1], [-76.6511, 1.1479]);
+    });
+
+    test('AC-03: elimina con más de 3 vértices y lo impide con 3', () {
+      final c = editor((_) => http.Response('{}', 200));
+      c.seleccionar(2);
+      expect(c.state.puedeEliminarVertice, isTrue);
+      c.eliminarVertice();
+      expect(c.state.vertices.length, 3);
+      c.seleccionar(0);
+      expect(c.state.puedeEliminarVertice, isFalse);
+      c.eliminarVertice();
+      expect(c.state.vertices.length, 3);
+      expect(c.state.error, contains('al menos 3'));
+    });
+
+    test('restaurar descarta las ediciones', () {
+      final c = editor((_) => http.Response('{}', 200));
+      c.moverVertice(0, -76.6513, 1.1479);
+      c.restaurar();
+      expect(c.state.modificado, isFalse);
+    });
+
+    test('AC-04: guarda con la versión leída como precondición', () async {
+      final c = editor(
+        (_) => http.Response(
+          jsonEncode({'id': 'e2', 'codigo': 'AUL-202', 'versionGeometria': 5}),
+          200,
+        ),
+      );
+      c.moverVertice(0, -76.6513, 1.1479);
+      await c.guardar();
+      final body = jsonDecode(peticiones.single.body) as Map<String, dynamic>;
+      expect(body['versionEsperada'], 4);
+      expect(body['coordenadas'].length, 4);
+      expect(c.state.guardado?.versionGeometria, 5);
+    });
+
+    test('un 409 CONFLICTO_VERSION se muestra sin perder la edición', () async {
+      final c = editor(
+        (_) => http.Response(
+          jsonEncode({
+            'codigo': 'CONFLICTO_VERSION',
+            'mensaje': 'La geometría del espacio cambió (versión vigente 5).',
+          }),
+          409,
+        ),
+      );
+      c.moverVertice(0, -76.6513, 1.1479);
+      await c.guardar();
+      expect(c.state.error, contains('cambió'));
+      expect(c.state.guardado, isNull);
+      expect(c.state.vertices[0], [-76.6513, 1.1479]);
+    });
   });
 }

@@ -1,5 +1,6 @@
 // marcajes_admin_bloc.dart — BLoC para consola web administrativa de marcajes
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 import '../../domain/repositories/marcajes_admin_repository.dart';
 import 'marcajes_admin_event.dart';
@@ -11,8 +12,8 @@ class MarcajesAdminBloc extends Bloc<MarcajesAdminEvent, MarcajesAdminState> {
   int _ultimaPagina = 1;
 
   MarcajesAdminBloc({required MarcajesAdminRepository repository})
-      : _repository = repository,
-        super(MarcajesAdminInitial()) {
+    : _repository = repository,
+      super(MarcajesAdminInitial()) {
     on<CargarMarcajesAdminEvent>(_onCargarMarcajes);
     on<AjustarMarcajeEvent>(_onAjustarMarcaje);
     on<CrearMarcajeManualEvent>(_onCrearMarcajeManual);
@@ -43,7 +44,11 @@ class MarcajesAdminBloc extends Bloc<MarcajesAdminEvent, MarcajesAdminState> {
     Emitter<MarcajesAdminState> emit,
   ) async {
     if (event.motivo.trim().length < 20) {
-      emit(const MarcajesAdminFailure('El motivo de ajuste debe contener al menos 20 caracteres'));
+      emit(
+        const MarcajesAdminFailure(
+          'El motivo de ajuste debe contener al menos 20 caracteres',
+        ),
+      );
       return;
     }
 
@@ -57,13 +62,20 @@ class MarcajesAdminBloc extends Bloc<MarcajesAdminEvent, MarcajesAdminState> {
         motivo: event.motivo,
       );
 
-      emit(MarcajesAdminActionSuccess(
-        mensaje: 'Ajuste administrativo registrado con éxito en auditoría',
-        marcaje: marcaje,
-      ));
+      emit(
+        MarcajesAdminActionSuccess(
+          mensaje: 'Ajuste administrativo registrado con éxito en auditoría',
+          marcaje: marcaje,
+        ),
+      );
 
       // Recargar lista manteniendo filtros actuales
-      add(CargarMarcajesAdminEvent(filtros: _ultimosFiltros, pagina: _ultimaPagina));
+      add(
+        CargarMarcajesAdminEvent(
+          filtros: _ultimosFiltros,
+          pagina: _ultimaPagina,
+        ),
+      );
     } catch (e) {
       emit(MarcajesAdminFailure('Error al aplicar ajuste: ${e.toString()}'));
     }
@@ -74,7 +86,11 @@ class MarcajesAdminBloc extends Bloc<MarcajesAdminEvent, MarcajesAdminState> {
     Emitter<MarcajesAdminState> emit,
   ) async {
     if (event.motivo.trim().length < 20) {
-      emit(const MarcajesAdminFailure('El motivo debe contener al menos 20 caracteres para trazabilidad'));
+      emit(
+        const MarcajesAdminFailure(
+          'El motivo debe contener al menos 20 caracteres para trazabilidad',
+        ),
+      );
       return;
     }
 
@@ -88,14 +104,25 @@ class MarcajesAdminBloc extends Bloc<MarcajesAdminEvent, MarcajesAdminState> {
         motivo: event.motivo,
       );
 
-      emit(MarcajesAdminActionSuccess(
-        mensaje: 'Marcaje manual de respaldo creado y auditado exitosamente',
-        marcaje: marcaje,
-      ));
+      emit(
+        MarcajesAdminActionSuccess(
+          mensaje: 'Marcaje manual de respaldo creado y auditado exitosamente',
+          marcaje: marcaje,
+        ),
+      );
 
-      add(CargarMarcajesAdminEvent(filtros: _ultimosFiltros, pagina: _ultimaPagina));
+      add(
+        CargarMarcajesAdminEvent(
+          filtros: _ultimosFiltros,
+          pagina: _ultimaPagina,
+        ),
+      );
     } catch (e) {
-      emit(MarcajesAdminFailure('Error al registrar marcaje manual: ${e.toString()}'));
+      emit(
+        MarcajesAdminFailure(
+          'Error al registrar marcaje manual: ${e.toString()}',
+        ),
+      );
     }
   }
 }

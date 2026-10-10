@@ -69,6 +69,9 @@ dependencies:
   network_info_plus: ^8.2.1
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
+  mobile_scanner: ^7.4.2
+  flutter_blue_plus: ^2.3.14
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

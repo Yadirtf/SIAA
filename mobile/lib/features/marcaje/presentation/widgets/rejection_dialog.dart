@@ -96,7 +96,8 @@ class RejectionDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 20, color: Colors.blue.shade800),
+                  Icon(Icons.info_outline,
+                      size: 20, color: Colors.blue.shade800),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(

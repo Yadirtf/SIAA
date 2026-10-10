@@ -4,68 +4,28 @@ package seed
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type paramDoc struct {
-	Ambito       string      `bson:"ambito"`
-	AmbitoID     *string     `bson:"ambitoId"`
-	Clave        string      `bson:"clave"`
-	Valor        interface{} `bson:"valor"`
-	VigenteDesde time.Time   `bson:"vigenteDesde"`
-	CreadoEn     time.Time   `bson:"creadoEn"`
+// clavesHeredadas son los alias camelCase que sembraban versiones anteriores. No pertenecen
+// al catálogo (domain/parametro) y aparecían duplicados en /parametros/efectivos.
+var clavesHeredadas = []string{
+	"holguraEntradaAntesMin", "holguraEntradaDespuesMin", "umbralTardanzaMin",
+	"holguraSalidaAntesMin", "holguraSalidaDespuesMin", "precisionGpsMaxMetros",
+	"bufferPerimetralMetros", "marcajeSalidaObligatorio", "marcajeOfflinePermitido",
+	"bloquearMockLocation", "bloquearDispositivoRooteado", "promedioLecturasVertice",
+	"maxIntentosFallidos", "duracionBloqueoMin", "ventanaIntentosFallidosMin",
 }
 
-// seedGlobalParams inserta los parámetros de configuración global (SRS §3.5).
-// Los valores solo se insertan si no existe el parámetro ($setOnInsert).
+// seedGlobalParams deja el nivel GLOBAL limpio. Los valores por defecto del SRS §3.5 viven en
+// parametro.ValoresPorDefecto() y la cascada los aplica sin necesidad de documentos; aquí solo
+// se retiran los documentos camelCase sembrados por versiones anteriores (US-PAR-01 AC-01).
 func seedGlobalParams(ctx context.Context, db *mongo.Database) error {
-	col := db.Collection("parametros")
-	now := time.Now().UTC()
-
-	// Valores por defecto definidos en SRS §3.5
-	defaults := []struct {
-		clave string
-		valor interface{}
-	}{
-		{"holguraEntradaAntesMin", 15},
-		{"holguraEntradaDespuesMin", 15},
-		{"umbralTardanzaMin", 10},
-		{"holguraSalidaAntesMin", 10},
-		{"holguraSalidaDespuesMin", 20},
-		{"precisionGpsMaxMetros", 35.0},
-		{"bufferPerimetralMetros", 10.0},
-		{"marcajeSalidaObligatorio", false},
-		{"marcajeOfflinePermitido", true},
-		{"bloquearMockLocation", true},
-		{"bloquearDispositivoRooteado", false},
-		{"promedioLecturasVertice", 5},
-		{"maxIntentosFallidos", 5},
-		{"duracionBloqueoMin", 15},
-		{"ventanaIntentosFallidosMin", 15},
-	}
-
-	upsertOpts := options.Update().SetUpsert(true)
-	for _, d := range defaults {
-		filter := bson.D{
-			{Key: "ambito", Value: "GLOBAL"},
-			{Key: "ambitoId", Value: nil},
-			{Key: "clave", Value: d.clave},
-		}
-		update := bson.D{{Key: "$setOnInsert", Value: paramDoc{
-			Ambito:       "GLOBAL",
-			AmbitoID:     nil,
-			Clave:        d.clave,
-			Valor:        d.valor,
-			VigenteDesde: now,
-			CreadoEn:     now,
-		}}}
-		if _, err := col.UpdateOne(ctx, filter, update, upsertOpts); err != nil {
-			return fmt.Errorf("upsert param %s: %w", d.clave, err)
-		}
+	filtro := bson.M{"ambito": "GLOBAL", "clave": bson.M{"$in": clavesHeredadas}}
+	if _, err := db.Collection("parametros").DeleteMany(ctx, filtro); err != nil {
+		return fmt.Errorf("retirar parámetros heredados: %w", err)
 	}
 	return nil
 }

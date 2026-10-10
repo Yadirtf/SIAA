@@ -22,6 +22,8 @@ type CrearPeriodoCmd struct {
 	Estado        domainAca.EstadoPeriodo
 	SedeID        string
 	CodigoExterno *string
+	// ConfirmarSolapamiento acepta activar un periodo que se cruza con otro activo (AC-03).
+	ConfirmarSolapamiento bool
 }
 
 type ResultadoPeriodo struct {
@@ -52,6 +54,9 @@ func (s *Service) CrearPeriodo(ctx context.Context, actor ContextoActor, cmd Cre
 	if p.Estado() == domainAca.EstadoActivo && p.SedeID() != "" {
 		solapado, err := s.periodoRepo.FindActivoSolapado(ctx, p.SedeID(), p.FechaInicio(), p.FechaFin(), "")
 		if err == nil && solapado != nil {
+			if !cmd.ConfirmarSolapamiento {
+				return nil, errorPeriodoSolapado(solapado)
+			}
 			advertencias = append(advertencias, fmt.Sprintf("Advertencia: ya existe un periodo ACTIVO (%s) con fechas solapadas para la misma sede (US-ACA-01 AC-03)", solapado.Codigo()))
 		}
 	}
@@ -106,6 +111,9 @@ func (s *Service) ActualizarPeriodo(ctx context.Context, actor ContextoActor, id
 	if nuevo.Estado() == domainAca.EstadoActivo && nuevo.SedeID() != "" {
 		solapado, err := s.periodoRepo.FindActivoSolapado(ctx, nuevo.SedeID(), nuevo.FechaInicio(), nuevo.FechaFin(), id)
 		if err == nil && solapado != nil {
+			if !cmd.ConfirmarSolapamiento {
+				return nil, errorPeriodoSolapado(solapado)
+			}
 			advertencias = append(advertencias, fmt.Sprintf("Advertencia: ya existe un periodo ACTIVO (%s) con fechas solapadas para la misma sede (US-ACA-01 AC-03)", solapado.Codigo()))
 		}
 	}
@@ -134,4 +142,11 @@ func (s *Service) ListarPeriodos(ctx context.Context, sedeID string) ([]*domainA
 		return s.periodoRepo.ListBySedeID(ctx, sedeID)
 	}
 	return s.periodoRepo.ListAll(ctx)
+}
+
+// errorPeriodoSolapado pide confirmar la activación de un periodo que se cruza con otro activo
+// de la misma sede (US-ACA-01 AC-03).
+func errorPeriodoSolapado(otro *domainAca.Periodo) error {
+	return &shared.DomainError{Code: shared.ErrConfirmacionRequerida, Message: fmt.Sprintf(
+		"Ya hay un periodo activo (%s) con fechas que se cruzan en esta sede. Confirma para activarlo de todos modos.", otro.Codigo())}
 }

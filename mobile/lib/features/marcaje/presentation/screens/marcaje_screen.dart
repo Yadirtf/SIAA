@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/presentation/permisos_sesion.dart';
 import '../../../justificaciones/presentation/screens/justificacion_form_screen.dart';
 import '../../../privacidad/data/consentimiento_gate.dart';
 import '../../../privacidad/presentation/cubit/consentimiento_cubit.dart';
@@ -13,9 +14,10 @@ import '../../domain/models/offline_marcaje_item.dart';
 import '../bloc/marcaje_bloc.dart';
 import '../bloc/marcaje_event.dart';
 import '../bloc/marcaje_state.dart';
+import '../helpers/accion_marcaje.dart';
 import '../helpers/verificacion_resolver.dart';
 import '../widgets/cola_offline_panel.dart';
-import '../widgets/one_touch_button.dart';
+import '../widgets/marcaje_accion_panel.dart';
 import '../widgets/rejection_dialog.dart';
 import '../widgets/sesion_card.dart';
 import '../widgets/sync_status_bar.dart';
@@ -63,6 +65,10 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
 
   void _recargar() => _bloc.add(const CargarSesionActivaEvent());
 
+  /// Todos los docentes ven abrir la ventana a la misma hora: refresco con jitter (R-05).
+  void _recargarAutomatico() =>
+      _bloc.add(const CargarSesionActivaEvent(automatico: true));
+
   /// 403 CONSENTIMIENTO_REQUERIDO en línea: se reconsulta y se presenta el aviso.
   Future<void> _solicitarConsentimiento() async {
     await context.read<ConsentimientoCubit>().requerirDeNuevo();
@@ -88,13 +94,17 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
     super.dispose();
   }
 
-  Future<void> _onMarcarPressed(MarcajeState state) async {
+  /// [tipo] lo fija la ventana vigente (ENTRADA | SALIDA, US-MAR-15).
+  Future<void> _onMarcarPressed(MarcajeState state, String tipo) async {
     final sesion = state.sesionActiva;
     if (sesion == null) return;
 
-    final tipo = sesion.tieneMarcajeEntrada ? 'SALIDA' : 'ENTRADA';
     final res = await _verificacionResolver.resolver(context, sesion);
     if (res.cancelado) return;
+    if (res.aviso != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(res.aviso!)));
+    }
     _bloc.add(RealizarMarcajeEvent(tipo: tipo, verificacion: res.verificacion));
   }
 
@@ -176,10 +186,13 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                     ),
                   );
                 } else if (res.esAceptado) {
+                  final permanencia = res.permanenciaMin;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          '¡Marcaje registrado y verificado exitosamente!'),
+                    SnackBar(
+                      content: Text(permanencia == null
+                          ? '¡Marcaje registrado y verificado exitosamente!'
+                          : '¡Salida registrada! Permanencia: '
+                              '${formatearPermanencia(permanencia)}'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -227,21 +240,13 @@ class _MarcajeScreenState extends State<MarcajeScreen> {
                       if (state.sesionActiva != null) ...[
                         SesionCard(
                           sesion: state.sesionActiva!,
-                          onVentanaCambia: _recargar,
+                          onVentanaCambia: _recargarAutomatico,
+                          esEstudiante: esEstudianteSesion(context),
                         ),
                         const SizedBox(height: 32),
-                        OneTouchButton(
-                          onPressed: state.puedeMarcar
-                              ? () => _onMarcarPressed(state)
-                              : null,
-                          isSubmitting: state.isSubmitting,
-                          isEnabled: state.puedeMarcar,
-                          label: state.sesionActiva!.tieneMarcajeEntrada
-                              ? 'MARCAR SALIDA'
-                              : 'MARCAR ENTRADA',
-                          icon: state.sesionActiva!.tieneMarcajeEntrada
-                              ? Icons.logout_rounded
-                              : Icons.touch_app_rounded,
+                        MarcajeAccionPanel(
+                          state: state,
+                          onMarcar: (tipo) => _onMarcarPressed(state, tipo),
                         ),
                       ] else ...[
                         const SizedBox(height: 48),

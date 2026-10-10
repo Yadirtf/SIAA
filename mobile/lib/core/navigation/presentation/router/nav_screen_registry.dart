@@ -18,6 +18,7 @@ import '../../../../features/parametros/data/parametros_data.dart';
 import '../../../../features/parametros/presentation/bloc/parametros_bloc.dart';
 import '../../../../features/parametros/presentation/screens/parametros_screen.dart';
 import '../../../../features/perfil/presentation/screens/perfil_screen.dart';
+import '../../../../features/privacidad/presentation/screens/derechos_screen.dart';
 import '../../../../features/privacidad/presentation/widgets/privacidad_view.dart';
 import '../../../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../../../shared/widgets/placeholder_screen.dart';
@@ -76,6 +77,9 @@ class NavScreenRegistry {
 
       case '/shell/notificaciones':
         return const BandejaNotificacionesScreen();
+
+      case '/shell/derechos':
+        return const DerechosScreen();
 
       default:
         return const PlaceholderScreen(

@@ -72,6 +72,8 @@ type Marcaje struct {
 	AjusteDe       string `json:"ajusteDe,omitempty" bson:"ajusteDe,omitempty"`
 	ReemplazadoPor string `json:"reemplazadoPor,omitempty" bson:"reemplazadoPor,omitempty"`
 	EsAnomalia     bool   `json:"esAnomalia" bson:"esAnomalia"`
+	// PermanenciaMin son los minutos entre la entrada válida y esta salida (US-MAR-15 AC-02).
+	PermanenciaMin *int   `json:"permanenciaMin,omitempty" bson:"permanenciaMin,omitempty"`
 	IdempotencyKey string `json:"idempotencyKey,omitempty" bson:"idempotencyKey,omitempty"`
 	// AnonimizadoEn marca cuándo se eliminaron las coordenadas por retención (RNF-LEG-006).
 	AnonimizadoEn *time.Time `json:"anonimizadoEn,omitempty" bson:"anonimizadoEn,omitempty"`

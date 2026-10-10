@@ -28,6 +28,10 @@ var rolesGlobales = map[RoleName]bool{
 	RolAuditor:    true,
 }
 
+// EsRolGlobal indica si el rol opera sobre toda la institución sin ámbitos asignados
+// (superadministrador, administrador institucional y auditor).
+func EsRolGlobal(rol string) bool { return rolesGlobales[RoleName(rol)] }
+
 // NuevoAlcance calcula el alcance a partir del rol activo, los permisos y los ámbitos.
 func NuevoAlcance(rolActivo string, permisos []Permission, usuarioID string, ambitos []Scope) Alcance {
 	a := Alcance{UsuarioID: usuarioID}

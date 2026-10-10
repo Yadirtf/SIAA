@@ -6,6 +6,7 @@ import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
 import 'certificate_pinning.dart';
+import 'politica_pinning.dart';
 
 /// ApiClient configura y proporciona el cliente HTTP de la aplicación.
 class ApiClient {
@@ -33,18 +34,25 @@ class ApiClient {
       },
     ));
 
-    // ─── Certificate Pinning Real — US-PLT-03 AC-06 / RNF-SEG-001 ───
-    if (!kIsWeb && dio.httpClientAdapter is IOHttpClientAdapter) {
-      (dio.httpClientAdapter as IOHttpClientAdapter).validateCertificate = (cert, host, port) {
-        if (_isDebug()) {
-          return true;
-        }
-        return CertificatePinningValidator.instance.validate(cert, host, port);
-      };
+    // ─── Certificate Pinning — US-SEG-01 AC-02 / RNF-SEG-001 ───
+    // Pines desde --dart-define=SIAA_CERT_PINS (ver docs/certificate-pinning.md).
+    // En web el navegador gestiona TLS y no es posible fijar certificados.
+    final pinning = CertificatePinningConfig.desdeEntorno(baseUrl: baseUrl);
+    final politica = PoliticaPinning.resolver(
+      esDebug: _isDebug() || kIsWeb,
+      baseUrl: baseUrl,
+      config: pinning,
+    );
+    if (politica.modo == ModoPinning.aplicado &&
+        dio.httpClientAdapter is IOHttpClientAdapter) {
+      (dio.httpClientAdapter as IOHttpClientAdapter).validateCertificate =
+          CertificatePinningValidator(pinning).validate;
     }
 
     // ─── Interceptores ───────────────────────────────────────
     dio.interceptors.addAll([
+      if (politica.modo == ModoPinning.bloqueado)
+        PinningBloqueoInterceptor(politica),
       _CorrelationIdInterceptor(),
       _AuthInterceptor(dio),
       _RetryInterceptor(dio),
@@ -52,7 +60,7 @@ class ApiClient {
         LogInterceptor(
           requestBody: true,
           responseBody: true,
-          logPrint: (obj) => print('[SIAA-HTTP] $obj'),
+          logPrint: (obj) => debugPrint('[SIAA-HTTP] $obj'),
         ),
     ]);
 
@@ -79,7 +87,7 @@ class _CorrelationIdInterceptor extends Interceptor {
   String _generateCorrelationId() {
     // UUID v4 simplificado
     final timestamp = DateTime.now().millisecondsSinceEpoch.toRadixString(16);
-    return '${timestamp}-mobile';
+    return '$timestamp-mobile';
   }
 }
 

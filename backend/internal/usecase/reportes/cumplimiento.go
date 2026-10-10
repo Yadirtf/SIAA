@@ -46,6 +46,8 @@ type Reporte struct {
 	Docentes       []FilaDocente `json:"docentes"`
 	Totales        FilaDocente   `json:"totales"`
 	FalsosRechazos int           `json:"falsosRechazos"` // justificaciones aprobadas por falla técnica
+	// UmbralAlerta es el porcentaje_minimo_asistencia efectivo del ámbito (US-PAR-04 AC-01).
+	UmbralAlerta float64 `json:"umbralAlerta"`
 }
 
 // Service calcula reportes a partir de sesiones, marcajes y justificaciones.
@@ -58,6 +60,7 @@ type Service struct {
 	auditoria       repository.AuditoriaRepository
 	clock           shared.Clock
 	periodos        repository.PeriodoRepository
+	umbral          func(ctx context.Context, facultadID string) float64
 }
 
 // NewService crea el servicio de reportes.
@@ -82,6 +85,12 @@ func (s *Service) WithPeriodos(p repository.PeriodoRepository) *Service {
 	return s
 }
 
+// WithUmbralAlerta resuelve el porcentaje mínimo de la cascada de parámetros (US-PAR-04 AC-01).
+func (s *Service) WithUmbralAlerta(f func(ctx context.Context, facultadID string) float64) *Service {
+	s.umbral = f
+	return s
+}
+
 // Cumplimiento calcula horas programadas, dictadas, tardanzas y ausencias por docente.
 func (s *Service) Cumplimiento(ctx context.Context, actor Actor, f Filtro) (*Reporte, error) {
 	if err := validarFiltro(f); err != nil {
@@ -99,6 +108,10 @@ func (s *Service) Cumplimiento(ctx context.Context, actor Actor, f Filtro) (*Rep
 	if err != nil {
 		return nil, err
 	}
+	salidas, err := s.marcajes.ListarConsolidados(ctx, ids, marcaje.TipoSalida)
+	if err != nil {
+		return nil, err
+	}
 	aprobadas, _, err := s.justificaciones.Listar(ctx, repository.FiltroJustificaciones{
 		SesionIDs: ids, Estado: justificacion.EstadoAprobada,
 	}, 0, 0)
@@ -106,7 +119,7 @@ func (s *Service) Cumplimiento(ctx context.Context, actor Actor, f Filtro) (*Rep
 		return nil, err
 	}
 
-	agg := nuevoAgregador(entradas, aprobadas)
+	agg := nuevoAgregador(entradas, salidas, aprobadas)
 	for _, se := range sesiones {
 		for _, docenteID := range se.DocenteIDs() {
 			if f.DocenteID != "" && docenteID != f.DocenteID {
@@ -118,8 +131,11 @@ func (s *Service) Cumplimiento(ctx context.Context, actor Actor, f Filtro) (*Rep
 			agg.sumar(se, docenteID)
 		}
 	}
-	rep := &Reporte{Filtro: f, GeneradoEn: s.clock.Now(), FalsosRechazos: agg.falsosRechazos}
-	rep.Docentes, rep.Totales = agg.resultado()
+	rep := &Reporte{Filtro: f, GeneradoEn: s.clock.Now(), FalsosRechazos: agg.falsosRechazos, UmbralAlerta: 80}
+	if s.umbral != nil {
+		rep.UmbralAlerta = s.umbral(ctx, f.FacultadID)
+	}
+	rep.Docentes, rep.Totales = agg.resultado(rep.UmbralAlerta)
 	s.completarNombres(ctx, rep.Docentes)
 	return rep, nil
 }

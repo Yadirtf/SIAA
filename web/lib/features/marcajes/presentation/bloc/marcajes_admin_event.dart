@@ -1,5 +1,6 @@
 // marcajes_admin_event.dart — Eventos de administración de marcajes
 import 'package:equatable/equatable.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 
 abstract class MarcajesAdminEvent extends Equatable {
@@ -40,7 +41,13 @@ class AjustarMarcajeEvent extends MarcajesAdminEvent {
   });
 
   @override
-  List<Object?> get props => [marcajeId, accion, nuevoResultado, anulado, motivo];
+  List<Object?> get props => [
+    marcajeId,
+    accion,
+    nuevoResultado,
+    anulado,
+    motivo,
+  ];
 }
 
 class CrearMarcajeManualEvent extends MarcajesAdminEvent {

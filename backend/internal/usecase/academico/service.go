@@ -46,6 +46,13 @@ type Service struct {
 	log            *applog.Logger
 	resolutor      ResolutorParametros
 	notificador    NotificadorHorario
+	// Carga masiva (US-ACA-07): archivo original y umbral de filas con error.
+	cargasRepo        repository.CargaMasivaRepository
+	umbralImportacion *float64
+	// Integrantes de cada grupo (US-MAR-13, US-MAR-14).
+	grupoEstRepo repository.GrupoEstudiantesRepository
+	// Trabajos asíncronos (US-ACA-05 AC-04).
+	trabajoRepo repository.TrabajoRepository
 }
 
 // AmbitoParametros identifica los niveles de la cascada que aplican a una asignación (RN-002).

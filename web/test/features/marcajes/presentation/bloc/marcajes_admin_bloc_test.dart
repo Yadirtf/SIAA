@@ -117,24 +117,29 @@ void main() {
     bloc.add(const CargarMarcajesAdminEvent());
   });
 
-  test('AjustarMarcajeEvent emite Failure si motivo tiene menos de 20 caracteres', () async {
-    final expected = [
-      isA<MarcajesAdminFailure>().having(
-        (s) => s.error,
-        'error',
-        contains('al menos 20 caracteres'),
-      ),
-    ];
+  test(
+    'AjustarMarcajeEvent emite Failure si motivo tiene menos de 20 caracteres',
+    () async {
+      final expected = [
+        isA<MarcajesAdminFailure>().having(
+          (s) => s.error,
+          'error',
+          contains('al menos 20 caracteres'),
+        ),
+      ];
 
-    expectLater(bloc.stream, emitsInOrder(expected));
+      expectLater(bloc.stream, emitsInOrder(expected));
 
-    bloc.add(const AjustarMarcajeEvent(
-      marcajeId: 'm-1',
-      accion: 'ANULAR',
-      anulado: true,
-      motivo: 'Muy corto', // Menor a 20 chars
-    ));
-  });
+      bloc.add(
+        const AjustarMarcajeEvent(
+          marcajeId: 'm-1',
+          accion: 'ANULAR',
+          anulado: true,
+          motivo: 'Muy corto', // Menor a 20 chars
+        ),
+      );
+    },
+  );
 
   test('AjustarMarcajeEvent emite Loading, ActionSuccess y recarga lista con motivo válido', () async {
     final expected = [
@@ -150,13 +155,15 @@ void main() {
 
     expectLater(bloc.stream, emitsInOrder(expected));
 
-    bloc.add(const AjustarMarcajeEvent(
-      marcajeId: 'm-1',
-      accion: 'AJUSTAR',
-      nuevoResultado: 'ACEPTADO',
-      anulado: false,
-      motivo: 'Corrección aprobada por resolución de decanatura académica.', // >= 20 chars
-    ));
+    bloc.add(
+      const AjustarMarcajeEvent(
+        marcajeId: 'm-1',
+        accion: 'AJUSTAR',
+        nuevoResultado: 'ACEPTADO',
+        anulado: false,
+        motivo: 'Corrección aprobada por resolución de decanatura académica.', // >= 20 chars
+      ),
+    );
   });
 
   test('CrearMarcajeManualEvent emite Failure si motivo tiene menos de 20 caracteres', () async {
@@ -170,12 +177,14 @@ void main() {
 
     expectLater(bloc.stream, emitsInOrder(expected));
 
-    bloc.add(const CrearMarcajeManualEvent(
-      sesionId: 'ses-1',
-      usuarioId: 'usr-1',
-      tipo: 'ENTRADA',
-      resultado: 'ACEPTADO',
-      motivo: 'Falla wifi',
-    ));
+    bloc.add(
+      const CrearMarcajeManualEvent(
+        sesionId: 'ses-1',
+        usuarioId: 'usr-1',
+        tipo: 'ENTRADA',
+        resultado: 'ACEPTADO',
+        motivo: 'Falla wifi',
+      ),
+    );
   });
 }

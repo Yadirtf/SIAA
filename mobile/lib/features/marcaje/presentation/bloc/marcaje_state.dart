@@ -53,6 +53,7 @@ class MarcajeState extends Equatable {
       !consentimientoRequerido &&
       sesionActiva != null &&
       sesionActiva!.ventana.estaAbierta &&
+      sesionActiva!.admiteMarcaje &&
       semaforo == SemaforoMarcaje.listo;
 
   List<OfflineMarcajeItem> _enEstado(EstadoSincronizacion e) =>

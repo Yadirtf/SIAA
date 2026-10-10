@@ -10,10 +10,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/navigation/config/app_navigator_keys.dart';
 import 'core/navigation/config/app_routes.dart';
 import 'core/navigation/presentation/bloc/nav_bloc.dart';
+import 'core/network/jitter_service.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/geo_editor/data/cartografia_sync_service.dart';
 import 'features/marcaje/data/repositories/marcaje_repository.dart';
 import 'features/marcaje/data/services/marcaje_sync_trigger.dart';
 import 'features/notificaciones/data/fcm_push_proveedor.dart';
@@ -69,6 +71,18 @@ void main() async {
     haySesion: () async =>
         ConsentimientoGate.instance.permiteSincronizar &&
         await SecureStorage.getAccessToken() != null,
+    esperarJitter: JitterService().waitJitter,
+  ).iniciar();
+
+  // Capturas de cartografía guardadas sin conexión (US-GEO-10 AC-02): se envían al
+  // recuperar la red y se informa el resultado; el detalle queda en Editor GPS.
+  final cartografia = CartografiaSyncService();
+  cartografia.resultados.listen((r) => AppNavigatorKeys.messenger.currentState
+      ?.showSnackBar(SnackBar(content: Text(r.resumen))));
+  MarcajeSyncTrigger(
+    sincronizar: cartografia.sincronizar,
+    haySesion: () async => await SecureStorage.getAccessToken() != null,
+    esperarJitter: JitterService().waitJitter,
   ).iniciar();
 }
 

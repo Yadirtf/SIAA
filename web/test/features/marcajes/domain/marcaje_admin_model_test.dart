@@ -44,30 +44,33 @@ void main() {
       expect(model.anulado, isFalse);
     });
 
-    test('detecta anomalías de mock location y salto imposible (US-MAR-10)', () {
-      final json = {
-        'id': 'mar-web-anomalo',
-        'sesionId': 'ses-10',
-        'usuarioId': 'usr-fraud',
-        'tipo': 'ENTRADA',
-        'resultado': 'RECHAZADO',
-        'origen': 'MOVIL_ONLINE',
-        'timestampServidor': '2026-09-25T07:05:00Z',
-        'evidencia': {
-          'ubicacion': {'type': 'Point', 'coordinates': [0.0, 0.0]},
-          'integridadFlags': {
-            'mockLocation': true,
-            'saltoImposible': true,
+    test(
+      'detecta anomalías de mock location y salto imposible (US-MAR-10)',
+      () {
+        final json = {
+          'id': 'mar-web-anomalo',
+          'sesionId': 'ses-10',
+          'usuarioId': 'usr-fraud',
+          'tipo': 'ENTRADA',
+          'resultado': 'RECHAZADO',
+          'origen': 'MOVIL_ONLINE',
+          'timestampServidor': '2026-09-25T07:05:00Z',
+          'evidencia': {
+            'ubicacion': {
+              'type': 'Point',
+              'coordinates': [0.0, 0.0],
+            },
+            'integridadFlags': {'mockLocation': true, 'saltoImposible': true},
           },
-        },
-      };
+        };
 
-      final model = MarcajeAdminModel.fromJson(json);
+        final model = MarcajeAdminModel.fromJson(json);
 
-      expect(model.tieneAnomalia, isTrue);
-      expect(model.mockLocation, isTrue);
-      expect(model.saltoImposible, isTrue);
-    });
+        expect(model.tieneAnomalia, isTrue);
+        expect(model.mockLocation, isTrue);
+        expect(model.saltoImposible, isTrue);
+      },
+    );
 
     test('deserializa página completa en MarcajeAdminPageModel', () {
       final json = {
@@ -80,7 +83,7 @@ void main() {
             'resultado': 'ACEPTADO',
             'origen': 'MOVIL_ONLINE',
             'timestampServidor': '2026-09-25T07:00:00Z',
-          }
+          },
         ],
         'total': 1,
         'pagina': 1,

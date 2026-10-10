@@ -13,12 +13,17 @@ class ReporteCumplimientoModel extends Equatable {
   /// Justificaciones aprobadas por falla técnica en el periodo.
   final int falsosRechazos;
 
+  /// Porcentaje mínimo de asistencia efectivo del ámbito: por debajo, la
+  /// fila se marca `bajoUmbral` (US-PAR-04 AC-01).
+  final double umbralAlerta;
+
   const ReporteCumplimientoModel({
     this.filtro = const FiltroReporteModel(),
     this.generadoEn,
     this.docentes = const [],
     this.totales = const FilaCumplimientoModel(),
     this.falsosRechazos = 0,
+    this.umbralAlerta = 0,
   });
 
   factory ReporteCumplimientoModel.fromJson(Map<String, dynamic> json) {
@@ -36,6 +41,7 @@ class ReporteCumplimientoModel extends Equatable {
           : const [],
       totales: FilaCumplimientoModel.fromJson(mapa(json['totales'])),
       falsosRechazos: (json['falsosRechazos'] as num?)?.toInt() ?? 0,
+      umbralAlerta: (json['umbralAlerta'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -46,5 +52,6 @@ class ReporteCumplimientoModel extends Equatable {
     docentes,
     totales,
     falsosRechazos,
+    umbralAlerta,
   ];
 }

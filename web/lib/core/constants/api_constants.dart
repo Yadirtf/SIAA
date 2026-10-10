@@ -12,6 +12,10 @@ class ApiConstants {
   static const String logout = '$baseUrl/auth/logout';
   static const String recuperar = '$baseUrl/auth/recuperar';
   static const String confirmarRecuperar = '$baseUrl/auth/recuperar/confirmar';
+  static const String totpVerificar = '$baseUrl/auth/totp/verificar';
+  static const String totpEnrolar = '$baseUrl/auth/totp/enrolar';
+  static const String totpEnrolarConfirmar =
+      '$baseUrl/auth/totp/enrolar/confirmar';
 
   // Geo
   static const String sedes = '$baseUrl/sedes';
@@ -23,10 +27,14 @@ class ApiConstants {
   static const String periodos = '$baseUrl/periodos';
   static String generarSesiones(String periodoId) =>
       '$baseUrl/periodos/$periodoId/generar-sesiones';
+  // Trabajos asíncronos, p. ej. la generación de sesiones (US-ACA-05 AC-04)
+  static String trabajo(String trabajoId) => '$baseUrl/trabajos/$trabajoId';
   static const String facultades = '$baseUrl/facultades';
   static const String programas = '$baseUrl/programas';
   static const String asignaturas = '$baseUrl/asignaturas';
   static const String grupos = '$baseUrl/grupos';
+  static String estudiantesGrupo(String grupoId) =>
+      '$baseUrl/grupos/$grupoId/estudiantes';
   static const String asignaciones = '$baseUrl/asignaciones';
   static const String excepciones = '$baseUrl/calendario-excepciones';
 
@@ -51,6 +59,10 @@ class ApiConstants {
   static const String academicoImportarPreview =
       '$baseUrl/academico/importar/preview';
   static const String academicoImportar = '$baseUrl/academico/importar';
+  static const String academicoImportarDiagnostico =
+      '$baseUrl/academico/importar/diagnostico';
+  static String academicoImportarPlantilla(String formato) =>
+      '$baseUrl/academico/importar/plantilla?formato=$formato';
 
   // Usuarios (US-ROL-01..05, US-AUT-02/07)
   static const String usuarios = '$baseUrl/usuarios';
@@ -77,6 +89,14 @@ class ApiConstants {
   static const String reporteCumplimiento = '$baseUrl/reportes/cumplimiento';
   static const String exportarCumplimiento =
       '$baseUrl/reportes/cumplimiento/exportar';
+  static const String reporteTablero = '$baseUrl/reportes/tablero';
+  static const String reporteOcupacion = '$baseUrl/reportes/ocupacion';
+  static const String exportarOcupacion =
+      '$baseUrl/reportes/ocupacion/exportar';
+  static const String reporteAsistenciaEstudiantil =
+      '$baseUrl/reportes/asistencia-estudiantil';
+  static const String gruposAsistenciaEstudiantil =
+      '$baseUrl/reportes/asistencia-estudiantil/grupos';
 
   // Auditoría (RF-AUD-003)
   static const String auditoria = '$baseUrl/auditoria';

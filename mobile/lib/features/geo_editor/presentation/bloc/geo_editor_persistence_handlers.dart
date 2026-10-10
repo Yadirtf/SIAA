@@ -22,6 +22,12 @@ extension GeoEditorPersistenceHandlers on GeoEditorBloc {
 
     emit(state.copyWith(status: GeoEditorStatus.saving, clearError: true));
 
+    // US-GEO-10 AC-01: sin red la captura se guarda cifrada en el dispositivo.
+    if (onSaveOffline != null && hayConexion != null && !await hayConexion!()) {
+      await _guardarOffline(event.espacioId, emit);
+      return;
+    }
+
     try {
       if (onSaveGeometry != null) {
         await onSaveGeometry!(
@@ -51,10 +57,40 @@ extension GeoEditorPersistenceHandlers on GeoEditorBloc {
         solapamientoCritico: e.mensaje,
         errorMessage: e.mensaje,
       ));
+    } on SinConexionGeometriaException catch (e) {
+      if (onSaveOffline != null) {
+        await _guardarOffline(event.espacioId, emit);
+      } else {
+        emit(state.copyWith(
+            status: GeoEditorStatus.error, errorMessage: e.mensaje));
+      }
     } catch (e) {
       emit(state.copyWith(
         status: GeoEditorStatus.error,
         errorMessage: 'Error al enviar geometría al servidor: $e',
+      ));
+    }
+  }
+
+  Future<void> _guardarOffline(
+      String espacioId, Emitter<GeoEditorState> emit) async {
+    try {
+      await onSaveOffline!(
+        espacioId: espacioId,
+        coordenadas: state.vertices,
+        metodoCaptura: state.metodoCapturaEfectivo,
+        precisionPromedioMetros: state.precisionPromedioCalculada,
+      );
+      emit(state.copyWith(
+        status: GeoEditorStatus.success,
+        successMessage: 'Sin conexión: la geometría quedó guardada en el '
+            'dispositivo y se sincronizará al recuperar la red.',
+        clearSolapamiento: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: GeoEditorStatus.error,
+        errorMessage: 'No se pudo guardar la captura en el dispositivo: $e',
       ));
     }
   }

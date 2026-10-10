@@ -1,5 +1,6 @@
 // marcajes_admin_state.dart — Estados del BLoC administrativo de marcajes
 import 'package:equatable/equatable.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 
 abstract class MarcajesAdminState extends Equatable {

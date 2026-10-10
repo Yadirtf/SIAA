@@ -51,7 +51,8 @@ void main() {
     );
 
     final item = await dataSource.encolarMarcaje(req);
-    final actualizado = item.copyWith(estado: EstadoSincronizacion.sincronizado);
+    final actualizado =
+        item.copyWith(estado: EstadoSincronizacion.sincronizado);
     await dataSource.actualizarItem(actualizado);
 
     final pendientes = await dataSource.obtenerPendientes();

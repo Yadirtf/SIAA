@@ -57,3 +57,21 @@ func TestPreferenciasYCatalogo(t *testing.T) {
 		t.Fatal("vencimiento")
 	}
 }
+
+func TestAvisosAdministrativos(t *testing.T) {
+	for tipo, ruta := range map[Tipo]string{
+		TipoRecordatorioRevision: "/justificaciones/revision",
+		TipoVencimientoRol:       "/usuarios",
+		TipoSolicitudDerechos:    "/privacidad/derechos",
+	} {
+		if RutaDe(tipo) != ruta {
+			t.Fatalf("ruta de %s: %s", tipo, RutaDe(tipo))
+		}
+		if !PermiteCorreo(tipo) {
+			t.Fatalf("%s debe salir por correo si no hay push", tipo)
+		}
+		if !PreferenciasPorDefecto().Permite(tipo) || !(Preferencias{}).Permite(tipo) {
+			t.Fatalf("%s es institucional: no se puede desactivar", tipo)
+		}
+	}
+}

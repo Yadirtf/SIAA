@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:siaa_web/core/widgets/selector_busqueda.dart';
+import 'package:siaa_web/features/academico/data/models/cambio_sesion.dart';
 import 'package:siaa_web/features/academico/data/models/sesion_model.dart';
 import 'package:siaa_web/features/academico/presentation/bloc/sesiones_bloc.dart';
 import 'package:siaa_web/features/academico/presentation/dialogs/sesion_ops_dialogs.dart';
@@ -14,17 +15,20 @@ import 'fake_catalogos.dart';
 class _RepoQueCaptura extends FakeAcademicoRepository {
   final aulas = <String>[];
   final suplentes = <String>[];
+  final cambios = <CambioSesion>[];
 
   @override
   Future<SesionModel> reasignarAulaSesion({
     required String sesionId,
     required String nuevoEspacioId,
-    String? motivo,
+    required CambioSesion cambio,
   }) {
     aulas.add(nuevoEspacioId);
+    cambios.add(cambio);
     return super.reasignarAulaSesion(
       sesionId: sesionId,
       nuevoEspacioId: nuevoEspacioId,
+      cambio: cambio,
     );
   }
 
@@ -32,12 +36,14 @@ class _RepoQueCaptura extends FakeAcademicoRepository {
   Future<SesionModel> asignarDocenteReemplazo({
     required String sesionId,
     required String docenteId,
-    String? motivo,
+    required CambioSesion cambio,
   }) {
     suplentes.add(docenteId);
+    cambios.add(cambio);
     return super.asignarDocenteReemplazo(
       sesionId: sesionId,
       docenteId: docenteId,
+      cambio: cambio,
     );
   }
 }
@@ -108,9 +114,12 @@ void main() {
 
     await tester.tap(find.text('A-102 · Aula 102'));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, 'Mantenimiento');
     await tester.tap(find.text('Reasignar Aula'));
     await tester.pumpAndSettle();
     expect(repo.aulas, ['esp-2']);
+    expect(repo.cambios.single.motivo, 'Mantenimiento');
+    expect(find.byType(ReasignarAulaDialog), findsNothing);
   });
 
   testWidgets('docente suplente se elige por nombre y envía su id', (
@@ -127,6 +136,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Laura Gómez'));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, 'Incapacidad');
     await tester.tap(find.text('Asignar Suplente'));
     await tester.pumpAndSettle();
 

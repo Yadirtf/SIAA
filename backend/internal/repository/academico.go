@@ -68,3 +68,19 @@ type CalendarioExcepcionRepository interface {
 	ListByRango(ctx context.Context, inicio, fin time.Time) ([]*domainAca.CalendarioExcepcion, error)
 	DeleteLogico(ctx context.Context, id string) error
 }
+
+// CargaMasiva es el registro de una carga aplicada con su archivo original (US-ACA-07 AC-06).
+type CargaMasiva struct {
+	ID        string
+	Nombre    string
+	Formato   string
+	Contenido []byte
+	ActorID   string
+	Resumen   map[string]interface{}
+	CreadoEn  time.Time
+}
+
+// CargaMasivaRepository conserva el archivo original de cada carga masiva aplicada.
+type CargaMasivaRepository interface {
+	Guardar(ctx context.Context, c *CargaMasiva) error
+}

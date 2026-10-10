@@ -25,6 +25,18 @@ Future<void> mostrarInformeGeneracion(
                 'Ya existían (omitidas)',
                 informe.sesionesOmitidasIdempotencia,
               ),
+              if (informe.sesionesReactivadas > 0)
+                _fila('Reactivadas', informe.sesionesReactivadas),
+              _fila(
+                'Fechas pasadas no generadas',
+                informe.sesionesPasadasOmitidas,
+              ),
+              if (informe.sesionesPasadasOmitidas > 0)
+                Text(
+                  'Para crearlas, vuelva a generar marcando "Incluir fechas '
+                  'pasadas".',
+                  style: AppTextStyles.bodySmall,
+                ),
               if (informe.asignacionesProcesadas == 0) ...[
                 const SizedBox(height: 12),
                 Text(

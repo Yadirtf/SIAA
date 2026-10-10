@@ -2,6 +2,8 @@
 // Sincroniza al arrancar, al recuperar conectividad, al volver la app a primer plano y
 // periódicamente mientras está en primer plano (para atender los reintentos con backoff).
 // La exclusión mutua la garantiza MarcajeSyncService: nunca corren dos sincronizaciones.
+// Los disparos que ocurren a la vez en muchos dispositivos (red recuperada, periódico)
+// esperan un jitter aleatorio antes de llamar al servidor (US-PLT-05 AC-05, R-05).
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
@@ -12,6 +14,9 @@ class MarcajeSyncTrigger {
   final Stream<List<ConnectivityResult>> _conectividad;
   final Duration periodo;
 
+  /// Espera aleatoria previa a los disparos masivos; null = sin espera.
+  final Future<void> Function()? _esperarJitter;
+
   StreamSubscription<List<ConnectivityResult>>? _suscripcion;
   AppLifecycleListener? _ciclo;
   Timer? _temporizador;
@@ -21,14 +26,18 @@ class MarcajeSyncTrigger {
     required Future<bool> Function() haySesion,
     Stream<List<ConnectivityResult>>? conectividad,
     this.periodo = const Duration(minutes: 1),
+    Future<void> Function()? esperarJitter,
   })  : _sincronizar = sincronizar,
+        _esperarJitter = esperarJitter,
         _haySesion = haySesion,
         _conectividad = conectividad ?? Connectivity().onConnectivityChanged;
 
   void iniciar({bool escucharCicloDeVida = true}) {
     detener();
     _suscripcion = _conectividad.listen((resultados) {
-      if (resultados.any((r) => r != ConnectivityResult.none)) disparar();
+      if (resultados.any((r) => r != ConnectivityResult.none)) {
+        disparar(conJitter: true);
+      }
     });
     if (escucharCicloDeVida) {
       _ciclo = AppLifecycleListener(
@@ -44,8 +53,10 @@ class MarcajeSyncTrigger {
   }
 
   /// Lanza una sincronización si hay sesión iniciada; los errores se absorben.
-  Future<void> disparar() async {
+  /// Con [conJitter] espera primero el desfase aleatorio configurado.
+  Future<void> disparar({bool conJitter = false}) async {
     try {
+      if (conJitter) await _esperarJitter?.call();
       if (!await _haySesion()) return;
       await _sincronizar();
     } catch (_) {
@@ -55,7 +66,7 @@ class MarcajeSyncTrigger {
 
   void _programarPeriodico() {
     _cancelarPeriodico();
-    _temporizador = Timer.periodic(periodo, (_) => disparar());
+    _temporizador = Timer.periodic(periodo, (_) => disparar(conJitter: true));
   }
 
   void _cancelarPeriodico() {

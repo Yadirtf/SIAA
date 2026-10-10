@@ -7,6 +7,7 @@ import '../bloc/academico_bloc.dart';
 import '../bloc/academico_event.dart';
 import '../bloc/academico_state.dart';
 import '../dialogs/asignatura_dialog.dart';
+import '../dialogs/estudiantes_grupo_dialog.dart';
 import '../dialogs/facultad_dialog.dart';
 import '../dialogs/grupo_dialog.dart';
 import '../dialogs/programa_dialog.dart';
@@ -212,11 +213,30 @@ class _EstructuraScreenState extends State<EstructuraScreen>
       titulo: 'Grupo ${g.numero}',
       subtitulo: _detalleGrupo(state, g),
       nombreTipo: 'grupo',
+      accionesExtra: [
+        IconButton(
+          icon: const Icon(Icons.people_alt_outlined),
+          tooltip: 'Estudiantes del grupo',
+          onPressed: () => EstudiantesGrupoDialog.mostrar(
+            context,
+            grupoId: g.id,
+            titulo: _tituloGrupo(state, g),
+            cupo: g.cupo,
+          ),
+        ),
+      ],
       onEditar: () => editarGrupo(context, g),
       onEliminar: () =>
           context.read<AcademicoBloc>().add(DeleteGrupoEvent(g.id)),
     ),
   );
+
+  String _tituloGrupo(AcademicoLoaded state, GrupoModel g) {
+    final asig = state.asignaturas.where((a) => a.id == g.asignaturaId);
+    return asig.isEmpty
+        ? 'Grupo ${g.numero}'
+        : '${asig.first.nombre} – Grupo ${g.numero}';
+  }
 
   String _detalleGrupo(AcademicoLoaded state, GrupoModel g) {
     final asig = state.asignaturas.where((a) => a.id == g.asignaturaId);

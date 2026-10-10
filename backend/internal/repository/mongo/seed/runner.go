@@ -25,6 +25,9 @@ func Run(ctx context.Context, db *mongo.Database, usuariosDemo bool, admin Admin
 		if err := seedUsers(ctx, db); err != nil {
 			return fmt.Errorf("seed users: %w", err)
 		}
+		if err := seedEstructuraDemo(ctx, db); err != nil {
+			return fmt.Errorf("seed estructura demo: %w", err)
+		}
 	}
 	if err := seedAdminInicial(ctx, db, admin); err != nil {
 		return fmt.Errorf("seed admin inicial: %w", err)

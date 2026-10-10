@@ -22,6 +22,8 @@ import (
 
 // NewRouter crea y configura el servidor Echo con todos los middlewares y rutas,
 // e impone la verificación de rutas al arranque exigida por T-ROL-01.4 y AC-03.
+// collector es el colector de /metrics compartido con el driver de MongoDB y el motor de
+// marcaje (US-PLT-05); si es nil se crea uno solo para HTTP.
 func NewRouter(
 	cfg *config.Config,
 	log *applog.Logger,
@@ -40,6 +42,7 @@ func NewRouter(
 	personales *HandlersPersonales,
 	auditoria repository.AuditoriaRepository,
 	registry *RouteRegistry,
+	collector *metrics.Collector,
 ) (*echo.Echo, error) {
 	if registry == nil {
 		registry = NewRouteRegistry()
@@ -56,6 +59,8 @@ func NewRouter(
 	// ─── Middlewares globales ────────────────────────────────
 	e.Use(mw.Recovery(log))
 	e.Use(mw.CorrelationID())
+	// IP, agente de usuario y sesión de cada petición viajan en el contexto hacia la bitácora (US-AUD-01 AC-02).
+	e.Use(mw.MetadatosAuditoria())
 	e.Use(mw.RequestLogger(log))
 	e.Use(echoMiddleware.ContextTimeoutWithConfig(echoMiddleware.ContextTimeoutConfig{
 		Timeout: 30 * time.Second,
@@ -132,7 +137,9 @@ func NewRouter(
 	api := e.Group("/api/v1")
 
 	// Métricas y Observabilidad (pública, US-PLT-05 AC-01, RNF-PER-003)
-	collector := metrics.NewCollector()
+	if collector == nil {
+		collector = metrics.NewCollector()
+	}
 	e.Use(mw.MetricsMiddleware(collector))
 	// CA-010: todo 403 por ámbito queda en la bitácora de auditoría.
 	e.Use(mw.AuditarAmbitoDenegado(auditoria))
@@ -154,11 +161,7 @@ func NewRouter(
 
 	// Autenticación (públicas con límite estricto de 20 req/min por origen — US-AUT-02 AC-03)
 	authGroup := api.Group("/auth")
-	authRateLimit := 20
-	if cfg.RateLimitPerMinute > 0 && cfg.RateLimitPerMinute < 20 {
-		authRateLimit = cfg.RateLimitPerMinute
-	}
-	authGroup.Use(mw.RateLimiterByIP(authRateLimit))
+	authGroup.Use(mw.RateLimiterByIP(limiteAutenticacion(cfg)))
 	authGroup.POST("/login", authH.Login)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/login")
 	authGroup.POST("/refresh", authH.Refresh)
@@ -169,6 +172,10 @@ func NewRouter(
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/recuperar/confirmar")
 	authGroup.POST("/totp/verificar", authH.VerificarTOTP)
 	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/verificar")
+	authGroup.POST("/totp/enrolar", authH.EnrolarTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/enrolar")
+	authGroup.POST("/totp/enrolar/confirmar", authH.ConfirmarEnrolamientoTOTP)
+	registry.MarkPublic(http.MethodPost, "/api/v1/auth/totp/enrolar/confirmar")
 
 	// Autenticación (requiere token válido y tasa de 120 req/min por usuario — US-AUT-02 AC-04)
 	authProtected := api.Group("/auth", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
@@ -261,18 +268,7 @@ func NewRouter(
 	registerAcademicoRoutes(api, cfg, auditoria, registry, acaH)
 
 	// ─── Parametrización jerárquica — EP-05, US-PAR-01, US-PAR-03 ─────
-	if parametroH != nil {
-		params := api.Group("/parametros", mw.JWTAuth(cfg), mw.RateLimiterByUser(120))
-		// GET /parametros?ambito=SEDE&ambito_id=xxx — lista los parámetros de un nivel
-		params.GET("", parametroH.ListarPorAmbito, mw.RequirePermission(rbac.PermParametroLeer, auditoria))
-		registry.RegisterPermission(http.MethodGet, "/api/v1/parametros", rbac.PermParametroLeer)
-		// PUT /parametros — inserta o actualiza un parámetro (US-PAR-01 AC-03)
-		params.PUT("", parametroH.GuardarParametro, mw.RequirePermission(rbac.PermParametroEditar, auditoria))
-		registry.RegisterPermission(http.MethodPut, "/api/v1/parametros", rbac.PermParametroEditar)
-		// GET /parametros/efectivos — resuelve cascada con origen (US-PAR-03 AC-01)
-		params.GET("/efectivos", parametroH.ObtenerEfectivos, mw.RequirePermission(rbac.PermParametroLeer, auditoria))
-		registry.RegisterPermission(http.MethodGet, "/api/v1/parametros/efectivos", rbac.PermParametroLeer)
-	}
+	registerParametroRoutes(api, cfg, auditoria, registry, parametroH)
 
 	// ─── Motor de marcaje — EP-06 (US-MAR-01..15) ─────────────
 	// Sin consentimiento informado vigente no se puede marcar (Ley 1581, US-LEG-01).

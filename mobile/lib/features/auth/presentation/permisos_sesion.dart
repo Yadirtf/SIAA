@@ -3,6 +3,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/navigation/config/rol_slug.dart';
 import 'bloc/auth_bloc.dart';
 
 /// true si la sesión autenticada incluye [permiso]; false sin sesión o sin AuthBloc.
@@ -24,5 +25,19 @@ String? usuarioIdSesion(BuildContext context) {
         : null;
   } catch (_) {
     return null;
+  }
+}
+
+/// true si la sesión opera con el rol de estudiante (rol activo o, sin él, el primero).
+bool esEstudianteSesion(BuildContext context) {
+  try {
+    final estado = context.read<AuthBloc>().state;
+    if (estado is! AuthAuthenticated) return false;
+    final rol = estado.rolActivo.isNotEmpty
+        ? estado.rolActivo
+        : (estado.roles.isEmpty ? '' : estado.roles.first);
+    return rolSlugDe(rol) == 'estudiante';
+  } catch (_) {
+    return false;
   }
 }

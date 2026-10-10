@@ -1,6 +1,6 @@
 // selector_verificacion.dart — Elige el testigo de verificación complementaria a enviar (RF-GEO-016)
-// Prioridad: WIFI (BSSID leído del dispositivo) y, si no se pudo leer, QR tecleado por el docente.
-// BLE aún no está soportado por la app, por lo que nunca se envía.
+// Prioridad: WIFI (BSSID leído del dispositivo), BLE (UUID de la baliza detectada) y,
+// si ninguno se pudo obtener, QR escaneado (o tecleado) por el docente.
 import '../../domain/models/verificacion_complementaria_model.dart';
 
 class SelectorVerificacion {
@@ -15,6 +15,8 @@ class SelectorVerificacion {
     return limpio.isNotEmpty && !_bssidsInvalidos.contains(limpio);
   }
 
+  static bool _valido(String? valor) => (valor?.trim() ?? '').isNotEmpty;
+
   static bool _admite(List<String> metodos, String metodo) =>
       metodos.any((m) => m.toUpperCase() == metodo);
 
@@ -25,18 +27,36 @@ class SelectorVerificacion {
   }) =>
       exigida && _admite(metodos, VerificacionComplementariaModel.metodoWifi);
 
-  /// Hay que pedir al docente el código del QR del aula.
-  static bool requiereCodigoQr({
+  /// Hay que buscar la baliza BLE: el aula la admite y el WiFi no resolvió.
+  static bool requiereBle({
     required bool exigida,
     required List<String> metodos,
     String? bssid,
   }) {
     if (!exigida ||
-        !_admite(metodos, VerificacionComplementariaModel.metodoQr)) {
+        !_admite(metodos, VerificacionComplementariaModel.metodoBle)) {
       return false;
     }
     return !(requiereBssid(exigida: exigida, metodos: metodos) &&
         bssidValido(bssid));
+  }
+
+  /// Hay que pedir al docente el código del QR del aula.
+  static bool requiereCodigoQr({
+    required bool exigida,
+    required List<String> metodos,
+    String? bssid,
+    String? uuidBle,
+  }) {
+    if (!exigida ||
+        !_admite(metodos, VerificacionComplementariaModel.metodoQr)) {
+      return false;
+    }
+    final wifiOk =
+        requiereBssid(exigida: exigida, metodos: metodos) && bssidValido(bssid);
+    final bleOk = _admite(metodos, VerificacionComplementariaModel.metodoBle) &&
+        _valido(uuidBle);
+    return !wifiOk && !bleOk;
   }
 
   /// Testigo a enviar, o null si no se exige o no hay ninguno disponible.
@@ -44,6 +64,7 @@ class SelectorVerificacion {
     required bool exigida,
     required List<String> metodos,
     String? bssid,
+    String? uuidBle,
     String? codigoQr,
   }) {
     if (!exigida) return null;
@@ -52,6 +73,13 @@ class SelectorVerificacion {
       return VerificacionComplementariaModel(
         metodo: VerificacionComplementariaModel.metodoWifi,
         valor: bssid!.trim(),
+      );
+    }
+    if (_admite(metodos, VerificacionComplementariaModel.metodoBle) &&
+        _valido(uuidBle)) {
+      return VerificacionComplementariaModel(
+        metodo: VerificacionComplementariaModel.metodoBle,
+        valor: uuidBle!.trim().toLowerCase(),
       );
     }
     final qr = codigoQr?.trim() ?? '';

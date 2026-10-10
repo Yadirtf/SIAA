@@ -21,6 +21,7 @@ type CrearMarcajeUseCase struct {
 	dispositivoRepo repository.DispositivoRepository
 	auditoriaRepo   repository.AuditoriaRepository
 	asignacionRepo  repository.AsignacionRepository
+	grupoEstRepo    repository.GrupoEstudiantesRepository
 	attestation     VerificadorAttestation
 	metrics         *metrics.Collector
 }
@@ -63,6 +64,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	if err != nil {
 		return nil, nil, err
 	}
+	req.RolMarcaje = rolSegunSesion(req, contexto.Sesion) // el rol lo decide el servidor (US-MAR-13 AC-02)
 
 	// 1b. Idempotencia (US-MAR-05, CA-012): si el usuario ya tiene un marcaje consolidado para
 	// esta sesión y tipo, se devuelve tal cual. Un intento posterior (doble toque, reintento de
@@ -110,7 +112,7 @@ func (uc *CrearMarcajeUseCase) Ejecutar(ctx context.Context, req domainMarcaje.S
 	}
 
 	// 6. Construir entidad inmutable con evidencia técnica completa (US-MAR-04)
-	m := uc.construirEntidadMarcaje(req, res, contexto, ahora)
+	m := uc.completarSalida(ctx, uc.construirEntidadMarcaje(req, res, contexto, ahora))
 
 	// 7. Persistir en MongoDB (maneja duplicados concurrentes de forma transparente - ADR-07)
 	if err := uc.marcajeRepo.Crear(ctx, m); err != nil {
@@ -145,6 +147,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 				FinProgramado:    s.FinProgramado(),
 				Modalidad:        modalidadDeAsignacion(ctx, uc.asignacionRepo, s.AsignacionID()),
 			}
+			uc.completarEstudiante(ctx, contexto.Sesion, s, req.UsuarioID)
 			// Parámetros efectivos congelados al generar la sesión (RN-002, ADR-05)
 			contexto.Parametros = ParametrosDesdeSesion(s.ParametrosCongelados())
 
@@ -192,7 +195,7 @@ func (uc *CrearMarcajeUseCase) armarContexto(ctx context.Context, req domainMarc
 		contexto.MarcajePrevio = previo
 	}
 
-	return contexto, nil
+	return contexto, validarSalidaPermitida(req, contexto)
 }
 
 func (uc *CrearMarcajeUseCase) verificarSaltoImposible(ctx context.Context, req domainMarcaje.SolicitudMarcaje, contexto *domainMarcaje.ContextoSesion, ahora time.Time) {

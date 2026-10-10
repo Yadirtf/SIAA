@@ -47,9 +47,22 @@ func TestHasAnyPermission(t *testing.T) {
 }
 
 func TestIsInScope(t *testing.T) {
-	t.Run("ámbitos vacíos significa acceso total (superadmin)", func(t *testing.T) {
-		if !rbac.IsInScope([]rbac.Scope{}, rbac.ScopeSede, "SEDE-001") {
-			t.Error("superadmin debe tener acceso total")
+	t.Run("ámbitos vacíos no dan acceso por sí solos", func(t *testing.T) {
+		if rbac.IsInScope([]rbac.Scope{}, rbac.ScopeSede, "SEDE-001") {
+			t.Error("una lista de ámbitos vacía no debe otorgar acceso")
+		}
+	})
+
+	t.Run("solo los roles institucionales acceden sin ámbitos", func(t *testing.T) {
+		for _, rol := range []rbac.RoleName{rbac.RolSuperadmin, rbac.RolAdminInst, rbac.RolAuditor} {
+			if !rbac.PermiteAmbito(string(rol), nil, rbac.ScopeSede, "SEDE-001") {
+				t.Errorf("%s debe tener acceso total", rol)
+			}
+		}
+		for _, rol := range []rbac.RoleName{rbac.RolCoordinador, rbac.RolMonitor, rbac.RolDocente, "ROL_PERSONALIZADO"} {
+			if rbac.PermiteAmbito(string(rol), nil, rbac.ScopeSede, "SEDE-001") {
+				t.Errorf("%s sin ámbitos no debe ver nada", rol)
+			}
 		}
 	})
 

@@ -1,9 +1,6 @@
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import 'models/academico_models.dart';
-import 'models/importacion_model.dart';
-import 'models/sesion_model.dart';
-
 
 class AcademicoRemoteDataSource {
   final ApiClient _client;
@@ -28,6 +25,7 @@ class AcademicoRemoteDataSource {
     required String fechaInicio,
     required String fechaFin,
     required String estado,
+    bool confirmarSolapamiento = false,
   }) async {
     final response = await _client.post(
       ApiConstants.periodos,
@@ -37,6 +35,8 @@ class AcademicoRemoteDataSource {
         'fechaInicio': fechaInicio,
         'fechaFin': fechaFin,
         'estado': estado,
+        // Acepta activarlo aunque se cruce con otro periodo activo.
+        if (confirmarSolapamiento) 'confirmarSolapamiento': true,
       },
     );
     return PeriodoModel.fromJson(response as Map<String, dynamic>);
@@ -193,123 +193,7 @@ class AcademicoRemoteDataSource {
     return [];
   }
 
-  Future<ExcepcionModel> createExcepcion({
-    required String nombre,
-    required String tipo,
-    required String ambito,
-    required String fechaInicio,
-    required String fechaFin,
-  }) async {
-    final response = await _client.post(
-      ApiConstants.excepciones,
-      body: {
-        'nombre': nombre,
-        'tipo': tipo,
-        'ambito': ambito,
-        'fechaInicio': fechaInicio,
-        'fechaFin': fechaFin,
-      },
-    );
-    return ExcepcionModel.fromJson(response as Map<String, dynamic>);
-  }
-
-  Future<void> deleteExcepcion(String id) async {
-    await _client.delete('${ApiConstants.excepciones}/$id');
-  }
-
   Future<void> deleteGrupo(String id) async {
     await _client.delete('${ApiConstants.grupos}/$id');
   }
-
-  // ─── Sesiones ───
-  Future<List<SesionModel>> getSesiones({
-    String? periodoId,
-    String? docenteId,
-    String? espacioId,
-    String? fecha,
-    String? estado,
-    String? desde,
-    String? hasta,
-  }) async {
-    final params = <String, String>{};
-    if (periodoId != null && periodoId.isNotEmpty) params['periodoId'] = periodoId;
-    if (docenteId != null && docenteId.isNotEmpty) params['docenteId'] = docenteId;
-    if (espacioId != null && espacioId.isNotEmpty) params['espacioId'] = espacioId;
-    if (fecha != null && fecha.isNotEmpty) params['fecha'] = fecha;
-    if (estado != null && estado.isNotEmpty) params['estado'] = estado;
-    if (desde != null && desde.isNotEmpty) params['desde'] = desde;
-    if (hasta != null && hasta.isNotEmpty) params['hasta'] = hasta;
-
-    final uri = Uri.parse(ApiConstants.sesiones).replace(queryParameters: params.isNotEmpty ? params : null);
-    final response = await _client.get(uri.toString());
-    if (response is List) {
-      return response
-          .map((item) => SesionModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }
-    return [];
-  }
-
-  Future<void> cancelarSesion({
-    required String sesionId,
-    required String motivo,
-  }) async {
-    await _client.post(
-      '${ApiConstants.sesiones}/$sesionId/cancelar',
-      body: {'motivo': motivo},
-    );
-  }
-
-  Future<SesionModel> reasignarAulaSesion({
-    required String sesionId,
-    required String nuevoEspacioId,
-    String? motivo,
-  }) async {
-    final response = await _client.put(
-      '${ApiConstants.sesiones}/$sesionId/aula',
-      body: {
-        'nuevoEspacioId': nuevoEspacioId,
-        if (motivo != null) 'motivo': motivo,
-      },
-    );
-    return SesionModel.fromJson(response as Map<String, dynamic>);
-  }
-
-  Future<SesionModel> asignarDocenteReemplazo({
-    required String sesionId,
-    required String docenteId,
-    String? motivo,
-  }) async {
-    final response = await _client.patch(
-      '${ApiConstants.sesiones}/$sesionId/docente-reemplazo',
-      body: {
-        'docenteId': docenteId,
-        if (motivo != null) 'motivo': motivo,
-      },
-    );
-    return SesionModel.fromJson(response as Map<String, dynamic>);
-  }
-
-  // ─── Carga Masiva CSV ───
-  Future<PreviewImportacionModel> previewImportarCsv({
-    required List<int> bytes,
-    required String filename,
-  }) async {
-    final response = await _client.postMultipart(
-      ApiConstants.academicoImportarPreview,
-      fileBytes: bytes,
-      filename: filename,
-    );
-    return PreviewImportacionModel.fromJson(response as Map<String, dynamic>);
-  }
-
-  Future<void> confirmarImportarCsv({
-    required List<Map<String, dynamic>> filas,
-  }) async {
-    await _client.post(
-      ApiConstants.academicoImportar,
-      body: {'filas': filas},
-    );
-  }
 }
-

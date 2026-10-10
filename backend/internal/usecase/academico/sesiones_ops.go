@@ -59,11 +59,15 @@ func (s *Service) CancelarSesion(ctx context.Context, id, motivo string, actor C
 }
 
 // ReasignarAulaSesion actualiza el aula de una sesión puntual y congela la versión de la nueva geometría (US-ACA-06).
-func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspacioID, motivo string, actor ContextoActor) (*academico.Sesion, error) {
+func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspacioID string, cambio CambioSesion, actor ContextoActor) (*academico.Sesion, error) {
 	sesion, err := s.sesionEnAlcance(ctx, sesionID, actor)
 	if err != nil {
 		return nil, err
 	}
+	if err := validarCambio(sesion, cambio, s.clk.Now()); err != nil {
+		return nil, err
+	}
+	motivo := cambio.Motivo
 
 	espacio, err := s.espacioRepo.FindByID(ctx, nuevoEspacioID)
 	if err != nil || espacio == nil {
@@ -98,7 +102,8 @@ func (s *Service) ReasignarAulaSesion(ctx context.Context, sesionID, nuevoEspaci
 }
 
 // AsignarDocenteReemplazo designa un docente suplente para una sesión puntual (US-ACA-09).
-func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDocenteID, motivo string, actor ContextoActor) (*academico.Sesion, error) {
+func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDocenteID string, cambio CambioSesion, actor ContextoActor) (*academico.Sesion, error) {
+	motivo := cambio.Motivo
 	if nuevoDocenteID == "" {
 		return nil, shared.NewValidationError("El identificador del nuevo docente es obligatorio", shared.FieldError{
 			Campo: "docenteId", Error: "REQUERIDO",
@@ -112,6 +117,9 @@ func (s *Service) AsignarDocenteReemplazo(ctx context.Context, sesionID, nuevoDo
 	}
 	sesion, err := s.sesionEnAlcance(ctx, sesionID, actor)
 	if err != nil {
+		return nil, err
+	}
+	if err := validarCambio(sesion, cambio, s.clk.Now()); err != nil {
 		return nil, err
 	}
 

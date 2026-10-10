@@ -1,5 +1,6 @@
 // marcajes_data_table.dart — Tabla paginada de marcajes con indicadores de integridad (US-MAR-09, US-MAR-10)
 import 'package:flutter/material.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 import '../../../../core/utils/formatos.dart';
 
@@ -55,29 +56,64 @@ class MarcajesDataTable extends StatelessWidget {
           rows: marcajes.map((m) {
             return DataRow(
               cells: [
-                DataCell(Text(Formatos.fechaHoraSegundos(m.timestampServidor), style: const TextStyle(fontSize: 13))),
-                DataCell(Text(m.usuarioId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                DataCell(Text(m.asignatura.isNotEmpty ? m.asignatura : m.sesionId, style: const TextStyle(fontSize: 13))),
+                DataCell(
+                  Text(
+                    Formatos.fechaHoraSegundos(m.timestampServidor),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    m.usuarioId,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    m.asignatura.isNotEmpty ? m.asignatura : m.sesionId,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
                 DataCell(Text(m.tipo, style: const TextStyle(fontSize: 13))),
                 DataCell(_buildResultadoBadge(m)),
-                DataCell(Text(m.origen, style: TextStyle(color: Colors.grey.shade700, fontSize: 12))),
+                DataCell(
+                  Text(
+                    m.origen,
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                  ),
+                ),
                 DataCell(_buildIntegridadBadge(m)),
                 DataCell(
                   m.anulado
                       ? const Chip(
-                          label: Text('ANULADO', style: TextStyle(fontSize: 10, color: Colors.white)),
+                          label: Text(
+                            'ANULADO',
+                            style: TextStyle(fontSize: 10, color: Colors.white),
+                          ),
                           backgroundColor: Colors.grey,
                           visualDensity: VisualDensity.compact,
                         )
-                      : const Text('Activo', style: TextStyle(fontSize: 12, color: Colors.green)),
+                      : const Text(
+                          'Activo',
+                          style: TextStyle(fontSize: 12, color: Colors.green),
+                        ),
                 ),
                 DataCell(
                   ElevatedButton.icon(
                     onPressed: () => onSeleccionar(m),
                     icon: const Icon(Icons.edit_note, size: 16),
-                    label: const Text('Ajustar', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Ajustar',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                     ),
                   ),
                 ),
@@ -127,7 +163,10 @@ class MarcajesDataTable extends StatelessWidget {
         children: [
           Icon(Icons.shield_outlined, size: 16, color: Colors.green.shade700),
           const SizedBox(width: 4),
-          const Text('Confiable', style: TextStyle(fontSize: 12, color: Colors.green)),
+          const Text(
+            'Confiable',
+            style: TextStyle(fontSize: 12, color: Colors.green),
+          ),
         ],
       );
     }
@@ -150,11 +189,19 @@ class MarcajesDataTable extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red),
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 14,
+              color: Colors.red,
+            ),
             const SizedBox(width: 4),
             Text(
               alerts.first,
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 11),
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
             ),
           ],
         ),

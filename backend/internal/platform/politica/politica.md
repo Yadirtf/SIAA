@@ -33,7 +33,11 @@ Los registros de asistencia se conservan por el periodo exigido institucionalmen
 
 ## 6. Transferencia internacional
 
-La base de datos puede alojarse en infraestructura de nube ubicada fuera de Colombia. En ese caso la institución selecciona la región disponible más cercana y suscribe con el encargado del tratamiento las cláusulas contractuales que garantizan un nivel adecuado de protección.
+Sus datos se almacenan en infraestructura de nube ubicada **fuera de Colombia**, en la región **Norte de Virginia, Estados Unidos (AWS us-east-1)**, que es la región disponible más cercana para los servicios que usa SIAA. Esto constituye una transferencia internacional de datos personales.
+
+- **Encargados del tratamiento:** MongoDB, Inc. (base de datos, servicio MongoDB Atlas) y Render Services, Inc. (servidor de la aplicación).
+- **Garantías:** la institución suscribe con cada encargado un acuerdo de tratamiento de datos con cláusulas contractuales que exigen un nivel adecuado de protección, confidencialidad, cifrado en tránsito y en reposo, y la devolución o eliminación de los datos al terminar el servicio.
+- Puede solicitar copia de las cláusulas por el canal de atención de titulares.
 
 ## 7. Sus derechos
 

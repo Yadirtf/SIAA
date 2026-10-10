@@ -29,13 +29,17 @@ type Config struct {
 	JWTIssuer        string
 
 	// Seguridad
-	BcryptCost           int
-	RateLimitPerMinute   int
-	FailedLoginMax       int
-	FailedLoginWindowMin int
-	LockoutDurationMin   int
-	AllowedEmailDomains  []string
-	CORSAllowedOrigins   []string
+	BcryptCost         int
+	RateLimitPerMinute int
+	// AuthRateLimitPerMinute limita /auth por IP (US-AUT-02 AC-03); por defecto 20.
+	AuthRateLimitPerMinute int
+	// ImportacionUmbralErroresPct: % de filas con error que aún permite aplicar una carga (US-ACA-07 AC-03).
+	ImportacionUmbralErroresPct float64
+	FailedLoginMax              int
+	FailedLoginWindowMin        int
+	LockoutDurationMin          int
+	AllowedEmailDomains         []string
+	CORSAllowedOrigins          []string
 
 	// Correo
 	SMTPHost string
@@ -70,8 +74,10 @@ type Config struct {
 	NotifSilencioFin     string
 	NotifRecordatorioMin int
 	NotifCierreMin       int
-	InstitucionNombre    string
-	PrivacidadContacto   string
+	// NotifRevisionHoras es el plazo tras el que se recuerda al revisor una justificación (US-JUS-04).
+	NotifRevisionHoras int
+	InstitucionNombre  string
+	PrivacidadContacto string
 
 	// Parámetros GPS por defecto — SRS §3.5
 	DefaultHolguraEntradaAntesMin   int
@@ -106,6 +112,8 @@ func Load() (*Config, error) {
 	// Seguridad
 	cfg.BcryptCost = getEnvInt("BCRYPT_COST", 12)
 	cfg.RateLimitPerMinute = getEnvInt("RATE_LIMIT_PER_MINUTE", 120)
+	cfg.AuthRateLimitPerMinute = getEnvInt("AUTH_RATE_LIMIT_PER_MINUTE", 20)
+	cfg.ImportacionUmbralErroresPct = float64(getEnvInt("IMPORTACION_UMBRAL_ERRORES_PCT", 5))
 	cfg.FailedLoginMax = getEnvInt("FAILED_LOGIN_MAX", 5)
 	cfg.FailedLoginWindowMin = getEnvInt("FAILED_LOGIN_WINDOW_MIN", 15)
 	cfg.LockoutDurationMin = getEnvInt("LOCKOUT_DURATION_MIN", 15)
@@ -147,6 +155,7 @@ func Load() (*Config, error) {
 	cfg.NotifSilencioFin = getEnv("NOTIF_SILENCIO_FIN", "06:00")
 	cfg.NotifRecordatorioMin = getEnvInt("NOTIF_RECORDATORIO_MIN", 15)
 	cfg.NotifCierreMin = getEnvInt("NOTIF_CIERRE_MIN", 5)
+	cfg.NotifRevisionHoras = getEnvInt("NOTIF_REVISION_JUSTIFICACION_HORAS", 48)
 	cfg.InstitucionNombre = getEnv("INSTITUCION_NOMBRE", "")
 	cfg.PrivacidadContacto = getEnv("PRIVACIDAD_CONTACTO", "")
 

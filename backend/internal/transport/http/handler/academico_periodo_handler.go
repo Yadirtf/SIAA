@@ -36,13 +36,14 @@ func (h *AcademicoHandler) CrearPeriodo(c echo.Context) error {
 
 	actor := extraerActorAcademico(c)
 	res, err := h.svc.CrearPeriodo(c.Request().Context(), actor, usecaseAca.CrearPeriodoCmd{
-		Codigo:        req.Codigo,
-		Nombre:        req.Nombre,
-		FechaInicio:   fIni,
-		FechaFin:      fFin,
-		Estado:        domainAca.EstadoPeriodo(req.Estado),
-		SedeID:        req.SedeID,
-		CodigoExterno: ext,
+		Codigo:                req.Codigo,
+		Nombre:                req.Nombre,
+		FechaInicio:           fIni,
+		FechaFin:              fFin,
+		Estado:                domainAca.EstadoPeriodo(req.Estado),
+		SedeID:                req.SedeID,
+		CodigoExterno:         ext,
+		ConfirmarSolapamiento: req.ConfirmarSolapamiento,
 	})
 	if err != nil {
 		return mapearErrorAcademico(err)
@@ -74,13 +75,14 @@ func (h *AcademicoHandler) ActualizarPeriodo(c echo.Context) error {
 
 	actor := extraerActorAcademico(c)
 	res, err := h.svc.ActualizarPeriodo(c.Request().Context(), actor, id, usecaseAca.CrearPeriodoCmd{
-		Codigo:        req.Codigo,
-		Nombre:        req.Nombre,
-		FechaInicio:   fIni,
-		FechaFin:      fFin,
-		Estado:        domainAca.EstadoPeriodo(req.Estado),
-		SedeID:        req.SedeID,
-		CodigoExterno: ext,
+		Codigo:                req.Codigo,
+		Nombre:                req.Nombre,
+		FechaInicio:           fIni,
+		FechaFin:              fFin,
+		Estado:                domainAca.EstadoPeriodo(req.Estado),
+		SedeID:                req.SedeID,
+		CodigoExterno:         ext,
+		ConfirmarSolapamiento: req.ConfirmarSolapamiento,
 	})
 	if err != nil {
 		return mapearErrorAcademico(err)

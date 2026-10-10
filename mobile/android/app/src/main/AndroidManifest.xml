@@ -9,6 +9,19 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Lectura del QR fijo del aula (US-GEO-13 AC-05) y fotos de soportes de justificación -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
+    <!-- Baliza BLE del aula (US-GEO-13): escaneo corto en primer plano al marcar.
+         Android 12+: BLUETOOTH_SCAN/CONNECT (sin neverForLocation, que ocultaría los iBeacon).
+         Android 11 o anterior: BLUETOOTH/BLUETOOTH_ADMIN más la ubicación ya declarada. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
+
     <!-- Notificaciones push (US-NOT-01): permiso en tiempo de ejecución desde Android 13 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 

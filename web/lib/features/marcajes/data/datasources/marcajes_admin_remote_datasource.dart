@@ -9,7 +9,7 @@ class MarcajesAdminRemoteDataSource {
   final ApiClient _apiClient;
 
   MarcajesAdminRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   Future<MarcajeAdminPageModel> listarMarcajes({
     FiltrosMarcajeAdmin filtros = const FiltrosMarcajeAdmin(),
@@ -25,7 +25,12 @@ class MarcajesAdminRemoteDataSource {
     if (response is Map<String, dynamic>) {
       return MarcajeAdminPageModel.fromJson(response);
     }
-    return const MarcajeAdminPageModel(items: [], total: 0, pagina: 1, limite: 20);
+    return const MarcajeAdminPageModel(
+      items: [],
+      total: 0,
+      pagina: 1,
+      limite: 20,
+    );
   }
 
   Future<MarcajeAdminModel> ajustarMarcaje({
@@ -62,7 +67,10 @@ class MarcajesAdminRemoteDataSource {
       'motivo': motivo,
     };
 
-    final response = await _apiClient.post(ApiConstants.marcajeManual, body: body);
+    final response = await _apiClient.post(
+      ApiConstants.marcajeManual,
+      body: body,
+    );
     return MarcajeAdminModel.fromJson(response as Map<String, dynamic>);
   }
 
@@ -71,7 +79,10 @@ class MarcajesAdminRemoteDataSource {
       final response = await _apiClient.get(ApiConstants.usuarios);
       if (response is List) {
         return response
-            .map((item) => UsuarioSummaryModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) =>
+                  UsuarioSummaryModel.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
     } catch (_) {}
@@ -83,7 +94,10 @@ class MarcajesAdminRemoteDataSource {
       final response = await _apiClient.get(ApiConstants.sesiones);
       if (response is List) {
         return response
-            .map((item) => SesionSummaryModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) =>
+                  SesionSummaryModel.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
     } catch (_) {}

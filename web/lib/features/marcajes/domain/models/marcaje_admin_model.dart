@@ -11,7 +11,8 @@ class MarcajeAdminModel extends Equatable {
   final String tipo; // ENTRADA | SALIDA
   final String resultado; // ACEPTADO | RECHAZADO | AUSENCIA_AUTOMATICA
   final String? motivoRechazo;
-  final String origen; // MOVIL_ONLINE | MOVIL_OFFLINE | MANUAL_DOCENTE | SISTEMA_AUTOMATICO
+  final String
+  origen; // MOVIL_ONLINE | MOVIL_OFFLINE | MANUAL_DOCENTE | SISTEMA_AUTOMATICO
   final double latitud;
   final double longitud;
   final double precisionMetros;
@@ -61,7 +62,8 @@ class MarcajeAdminModel extends Equatable {
   bool get esAceptado => resultado == 'ACEPTADO';
   bool get esRechazado => resultado == 'RECHAZADO';
   bool get esAusencia => resultado == 'AUSENCIA_AUTOMATICA';
-  bool get tieneAnomalia => mockLocation || rooteado || emulador || saltoImposible;
+  bool get tieneAnomalia =>
+      mockLocation || rooteado || emulador || saltoImposible;
 
   factory MarcajeAdminModel.fromJson(Map<String, dynamic> json) {
     final evidencia = json['evidencia'] as Map<String, dynamic>? ?? {};
@@ -84,10 +86,18 @@ class MarcajeAdminModel extends Equatable {
       longitud: coords.isNotEmpty ? (coords[0] as num).toDouble() : 0.0,
       latitud: coords.length > 1 ? (coords[1] as num).toDouble() : 0.0,
       precisionMetros: (evidencia['precision'] as num?)?.toDouble() ?? 0.0,
-      distanciaAlPoligono: (evidencia['distanciaAlPoligono'] as num?)?.toDouble(),
-      timestampServidor: DateTime.tryParse(json['timestampServidor'] as String? ?? '') ?? DateTime.now(),
-      timestampDispositivo: DateTime.tryParse(evidencia['timestampDispositivo'] as String? ?? '') ?? DateTime.now(),
-      desfaseSegundos: (evidencia['desfaseRelojSegundos'] as num?)?.toInt() ?? 0,
+      distanciaAlPoligono: (evidencia['distanciaAlPoligono'] as num?)
+          ?.toDouble(),
+      timestampServidor:
+          DateTime.tryParse(json['timestampServidor'] as String? ?? '') ??
+          DateTime.now(),
+      timestampDispositivo:
+          DateTime.tryParse(
+            evidencia['timestampDispositivo'] as String? ?? '',
+          ) ??
+          DateTime.now(),
+      desfaseSegundos:
+          (evidencia['desfaseRelojSegundos'] as num?)?.toInt() ?? 0,
       dispositivoId: evidencia['dispositivoId'] as String? ?? '',
       mockLocation: flags['mockLocation'] as bool? ?? false,
       rooteado: flags['rooteado'] as bool? ?? false,
@@ -96,23 +106,25 @@ class MarcajeAdminModel extends Equatable {
       anulado: json['anulado'] as bool? ?? false,
       motivoAjuste: ajuste?['motivo'] as String?,
       ajustadoPor: ajuste?['usuarioAjustoId'] as String?,
-      ajustadoEn: DateTime.tryParse(ajuste?['timestampAjuste'] as String? ?? ''),
+      ajustadoEn: DateTime.tryParse(
+        ajuste?['timestampAjuste'] as String? ?? '',
+      ),
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        sesionId,
-        usuarioId,
-        tipo,
-        resultado,
-        origen,
-        timestampServidor,
-        anulado,
-        mockLocation,
-        saltoImposible,
-      ];
+    id,
+    sesionId,
+    usuarioId,
+    tipo,
+    resultado,
+    origen,
+    timestampServidor,
+    anulado,
+    mockLocation,
+    saltoImposible,
+  ];
 }
 
 class MarcajeAdminPageModel extends Equatable {
@@ -166,13 +178,12 @@ class FiltrosMarcajeAdmin extends Equatable {
   });
 
   Map<String, dynamic> toQueryParams({int pagina = 1, int limite = 20}) {
-    final params = <String, dynamic>{
-      'pagina': pagina,
-      'limite': limite,
-    };
-    if (usuarioId != null && usuarioId!.isNotEmpty) params['usuarioId'] = usuarioId;
+    final params = <String, dynamic>{'pagina': pagina, 'limite': limite};
+    if (usuarioId != null && usuarioId!.isNotEmpty)
+      params['usuarioId'] = usuarioId;
     if (sesionId != null && sesionId!.isNotEmpty) params['sesionId'] = sesionId;
-    if (resultado != null && resultado!.isNotEmpty) params['resultado'] = resultado;
+    if (resultado != null && resultado!.isNotEmpty)
+      params['resultado'] = resultado;
     if (tipo != null && tipo!.isNotEmpty) params['tipo'] = tipo;
     if (origen != null && origen!.isNotEmpty) params['origen'] = origen;
     if (desde != null) params['desde'] = desde!.toUtc().toIso8601String();
@@ -181,5 +192,13 @@ class FiltrosMarcajeAdmin extends Equatable {
   }
 
   @override
-  List<Object?> get props => [usuarioId, sesionId, resultado, tipo, origen, desde, hasta];
+  List<Object?> get props => [
+    usuarioId,
+    sesionId,
+    resultado,
+    tipo,
+    origen,
+    desde,
+    hasta,
+  ];
 }

@@ -15,7 +15,8 @@ import (
 
 // UseCase agrupa los casos de uso de parametrización jerárquica.
 type UseCase struct {
-	repo repository.ParametroRepository
+	repo    repository.ParametroRepository
+	ambitos FuenteAmbitos
 }
 
 // New construye el caso de uso con su dependencia.
@@ -46,6 +47,7 @@ func (uc *UseCase) ListarPorAmbito(ctx context.Context, ambito dompar.Ambito, am
 // ctx: contexto de la solicitud.
 // spec: descripción de los ámbitos a consultar para construir la cascada.
 func (uc *UseCase) ResolverEfectivos(ctx context.Context, spec EspecCascada) (dompar.Snapshot, error) {
+	spec = uc.completarEspec(ctx, spec)
 	// Construir los filtros para recuperar solo los parámetros relevantes
 	filtros := spec.toFiltros()
 

@@ -3,10 +3,19 @@ import 'dart:convert';
 import '../../../core/storage/token_storage.dart';
 import '../data/auth_remote_datasource.dart';
 import '../data/models/login_response_model.dart';
+import '../data/models/segundo_factor_model.dart';
 import '../data/models/user_model.dart';
 
 abstract class AuthRepository {
-  Future<UserModel> login({required String correo, required String password});
+  Future<LoginResultado> login({
+    required String correo,
+    required String password,
+  });
+  Future<TotpEnrolamiento> enrolarTotp(DesafioTotp desafio);
+  Future<UserModel> completarTotp({
+    required DesafioTotp desafio,
+    required String codigo,
+  });
   Future<UserModel?> checkAuthStatus();
   Future<void> logout();
   Future<void> recuperarPassword({required String correo});
@@ -27,7 +36,7 @@ class AuthRepositoryImpl implements AuthRepository {
        _tokenStorage = tokenStorage ?? TokenStorage();
 
   @override
-  Future<UserModel> login({
+  Future<LoginResultado> login({
     required String correo,
     required String password,
   }) async {
@@ -35,14 +44,33 @@ class AuthRepositoryImpl implements AuthRepository {
       correo: correo,
       password: password,
     );
+    final desafio = response.desafio;
+    if (desafio != null) return LoginResultado.desafio(desafio);
+    return LoginResultado.autenticado(await _guardarSesion(response));
+  }
 
+  @override
+  Future<TotpEnrolamiento> enrolarTotp(DesafioTotp desafio) =>
+      _remoteDataSource.enrolarTotp(desafio.token);
+
+  @override
+  Future<UserModel> completarTotp({
+    required DesafioTotp desafio,
+    required String codigo,
+  }) async {
+    final response = await _remoteDataSource.completarTotp(
+      desafio: desafio,
+      codigo: codigo,
+    );
+    return _guardarSesion(response);
+  }
+
+  Future<UserModel> _guardarSesion(LoginResponseModel response) async {
     await _tokenStorage.saveTokens(
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
     );
-
     await _tokenStorage.saveUserData(jsonEncode(response.usuario.toJson()));
-
     return response.usuario;
   }
 

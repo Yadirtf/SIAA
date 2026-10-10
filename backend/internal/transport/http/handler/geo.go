@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/siaa/backend/internal/domain/geo"
-	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/dto"
 	"github.com/siaa/backend/internal/transport/http/middleware"
@@ -17,7 +16,8 @@ import (
 
 // GeoHandler maneja las peticiones HTTP de sedes, bloques y espacios.
 type GeoHandler struct {
-	svc *usecaseGeo.Service
+	svc        *usecaseGeo.Service
+	facultades LectorFacultades
 }
 
 func NewGeoHandler(svc *usecaseGeo.Service) *GeoHandler {
@@ -61,16 +61,12 @@ func (h *GeoHandler) CrearEspacio(c echo.Context) error {
 }
 
 func (h *GeoHandler) ListarEspacios(c echo.Context) error {
-	claims, _ := middleware.GetClaims(c)
-	sedeID, err := middleware.EnforceScopeFilter(claims, rbac.ScopeSede, c.QueryParam("sedeId"))
+	todas, sedes, err := h.sedesDeConsulta(c, c.QueryParam("sedeId"))
 	if err != nil {
 		return err
 	}
 
-	filter := repository.EspacioFilter{
-		SedeID:   sedeID,
-		BloqueID: c.QueryParam("bloqueId"),
-	}
+	filter := repository.EspacioFilter{BloqueID: c.QueryParam("bloqueId")}
 	if pStr := c.QueryParam("piso"); pStr != "" {
 		if p, err := strconv.Atoi(pStr); err == nil {
 			filter.Piso = &p
@@ -84,15 +80,20 @@ func (h *GeoHandler) ListarEspacios(c echo.Context) error {
 		e := geo.EstadoEspacio(eStr)
 		filter.Estado = &e
 	}
-
-	espacios, err := h.svc.ListarEspacios(c.Request().Context(), filter)
-	if err != nil {
-		return err
+	if todas {
+		sedes = []string{""}
 	}
 
-	res := make([]dto.EspacioResponse, 0, len(espacios))
-	for _, e := range espacios {
-		res = append(res, dto.EspacioToResponse(e))
+	res := make([]dto.EspacioResponse, 0)
+	for _, sedeID := range sedes {
+		filter.SedeID = sedeID
+		espacios, err := h.svc.ListarEspacios(c.Request().Context(), filter)
+		if err != nil {
+			return err
+		}
+		for _, e := range espacios {
+			res = append(res, dto.EspacioToResponse(e))
+		}
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -104,8 +105,7 @@ func (h *GeoHandler) ObtenerEspacio(c echo.Context) error {
 		return err
 	}
 
-	claims, _ := middleware.GetClaims(c)
-	if err := middleware.ValidateResourceScope(claims, rbac.ScopeSede, espacio.SedeID); err != nil {
+	if err := h.exigirSede(c, espacio.SedeID); err != nil {
 		return err
 	}
 
@@ -155,53 +155,6 @@ func (h *GeoHandler) EliminarEspacio(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-// ActualizarGeometria maneja PUT /api/v1/espacios/:id/geometria.
-// RF-GEO-002, T-GEO-02.7, AC-06, AC-07, ADR-04.
-func (h *GeoHandler) ActualizarGeometria(c echo.Context) error {
-	id := c.Param("id")
-	var req dto.ActualizarGeometriaRequest
-	if err := c.Bind(&req); err != nil {
-		return err
-	}
-	if err := c.Validate(&req); err != nil {
-		return err
-	}
-
-	vertices := make([]geo.GeoPoint, 0, len(req.Coordenadas))
-	for _, coord := range req.Coordenadas {
-		pt, err := geo.NewGeoPoint(coord[0], coord[1])
-		if err != nil {
-			return err
-		}
-		vertices = append(vertices, pt)
-	}
-
-	var centroide *geo.GeoPoint
-	if req.Centroide != nil {
-		if pt, errPt := geo.NewGeoPoint(req.Centroide[0], req.Centroide[1]); errPt == nil {
-			centroide = &pt
-		}
-	}
-
-	actor := extraerActor(c)
-	espacio, err := h.svc.GuardarGeometriaEspacio(c.Request().Context(), usecaseGeo.GuardarGeometriaCmd{
-		EspacioID:               id,
-		Vertices:                vertices,
-		Centroide:               centroide,
-		RadioMetros:             req.RadioMetros,
-		MetodoCaptura:           req.MetodoCaptura,
-		PrecisionPromedioMetros: req.PrecisionPromedioMetros,
-		ConfirmarSolapamiento:   req.ConfirmarSolapamiento,
-		MotivoSolapamiento:      req.MotivoSolapamiento,
-		Actor:                   actor,
-	})
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, dto.EspacioToResponse(espacio))
 }
 
 // InformeSolapamientos maneja GET /api/v1/espacios/solapamientos.

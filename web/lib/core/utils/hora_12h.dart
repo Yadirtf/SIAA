@@ -17,7 +17,9 @@ String hora12hDesdeTexto(String hhmm) {
   return hora12h(hora, minuto);
 }
 
-final _hora24 = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b(?!\s?[ap]\. ?m\.)(?!:\d)');
+final _hora24 = RegExp(
+  r'\b([01]?\d|2[0-3]):([0-5]\d)\b(?!\s?[ap]\. ?m\.)(?!:\d)',
+);
 
 /// Reescribe en 12 h cada hora "HH:mm" dentro de un texto, p. ej. el nombre de
 /// sesión "2026-10-01 18:30-19:30" que guardaban las justificaciones antiguas.

@@ -31,9 +31,7 @@ class NotificacionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final n = notificacion;
-    final fecha = n.creadaEn == null
-        ? ''
-        : diaMesHora(n.creadaEn!);
+    final fecha = n.creadaEn == null ? '' : diaMesHora(n.creadaEn!);
     return ListTile(
       leading: Icon(_icono(n.tipo)),
       title: Text(

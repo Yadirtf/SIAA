@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/fechas_es.dart';
 import '../../domain/models/sesion_activa_model.dart';
+import 'aviso_ventana_estudiante.dart';
 
 class SesionCard extends StatefulWidget {
   final SesionActivaModel sesion;
@@ -10,7 +11,16 @@ class SesionCard extends StatefulWidget {
   /// Se llama una vez cuando la ventana abre o cierra, para recargar la sesión.
   final VoidCallback? onVentanaCambia;
 
-  const SesionCard({super.key, required this.sesion, this.onVentanaCambia});
+  /// El estudiante depende de la ventana que abre su docente (US-MAR-13): sin ella
+  /// se muestra un aviso en lugar de la cuenta regresiva.
+  final bool esEstudiante;
+
+  const SesionCard({
+    super.key,
+    required this.sesion,
+    this.onVentanaCambia,
+    this.esEstudiante = false,
+  });
 
   @override
   State<SesionCard> createState() => _SesionCardState();
@@ -42,6 +52,11 @@ class _SesionCardState extends State<SesionCard> {
   void _actualizarRestante() {
     final ahora = widget.sesion.ahoraServidor();
     final ventana = widget.sesion.ventana;
+    if (_esperaDocente) {
+      _restante = Duration.zero;
+      if (mounted) setState(() {});
+      return;
+    }
     if (ventana.estaAbierta) {
       _restante = ventana.cierraEn.isAfter(ahora)
           ? ventana.cierraEn.difference(ahora)
@@ -59,6 +74,17 @@ class _SesionCardState extends State<SesionCard> {
       widget.onVentanaCambia?.call();
     }
     if (mounted) setState(() {});
+  }
+
+  bool get _esperaDocente =>
+      widget.esEstudiante && !widget.sesion.ventana.estaAbierta;
+
+  String _textoInsignia(VentanaInfo ventana) {
+    if (_esperaDocente) return AvisoVentanaEstudiante.insignia(ventana);
+    if (ventana.estaAbierta) return 'Cierra en: ${_formatDuration(_restante)}';
+    return ventana.noAbierta
+        ? 'Abre en: ${_formatDuration(_restante)}'
+        : 'Ventana cerrada';
   }
 
   @override
@@ -129,11 +155,7 @@ class _SesionCardState extends State<SesionCard> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        sesion.ventana.estaAbierta
-                            ? 'Cierra en: ${_formatDuration(_restante)}'
-                            : sesion.ventana.noAbierta
-                                ? 'Abre en: ${_formatDuration(_restante)}'
-                                : 'Ventana cerrada',
+                        _textoInsignia(sesion.ventana),
                         style: TextStyle(
                           color: sesion.ventana.estaAbierta
                               ? Colors.green.shade800
@@ -179,6 +201,7 @@ class _SesionCardState extends State<SesionCard> {
                 ),
               ],
             ),
+            if (widget.esEstudiante) AvisoVentanaEstudiante(sesion: sesion),
           ],
         ),
       ),

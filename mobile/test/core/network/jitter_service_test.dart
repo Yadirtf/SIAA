@@ -6,7 +6,9 @@ import 'package:siaa_mobile/core/network/jitter_service.dart';
 
 void main() {
   group('JitterService (US-PLT-05 AC-05 / R-05)', () {
-    test('calculateJitter respeta estrictamente el límite máximo de 20 segundos', () {
+    test(
+        'calculateJitter respeta estrictamente el límite máximo de 20 segundos',
+        () {
       final service = JitterService();
       const maxSeconds = 20;
       const maxMs = maxSeconds * 1000;
@@ -46,7 +48,8 @@ void main() {
       }
 
       final distinctCount = values.toSet().length;
-      expect(distinctCount, greaterThan(80), reason: 'Debe exhibir variabilidad aleatoria');
+      expect(distinctCount, greaterThan(80),
+          reason: 'Debe exhibir variabilidad aleatoria');
       expect(values.reduce(min), greaterThanOrEqualTo(0));
       expect(values.reduce(max), lessThanOrEqualTo(20000));
     });

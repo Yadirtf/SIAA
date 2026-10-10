@@ -41,6 +41,8 @@ type RolAsignado struct {
 	Nombre         rbac.RoleName
 	VigenciaInicio *time.Time
 	VigenciaFin    *time.Time
+	// AsignadoPor es el administrador que otorgó el rol: recibe el aviso de vencimiento (US-ROL-05 AC-02).
+	AsignadoPor string
 }
 
 // IsVigente verifica la validez temporal del rol (US-ROL-05 AC-01).

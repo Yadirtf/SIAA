@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/network/mensaje_error.dart';
 import '../../data/generacion_sesiones_remote_datasource.dart';
 import '../../data/models/academico_models.dart';
+import '../cubit/generacion_sesiones_cubit.dart';
+import '../dialogs/confirmar_generacion_dialog.dart';
 import '../dialogs/informe_generacion_dialog.dart';
 
 /// Acción "Generar sesiones" de un periodo (US-ACA-05). Convierte las
 /// asignaciones del periodo en sesiones fechadas, que es lo que el docente
-/// ve y marca en la app. Se puede repetir: no duplica sesiones.
+/// ve y marca en la app. Se ejecuta en segundo plano en el servidor y al
+/// terminar muestra el informe. Se puede repetir: no duplica sesiones.
 class GenerarSesionesBoton extends StatefulWidget {
   final PeriodoModel periodo;
   final GeneracionSesionesRemoteDataSource? dataSource;
+
+  /// Cada cuánto se consulta el trabajo en el servidor.
+  final Duration intervaloConsulta;
 
   const GenerarSesionesBoton({
     super.key,
     required this.periodo,
     this.dataSource,
+    this.intervaloConsulta = const Duration(seconds: 2),
   });
 
   @override
@@ -23,49 +30,29 @@ class GenerarSesionesBoton extends StatefulWidget {
 }
 
 class _GenerarSesionesBotonState extends State<GenerarSesionesBoton> {
-  late final _ds = widget.dataSource ?? GeneracionSesionesRemoteDataSource();
-  bool _generando = false;
+  late final _cubit = GeneracionSesionesCubit(
+    dataSource: widget.dataSource ?? GeneracionSesionesRemoteDataSource(),
+    intervalo: widget.intervaloConsulta,
+  );
 
-  Future<bool> _confirmar() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Generar sesiones'),
-        content: Text(
-          'Se crearán las sesiones de todas las asignaciones de '
-          '${widget.periodo.nombre} entre ${widget.periodo.fechaInicio} y '
-          '${widget.periodo.fechaFin}. Las que ya existen no se duplican.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Generar'),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
   }
 
   Future<void> _generar() async {
-    if (!await _confirmar()) return;
-    setState(() => _generando = true);
-    try {
-      final informe = await _ds.generar(widget.periodo.id);
-      if (!mounted) return;
-      setState(() => _generando = false);
-      await mostrarInformeGeneracion(context, informe);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _generando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se generaron sesiones: ${mensajeDeError(e)}'),
-        ),
+    final incluirPasadas = await confirmarGeneracion(context, widget.periodo);
+    if (incluirPasadas == null) return;
+    await _cubit.generar(widget.periodo.id, incluirPasadas: incluirPasadas);
+  }
+
+  void _alTerminar(BuildContext context, GeneracionSesionesState s) {
+    if (s.fase == FaseGeneracion.completada && s.informe != null) {
+      mostrarInformeGeneracion(context, s.informe!);
+    } else if (s.fase == FaseGeneracion.fallida) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('No se generaron sesiones: ${s.error ?? ''}')),
       );
     }
   }
@@ -73,16 +60,25 @@ class _GenerarSesionesBotonState extends State<GenerarSesionesBoton> {
   @override
   Widget build(BuildContext context) {
     if (widget.periodo.estado == 'CERRADO') return const SizedBox.shrink();
-    return OutlinedButton.icon(
-      onPressed: _generando ? null : _generar,
-      icon: _generando
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.event_repeat_rounded, size: 18),
-      label: const Text('Generar sesiones'),
+    return BlocConsumer<GeneracionSesionesCubit, GeneracionSesionesState>(
+      bloc: _cubit,
+      listenWhen: (a, b) => a.fase != b.fase,
+      listener: _alTerminar,
+      builder: (context, s) => OutlinedButton.icon(
+        onPressed: s.enCurso ? null : _generar,
+        icon: s.enCurso
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.event_repeat_rounded, size: 18),
+        label: Text(
+          s.enCurso
+              ? (s.progreso > 0 ? 'Generando… ${s.progreso} %' : 'Generando…')
+              : 'Generar sesiones',
+        ),
+      ),
     );
   }
 }

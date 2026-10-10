@@ -5,8 +5,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/siaa/backend/internal/domain/rbac"
 	"github.com/siaa/backend/internal/domain/shared"
@@ -35,6 +33,11 @@ func (s *Service) SetupTOTP(ctx context.Context, usuarioID string) (*TOTPSetupRe
 	u, err := s.usuarios.FindByID(ctx, usuarioID)
 	if err != nil || u == nil {
 		return nil, shared.NewNotFoundError("Usuario", usuarioID)
+	}
+	// Reconfigurar un segundo factor activo lo dejaría inactivo con solo un access token robado.
+	if u.TOTPActivado {
+		return nil, &shared.DomainError{Code: shared.ErrConflictoUnicidad,
+			Message: "El segundo factor ya está activo; un administrador debe restablecerlo"}
 	}
 
 	secret, err := crypto.GenerateTOTPSecret()
@@ -101,58 +104,4 @@ func (s *Service) ActivarTOTP(ctx context.Context, usuarioID, codigo string) err
 	}
 
 	return nil
-}
-
-// VerificarTOTP valida el código de segundo factor (o backup code) durante el flujo de inicio de sesión.
-// AC-04: Bloquea la cuenta tras 5 intentos fallidos consecutivos.
-func (s *Service) VerificarTOTP(ctx context.Context, usuarioID, codigo, dispositivoID string) (*TokenPair, error) {
-	u, err := s.usuarios.FindByID(ctx, usuarioID)
-	if err != nil || u == nil {
-		return nil, shared.NewNotFoundError("Usuario", usuarioID)
-	}
-
-	now := s.clock.Now()
-
-	// Verificar bloqueo por intentos fallidos de 2FA — AC-04
-	if u.BloqueadoHastaTOTP != nil && now.Before(*u.BloqueadoHastaTOTP) {
-		return nil, shared.NewAuthError(shared.ErrCuentaBloqueada,
-			fmt.Sprintf("Segundo factor bloqueado por intentos fallidos hasta las %s",
-				shared.HoraLocal(*u.BloqueadoHastaTOTP)))
-	}
-
-	codigoLimpio := strings.ToUpper(strings.TrimSpace(codigo))
-
-	// Intentar validar como código TOTP de 6 dígitos
-	esValido := crypto.ValidateTOTPCode(u.TOTPSecreto, codigoLimpio, now)
-
-	// Si no es válido como TOTP, intentar consumir como código de respaldo
-	if !esValido && len(codigoLimpio) == 8 {
-		hashInput := crypto.HashToken(codigoLimpio)
-		for idx, h := range u.BackupCodes {
-			if h == hashInput {
-				// Consumo de código de respaldo único (AC-03)
-				u.BackupCodes = append(u.BackupCodes[:idx], u.BackupCodes[idx+1:]...)
-				esValido = true
-				break
-			}
-		}
-	}
-
-	if !esValido {
-		u.IntentosFallidosTOTP++
-		if u.IntentosFallidosTOTP >= 5 {
-			bloqueo := now.Add(15 * time.Minute)
-			u.BloqueadoHastaTOTP = &bloqueo
-			u.IntentosFallidosTOTP = 0
-		}
-		_ = s.usuarios.Update(ctx, u)
-		return nil, shared.NewAuthError(shared.ErrCredencialesInvalidas, "Código de autenticación inválido")
-	}
-
-	// Éxito: resetear contadores de fallo y emitir tokens
-	u.IntentosFallidosTOTP = 0
-	u.BloqueadoHastaTOTP = nil
-	_ = s.usuarios.Update(ctx, u)
-
-	return s.emitTokens(ctx, u, dispositivoID)
 }

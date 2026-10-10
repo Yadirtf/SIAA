@@ -66,6 +66,19 @@ func ErrorHandler(log *applog.Logger) echo.HTTPErrorHandler {
 	}
 }
 
+// EstadoHTTP devuelve el código HTTP con el que ErrorHandler responderá a err. Lo usan el log
+// de peticiones y las métricas para registrar el estado real (US-PLT-01 AC-04) cuando el
+// error todavía no se ha escrito en la respuesta.
+func EstadoHTTP(err error) int {
+	if de, ok := shared.AsDomainError(err); ok {
+		return domainErrorToHTTP(de.Code)
+	}
+	if he, ok := err.(*echo.HTTPError); ok {
+		return he.Code
+	}
+	return http.StatusInternalServerError
+}
+
 // domainErrorToHTTP mapea códigos de error de dominio a códigos HTTP.
 func domainErrorToHTTP(code shared.ErrorCode) int {
 	switch code {
@@ -81,7 +94,8 @@ func domainErrorToHTTP(code shared.ErrorCode) int {
 		return http.StatusUnprocessableEntity
 	case shared.ErrRecursoNoEncontrado:
 		return http.StatusNotFound
-	case shared.ErrConflictoHorario, shared.ErrConflictoUnicidad, shared.ErrGeometriaSolapada:
+	case shared.ErrConflictoHorario, shared.ErrConflictoUnicidad, shared.ErrGeometriaSolapada,
+		shared.ErrEstadoInvalido, shared.ErrConfirmacionRequerida, shared.ErrConflictoVersion:
 		return http.StatusConflict
 	case shared.ErrLimiteTasa:
 		return http.StatusTooManyRequests

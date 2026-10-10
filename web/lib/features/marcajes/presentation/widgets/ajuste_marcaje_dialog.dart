@@ -1,5 +1,6 @@
 // ajuste_marcaje_dialog.dart — Modal para anulación o corrección administrativa con auditoría (US-MAR-09)
 import 'package:flutter/material.dart';
+
 import '../../domain/models/marcaje_admin_model.dart';
 
 class AjusteMarcajeDialog extends StatefulWidget {
@@ -9,7 +10,8 @@ class AjusteMarcajeDialog extends StatefulWidget {
     String? nuevoResultado,
     required bool anulado,
     required String motivo,
-  }) onConfirmar;
+  })
+  onConfirmar;
 
   const AjusteMarcajeDialog({
     super.key,
@@ -25,12 +27,14 @@ class AjusteMarcajeDialog extends StatefulWidget {
       String? nuevoResultado,
       required bool anulado,
       required String motivo,
-    }) onConfirmar,
+    })
+    onConfirmar,
   }) {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AjusteMarcajeDialog(marcaje: marcaje, onConfirmar: onConfirmar),
+      builder: (_) =>
+          AjusteMarcajeDialog(marcaje: marcaje, onConfirmar: onConfirmar),
     );
   }
 
@@ -61,9 +65,7 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
         children: [
           Icon(Icons.admin_panel_settings_rounded, color: Colors.blue.shade800),
           const SizedBox(width: 8),
-          const Expanded(
-            child: Text('Ajuste Administrativo de Marcaje'),
-          ),
+          const Expanded(child: Text('Ajuste Administrativo de Marcaje')),
         ],
       ),
       content: SizedBox(
@@ -87,12 +89,16 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
                     _buildRow('Tipo:', m.tipo),
                     _buildRow('Resultado Actual:', m.resultado),
                     _buildRow('Origen:', m.origen),
-                    if (m.motivoRechazo != null) _buildRow('Motivo Original:', m.motivoRechazo!),
+                    if (m.motivoRechazo != null)
+                      _buildRow('Motivo Original:', m.motivoRechazo!),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Tipo de Corrección:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Tipo de Corrección:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
                   Radio<String>(
@@ -114,10 +120,19 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _nuevoResultado,
-                  decoration: const InputDecoration(labelText: 'Nuevo Resultado', isDense: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Nuevo Resultado',
+                    isDense: true,
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'ACEPTADO', child: Text('ACEPTADO')),
-                    DropdownMenuItem(value: 'RECHAZADO', child: Text('RECHAZADO')),
+                    DropdownMenuItem(
+                      value: 'ACEPTADO',
+                      child: Text('ACEPTADO'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'RECHAZADO',
+                      child: Text('RECHAZADO'),
+                    ),
                   ],
                   onChanged: (val) => setState(() => _nuevoResultado = val!),
                 ),
@@ -126,7 +141,10 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Motivo Obligatorio (Auditoría):', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Motivo Obligatorio (Auditoría):',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     '$chars / 20 mín',
                     style: TextStyle(
@@ -162,17 +180,23 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
                   Navigator.pop(context);
                   widget.onConfirmar(
                     accion: _accion,
-                    nuevoResultado: _accion == 'AJUSTAR' ? _nuevoResultado : null,
+                    nuevoResultado: _accion == 'AJUSTAR'
+                        ? _nuevoResultado
+                        : null,
                     anulado: _accion == 'ANULAR',
                     motivo: _motivoCtrl.text.trim(),
                   );
                 }
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: _accion == 'ANULAR' ? Colors.red.shade700 : Colors.blue.shade800,
+            backgroundColor: _accion == 'ANULAR'
+                ? Colors.red.shade700
+                : Colors.blue.shade800,
             foregroundColor: Colors.white,
           ),
-          child: Text(_accion == 'ANULAR' ? 'Anular Marcaje' : 'Aplicar Ajuste'),
+          child: Text(
+            _accion == 'ANULAR' ? 'Anular Marcaje' : 'Aplicar Ajuste',
+          ),
         ),
       ],
     );
@@ -185,7 +209,10 @@ class _AjusteMarcajeDialogState extends State<AjusteMarcajeDialog> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

@@ -11,9 +11,13 @@ import (
 	"github.com/siaa/backend/internal/usecase/reportes"
 )
 
-// ReportesHandler expone el reporte de cumplimiento docente.
+// ReportesHandler expone los reportes de EP-08: cumplimiento docente, tablero en vivo,
+// ocupación de espacios y asistencia estudiantil.
 type ReportesHandler struct {
-	svc *reportes.Service
+	svc        *reportes.Service
+	tablero    *reportes.TableroService
+	ocupacion  *reportes.OcupacionService
+	asistencia *reportes.AsistenciaGrupoService
 }
 
 // NewReportesHandler crea el handler de reportes.

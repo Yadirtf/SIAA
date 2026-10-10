@@ -24,7 +24,9 @@ import '../../../marcajes/presentation/screens/marcajes_admin_screen.dart';
 import '../../../parametros/presentation/screens/parametros_screen.dart';
 import '../../../privacidad/presentation/screens/aviso_privacidad_screen.dart';
 import '../../../privacidad/presentation/screens/politica_privacidad_view.dart';
+import '../../../privacidad/presentation/screens/solicitudes_derechos_screen.dart';
 import '../../../reportes/presentation/screens/reporte_cumplimiento_screen.dart';
+import '../../../reportes/presentation/screens/reportes_operativos_providers.dart';
 import '../../../usuarios/presentation/screens/usuarios_screen.dart';
 import '../models/nav_item.dart';
 import '../widgets/sidebar.dart';
@@ -97,12 +99,18 @@ class _DashboardShellState extends State<DashboardShell> {
         return ReporteCumplimientoScreen(
           puedeExportar: permisos.contains('reporte:exportar'),
         );
+      case NavSection.tablero:
+      case NavSection.ocupacion:
+      case NavSection.asistenciaEstudiantil:
+        return pantallaReporteOperativo(_currentSection, permisos);
       case NavSection.usuarios:
         return const UsuariosScreen();
       case NavSection.auditoria:
         return const AuditoriaScreen();
       case NavSection.privacidad:
         return const PoliticaPrivacidadView();
+      case NavSection.solicitudesDerechos:
+        return const SolicitudesDerechosScreen();
     }
   }
 

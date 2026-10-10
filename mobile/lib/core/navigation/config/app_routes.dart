@@ -30,6 +30,7 @@ class AppRoutes {
   static const perfil = '/shell/perfil';
   static const privacidad = '/shell/privacidad';
   static const notificaciones = '/shell/notificaciones';
+  static const derechos = '/shell/derechos';
 
   /// Genera el mapa de rutas para MaterialApp.
   /// Todas las sub-rutas `/shell/*` son alojadas por [AppShell].
@@ -53,5 +54,6 @@ class AppRoutes {
         perfil: (_) => const AppShell(),
         privacidad: (_) => const AppShell(),
         notificaciones: (_) => const AppShell(),
+        derechos: (_) => const AppShell(),
       };
 }

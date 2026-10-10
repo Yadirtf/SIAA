@@ -17,9 +17,13 @@ enum NavSection {
   marcajes,
   justificaciones,
   reportes,
+  tablero,
+  ocupacion,
+  asistenciaEstudiantil,
   usuarios,
   auditoria,
   privacidad,
+  solicitudesDerechos,
 }
 
 class NavItem {
@@ -139,6 +143,28 @@ class NavItem {
       permiso: 'reporte:leer',
     ),
     NavItem(
+      section: NavSection.tablero,
+      title: 'Tablero en Vivo',
+      icon: Icons.monitor_heart_outlined,
+      category: 'REPORTES',
+      permiso: 'reporte:leer',
+    ),
+    NavItem(
+      section: NavSection.ocupacion,
+      title: 'Ocupación de Espacios',
+      icon: Icons.meeting_room_outlined,
+      category: 'REPORTES',
+      permiso: 'reporte:leer',
+    ),
+    // El docente consulta sus grupos; el servidor aplica el ámbito (US-REP-05).
+    NavItem(
+      section: NavSection.asistenciaEstudiantil,
+      title: 'Asistencia Estudiantil',
+      icon: Icons.school_outlined,
+      category: 'REPORTES',
+      permiso: 'marcaje:leer',
+    ),
+    NavItem(
       section: NavSection.usuarios,
       title: 'Usuarios',
       icon: Icons.people_alt_outlined,
@@ -157,6 +183,14 @@ class NavItem {
       title: 'Aviso de privacidad',
       icon: Icons.privacy_tip_outlined,
       category: 'LEGAL',
+    ),
+    // Atender rectificaciones y supresiones modifica cuentas (US-LEG-02).
+    NavItem(
+      section: NavSection.solicitudesDerechos,
+      title: 'Derechos de titulares',
+      icon: Icons.folder_shared_outlined,
+      category: 'LEGAL',
+      permiso: 'usuario:editar',
     ),
   ];
 }

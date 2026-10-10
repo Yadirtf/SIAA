@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/siaa/backend/internal/platform/config"
+	"github.com/siaa/backend/internal/repository"
 	"github.com/siaa/backend/internal/transport/http/handler"
 	mw "github.com/siaa/backend/internal/transport/http/middleware"
 )
@@ -17,6 +18,9 @@ type HandlersPersonales struct {
 	Privacidad     *handler.PrivacidadHandler
 	Notificaciones *handler.NotificacionesHandler
 	Perfil         *handler.PerfilHandler
+	// Derechos del titular y su bandeja de atención (US-LEG-02).
+	Derechos  *handler.DerechosHandler
+	Auditoria repository.AuditoriaRepository
 }
 
 // exigirConsentimiento devuelve el middleware que bloquea el marcaje sin consentimiento.
@@ -44,6 +48,7 @@ func registerPersonalesRoutes(api *echo.Group, cfg *config.Config, registry *Rou
 		propia(me, http.MethodGet, "/me/consentimiento", "", p.Estado)
 		propia(me, http.MethodPost, "/me/consentimiento", "", p.Decidir)
 	}
+	registerDerechosRoutes(api, cfg, h.Auditoria, registry, h.Derechos)
 	if p := h.Perfil; p != nil {
 		g := api.Group("/me/perfil", mw.JWTAuth(cfg), mw.RateLimiterByUser(60))
 		propia(g, http.MethodGet, "/me/perfil", "", p.Obtener)

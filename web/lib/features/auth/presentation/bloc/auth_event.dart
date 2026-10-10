@@ -24,3 +24,18 @@ class LoginSubmittedEvent extends AuthEvent {
 class LogoutRequestedEvent extends AuthEvent {
   const LogoutRequestedEvent();
 }
+
+/// Código TOTP (o de respaldo) para el desafío pendiente (US-AUT-05).
+class SegundoFactorEnviadoEvent extends AuthEvent {
+  final String codigo;
+
+  const SegundoFactorEnviadoEvent(this.codigo);
+
+  @override
+  List<Object?> get props => [codigo];
+}
+
+/// Abandona el segundo factor y vuelve al formulario de contraseña.
+class SegundoFactorCanceladoEvent extends AuthEvent {
+  const SegundoFactorCanceladoEvent();
+}

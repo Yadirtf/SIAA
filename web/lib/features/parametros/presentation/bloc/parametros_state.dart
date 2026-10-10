@@ -41,15 +41,15 @@ class ParametrosLoaded extends ParametrosState {
     return ParametrosLoaded(
       snapshot: snapshot ?? this.snapshot,
       isSaving: isSaving ?? this.isSaving,
-      successMessage:
-          clearMessages ? null : (successMessage ?? this.successMessage),
+      successMessage: clearMessages
+          ? null
+          : (successMessage ?? this.successMessage),
       errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [snapshot, isSaving, successMessage, errorMessage];
+  List<Object?> get props => [snapshot, isSaving, successMessage, errorMessage];
 }
 
 class ParametrosFailure extends ParametrosState {

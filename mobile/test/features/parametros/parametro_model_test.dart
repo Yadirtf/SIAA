@@ -48,7 +48,8 @@ void main() {
           nivel: entry.key,
           nivelId: '',
         );
-        expect(p.nivelLabel, entry.value, reason: 'Falla para nivel ${entry.key}');
+        expect(p.nivelLabel, entry.value,
+            reason: 'Falla para nivel ${entry.key}');
       }
     });
   });
@@ -57,8 +58,18 @@ void main() {
     test('fromJson construye el snapshot con todos los parámetros', () {
       final json = {
         'parametros': [
-          {'clave': 'buffer_perimetral_metros', 'valor': 10, 'nivel': 'GLOBAL', 'nivel_id': ''},
-          {'clave': 'umbral_tardanza_min', 'valor': 5, 'nivel': 'SEDE', 'nivel_id': 's1'},
+          {
+            'clave': 'buffer_perimetral_metros',
+            'valor': 10,
+            'nivel': 'GLOBAL',
+            'nivel_id': ''
+          },
+          {
+            'clave': 'umbral_tardanza_min',
+            'valor': 5,
+            'nivel': 'SEDE',
+            'nivel_id': 's1'
+          },
         ],
       };
       final snap = ParametrosSnapshot.fromJson(json);

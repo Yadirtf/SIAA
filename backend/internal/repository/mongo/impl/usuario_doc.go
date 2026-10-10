@@ -44,6 +44,7 @@ type rolAsignadoDoc struct {
 	Nombre         string     `bson:"nombre"`
 	VigenciaInicio *time.Time `bson:"vigenciaInicio,omitempty"`
 	VigenciaFin    *time.Time `bson:"vigenciaFin,omitempty"`
+	AsignadoPor    string     `bson:"asignadoPor,omitempty"`
 }
 
 type ambitoDoc struct {
@@ -83,6 +84,7 @@ func docToUsuario(d *usuarioDoc) *user.Usuario {
 			Nombre:         rbac.RoleName(r.Nombre),
 			VigenciaInicio: r.VigenciaInicio,
 			VigenciaFin:    r.VigenciaFin,
+			AsignadoPor:    r.AsignadoPor,
 		})
 	}
 	for _, a := range d.Ambitos {
@@ -128,6 +130,7 @@ func usuarioToDoc(u *user.Usuario) *usuarioDoc {
 			Nombre:         string(r.Nombre),
 			VigenciaInicio: r.VigenciaInicio,
 			VigenciaFin:    r.VigenciaFin,
+			AsignadoPor:    r.AsignadoPor,
 		})
 	}
 	for _, a := range u.Ambitos {

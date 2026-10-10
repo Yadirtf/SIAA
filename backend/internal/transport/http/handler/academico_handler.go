@@ -57,7 +57,7 @@ func mapearErrorAcademico(err error) error {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 	if errors.Is(err, domainAca.ErrPeriodoCerradoModif) {
-		return echo.NewHTTPError(http.StatusConflict, err.Error())
+		return &shared.DomainError{Code: shared.ErrEstadoInvalido, Message: "El periodo está cerrado; no admite cambios"}
 	}
 	var de *shared.DomainError
 	if errors.As(err, &de) {

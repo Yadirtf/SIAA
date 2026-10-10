@@ -7,6 +7,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/edicion_remote_datasource.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/advertencias_dialog.dart';
 import '../../../../core/widgets/error_operacion_dialog.dart';
 import '../../../usuarios/presentation/widgets/selector_usuario.dart';
 import '../../data/models/academico_models.dart';
@@ -111,15 +112,22 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
     // (p. ej. un cruce de horario) se explica en un modal y se puede corregir.
     setState(() => _guardando = true);
     try {
-      final mensaje = _editando
+      final (mensaje, advertencias) = _editando
           ? await _guardarEdicion(asignacion.toJson())
           : await _guardarNueva(asignacion.toJson());
       if (!mounted) return;
+      // Avisos no bloqueantes (franja corta, aula sin geometría): se leen
+      // antes de cerrar el formulario (US-ACA-03 AC-04). Ya está guardada.
+      setState(() => _guardando = false);
+      await mostrarAdvertencias(
+        context,
+        titulo: 'Asignación guardada con advertencias',
+        advertencias: advertencias,
+      );
+      if (!mounted) return;
       final avisos = ScaffoldMessenger.maybeOf(context);
       Navigator.pop(context);
-      if (mensaje != null) {
-        avisos?.showSnackBar(SnackBar(content: Text(mensaje)));
-      }
+      avisos?.showSnackBar(SnackBar(content: Text(mensaje)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _guardando = false);
@@ -127,16 +135,20 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
     }
   }
 
-  Future<String?> _guardarNueva(Map<String, dynamic> cuerpo) async {
-    final resultado = Completer<void>();
+  Future<(String, List<String>)> _guardarNueva(
+    Map<String, dynamic> cuerpo,
+  ) async {
+    final resultado = Completer<AsignacionModel>();
     context.read<AcademicoBloc>().add(
       CreateAsignacionEvent(cuerpo, resultado: resultado),
     );
-    await resultado.future;
-    return null;
+    final creada = await resultado.future;
+    return ('Asignación creada.', creada.advertencias);
   }
 
-  Future<String> _guardarEdicion(Map<String, dynamic> cuerpo) async {
+  Future<(String, List<String>)> _guardarEdicion(
+    Map<String, dynamic> cuerpo,
+  ) async {
     final bloc = context.read<AcademicoBloc>();
     final res = await context.read<EdicionRemoteDataSource>().actualizar(
       '${ApiConstants.asignaciones}/${widget.inicial!.id}',
@@ -144,9 +156,10 @@ class _AsignacionDialogState extends State<AsignacionDialog> {
     );
     bloc.add(const LoadAcademicoDataEvent());
     final n = (res['sesionesGeneradas'] as num?)?.toInt() ?? 0;
-    return n == 0
+    final mensaje = n == 0
         ? 'Asignación actualizada.'
         : 'Asignación actualizada. $n sesiones futuras siguen el nuevo horario.';
+    return (mensaje, AsignacionModel.fromJson(res).advertencias);
   }
 
   @override

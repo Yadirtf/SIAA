@@ -122,7 +122,19 @@ class _ReporteCumplimientoScreenState extends State<ReporteCumplimientoScreen> {
                 detalle: 'No hay docentes con sesiones para estos filtros.',
               )
             else
-              ReporteTabla(docentes: r.docentes, totales: r.totales),
+              ReporteTabla(
+                docentes: r.docentes,
+                totales: r.totales,
+                umbralAlerta: r.umbralAlerta,
+              ),
+            if (r.umbralAlerta > 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Filas resaltadas: cumplimiento por debajo del umbral de '
+                'alerta (${Formatos.porcentaje(r.umbralAlerta)}).',
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
             const SizedBox(height: 8),
             Text(
               'Generado: ${Formatos.fechaHora(r.generadoEn)}',

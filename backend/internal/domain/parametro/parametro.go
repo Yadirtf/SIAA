@@ -99,6 +99,9 @@ var RangosValidos = map[Clave][2]int{
 // ErrFueraDeRango indica que el valor no está en el rango permitido.
 var ErrFueraDeRango = errors.New("valor fuera del rango permitido")
 
+// ErrModoSalidaInvalido indica un modo de salida fuera del catálogo (US-PAR-01 AC-04).
+var ErrModoSalidaInvalido = errors.New("salida_obligatoria admite OBLIGATORIO, OPCIONAL o DESACTIVADO")
+
 // ErrClaveInvalida indica que la clave de parámetro no existe en el catálogo.
 var ErrClaveInvalida = errors.New("clave de parámetro no reconocida")
 
@@ -139,7 +142,28 @@ func (p *Parametro) Validate() error {
 			return ErrFueraDeRango
 		}
 	}
+	if p.Clave == ClaveSalidaObligatoria && !ModoSalidaValido(p.Valor) {
+		return ErrModoSalidaInvalido
+	}
+	if _, esBool := ValoresPorDefecto()[p.Clave].(bool); esBool {
+		if _, ok := p.Valor.(bool); !ok {
+			return ErrFueraDeRango
+		}
+	}
 	return nil
+}
+
+// Modos admitidos para salida_obligatoria (US-PAR-01 AC-04, US-MAR-15).
+const (
+	SalidaObligatoria = "OBLIGATORIO"
+	SalidaOpcional    = "OPCIONAL"
+	SalidaDesactivada = "DESACTIVADO"
+)
+
+// ModoSalidaValido indica si el valor es uno de los tres modos de salida del catálogo.
+func ModoSalidaValido(v interface{}) bool {
+	s, ok := v.(string)
+	return ok && (s == SalidaObligatoria || s == SalidaOpcional || s == SalidaDesactivada)
 }
 
 func toInt(v interface{}) (int, bool) {

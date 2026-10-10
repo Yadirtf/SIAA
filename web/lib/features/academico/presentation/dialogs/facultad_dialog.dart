@@ -37,8 +37,8 @@ class _FacultadDialogState extends State<FacultadDialog> {
 
     if (codigo.isNotEmpty && nombre.isNotEmpty) {
       context.read<AcademicoBloc>().add(
-            CreateFacultadEvent(codigo: codigo, nombre: nombre),
-          );
+        CreateFacultadEvent(codigo: codigo, nombre: nombre),
+      );
       Navigator.pop(context);
     }
   }
@@ -77,10 +77,7 @@ class _FacultadDialogState extends State<FacultadDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Crear Facultad'),
-        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Crear Facultad')),
       ],
     );
   }

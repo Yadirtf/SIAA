@@ -4,8 +4,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../domain/models/capa_mapa.dart';
+import '../../../domain/models/clave_tesela.dart';
 import '../../../domain/models/tagged_vertex.dart';
 import '../../bloc/geo_editor_state.dart';
+import '../../cubit/teselas_offline_cubit.dart';
+import 'aviso_teselas_offline.dart';
 import 'geo_editor_map_banners.dart';
 import 'geo_editor_map_layers.dart';
 import 'map_floating_controls.dart';
@@ -26,6 +29,9 @@ class GeoEditorMapView extends StatelessWidget {
   final void Function(int indexDespuesDe, double longitud, double latitud)?
       onInsertVertex;
 
+  /// Caché persistente de teselas (US-GEO-03 AC-04); sin él se usa la red directa.
+  final TeselasOfflineCubit? teselas;
+
   const GeoEditorMapView({
     super.key,
     required this.mapController,
@@ -38,7 +44,27 @@ class GeoEditorMapView extends StatelessWidget {
     this.onDeleteVertex,
     this.onMoveVertex,
     this.onInsertVertex,
+    this.teselas,
   });
+
+  static AreaGeo areaDe(LatLngBounds b) =>
+      AreaGeo(sur: b.south, oeste: b.west, norte: b.north, este: b.east);
+
+  void _evaluarTeselas(CapaMapa capa) {
+    final camara = mapController.camera;
+    teselas?.camaraMovida(capa, areaDe(camara.visibleBounds), camara.zoom);
+  }
+
+  void _rotarCapa() {
+    onRotarCapa();
+    _evaluarTeselas(capaActual.siguiente);
+  }
+
+  void _descargarZona() {
+    final camara = mapController.camera;
+    teselas?.descargarZona(
+        capaActual, areaDe(camara.visibleBounds), camara.zoom);
+  }
 
   ll.LatLng get _initialCenter {
     if (state.vertices.isNotEmpty) {
@@ -144,6 +170,9 @@ class GeoEditorMapView extends StatelessWidget {
             initialZoom: 18.5,
             minZoom: 3.0,
             maxZoom: 22.5,
+            onMapReady: () => _evaluarTeselas(capaActual),
+            onPositionChanged: (camara, _) => teselas?.camaraMovida(
+                capaActual, areaDe(camara.visibleBounds), camara.zoom),
             onTap: (tapPosition, point) {
               if (state.verticeSeleccionadoIndex != null) {
                 onMoveVertex?.call(state.verticeSeleccionadoIndex!,
@@ -167,6 +196,7 @@ class GeoEditorMapView extends StatelessWidget {
             TileLayer(
               key: ValueKey(capaActual),
               urlTemplate: capaActual.urlTemplate,
+              tileProvider: teselas?.proveedorPara(capaActual),
               userAgentPackageName: 'com.siaa.mobile',
               maxNativeZoom: capaActual.maxNativeZoom,
               maxZoom: 22.5,
@@ -182,6 +212,13 @@ class GeoEditorMapView extends StatelessWidget {
             ),
           ],
         ),
+        if (teselas != null)
+          Positioned(
+            left: 12,
+            right: 60,
+            bottom: 12,
+            child: AvisoTeselasOffline(cubit: teselas!),
+          ),
         GeoEditorMapBanners(
           state: state,
           onSelectVertex: onSelectVertex,
@@ -193,7 +230,8 @@ class GeoEditorMapView extends StatelessWidget {
             capaActual: capaActual,
             hasGpsPosition: state.currentPosition != null,
             hasVertices: state.vertices.isNotEmpty,
-            onRotarCapa: onRotarCapa,
+            onRotarCapa: _rotarCapa,
+            onDescargarZona: teselas == null ? null : _descargarZona,
             onCentrarGps: _centrarGps,
             onCentrarPoligono: _centrarPoligono,
             onZoomIn: _zoomIn,

@@ -14,6 +14,7 @@ type SesionFilter struct {
 	PeriodoID    string
 	AsignacionID string
 	DocenteID    string
+	GrupoIDs     []string // nil = sin filtro (sesiones de los grupos de un estudiante)
 	EspacioID    string
 	Fecha        string
 	Estado       *academico.EstadoSesion

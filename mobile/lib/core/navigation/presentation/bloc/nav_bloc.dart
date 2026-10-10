@@ -77,7 +77,8 @@ class NavBloc extends Bloc<NavEvent, NavState> {
     }
     final permitida =
         state.drawerExtraItems.any((i) => i.route == event.route) ||
-            NavDestinations.comunes.any((i) => i.route == event.route);
+            NavDestinations.comunes.any((i) => i.route == event.route) ||
+            NavDestinations.sinMenu.any((i) => i.route == event.route);
     if (!permitida) return;
     emit(state.copyWith(
       activeDrawerRoute: event.route,

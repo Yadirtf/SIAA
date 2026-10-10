@@ -28,6 +28,7 @@ type AusenciasWorker struct {
 	marcajeRepo repository.MarcajeRepository
 	sesionRepo  repository.SesionRepository
 	procesos    repository.ProcesoRepository
+	alertas     *AlertasInasistencias
 }
 
 func NewAusenciasWorker(marcajeRepo repository.MarcajeRepository, sesionRepo repository.SesionRepository) *AusenciasWorker {
@@ -40,6 +41,12 @@ func NewAusenciasWorker(marcajeRepo repository.MarcajeRepository, sesionRepo rep
 // WithMarcaDeAgua habilita el procesamiento incremental entre ciclos (ADR-09).
 func (w *AusenciasWorker) WithMarcaDeAgua(p repository.ProcesoRepository) *AusenciasWorker {
 	w.procesos = p
+	return w
+}
+
+// WithAlertas avisa a la coordinación cuando una ausencia nueva completa una racha (US-PAR-04).
+func (w *AusenciasWorker) WithAlertas(a *AlertasInasistencias) *AusenciasWorker {
+	w.alertas = a
 	return w
 }
 
@@ -60,6 +67,7 @@ func (w *AusenciasWorker) EjecutarCiclo(ctx context.Context, ahora time.Time) (i
 	}
 
 	ausenciasGeneradas := 0
+	afectados := map[[2]string]bool{} // (docente, facultad) con ausencias nuevas en este ciclo
 	for _, s := range sesiones {
 		// AC-02: Excluir explícitamente canceladas o excluidas
 		if s.Estado() == academico.EstadoSesionCancelada || s.Estado() == academico.EstadoSesionExcluida {
@@ -74,7 +82,13 @@ func (w *AusenciasWorker) EjecutarCiclo(ctx context.Context, ahora time.Time) (i
 			}
 			if err := w.marcajeRepo.Crear(ctx, nuevaAusencia(s.ID(), docenteID, ahora)); err == nil {
 				ausenciasGeneradas++
+				afectados[[2]string{docenteID, s.FacultadID()}] = true
 			}
+		}
+	}
+	if w.alertas != nil {
+		for k := range afectados {
+			w.alertas.Evaluar(ctx, k[0], k[1], ahora)
 		}
 	}
 

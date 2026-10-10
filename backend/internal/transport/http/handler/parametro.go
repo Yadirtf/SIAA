@@ -60,7 +60,7 @@ func (h *ParametroHandler) GuardarParametro(c echo.Context) error {
 		switch err {
 		case dompar.ErrFueraDeRango:
 			return echo.NewHTTPError(http.StatusUnprocessableEntity, "valor fuera del rango permitido para este parámetro")
-		case dompar.ErrSoloGlobal:
+		case dompar.ErrSoloGlobal, dompar.ErrModoSalidaInvalido:
 			return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
 		case dompar.ErrClaveInvalida:
 			return echo.NewHTTPError(http.StatusUnprocessableEntity, "clave de parámetro no reconocida")

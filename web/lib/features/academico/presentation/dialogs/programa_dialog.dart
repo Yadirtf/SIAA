@@ -52,12 +52,8 @@ class _ProgramaDialogState extends State<ProgramaDialog> {
 
     if (codigo.isNotEmpty && nombre.isNotEmpty && facId != null) {
       context.read<AcademicoBloc>().add(
-            CreateProgramaEvent(
-              codigo: codigo,
-              nombre: nombre,
-              facultadId: facId,
-            ),
-          );
+        CreateProgramaEvent(codigo: codigo, nombre: nombre, facultadId: facId),
+      );
       Navigator.pop(context);
     }
   }
@@ -132,10 +128,7 @@ class _ProgramaDialogState extends State<ProgramaDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Crear Programa'),
-        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Crear Programa')),
       ],
     );
   }

@@ -37,7 +37,9 @@ class ParametrosBloc extends Bloc<ParametrosEvent, ParametrosState> {
       );
       emit(ParametrosLoaded(snapshot: snapshot));
     } catch (e) {
-      emit(ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -71,9 +73,7 @@ class ParametrosBloc extends Bloc<ParametrosEvent, ParametrosState> {
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
       if (current is ParametrosLoaded) {
-        emit(
-          current.copyWith(isSaving: false, errorMessage: 'Error: $msg'),
-        );
+        emit(current.copyWith(isSaving: false, errorMessage: 'Error: $msg'));
       } else {
         emit(ParametrosFailure(error: msg));
       }

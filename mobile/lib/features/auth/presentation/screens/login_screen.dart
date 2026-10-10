@@ -8,6 +8,7 @@ import '../bloc/auth_bloc.dart';
 import '../widgets/dispositivo_pendiente_dialog.dart';
 import '../widgets/login_form_card.dart';
 import '../widgets/login_header.dart';
+import '../widgets/segundo_factor_card.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -110,12 +111,17 @@ class _LoginScreenState extends State<LoginScreen>
                   opacity: _fadeAnimation,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 440),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        LoginHeader(),
-                        SizedBox(height: SIAASpacing.xxl),
-                        LoginFormCard(),
+                        const LoginHeader(),
+                        const SizedBox(height: SIAASpacing.xxl),
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) =>
+                              state is AuthSegundoFactorRequerido
+                                  ? SegundoFactorCard(estado: state)
+                                  : const LoginFormCard(),
+                        ),
                       ],
                     ),
                   ),

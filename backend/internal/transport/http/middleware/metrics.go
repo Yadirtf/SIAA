@@ -25,8 +25,7 @@ func MetricsMiddleware(collector *metrics.Collector) echo.MiddlewareFunc {
 			}
 			routeKey := fmt.Sprintf("%s %s", c.Request().Method, routePath)
 
-			status := c.Response().Status
-			isError := status >= 400 || err != nil
+			isError := estadoFinal(c, err) >= 400
 
 			collector.RecordRequest(routeKey, duration, isError)
 

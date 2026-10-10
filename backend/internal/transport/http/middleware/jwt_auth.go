@@ -49,6 +49,7 @@ func JWTAuth(cfg *config.Config) echo.MiddlewareFunc {
 
 			c.Set(CtxClaims, claims)
 			c.Set(CtxUsuarioID, claims.UsuarioID)
+			fijarSesionAuditoria(c, claims.UsuarioID, claims.RolActivo)
 			return next(c)
 		}
 	}

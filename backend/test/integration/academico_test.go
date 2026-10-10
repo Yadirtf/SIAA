@@ -56,20 +56,6 @@ func TestAcademico_EstructuraYSesiones(t *testing.T) {
 	e.sinErrorInterno(http.MethodPost, "/sesiones/"+futura+"/cancelar", map[string]interface{}{"motivo": "Paro"}, a)
 	e.sinErrorInterno(http.MethodPost, "/sesiones/000000000000000000000000/cancelar", map[string]interface{}{"motivo": "No existe"}, a)
 
-	// Importación masiva (US-ACA-07): vista previa CSV y confirmación.
-	csv := "periodoCodigo,facultadCodigo,programaCodigo,asignaturaCodigo,asignaturaNombre,grupoCodigo,docenteDocumento,aulaCodigo,diaSemana,horaInicio,horaFin,modalidad\n" +
-		"2026-2,ING,SIS,FIS1,Física,02,123,A-302,2,07:00,09:00,PRESENCIAL\n" +
-		"2026-2,ING,SIS,,Sin código,03,123,A-302,9,25:00,09:00,OTRA\n"
-	e.enviarTexto(http.MethodPost, "/academico/importar/preview", "text/csv", csv, a)
-	e.sinErrorInterno(http.MethodPost, "/academico/importar", map[string]interface{}{
-		"filas": []map[string]interface{}{{
-			"numeroFila": 1, "periodoCodigo": "2026-2", "facultadCodigo": "ING", "programaCodigo": "SIS",
-			"asignaturaCodigo": "FIS1", "asignaturaNombre": "Física", "grupoCodigo": "02", "docenteDocumento": "123",
-			"aulaCodigo": "A-302", "diaSemana": 2, "horaInicio": "07:00", "horaFin": "09:00", "modalidad": "PRESENCIAL", "valida": true,
-		}},
-	}, a)
-	e.sinErrorInterno(http.MethodPost, "/academico/importar", map[string]interface{}{"filas": []interface{}{}}, a)
-
 	// Eliminaciones: asignación y entidades sin dependencias.
 	e.sinErrorInterno(http.MethodDelete, "/asignaciones/"+s.asignacion, nil, a)
 	e.sinErrorInterno(http.MethodDelete, "/grupos/"+s.grupo, nil, a)

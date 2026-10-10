@@ -7,12 +7,14 @@ import '../domain/models/espacio_model.dart';
 import '../domain/models/geometria_historial_item.dart';
 import '../domain/models/sede_model.dart';
 import '../domain/models/validacion_geometria_model.dart';
+import 'geometria_exceptions.dart';
 
 // Re-exportar modelos para mantener compatibilidad hacia atrás
 export '../domain/models/bloque_model.dart';
 export '../domain/models/espacio_model.dart';
 export '../domain/models/sede_model.dart';
 export '../domain/models/validacion_geometria_model.dart';
+export 'geometria_exceptions.dart';
 
 class EspacioRepository {
   final Dio _client;
@@ -117,8 +119,9 @@ class EspacioRepository {
         'tipo': tipo,
         'bufferMetros': bufferMetros,
       };
-      if (bloqueId != null && bloqueId.isNotEmpty)
+      if (bloqueId != null && bloqueId.isNotEmpty) {
         payload['bloqueId'] = bloqueId;
+      }
       if (piso != null) payload['piso'] = piso;
       if (facultadResponsable != null && facultadResponsable.isNotEmpty) {
         payload['facultadResponsable'] = facultadResponsable;
@@ -143,8 +146,9 @@ class EspacioRepository {
     try {
       final queryParams = <String, dynamic>{};
       if (sedeId != null && sedeId.isNotEmpty) queryParams['sedeId'] = sedeId;
-      if (bloqueId != null && bloqueId.isNotEmpty)
+      if (bloqueId != null && bloqueId.isNotEmpty) {
         queryParams['bloqueId'] = bloqueId;
+      }
       if (tipo != null && tipo.isNotEmpty) queryParams['tipo'] = tipo;
       if (estado != null && estado.isNotEmpty) queryParams['estado'] = estado;
 
@@ -168,6 +172,9 @@ class EspacioRepository {
       final response = await _client.get('/espacios/$id');
       return EspacioModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
+      if (e.response == null && _esFalloDeRed(e)) {
+        throw SinConexionGeometriaException();
+      }
       final errorMsg = e.response?.data?['mensaje'] ??
           e.message ??
           'Error al obtener espacio';
@@ -184,19 +191,20 @@ class EspacioRepository {
     double? precisionPromedioMetros,
     bool confirmarSolapamiento = false,
     String? motivoSolapamiento,
+    int? versionEsperada,
   }) async {
     try {
       final payload = <String, dynamic>{
         'coordenadas': coordenadas,
         'metodoCaptura': metodoCaptura,
         'confirmarSolapamiento': confirmarSolapamiento,
+        if (precisionPromedioMetros != null)
+          'precisionPromedioMetros': precisionPromedioMetros,
+        if (motivoSolapamiento != null && motivoSolapamiento.isNotEmpty)
+          'motivoSolapamiento': motivoSolapamiento,
+        // Precondición optimista: 409 CONFLICTO_VERSION si otro la cambió.
+        if (versionEsperada != null) 'versionEsperada': versionEsperada,
       };
-      if (precisionPromedioMetros != null) {
-        payload['precisionPromedioMetros'] = precisionPromedioMetros;
-      }
-      if (motivoSolapamiento != null && motivoSolapamiento.isNotEmpty) {
-        payload['motivoSolapamiento'] = motivoSolapamiento;
-      }
 
       final response = await _client.put(
         '/espacios/$espacioId/geometria',
@@ -205,30 +213,10 @@ class EspacioRepository {
 
       return EspacioModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final codigo = data['codigo'] as String?;
-        final mensaje =
-            data['mensaje'] as String? ?? 'Error al guardar geometría';
-        final detalles = (data['detalles'] as List<dynamic>?)
-            ?.map((d) => d is Map<String, dynamic>
-                ? d['error']?.toString() ?? ''
-                : d.toString())
-            .toList();
-
-        if (codigo == 'VALIDACION' &&
-            mensaje.toLowerCase().contains('solapamiento')) {
-          throw SolapamientoAdvertenciaException(
-              mensaje: mensaje, detalles: detalles);
-        } else if (codigo == 'GEOMETRIA_SOLAPADA') {
-          throw SolapamientoCriticoException(mensaje: mensaje);
-        }
-        throw Exception(mensaje);
+      if (e.response == null && _esFalloDeRed(e)) {
+        throw SinConexionGeometriaException();
       }
-      final errorMsg = e.response?.data?.toString() ??
-          e.message ??
-          'Error de red o servidor inalcanzable. Detalles: ${e.toString()}';
-      throw Exception(errorMsg);
+      throw excepcionGuardadoGeometria(e);
     }
   }
 
@@ -281,25 +269,10 @@ class EspacioRepository {
       throw Exception(errorMsg);
     }
   }
-}
 
-/// Excepción cuando un solapamiento <= 50% requiere confirmación del usuario (US-GEO-05 AC-01/AC-02).
-class SolapamientoAdvertenciaException implements Exception {
-  final String mensaje;
-  final List<String>? detalles;
-
-  SolapamientoAdvertenciaException({required this.mensaje, this.detalles});
-
-  @override
-  String toString() => mensaje;
-}
-
-/// Excepción cuando un solapamiento > 50% bloquea irrevocablemente el guardado (US-GEO-05 AC-03).
-class SolapamientoCriticoException implements Exception {
-  final String mensaje;
-
-  SolapamientoCriticoException({required this.mensaje});
-
-  @override
-  String toString() => mensaje;
+  static bool _esFalloDeRed(DioException e) =>
+      e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      e.type == DioExceptionType.receiveTimeout;
 }

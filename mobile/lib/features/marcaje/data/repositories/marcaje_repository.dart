@@ -168,22 +168,4 @@ class MarcajeRepository {
       {String? mes, int pagina = 1}) {
     return _remoteDataSource.consultarHistorial(mes: mes, pagina: pagina);
   }
-
-  Future<DateTime> abrirVentanaEstudiantil(String sesionId,
-      {int duracionMinutos = 5}) {
-    return _remoteDataSource.abrirVentanaEstudiantil(sesionId,
-        duracionMinutos: duracionMinutos);
-  }
-
-  Future<void> registrarListaManual({
-    required String sesionId,
-    required String motivo,
-    required List<Map<String, dynamic>> estudiantes,
-  }) {
-    return _remoteDataSource.registrarListaManual(
-      sesionId: sesionId,
-      motivo: motivo,
-      estudiantes: estudiantes,
-    );
-  }
 }

@@ -10,8 +10,8 @@ class ParametrosBloc extends Bloc<ParametrosEvent, ParametrosState> {
   final ParametrosRepository _repository;
 
   ParametrosBloc({required ParametrosRepository repository})
-    : _repository = repository,
-      super(const ParametrosInitial()) {
+      : _repository = repository,
+        super(const ParametrosInitial()) {
     on<CargarParametrosEfectivosEvent>(_onCargarEfectivos);
     on<CargarParametrosGlobalesEvent>(_onCargarGlobales);
   }
@@ -32,7 +32,8 @@ class ParametrosBloc extends Bloc<ParametrosEvent, ParametrosState> {
       final label = _buildLabel(event);
       emit(ParametrosLoaded(snapshot: snapshot, ambitoLabel: label));
     } catch (e) {
-      emit(ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')));
+      emit(
+          ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -50,7 +51,8 @@ class ParametrosBloc extends Bloc<ParametrosEvent, ParametrosState> {
         ),
       );
     } catch (e) {
-      emit(ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')));
+      emit(
+          ParametrosFailure(error: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
