@@ -94,8 +94,15 @@ curl http://localhost:8080/api/v1/health/ready
 ```bash
 cd mobile
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:8080/api/v1
+# Emulador Android: 10.0.2.2 es el computador anfitrión.
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
+# Celular físico: IP del computador en la misma red WiFi.
+flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8080/api/v1
 ```
+
+Sin `API_BASE_URL` la app usa el backend de pruebas en Render
+(`https://siaa-api.onrender.com/api/v1`). En un celular o emulador `localhost` no
+es tu computador, así que la app no conectaría.
 
 ### 6. Levantar consola web
 

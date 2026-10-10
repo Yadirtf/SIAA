@@ -99,7 +99,11 @@ jobs:
         run: flutter pub get
 
       - name: flutter build apk
-        run: flutter build apk --debug
+        # El APK publicado se instala en celulares reales: debe apuntar al API desplegado.
+        # La variable de repositorio API_BASE_URL permite cambiarlo sin tocar el flujo.
+        run: >-
+          flutter build apk --debug
+          --dart-define=API_BASE_URL=${{ vars.API_BASE_URL || 'https://siaa-api.onrender.com/api/v1' }}
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4

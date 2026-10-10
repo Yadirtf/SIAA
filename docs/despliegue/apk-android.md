@@ -34,6 +34,15 @@ flutter build apk --debug --dart-define=API_BASE_URL=https://siaa-api.onrender.c
 
 El APK queda en `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
 
+Si compilas sin `--dart-define=API_BASE_URL` (por ejemplo con el botón *Run* del
+IDE), la app usa `https://siaa-api.onrender.com/api/v1` por defecto. El APK que
+publica el CI (artefacto `siaa-mobile-apk`) también apunta ahí; para cambiarlo,
+define la variable de repositorio `API_BASE_URL` en GitHub. Nunca uses `localhost`
+en un celular: ahí `localhost` es el propio teléfono y la app mostrará "No se pudo
+conectar al servidor". Para probar contra tu backend local desde el celular usa la
+IP de tu computador en la red WiFi (`http://192.168.x.x:8080/api/v1`) o, en el
+emulador de Android, `http://10.0.2.2:8080/api/v1`.
+
 ### ¿Por qué `--debug` y no `--release`?
 
 La app trae *certificate pinning* (US-PLT-03): en modo release solo acepta el

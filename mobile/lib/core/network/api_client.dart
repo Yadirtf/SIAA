@@ -12,10 +12,14 @@ import 'politica_pinning.dart';
 class ApiClient {
   static Dio? _instance;
 
-  /// Base URL por entorno. Se inyecta desde la configuración de entorno.
+  /// Base URL por entorno: --dart-define=API_BASE_URL=<url>/api/v1.
+  /// Sin ese valor apunta al backend de pruebas en Render: "localhost" en un
+  /// celular es el propio celular, así que un APK compilado sin la variable
+  /// (CI, botón Run del IDE) nunca alcanzaba el servidor. Para el backend local
+  /// se pasa la URL explícitamente (ver README).
   static String baseUrl = const String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8080/api/v1',
+    defaultValue: 'https://siaa-api.onrender.com/api/v1',
   );
 
   static Dio get instance {
@@ -24,6 +28,8 @@ class ApiClient {
   }
 
   static Dio _create() {
+    // Visible en `flutter logs`: primer dato a revisar si la app no conecta.
+    debugPrint('[SIAA-HTTP] API_BASE_URL=$baseUrl');
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 15),
